@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
   ChevronRight,
@@ -56,6 +55,8 @@ export function MobileCategoryMenu({
   categories,
 }: MobileCategoryMenuProps) {
   const [stack, setStack] = useState<StackLevel[]>([]);
+  const [mounted, setMounted] = useState(false);
+  const [visible, setVisible] = useState(false);
 
   const menuNodes = useMemo(() => {
     const nodes: CategoryNode[] = [];
@@ -101,19 +102,19 @@ export function MobileCategoryMenu({
   useEffect(() => {
     if (open) {
       setStack([{ title: "Каталог", slug: null, items: menuNodes }]);
-    }
-  }, [open, menuNodes]);
-
-  useEffect(() => {
-    if (open) {
+      setMounted(true);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setVisible(true));
+      });
       document.body.style.overflow = "hidden";
     } else {
+      setVisible(false);
+      const timer = setTimeout(() => setMounted(false), 300);
       document.body.style.overflow = "";
+      return () => clearTimeout(timer);
     }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [open]);
+    return () => { document.body.style.overflow = ""; };
+  }, [open, menuNodes]);
 
   const current = stack[stack.length - 1];
 
@@ -128,28 +129,24 @@ export function MobileCategoryMenu({
     setStack((s) => (s.length > 1 ? s.slice(0, -1) : s));
   }
 
-  return (
-    <AnimatePresence>
-      {open && (
-        <>
-          {/* Overlay */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm md:hidden"
-            onClick={onClose}
-          />
+  if (!mounted) return null;
 
-          {/* Drawer */}
-          <motion.div
-            initial={{ x: "-100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "-100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed inset-y-0 left-0 z-[70] flex w-full max-w-sm flex-col bg-[#08080c] md:hidden"
-          >
+  return (
+    <>
+      {/* Overlay */}
+      <div
+        className={`fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm transition-opacity duration-200 md:hidden ${
+          visible ? "opacity-100" : "opacity-0"
+        }`}
+        onClick={onClose}
+      />
+
+      {/* Drawer */}
+      <div
+        className={`fixed inset-y-0 left-0 z-[70] flex w-full max-w-sm flex-col bg-[#08080c] transition-transform duration-300 ease-out md:hidden ${
+          visible ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
             {/* Header */}
             <div className="flex h-14 items-center justify-between border-b border-zinc-800 px-4">
               <div className="flex items-center gap-2">
@@ -191,13 +188,8 @@ export function MobileCategoryMenu({
 
             {/* Category list */}
             <div className="flex-1 overflow-y-auto">
-              <AnimatePresence mode="wait">
-                <motion.div
+                <div
                   key={stack.length}
-                  initial={{ x: stack.length > 1 ? 60 : -60, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  exit={{ x: stack.length > 1 ? -60 : 60, opacity: 0 }}
-                  transition={{ duration: 0.15, ease: "easeOut" }}
                   className="flex flex-col"
                 >
                   {current?.items.map((cat) => {
@@ -246,8 +238,7 @@ export function MobileCategoryMenu({
                       </div>
                     );
                   })}
-                </motion.div>
-              </AnimatePresence>
+                </div>
             </div>
 
             {/* Footer */}
@@ -263,9 +254,7 @@ export function MobileCategoryMenu({
                 </Link>
               </div>
             </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+      </div>
+    </>
   );
 }

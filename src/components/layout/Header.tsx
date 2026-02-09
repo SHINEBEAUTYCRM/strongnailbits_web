@@ -15,12 +15,20 @@ import {
   Clock,
   LayoutGrid,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useCartStore } from "@/lib/store/cart";
 import { useWishlistStore } from "@/lib/store/wishlist";
-import { CartDrawer } from "@/components/cart/CartDrawer";
-import { SearchModal } from "@/components/search/SearchModal";
 import { formatPrice } from "@/utils/format";
 import { useCategoryTree, type CatNode } from "@/hooks/useCategoryTree";
+
+const CartDrawer = dynamic(
+  () => import("@/components/cart/CartDrawer").then((m) => m.CartDrawer),
+  { ssr: false },
+);
+const SearchModal = dynamic(
+  () => import("@/components/search/SearchModal").then((m) => m.SearchModal),
+  { ssr: false },
+);
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);

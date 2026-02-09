@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Check, X as XIcon, AlertCircle } from "lucide-react";
 
 interface ToastMessage {
@@ -35,37 +34,31 @@ export function ToastContainer() {
 
   return (
     <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2">
-      <AnimatePresence>
-        {toasts.map((t) => (
-          <motion.div
-            key={t.id}
-            initial={{ opacity: 0, x: 80, scale: 0.95 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 80, scale: 0.95 }}
-            transition={{ duration: 0.25 }}
-            className={`flex items-center gap-3 rounded-card border px-4 py-3 text-sm font-medium shadow-lg ${
-              t.type === "success"
-                ? "border-green/20 bg-green/5 text-green"
-                : "border-red/20 bg-red/5 text-red"
-            }`}
+      {toasts.map((t) => (
+        <div
+          key={t.id}
+          className={`flex animate-slide-in-right items-center gap-3 rounded-card border px-4 py-3 text-sm font-medium shadow-lg ${
+            t.type === "success"
+              ? "border-green/20 bg-green/5 text-green"
+              : "border-red/20 bg-red/5 text-red"
+          }`}
+        >
+          {t.type === "success" ? (
+            <Check size={16} className="shrink-0" />
+          ) : (
+            <AlertCircle size={16} className="shrink-0" />
+          )}
+          {t.text}
+          <button
+            onClick={() =>
+              setToasts((prev) => prev.filter((x) => x.id !== t.id))
+            }
+            className="ml-2 shrink-0 opacity-50 transition-opacity hover:opacity-100"
           >
-            {t.type === "success" ? (
-              <Check size={16} className="shrink-0" />
-            ) : (
-              <AlertCircle size={16} className="shrink-0" />
-            )}
-            {t.text}
-            <button
-              onClick={() =>
-                setToasts((prev) => prev.filter((x) => x.id !== t.id))
-              }
-              className="ml-2 shrink-0 opacity-50 transition-opacity hover:opacity-100"
-            >
-              <XIcon size={14} />
-            </button>
-          </motion.div>
-        ))}
-      </AnimatePresence>
+            <XIcon size={14} />
+          </button>
+        </div>
+      ))}
     </div>
   );
 }

@@ -82,7 +82,6 @@ export default async function BrandsPage() {
                         fill
                         sizes="150px"
                         className="object-contain"
-                        unoptimized
                       />
                     </div>
                   ) : (

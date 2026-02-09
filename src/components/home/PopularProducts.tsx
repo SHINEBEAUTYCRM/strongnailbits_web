@@ -110,7 +110,6 @@ export function PopularProducts({
                     fill
                     sizes="180px"
                     className="object-contain p-3"
-                    unoptimized
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-[var(--t3)]">

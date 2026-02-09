@@ -54,7 +54,6 @@ export function OrderSummary({
                   fill
                   sizes="48px"
                   className="object-contain p-0.5"
-                  unoptimized
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-[var(--t3)]">

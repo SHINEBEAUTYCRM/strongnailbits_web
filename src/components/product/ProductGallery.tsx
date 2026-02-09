@@ -71,7 +71,6 @@ export function ProductGallery({ images, name }: ProductGalleryProps) {
                 : undefined
             }
             priority={current === 0}
-            unoptimized
           />
         ) : (
           <div className="flex h-full items-center justify-center text-[#ddd]">
@@ -139,7 +138,6 @@ export function ProductGallery({ images, name }: ProductGalleryProps) {
                 fill
                 sizes="64px"
                 className="object-contain bg-white p-1"
-                unoptimized
               />
             </button>
           ))}

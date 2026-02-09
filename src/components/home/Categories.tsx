@@ -42,7 +42,6 @@ export function Categories({ categories }: CategoriesProps) {
                   fill
                   sizes="64px"
                   className="object-contain p-1.5"
-                  unoptimized
                 />
               ) : (
                 <Grid3X3 size={24} className="text-[var(--t3)]" />

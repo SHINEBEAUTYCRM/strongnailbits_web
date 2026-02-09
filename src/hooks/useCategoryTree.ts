@@ -34,8 +34,9 @@ function buildTree(): Promise<CatNode[]> {
       if (!data) return [];
 
       // Filter hidden names
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const clean = data.filter(
-        (c) => !HIDDEN.some((h) => c.name_uk.toLowerCase().trim().startsWith(h)),
+        (c: any) => !HIDDEN.some((h) => c.name_uk.toLowerCase().trim().startsWith(h)),
       );
 
       const map = new Map<number, CatNode>();

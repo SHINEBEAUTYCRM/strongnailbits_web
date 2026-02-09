@@ -3,7 +3,6 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import { LayoutGrid, ChevronRight } from "lucide-react";
 import type { CategoryNode } from "@/lib/categories/tree";
 import {
@@ -274,35 +273,21 @@ export function MegaMenu({ categories }: MegaMenuProps) {
   const dropdown =
     portalReady && open
       ? createPortal(
-          <AnimatePresence>
-            {open && (
-              <>
-                <motion.div
-                  key="mega-overlay"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                  className="fixed inset-0 z-[49] bg-black/60"
-                  style={{ top: dropdownTop }}
-                  onClick={closeNow}
-                />
-                <motion.div
-                  key="mega-dropdown"
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.18, ease: "easeOut" }}
-                  className="fixed left-0 right-0 z-[50] shadow-2xl shadow-black/60"
-                  style={{ top: dropdownTop }}
-                  onMouseEnter={keepOpen}
-                  onMouseLeave={handleClose}
-                >
-                  {mode === "catalog" ? catalogDropdown : categoryDropdown}
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>,
+          <>
+            <div
+              className="fixed inset-0 z-[49] bg-black/60 animate-[fadeIn_0.15s_ease-out]"
+              style={{ top: dropdownTop }}
+              onClick={closeNow}
+            />
+            <div
+              className="fixed left-0 right-0 z-[50] shadow-2xl shadow-black/60 animate-[slideDown_0.18s_ease-out]"
+              style={{ top: dropdownTop }}
+              onMouseEnter={keepOpen}
+              onMouseLeave={handleClose}
+            >
+              {mode === "catalog" ? catalogDropdown : categoryDropdown}
+            </div>
+          </>,
           document.body,
         )
       : null;

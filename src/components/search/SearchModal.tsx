@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback, type FormEvent } from "react"
 import Image from "next/image";
 import Link from "next/link";
 import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, Loader2, ArrowRight, Tag, Grid3X3 } from "lucide-react";
 
 interface SearchProduct {
@@ -65,15 +64,24 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [ready, setReady] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => { setReady(true); }, []);
 
   useEffect(() => {
     if (open) {
+      setMounted(true);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setVisible(true));
+      });
       document.body.style.overflow = "hidden";
       setTimeout(() => inputRef.current?.focus(), 100);
     } else {
+      setVisible(false);
+      const timer = setTimeout(() => setMounted(false), 200);
       document.body.style.overflow = "";
+      return () => clearTimeout(timer);
     }
     return () => { document.body.style.overflow = ""; };
   }, [open]);
@@ -160,30 +168,22 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     results.categories.length === 0 &&
     results.brands.length === 0;
 
-  if (!ready) return null;
+  if (!ready || !mounted) return null;
 
   return createPortal(
-    <AnimatePresence>
-      {open && (
-        <>
-          <motion.div
-            key="search-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-[60] bg-black/30 backdrop-blur-sm"
-            onClick={onClose}
-          />
+    <>
+      <div
+        className={`fixed inset-0 z-[60] bg-black/30 backdrop-blur-sm transition-opacity duration-150 ${
+          visible ? "opacity-100" : "opacity-0"
+        }`}
+        onClick={onClose}
+      />
 
-          <motion.div
-            key="search-modal"
-            initial={{ opacity: 0, y: -20, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.98 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="fixed inset-x-0 top-0 z-[70] mx-auto w-full max-w-2xl px-4 pt-[10vh] sm:pt-[12vh]"
-          >
+      <div
+        className={`fixed inset-x-0 top-0 z-[70] mx-auto w-full max-w-2xl px-4 pt-[10vh] transition-all duration-200 ease-out sm:pt-[12vh] ${
+          visible ? "translate-y-0 scale-100 opacity-100" : "-translate-y-5 scale-[0.98] opacity-0"
+        }`}
+      >
             <div className="overflow-hidden rounded-card border border-[var(--border)] bg-white shadow-[0_16px_64px_rgba(0,0,0,.12)]">
               {/* Search input */}
               <form onSubmit={handleSubmit} className="relative">
@@ -315,7 +315,6 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
                                 fill
                                 sizes="48px"
                                 className="object-contain p-0.5"
-                                unoptimized
                               />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center text-[var(--t3)]">
@@ -369,10 +368,8 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
                 </div>
               )}
             </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>,
+      </div>
+    </>,
     document.body,
   );
 }

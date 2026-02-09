@@ -36,7 +36,7 @@ export function DangrowBadge({ compact = false }: { compact?: boolean }) {
         powered by
       </span>
 
-      <span style={{ fontFamily: "'Unbounded', cursive", fontSize: compact ? "8px" : "9px", fontWeight: 800, color: "#71717a", letterSpacing: "0.5px" }}>
+      <span style={{ fontFamily: "var(--font-unbounded), 'Unbounded', cursive", fontSize: compact ? "8px" : "9px", fontWeight: 800, color: "#71717a", letterSpacing: "0.5px" }}>
         DAN<span style={{ color: "#9ba33a" }}>GROW</span>
       </span>
     </a>

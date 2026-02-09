@@ -1,9 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { SortBar } from "./SortBar";
-import { FilterDrawer, type SubcategoryItem } from "./FilterDrawer";
+import type { SubcategoryItem } from "./FilterDrawer";
 import type { BrandFilterItem } from "./Filters";
+
+const FilterDrawer = dynamic(
+  () => import("./FilterDrawer").then((m) => m.FilterDrawer),
+  { ssr: false },
+);
 
 interface CatalogToolbarProps {
   total: number;

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Unbounded, Inter } from "next/font/google";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -42,6 +42,16 @@ export const metadata: Metadata = {
     locale: "uk_UA",
     siteName: "SHINE SHOP",
   },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#f5f5f7",
 };
 
 export default function RootLayout({
@@ -51,6 +61,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="uk">
+      <head>
+        <link rel="dns-prefetch" href="https://kqgtxmdruxwtocmvsvwh.supabase.co" />
+        <link rel="preconnect" href="https://kqgtxmdruxwtocmvsvwh.supabase.co" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://shine-shop.com.ua" />
+      </head>
       <body
         className={`${unbounded.variable} ${inter.variable} antialiased`}
       >
