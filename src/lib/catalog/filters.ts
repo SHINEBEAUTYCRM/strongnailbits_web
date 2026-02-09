@@ -162,8 +162,7 @@ export async function fetchFilteredProducts({
   perPage,
 }: FetchProductsOpts) {
   const supabase = createAdminClient();
-  const from = (filters.page - 1) * perPage;
-  const to = from + perPage - 1;
+  const offset = (filters.page - 1) * perPage;
 
   // Resolve brand slugs → UUIDs
   let brandIds: string[] | null = null;
@@ -173,59 +172,100 @@ export async function fetchFilteredProducts({
       .select("id")
       .in("slug", filters.brandSlugs);
     brandIds = brandRows?.map((b) => b.id) ?? [];
-    // If no brands matched, return empty (impossible filter)
     if (brandIds.length === 0) {
       return { products: [], total: 0 };
     }
   }
 
-  let query = supabase
-    .from("products")
-    .select(
-      "id, slug, name_uk, price, old_price, main_image_url, status, quantity, is_new, is_featured, brand_id, brands!products_brand_id_fkey(name)",
-      { count: "exact" },
-    )
-    .eq("status", "active");
-
-  // Category filter — use .in() for multiple category IDs
-  if (categoryIds && categoryIds.length > 0) {
-    query = query.in("category_id", categoryIds);
-  }
-
-  // Price filters
-  if (filters.priceMin !== null && filters.priceMin > 0) {
-    query = query.gte("price", filters.priceMin);
-  }
-  if (filters.priceMax !== null && filters.priceMax > 0) {
-    query = query.lte("price", filters.priceMax);
-  }
-
-  // Brand filter
-  if (brandIds) {
-    query = query.in("brand_id", brandIds);
-  }
-
-  // In stock filter
-  if (filters.inStock) {
-    query = query.gt("quantity", 0);
-  }
-
-  // Discount sort — only products with old_price > price
-  if (filters.sort === "discount") {
-    query = query.gt("old_price", 0);
-  }
-
-  // Sort: always push out-of-stock (quantity=0) to the bottom
-  query = query.order("quantity", { ascending: false, nullsFirst: false });
-  // Then apply user's chosen sort as secondary
   const sortDef = SORT_MAP[filters.sort];
-  query = query.order(sortDef.column, { ascending: sortDef.ascending });
+  const COLUMNS =
+    "id, slug, name_uk, price, old_price, main_image_url, status, quantity, is_new, is_featured, brand_id, brands!products_brand_id_fkey(name)";
 
-  // Pagination
-  query = query.range(from, to);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  type Q = any;
 
-  const { data, count } = await query;
-  return { products: data ?? [], total: count ?? 0 };
+  /** Apply shared filters (category, price, brand, discount) */
+  function applyFilters(q: Q): Q {
+    let f = q.eq("status", "active");
+    if (categoryIds && categoryIds.length > 0)
+      f = f.in("category_id", categoryIds);
+    if (filters.priceMin !== null && filters.priceMin > 0)
+      f = f.gte("price", filters.priceMin);
+    if (filters.priceMax !== null && filters.priceMax > 0)
+      f = f.lte("price", filters.priceMax);
+    if (brandIds) f = f.in("brand_id", brandIds);
+    if (filters.sort === "discount") f = f.gt("old_price", 0);
+    return f;
+  }
+
+  // ── If user explicitly filters in-stock only — single query ──
+  if (filters.inStock) {
+    const { data, count } = await applyFilters(
+      supabase.from("products").select(COLUMNS, { count: "exact" }),
+    )
+      .gt("quantity", 0)
+      .order(sortDef.column, { ascending: sortDef.ascending })
+      .range(offset, offset + perPage - 1);
+    return { products: data ?? [], total: count ?? 0 };
+  }
+
+  // ── Two-pass: in-stock first, out-of-stock at the bottom ──
+
+  // 1) Count in-stock products matching all filters
+  const { count: rawInStock } = await applyFilters(
+    supabase.from("products").select("id", { count: "exact", head: true }),
+  ).gt("quantity", 0);
+  const inStockCount = rawInStock ?? 0;
+
+  // 2) Count out-of-stock products matching all filters
+  const { count: rawOutOfStock } = await applyFilters(
+    supabase.from("products").select("id", { count: "exact", head: true }),
+  ).lte("quantity", 0);
+  const outOfStockCount = rawOutOfStock ?? 0;
+
+  const totalAll = inStockCount + outOfStockCount;
+
+  // 3) Fetch the right slice for this page
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const products: any[] = [];
+
+  if (offset < inStockCount) {
+    // Page starts in in-stock territory
+    const inFrom = offset;
+    const inTo = Math.min(offset + perPage - 1, inStockCount - 1);
+    const { data: inData } = await applyFilters(
+      supabase.from("products").select(COLUMNS),
+    )
+      .gt("quantity", 0)
+      .order(sortDef.column, { ascending: sortDef.ascending })
+      .range(inFrom, inTo);
+    products.push(...(inData ?? []));
+
+    // If page spans the boundary, also fetch start of out-of-stock
+    if (products.length < perPage && outOfStockCount > 0) {
+      const remaining = perPage - products.length;
+      const { data: outData } = await applyFilters(
+        supabase.from("products").select(COLUMNS),
+      )
+        .lte("quantity", 0)
+        .order(sortDef.column, { ascending: sortDef.ascending })
+        .range(0, remaining - 1);
+      products.push(...(outData ?? []));
+    }
+  } else if (outOfStockCount > 0) {
+    // Page is entirely in out-of-stock territory
+    const outFrom = offset - inStockCount;
+    const outTo = outFrom + perPage - 1;
+    const { data: outData } = await applyFilters(
+      supabase.from("products").select(COLUMNS),
+    )
+      .lte("quantity", 0)
+      .order(sortDef.column, { ascending: sortDef.ascending })
+      .range(outFrom, outTo);
+    products.push(...(outData ?? []));
+  }
+
+  return { products, total: totalAll };
 }
 
 /* ------------------------------------------------------------------ */

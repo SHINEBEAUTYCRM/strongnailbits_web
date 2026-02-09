@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Plus, Search, Pencil, Trash2, FolderTree, Power, PowerOff,
+  Plus, Search, Pencil, Trash2, FolderTree,
   ChevronDown, ChevronRight, Loader2, CheckSquare, Square, X,
-  Eye, EyeOff, ArrowUpDown, ImageIcon,
+  Eye, EyeOff, ImageIcon,
 } from "lucide-react";
 
 interface Cat {
@@ -22,17 +22,24 @@ interface Cat {
   image_url: string | null;
 }
 
-type CatNode = Cat & { children: CatNode[] };
+type CatNode = Cat & { children: CatNode[]; totalProducts: number };
 
 function buildTree(cats: Cat[]): CatNode[] {
   const map = new Map<number, CatNode>();
   const roots: CatNode[] = [];
-  for (const c of cats) map.set(c.cs_cart_id, { ...c, children: [] });
+  for (const c of cats) map.set(c.cs_cart_id, { ...c, children: [], totalProducts: c.product_count });
   for (const c of cats) {
     const n = map.get(c.cs_cart_id)!;
-    if (c.parent_cs_cart_id && map.has(c.parent_cs_cart_id)) map.get(c.parent_cs_cart_id)!.children.push(n);
-    else roots.push(n);
+    if (c.parent_cs_cart_id && map.has(c.parent_cs_cart_id)) {
+      const parent = map.get(c.parent_cs_cart_id)!;
+      parent.children.push(n);
+      parent.totalProducts += c.product_count;
+    } else {
+      roots.push(n);
+    }
   }
+  roots.sort((a, b) => a.position - b.position);
+  for (const r of roots) r.children.sort((a, b) => a.position - b.position);
   return roots;
 }
 
@@ -40,66 +47,113 @@ function strip(h: string) {
   return h.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
 }
 
-function flatIds(node: CatNode): string[] {
-  return [node.id, ...node.children.flatMap(flatIds)];
-}
-
 export function CategoryTable({ categories }: { categories: Cat[] }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "disabled">("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState<Record<string, boolean>>({});
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
   const [error, setError] = useState("");
+  // Optimistic status overrides
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, string>>({});
 
-  const filtered = useMemo(() => {
-    let list = categories;
-    if (statusFilter !== "all") list = list.filter((c) => c.status === statusFilter);
+  const tree = useMemo(() => buildTree(categories), [categories]);
+
+  const filteredTree = useMemo(() => {
+    let roots = tree;
+    if (statusFilter !== "all") {
+      roots = roots.map((r) => ({
+        ...r,
+        children: r.children.filter((c) => c.status === statusFilter),
+      })).filter((r) => r.status === statusFilter || r.children.length > 0);
+    }
     if (search) {
       const q = search.toLowerCase();
-      list = list.filter((c) => c.name_uk.toLowerCase().includes(q) || c.slug.includes(q));
+      roots = roots.map((r) => ({
+        ...r,
+        children: r.children.filter((c) => c.name_uk.toLowerCase().includes(q) || c.slug.includes(q)),
+      })).filter((r) => r.name_uk.toLowerCase().includes(q) || r.slug.includes(q) || r.children.length > 0);
     }
-    return list;
-  }, [categories, statusFilter, search]);
+    return roots;
+  }, [tree, statusFilter, search]);
 
-  const tree = useMemo(() => buildTree(filtered), [filtered]);
-  const showTree = !search && statusFilter === "all";
+  const allFlat = useMemo(() => categories, [categories]);
 
   const toggleSelect = (id: string) => {
     setSelected((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   };
 
   const selectAll = () => {
-    if (selected.size === filtered.length) setSelected(new Set());
-    else setSelected(new Set(filtered.map((c) => c.id)));
+    const allIds = allFlat.map((c) => c.id);
+    if (selected.size === allIds.length) setSelected(new Set());
+    else setSelected(new Set(allIds));
   };
 
-  const toggleCollapse = (id: string) => {
-    setCollapsed((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const toggleExpand = (id: string) => {
+    setExpanded((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   };
 
-  const api = async (method: string, body: Record<string, unknown>) => {
-    const res = await fetch("/api/admin/categories", { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    return res.json();
+  const expandAll = () => {
+    const rootIds = tree.filter((r) => r.children.length > 0).map((r) => r.id);
+    if (expanded.size >= rootIds.length) setExpanded(new Set());
+    else setExpanded(new Set(rootIds));
   };
 
-  const toggleStatus = async (id: string) => {
-    setLoading((l) => ({ ...l, [id]: true })); setError("");
-    const data = await api("PATCH", { action: "toggle", id });
-    if (!data.ok) setError(data.error || "Помилка");
-    router.refresh();
-    setLoading((l) => ({ ...l, [id]: false }));
-  };
+  const getStatus = (cat: Cat) => statusOverrides[cat.id] ?? cat.status;
+
+  const toggleStatus = useCallback(async (id: string) => {
+    const cat = categories.find((c) => c.id === id);
+    if (!cat) return;
+
+    const currentStatus = getStatus(cat);
+    const newStatus = currentStatus === "active" ? "disabled" : "active";
+
+    // Optimistic update
+    setStatusOverrides((prev) => ({ ...prev, [id]: newStatus }));
+    setLoadingIds((s) => { const n = new Set(s); n.add(id); return n; });
+    setError("");
+
+    try {
+      const res = await fetch("/api/admin/categories", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "toggle", id }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        // Revert optimistic update
+        setStatusOverrides((prev) => { const n = { ...prev }; delete n[id]; return n; });
+        setError(data.error || "Помилка зміни статусу");
+      } else {
+        // Refresh server data, keep override until refresh completes
+        router.refresh();
+      }
+    } catch {
+      setStatusOverrides((prev) => { const n = { ...prev }; delete n[id]; return n; });
+      setError("Помилка мережі");
+    } finally {
+      setLoadingIds((s) => { const n = new Set(s); n.delete(id); return n; });
+    }
+  }, [categories, router, statusOverrides]);
 
   const bulkAction = async (action: string, extra?: Record<string, unknown>) => {
     if (selected.size === 0) return;
     setBulkLoading(true); setError("");
-    const data = await api("PATCH", { action, ids: Array.from(selected), ...extra });
-    if (!data.ok) setError(data.error || "Помилка");
+    try {
+      const res = await fetch("/api/admin/categories", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, ids: Array.from(selected), ...extra }),
+      });
+      const data = await res.json();
+      if (!data.ok) setError(data.error || "Помилка");
+      else router.refresh();
+    } catch {
+      setError("Помилка мережі");
+    }
     setSelected(new Set());
-    router.refresh();
     setBulkLoading(false);
   };
 
@@ -121,6 +175,9 @@ export function CategoryTable({ categories }: { categories: Cat[] }) {
               {s.l} <span style={{ color: "#3f3f46" }}>({s.count})</span>
             </button>
           ))}
+          <button onClick={expandAll} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors" style={{ background: "#111116", color: "#71717a", border: "1px solid #1e1e2a" }}>
+            {expanded.size >= tree.filter((r) => r.children.length > 0).length ? "Згорнути все" : "Розгорнути все"}
+          </button>
         </div>
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -156,163 +213,152 @@ export function CategoryTable({ categories }: { categories: Cat[] }) {
 
       {error && <div className="mb-4 px-4 py-2.5 rounded-lg text-sm" style={{ color: "#f87171", background: "#450a0a", border: "1px solid #7f1d1d" }}>{error}</div>}
 
-      {/* Table */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
-        <table className="w-full text-sm">
-          <thead>
-            <tr style={{ borderBottom: "1px solid #1e1e2a" }}>
-              <th className="w-10 px-4 py-3">
-                <button onClick={selectAll}>{selected.size === filtered.length && filtered.length > 0
-                  ? <CheckSquare className="w-4 h-4" style={{ color: "#7c3aed" }} />
-                  : <Square className="w-4 h-4" style={{ color: "#3f3f46" }} />}
-                </button>
-              </th>
-              <th className="text-left px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Категорія</th>
-              <th className="text-left px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Slug</th>
-              <th className="text-right px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Товарів</th>
-              <th className="text-center px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Позиція</th>
-              <th className="text-center px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Статус</th>
-              <th className="text-right px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Дії</th>
-            </tr>
-          </thead>
-          <tbody>
-            {showTree
-              ? tree.map((c) => <TreeRow key={c.id} cat={c} depth={0} selected={selected} onToggleSelect={toggleSelect} collapsed={collapsed} onToggleCollapse={toggleCollapse} loading={loading} onToggleStatus={toggleStatus} />)
-              : filtered.map((c) => <FlatRow key={c.id} cat={c} selected={selected} onToggleSelect={toggleSelect} loading={loading} onToggleStatus={toggleStatus} />)
-            }
-            {filtered.length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-12 text-center" style={{ color: "#3f3f46" }}>
-                {search ? "Нічого не знайдено" : "Категорій немає"}
-              </td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
+      {/* Category cards */}
+      <div className="space-y-3">
+        {filteredTree.map((root) => {
+          const isOpen = expanded.has(root.id);
+          const rootStatus = getStatus(root);
+          const hasChildren = root.children.length > 0;
+          const desc = root.description_uk ? strip(root.description_uk) : null;
 
-/* ─── Tree Row (hierarchical) ─── */
-function TreeRow({
-  cat, depth, selected, onToggleSelect, collapsed, onToggleCollapse, loading, onToggleStatus,
-}: {
-  cat: CatNode; depth: number; selected: Set<string>; onToggleSelect: (id: string) => void;
-  collapsed: Set<string>; onToggleCollapse: (id: string) => void;
-  loading: Record<string, boolean>; onToggleStatus: (id: string) => void;
-}) {
-  const isCollapsed = collapsed.has(cat.id);
-  const hasChildren = cat.children.length > 0;
-  const desc = cat.description_uk ? strip(cat.description_uk) : null;
-
-  return (
-    <>
-      <tr style={{ borderBottom: "1px solid #141420" }} className="group">
-        <td className="w-10 px-4 py-2.5">
-          <button onClick={() => onToggleSelect(cat.id)}>
-            {selected.has(cat.id) ? <CheckSquare className="w-4 h-4" style={{ color: "#7c3aed" }} /> : <Square className="w-4 h-4" style={{ color: "#3f3f46" }} />}
-          </button>
-        </td>
-        <td className="px-4 py-2.5">
-          <div style={{ paddingLeft: depth * 24 }}>
-            <div className="flex items-center gap-2">
-              {hasChildren ? (
-                <button onClick={() => onToggleCollapse(cat.id)} className="p-0.5 rounded" style={{ color: "#52525b" }}>
-                  {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          return (
+            <div key={root.id} className="rounded-2xl overflow-hidden" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
+              {/* Root category row */}
+              <div className="flex items-center gap-3 px-4 py-3 group" style={{ borderBottom: isOpen ? "1px solid #1e1e2a" : "none" }}>
+                {/* Checkbox */}
+                <button onClick={() => toggleSelect(root.id)} className="shrink-0">
+                  {selected.has(root.id) ? <CheckSquare className="w-4 h-4" style={{ color: "#7c3aed" }} /> : <Square className="w-4 h-4" style={{ color: "#3f3f46" }} />}
                 </button>
-              ) : <span className="w-5" />}
-              {cat.image_url ? (
-                <img src={cat.image_url} alt="" className="w-8 h-8 rounded-lg object-cover shrink-0" style={{ background: "#141420" }} />
-              ) : (
-                <div className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center" style={{ background: "#141420" }}>
-                  <FolderTree className="w-3.5 h-3.5" style={{ color: "#3f3f46" }} />
+
+                {/* Expand toggle */}
+                {hasChildren ? (
+                  <button onClick={() => toggleExpand(root.id)} className="shrink-0 p-1 rounded-lg transition-colors" style={{ color: "#52525b" }}>
+                    {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                  </button>
+                ) : <span className="w-6 shrink-0" />}
+
+                {/* Image */}
+                {root.image_url ? (
+                  <img src={root.image_url} alt="" className="w-10 h-10 rounded-xl object-cover shrink-0" style={{ background: "#141420" }} />
+                ) : (
+                  <div className="w-10 h-10 rounded-xl shrink-0 flex items-center justify-center" style={{ background: "#141420" }}>
+                    <FolderTree className="w-4 h-4" style={{ color: "#3f3f46" }} />
+                  </div>
+                )}
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <Link href={`/admin/categories/${root.id}`} className="text-sm font-medium hover:underline truncate" style={{ color: rootStatus === "active" ? "#f4f4f5" : "#52525b" }}>
+                      {root.name_uk}
+                    </Link>
+                    {hasChildren && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full shrink-0" style={{ background: "#141420", color: "#52525b" }}>
+                        {root.children.length} підкат.
+                      </span>
+                    )}
+                  </div>
+                  {desc && <p className="text-[11px] mt-0.5 line-clamp-1" style={{ color: "#3f3f46" }}>{desc}</p>}
+                </div>
+
+                {/* Stats */}
+                <div className="hidden sm:flex items-center gap-6 shrink-0">
+                  <div className="text-right">
+                    <p className="text-[10px] uppercase" style={{ color: "#3f3f46" }}>Товарів</p>
+                    <p className="text-sm font-mono tabular-nums" style={{ color: root.totalProducts > 0 ? "#a1a1aa" : "#3f3f46" }}>{root.totalProducts}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] uppercase" style={{ color: "#3f3f46" }}>Slug</p>
+                    <p className="text-xs font-mono truncate max-w-[120px]" style={{ color: "#52525b" }}>{root.slug}</p>
+                  </div>
+                </div>
+
+                {/* Status toggle */}
+                <button onClick={() => toggleStatus(root.id)} disabled={loadingIds.has(root.id)}
+                  className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                  title={rootStatus === "active" ? "Вимкнути категорію" : "Увімкнути категорію"}
+                  style={rootStatus === "active" ? { color: "#4ade80", background: "#052e16", border: "1px solid #14532d" } : { color: "#71717a", background: "#18181b", border: "1px solid #27272a" }}>
+                  {loadingIds.has(root.id) ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : rootStatus === "active" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                  {rootStatus === "active" ? "Активна" : "Вимкнена"}
+                </button>
+
+                {/* Edit */}
+                <Link href={`/admin/categories/${root.id}`} className="shrink-0 p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "#71717a" }} title="Редагувати">
+                  <Pencil className="w-4 h-4" />
+                </Link>
+              </div>
+
+              {/* Subcategories dropdown */}
+              {hasChildren && isOpen && (
+                <div style={{ background: "#0a0a10" }}>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr style={{ borderBottom: "1px solid #141420" }}>
+                        <th className="w-10 pl-14 pr-2 py-2" />
+                        <th className="text-left px-3 py-2 text-[10px] font-medium uppercase tracking-wider" style={{ color: "#27272a" }}>Підкатегорія</th>
+                        <th className="text-left px-3 py-2 text-[10px] font-medium uppercase tracking-wider" style={{ color: "#27272a" }}>Slug</th>
+                        <th className="text-right px-3 py-2 text-[10px] font-medium uppercase tracking-wider" style={{ color: "#27272a" }}>Товарів</th>
+                        <th className="text-center px-3 py-2 text-[10px] font-medium uppercase tracking-wider" style={{ color: "#27272a" }}>Статус</th>
+                        <th className="w-10 px-3 py-2" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {root.children.map((sub) => {
+                        const subStatus = getStatus(sub);
+                        return (
+                          <tr key={sub.id} style={{ borderBottom: "1px solid #0e0e14" }} className="group/sub">
+                            <td className="pl-14 pr-2 py-2">
+                              <button onClick={() => toggleSelect(sub.id)} className="shrink-0">
+                                {selected.has(sub.id) ? <CheckSquare className="w-3.5 h-3.5" style={{ color: "#7c3aed" }} /> : <Square className="w-3.5 h-3.5" style={{ color: "#27272a" }} />}
+                              </button>
+                            </td>
+                            <td className="px-3 py-2">
+                              <div className="flex items-center gap-2">
+                                {sub.image_url ? (
+                                  <img src={sub.image_url} alt="" className="w-7 h-7 rounded-lg object-cover shrink-0" style={{ background: "#141420" }} />
+                                ) : (
+                                  <div className="w-7 h-7 rounded-lg shrink-0 flex items-center justify-center" style={{ background: "#111116" }}>
+                                    <FolderTree className="w-3 h-3" style={{ color: "#27272a" }} />
+                                  </div>
+                                )}
+                                <Link href={`/admin/categories/${sub.id}`} className="text-xs hover:underline truncate" style={{ color: subStatus === "active" ? "#a1a1aa" : "#3f3f46" }}>
+                                  {sub.name_uk}
+                                </Link>
+                              </div>
+                            </td>
+                            <td className="px-3 py-2 text-[11px] font-mono truncate max-w-[100px]" style={{ color: "#3f3f46" }}>{sub.slug}</td>
+                            <td className="px-3 py-2 text-right text-xs tabular-nums" style={{ color: sub.product_count > 0 ? "#71717a" : "#27272a" }}>{sub.product_count}</td>
+                            <td className="px-3 py-2 text-center">
+                              <button onClick={() => toggleStatus(sub.id)} disabled={loadingIds.has(sub.id)}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition-all"
+                                title={subStatus === "active" ? "Вимкнути" : "Увімкнути"}
+                                style={subStatus === "active" ? { color: "#4ade80", background: "#052e16" } : { color: "#52525b", background: "#18181b" }}>
+                                {loadingIds.has(sub.id) ? <Loader2 className="w-3 h-3 animate-spin" /> : subStatus === "active" ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                                {subStatus === "active" ? "Актив" : "Вимк"}
+                              </button>
+                            </td>
+                            <td className="px-3 py-2">
+                              <Link href={`/admin/categories/${sub.id}`} className="p-1 rounded-lg opacity-0 group-hover/sub:opacity-100 transition-opacity inline-flex" style={{ color: "#52525b" }}>
+                                <Pencil className="w-3.5 h-3.5" />
+                              </Link>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               )}
-              <div className="min-w-0">
-                <Link href={`/admin/categories/${cat.id}`} className="text-sm hover:underline" style={{ color: cat.status === "active" ? "#e4e4e7" : "#52525b" }}>
-                  {cat.name_uk}
-                </Link>
-                {desc && <p className="text-[11px] mt-0.5 line-clamp-1 leading-relaxed" style={{ color: "#3f3f46" }}>{desc}</p>}
-              </div>
             </div>
-          </div>
-        </td>
-        <td className="px-4 py-2.5 text-xs font-mono" style={{ color: "#52525b" }}>{cat.slug}</td>
-        <td className="px-4 py-2.5 text-right text-xs tabular-nums" style={{ color: "#71717a" }}>
-          {cat.product_count > 0 ? (
-            <Link href={`/admin/products?search=&status=all`} className="hover:underline">{cat.product_count}</Link>
-          ) : <span style={{ color: "#3f3f46" }}>0</span>}
-        </td>
-        <td className="px-4 py-2.5 text-center text-xs font-mono tabular-nums" style={{ color: "#52525b" }}>{cat.position}</td>
-        <td className="px-4 py-2.5 text-center">
-          <button onClick={() => onToggleStatus(cat.id)} disabled={loading[cat.id]} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium transition-colors" title={cat.status === "active" ? "Натисніть щоб вимкнути" : "Натисніть щоб увімкнути"}
-            style={cat.status === "active" ? { color: "#4ade80", background: "#052e16" } : { color: "#71717a", background: "#18181b" }}>
-            {loading[cat.id] ? <Loader2 className="w-3 h-3 animate-spin" /> : cat.status === "active" ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-            {cat.status === "active" ? "Актив" : "Вимк"}
-          </button>
-        </td>
-        <td className="px-4 py-2.5 text-right">
-          <Link href={`/admin/categories/${cat.id}`} className="inline-flex p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "#71717a" }} title="Редагувати">
-            <Pencil className="w-4 h-4" />
-          </Link>
-        </td>
-      </tr>
-      {hasChildren && !isCollapsed && cat.children.map((ch) => (
-        <TreeRow key={ch.id} cat={ch} depth={depth + 1} selected={selected} onToggleSelect={onToggleSelect} collapsed={collapsed} onToggleCollapse={onToggleCollapse} loading={loading} onToggleStatus={onToggleStatus} />
-      ))}
-    </>
-  );
-}
+          );
+        })}
 
-/* ─── Flat Row (when searching/filtering) ─── */
-function FlatRow({
-  cat, selected, onToggleSelect, loading, onToggleStatus,
-}: {
-  cat: Cat; selected: Set<string>; onToggleSelect: (id: string) => void;
-  loading: Record<string, boolean>; onToggleStatus: (id: string) => void;
-}) {
-  const desc = cat.description_uk ? strip(cat.description_uk) : null;
-
-  return (
-    <tr style={{ borderBottom: "1px solid #141420" }} className="group">
-      <td className="w-10 px-4 py-2.5">
-        <button onClick={() => onToggleSelect(cat.id)}>
-          {selected.has(cat.id) ? <CheckSquare className="w-4 h-4" style={{ color: "#7c3aed" }} /> : <Square className="w-4 h-4" style={{ color: "#3f3f46" }} />}
-        </button>
-      </td>
-      <td className="px-4 py-2.5">
-        <div className="flex items-center gap-2">
-          {cat.image_url ? (
-            <img src={cat.image_url} alt="" className="w-8 h-8 rounded-lg object-cover shrink-0" style={{ background: "#141420" }} />
-          ) : (
-            <div className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center" style={{ background: "#141420" }}>
-              <FolderTree className="w-3.5 h-3.5" style={{ color: "#3f3f46" }} />
-            </div>
-          )}
-          <div className="min-w-0">
-            <Link href={`/admin/categories/${cat.id}`} className="text-sm hover:underline" style={{ color: cat.status === "active" ? "#e4e4e7" : "#52525b" }}>
-              {cat.name_uk}
-            </Link>
-            {desc && <p className="text-[11px] mt-0.5 line-clamp-1 leading-relaxed" style={{ color: "#3f3f46" }}>{desc}</p>}
+        {filteredTree.length === 0 && (
+          <div className="rounded-2xl px-4 py-12 text-center" style={{ background: "#0e0e14", border: "1px solid #1e1e2a", color: "#3f3f46" }}>
+            {search ? "Нічого не знайдено" : "Категорій немає"}
           </div>
-        </div>
-      </td>
-      <td className="px-4 py-2.5 text-xs font-mono" style={{ color: "#52525b" }}>{cat.slug}</td>
-      <td className="px-4 py-2.5 text-right text-xs tabular-nums" style={{ color: "#71717a" }}>
-        {cat.product_count > 0 ? cat.product_count : <span style={{ color: "#3f3f46" }}>0</span>}
-      </td>
-      <td className="px-4 py-2.5 text-center text-xs font-mono tabular-nums" style={{ color: "#52525b" }}>{cat.position}</td>
-      <td className="px-4 py-2.5 text-center">
-        <button onClick={() => onToggleStatus(cat.id)} disabled={loading[cat.id]} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium transition-colors" title={cat.status === "active" ? "Натисніть щоб вимкнути" : "Натисніть щоб увімкнути"}
-          style={cat.status === "active" ? { color: "#4ade80", background: "#052e16" } : { color: "#71717a", background: "#18181b" }}>
-          {loading[cat.id] ? <Loader2 className="w-3 h-3 animate-spin" /> : cat.status === "active" ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-          {cat.status === "active" ? "Актив" : "Вимк"}
-        </button>
-      </td>
-      <td className="px-4 py-2.5 text-right">
-        <Link href={`/admin/categories/${cat.id}`} className="inline-flex p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "#71717a" }} title="Редагувати">
-          <Pencil className="w-4 h-4" />
-        </Link>
-      </td>
-    </tr>
+        )}
+      </div>
+    </div>
   );
 }
