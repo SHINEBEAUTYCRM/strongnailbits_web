@@ -74,21 +74,7 @@ export function Header() {
     return () => document.removeEventListener("keydown", fn);
   }, []);
 
-  /* Close catalog dropdown on outside click */
-  useEffect(() => {
-    if (!catalogOpen) return;
-    const fn = (e: MouseEvent) => {
-      if (
-        catalogRef.current &&
-        !catalogRef.current.contains(e.target as Node)
-      ) {
-        setCatalogOpen(false);
-        setHoveredCatId(null);
-      }
-    };
-    document.addEventListener("mousedown", fn);
-    return () => document.removeEventListener("mousedown", fn);
-  }, [catalogOpen]);
+  /* Close catalog dropdown on outside click is handled by the backdrop overlay */
 
   /* Lock body scroll for mobile menu */
   useEffect(() => {
@@ -166,120 +152,134 @@ export function Header() {
               Каталог
             </button>
 
-            {/* ── Catalog Dropdown ── */}
-            {catalogOpen && (
-              <div className="absolute left-0 top-full z-50 mt-3 flex max-h-[70vh] overflow-hidden rounded-2xl border border-[#eee] bg-white shadow-[0_16px_64px_rgba(0,0,0,0.14)]">
-                {/* Left panel: list */}
-                <div className="w-[260px] overflow-y-auto border-r border-[#f0f0f0] py-2">
-                  {/* Sale */}
-                  <Link
-                    href="/catalog?in_stock=true&sort=discount"
-                    onClick={() => setCatalogOpen(false)}
-                    className="flex items-center gap-2.5 px-5 py-3 transition-colors hover:bg-[#fff5f6]"
-                    onMouseEnter={() => setHoveredCatId(null)}
-                  >
-                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-coral text-[11px] font-extrabold text-white">
-                      %
-                    </span>
-                    <span className="text-[14px] font-semibold text-coral">
-                      Sale
-                    </span>
-                  </Link>
-
-                  {/* Brands */}
-                  <Link
-                    href="/brands"
-                    onClick={() => setCatalogOpen(false)}
-                    className="flex items-center px-5 py-3 text-[14px] font-medium text-[#1a1a1a] transition-colors hover:bg-[#f8f8f8]"
-                    onMouseEnter={() => setHoveredCatId(null)}
-                  >
-                    Бренди
-                  </Link>
-
-                  <div className="mx-5 my-1 border-t border-[#f0f0f0]" />
-
-                  {/* Categories */}
-                  {tree.map((cat) => (
-                    <Link
-                      key={cat.id}
-                      href={`/catalog/${cat.slug}`}
-                      onClick={() => setCatalogOpen(false)}
-                      className={`flex items-center justify-between px-5 py-3 text-[14px] transition-colors ${
-                        hoveredCatId === cat.cs_cart_id
-                          ? "bg-[#fff5f6] font-medium text-coral"
-                          : "text-[#1a1a1a] hover:bg-[#f8f8f8]"
-                      }`}
-                      onMouseEnter={() =>
-                        cat.children.length > 0
-                          ? setHoveredCatId(cat.cs_cart_id)
-                          : setHoveredCatId(null)
-                      }
-                    >
-                      <span>{cat.name_uk}</span>
-                      {cat.children.length > 0 && (
-                        <ChevronRight
-                          size={14}
-                          className="text-[#c4c4cc]"
-                        />
-                      )}
-                    </Link>
-                  ))}
-                </div>
-
-                {/* Right panel: subcategories */}
-                {hoveredCat && hoveredCat.children.length > 0 && (
-                  <div className="w-[380px] overflow-y-auto p-6">
-                    <Link
-                      href={`/catalog/${hoveredCat.slug}`}
-                      onClick={() => setCatalogOpen(false)}
-                      className="font-unbounded mb-4 block text-[15px] font-bold text-[#1a1a1a] hover:text-coral"
-                    >
-                      {hoveredCat.name_uk}
-                    </Link>
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                      {hoveredCat.children.map((child) => (
-                        <div key={child.id}>
-                          <Link
-                            href={`/catalog/${child.slug}`}
-                            onClick={() => setCatalogOpen(false)}
-                            className="text-[13px] font-semibold text-[#1a1a1a] transition-colors hover:text-coral"
-                          >
-                            {child.name_uk}
-                          </Link>
-                          {child.children.length > 0 && (
-                            <ul className="mt-1 space-y-0.5">
-                              {child.children.slice(0, 5).map((gc) => (
-                                <li key={gc.id}>
-                                  <Link
-                                    href={`/catalog/${gc.slug}`}
-                                    onClick={() => setCatalogOpen(false)}
-                                    className="text-[12px] text-[#888] transition-colors hover:text-coral"
-                                  >
-                                    {gc.name_uk}
-                                  </Link>
-                                </li>
-                              ))}
-                              {child.children.length > 5 && (
-                                <li>
-                                  <Link
-                                    href={`/catalog/${child.slug}`}
-                                    onClick={() => setCatalogOpen(false)}
-                                    className="text-[12px] font-medium text-coral"
-                                  >
-                                    ще {child.children.length - 5}...
-                                  </Link>
-                                </li>
-                              )}
-                            </ul>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+            {/* Catalog button owns the ref but dropdown is fixed full-width */}
           </div>
+
+          {/* ── Catalog Dropdown (full-width) ── */}
+          {catalogOpen && (
+            <>
+              {/* Backdrop */}
+              <div
+                className="fixed inset-0 z-40 bg-black/30"
+                onClick={() => {
+                  setCatalogOpen(false);
+                  setHoveredCatId(null);
+                }}
+              />
+              <div className="fixed left-0 right-0 top-[72px] z-50 border-t border-[#f0f0f0] bg-white shadow-[0_16px_64px_rgba(0,0,0,0.12)]">
+                <div className="mx-auto flex max-h-[calc(100vh-120px)] max-w-[1400px] overflow-hidden px-6">
+                  {/* Left panel: category list */}
+                  <div className="w-[260px] shrink-0 overflow-y-auto border-r border-[#f0f0f0] py-4 pr-2">
+                    {/* Sale */}
+                    <Link
+                      href="/catalog?in_stock=true&sort=discount"
+                      onClick={() => setCatalogOpen(false)}
+                      className="flex items-center gap-2.5 rounded-xl px-4 py-3 transition-colors hover:bg-[#fff5f6]"
+                      onMouseEnter={() => setHoveredCatId(null)}
+                    >
+                      <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-coral text-[11px] font-extrabold text-white">
+                        %
+                      </span>
+                      <span className="text-[14px] font-semibold text-coral">
+                        Sale
+                      </span>
+                    </Link>
+
+                    {/* Brands */}
+                    <Link
+                      href="/brands"
+                      onClick={() => setCatalogOpen(false)}
+                      className="flex items-center rounded-xl px-4 py-3 text-[14px] font-medium text-[#1a1a1a] transition-colors hover:bg-[#f8f8f8]"
+                      onMouseEnter={() => setHoveredCatId(null)}
+                    >
+                      Бренди
+                    </Link>
+
+                    <div className="mx-4 my-2 border-t border-[#f0f0f0]" />
+
+                    {/* Categories */}
+                    {tree.map((cat) => (
+                      <Link
+                        key={cat.id}
+                        href={`/catalog/${cat.slug}`}
+                        onClick={() => setCatalogOpen(false)}
+                        className={`flex items-center justify-between rounded-xl px-4 py-3 text-[14px] transition-colors ${
+                          hoveredCatId === cat.cs_cart_id
+                            ? "bg-[#fff5f6] font-medium text-coral"
+                            : "text-[#1a1a1a] hover:bg-[#f8f8f8]"
+                        }`}
+                        onMouseEnter={() =>
+                          cat.children.length > 0
+                            ? setHoveredCatId(cat.cs_cart_id)
+                            : setHoveredCatId(null)
+                        }
+                      >
+                        <span>{cat.name_uk}</span>
+                        {cat.children.length > 0 && (
+                          <ChevronRight
+                            size={14}
+                            className="text-[#c4c4cc]"
+                          />
+                        )}
+                      </Link>
+                    ))}
+                  </div>
+
+                  {/* Right panel: subcategories — fills remaining width */}
+                  {hoveredCat && hoveredCat.children.length > 0 && (
+                    <div className="flex-1 overflow-y-auto p-6">
+                      <Link
+                        href={`/catalog/${hoveredCat.slug}`}
+                        onClick={() => setCatalogOpen(false)}
+                        className="font-unbounded mb-5 inline-block text-[16px] font-bold text-[#1a1a1a] transition-colors hover:text-coral"
+                      >
+                        {hoveredCat.name_uk} →
+                      </Link>
+                      <div className="grid grid-cols-3 gap-x-8 gap-y-5 xl:grid-cols-4">
+                        {hoveredCat.children.map((child) => (
+                          <div key={child.id}>
+                            <Link
+                              href={`/catalog/${child.slug}`}
+                              onClick={() => setCatalogOpen(false)}
+                              className="text-[13px] font-semibold text-[#1a1a1a] transition-colors hover:text-coral"
+                            >
+                              {child.name_uk}
+                            </Link>
+                            {child.children.length > 0 && (
+                              <ul className="mt-1.5 space-y-1">
+                                {child.children.slice(0, 6).map((gc) => (
+                                  <li key={gc.id}>
+                                    <Link
+                                      href={`/catalog/${gc.slug}`}
+                                      onClick={() => setCatalogOpen(false)}
+                                      className="text-[12px] text-[#888] transition-colors hover:text-coral"
+                                    >
+                                      {gc.name_uk}
+                                    </Link>
+                                  </li>
+                                ))}
+                                {child.children.length > 6 && (
+                                  <li>
+                                    <Link
+                                      href={`/catalog/${child.slug}`}
+                                      onClick={() => setCatalogOpen(false)}
+                                      className="text-[12px] font-medium text-coral"
+                                    >
+                                      ще {child.children.length - 6}...
+                                    </Link>
+                                  </li>
+                                )}
+                              </ul>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Search bar (opens modal on click) */}
           <button
