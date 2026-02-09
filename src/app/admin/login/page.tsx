@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogIn, Eye, EyeOff, AlertCircle, Loader2 } from "lucide-react";
+import { DangrowBadge } from "@/components/admin/DangrowBadge";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -42,7 +43,7 @@ export default function AdminLoginPage() {
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />} Увійти
           </button>
         </form>
-        <p className="text-center text-[10px] tracking-wider mt-6" style={{ color: "#27272a" }}>powered by <span style={{ color: "#3f3f46" }}>DANGROW</span></p>
+        <div className="flex justify-center mt-6"><DangrowBadge /></div>
       </div>
     </div>
   );

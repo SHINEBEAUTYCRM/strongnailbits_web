@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight, Menu, Search, ExternalLink, Bell, LogOut, User, Store, X } from "lucide-react";
 import { adminNavigation, type NavItem } from "@/lib/admin/navigation";
 import { SearchModal } from "./SearchModal";
+import { DangrowBadge } from "./DangrowBadge";
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -69,7 +70,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             <div className="flex justify-center py-2 mb-2"><div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: "#7c3aed" }}>A</div></div>
           )}
           {(!collapsed || mobileOpen) && (
-            <p className="text-center text-[10px] tracking-wider pb-1" style={{ color: "#27272a" }}>powered by <span style={{ color: "#3f3f46" }}>DANGROW</span></p>
+            <div className="flex justify-center pb-1"><DangrowBadge compact /></div>
           )}
         </div>
       </aside>
