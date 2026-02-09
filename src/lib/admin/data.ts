@@ -50,16 +50,48 @@ export async function getOrderById(id: string) {
 }
 
 /* ─── Products ─── */
-export async function getProducts(params: { page?: number; limit?: number; status?: string; search?: string }) {
-  const { page = 1, limit = 25, status, search } = params;
+export async function getProducts(params: { page?: number; limit?: number; status?: string; search?: string; filter?: string }) {
+  const { page = 1, limit = 25, status, search, filter } = params;
   const supabase = createAdminClient();
   const from = (page - 1) * limit;
   const to = from + limit - 1;
-  let query = supabase.from("products").select("id, cs_cart_id, name_uk, slug, sku, price, old_price, wholesale_price, quantity, status, main_image_url, is_featured, is_new, created_at, updated_at, categories(name_uk), brands(name)", { count: "exact" }).order("updated_at", { ascending: false }).range(from, to);
+  let query = supabase.from("products").select("id, cs_cart_id, name_uk, slug, sku, price, old_price, wholesale_price, quantity, status, main_image_url, description_uk, meta_title, meta_description, is_featured, is_new, created_at, updated_at, categories(name_uk), brands(name)", { count: "exact" }).order("updated_at", { ascending: false }).range(from, to);
   if (status && status !== "all") query = query.eq("status", status);
   if (search) query = query.or(`name_uk.ilike.%${search}%,sku.ilike.%${search}%`);
+
+  // Quality filters
+  if (filter === "no_photo") {
+    query = query.or("main_image_url.is.null,main_image_url.eq.");
+  } else if (filter === "no_description") {
+    query = query.or("description_uk.is.null,description_uk.eq.");
+  } else if (filter === "no_seo") {
+    query = query.or("meta_title.is.null,meta_title.eq.,meta_description.is.null,meta_description.eq.");
+  } else if (filter === "no_category") {
+    query = query.is("category_id", null);
+  } else if (filter === "no_price") {
+    query = query.or("price.is.null,price.eq.0");
+  }
+
   const { data, count } = await query;
   return { products: data ?? [], total: count ?? 0 };
+}
+
+export async function getProductQualityCounts() {
+  const supabase = createAdminClient();
+  const [noPhoto, noDesc, noSeo, noCat, noPrice] = await Promise.all([
+    supabase.from("products").select("id", { count: "exact", head: true }).or("main_image_url.is.null,main_image_url.eq."),
+    supabase.from("products").select("id", { count: "exact", head: true }).or("description_uk.is.null,description_uk.eq."),
+    supabase.from("products").select("id", { count: "exact", head: true }).or("meta_title.is.null,meta_title.eq.,meta_description.is.null,meta_description.eq."),
+    supabase.from("products").select("id", { count: "exact", head: true }).is("category_id", null),
+    supabase.from("products").select("id", { count: "exact", head: true }).or("price.is.null,price.eq.0"),
+  ]);
+  return {
+    no_photo: noPhoto.count ?? 0,
+    no_description: noDesc.count ?? 0,
+    no_seo: noSeo.count ?? 0,
+    no_category: noCat.count ?? 0,
+    no_price: noPrice.count ?? 0,
+  };
 }
 
 export async function getProductById(id: string) {
