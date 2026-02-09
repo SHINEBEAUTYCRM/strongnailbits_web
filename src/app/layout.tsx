@@ -1,9 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Unbounded, Inter } from "next/font/google";
+import { Unbounded, Inter, JetBrains_Mono } from "next/font/google";
+import dynamic from "next/dynamic";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { ToastContainer } from "@/components/ui/Toast";
 import "./globals.css";
+
+const ToastContainer = dynamic(
+  () => import("@/components/ui/Toast").then((m) => m.ToastContainer),
+  { ssr: false },
+);
 
 const unbounded = Unbounded({
   variable: "--font-unbounded",
@@ -16,6 +21,13 @@ const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin", "cyrillic"],
   weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains",
+  subsets: ["latin", "cyrillic"],
+  weight: ["400", "500", "700"],
   display: "swap",
 });
 
@@ -67,7 +79,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://shine-shop.com.ua" />
       </head>
       <body
-        className={`${unbounded.variable} ${inter.variable} antialiased`}
+        className={`${unbounded.variable} ${inter.variable} ${jetbrainsMono.variable} antialiased`}
       >
         <Header />
         <main className="min-h-[calc(100dvh-80px)]">{children}</main>

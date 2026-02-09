@@ -71,28 +71,37 @@ export function ImageUpload({ onUpload, currentUrl, label, compact }: Props) {
     if (!originalFileRef.current) return;
     setStage("removing-bg");
     setProgress("Завантаження моделі нейромережі...");
+    const t0 = performance.now();
 
     try {
       // Dynamic import to keep bundle small
       const { removeBackground } = await import("@imgly/background-removal");
 
-      setProgress("Видалення фону... (може зайняти 10-30с)");
+      setProgress("Видалення фону...");
 
       const blob = await removeBackground(originalFileRef.current, {
+        model: "isnet_quint8",  // Small model (~40MB vs ~80MB) — faster download, good quality
+        device: "gpu",          // Use WebGPU if available (much faster)
+        output: { format: "image/png", quality: 0.9, type: "foreground" },
         progress: (key: string, current: number, total: number) => {
-          if (key === "compute:inference") {
+          if (key.includes("fetch")) {
+            const pct = Math.round((current / total) * 100);
+            setProgress(`Завантаження моделі... ${pct}%`);
+          } else if (key === "compute:inference") {
             const pct = Math.round((current / total) * 100);
             setProgress(`Обробка... ${pct}%`);
           }
         },
       });
 
+      const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
       processedBlobRef.current = blob;
       const url = URL.createObjectURL(blob);
       setProcessed(url);
       setUseOriginal(false);
       setStage("preview");
-      setProgress("");
+      setProgress(`Готово за ${elapsed}с`);
+      setTimeout(() => setProgress(""), 4000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Помилка видалення фону");
       setStage("preview");

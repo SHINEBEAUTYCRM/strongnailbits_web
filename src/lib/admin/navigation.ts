@@ -18,6 +18,7 @@ import {
   RefreshCw,
   Settings,
   Key,
+  Gauge,
 } from "lucide-react";
 
 export interface NavItem {
@@ -83,6 +84,7 @@ export const adminNavigation: NavGroup[] = [
     label: "СИСТЕМА",
     items: [
       { label: "Синхронізація", href: "/admin/sync", icon: RefreshCw },
+      { label: "PageSpeed", href: "/admin/pagespeed", icon: Gauge },
       { label: "Налаштування", href: "/admin/settings", icon: Settings, soon: true },
       { label: "API ключі", href: "/admin/api-keys", icon: Key, soon: true },
     ],

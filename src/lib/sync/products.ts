@@ -12,9 +12,11 @@ interface ProductRow {
   cs_cart_id: number;
   category_id: string | null;
   name_uk: string;
+  name_ru: string | null;
   slug: string;
   sku: string | null;
   description_uk: string | null;
+  description_ru: string | null;
   price: number;
   old_price: number | null;
   quantity: number;
@@ -87,6 +89,7 @@ function extractImages(product: CSCartProduct): string[] {
 function mapProduct(
   product: CSCartProduct,
   categoryMap: Map<number, string>,
+  ruProduct?: CSCartProduct | null,
 ): ProductRow {
   const price = parsePrice(product.price);
   // CS-Cart uses base_price for original price before discount (list_price is usually 0)
@@ -95,6 +98,10 @@ function mapProduct(
   // Pick the higher of base_price and list_price as the "old" price
   const oldPriceCandidate = Math.max(basePrice, listPrice);
   const name = product.product || `Product ${product.product_id}`;
+
+  // Russian name / description from RU fetch
+  const nameRu = ruProduct?.product || null;
+  const descriptionRu = ruProduct?.full_description || null;
 
   // Slug: seo_name з CS-Cart або генеруємо з назви
   const rawSlug = product.seo_name
@@ -134,9 +141,11 @@ function mapProduct(
     cs_cart_id: product.product_id,
     category_id: categoryId,
     name_uk: name,
+    name_ru: nameRu,
     slug,
     sku: product.product_code || null,
     description_uk: product.full_description || null,
+    description_ru: descriptionRu,
     price,
     old_price: oldPriceCandidate > 0 && oldPriceCandidate > price ? oldPriceCandidate : null,
     quantity: product.amount ?? 0,
