@@ -82,7 +82,7 @@ export function ImageUpload({ onUpload, currentUrl, label, compact }: Props) {
       const blob = await removeBackground(originalFileRef.current, {
         model: "isnet_quint8",  // Small model (~40MB vs ~80MB) — faster download, good quality
         device: "gpu",          // Use WebGPU if available (much faster)
-        output: { format: "image/png", quality: 0.9, type: "foreground" },
+        output: { format: "image/png", quality: 0.9 },
         progress: (key: string, current: number, total: number) => {
           if (key.includes("fetch")) {
             const pct = Math.round((current / total) * 100);
