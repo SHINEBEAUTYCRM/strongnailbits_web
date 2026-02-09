@@ -71,6 +71,18 @@ export async function getCategoryList() {
   return data ?? [];
 }
 
+export async function getCategoryById(id: string) {
+  const supabase = createAdminClient();
+  const { data } = await supabase.from("categories").select("*").eq("id", id).single();
+  return data;
+}
+
+export async function getCategoryProductCount(categoryId: string) {
+  const supabase = createAdminClient();
+  const { count } = await supabase.from("products").select("id", { count: "exact", head: true }).eq("category_id", categoryId);
+  return count ?? 0;
+}
+
 /* ─── Brands ─── */
 export async function getBrands() {
   const supabase = createAdminClient();
