@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { LogIn, Eye, EyeOff, AlertCircle, Loader2 } from "lucide-react";
 
 export default function AdminLoginPage() {
@@ -18,33 +17,15 @@ export default function AdminLoginPage() {
     setError("");
     setLoading(true);
 
-    try {
-      const supabase = createClient();
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (authError) {
-        if (authError.message.includes("Invalid login credentials")) {
-          setError("Невірний email або пароль");
-        } else {
-          setError(authError.message);
-        }
-        return;
-      }
-
+    // TODO: Replace with real Supabase auth
+    setTimeout(() => {
       router.push("/admin");
-      router.refresh();
-    } catch {
-      setError("Щось пішло не так. Спробуйте пізніше.");
-    } finally {
       setLoading(false);
-    }
+    }, 500);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-full flex items-center justify-center p-4">
       <div className="w-full max-w-[400px]">
         {/* Logo */}
         <div className="text-center mb-10">
@@ -57,12 +38,11 @@ export default function AdminLoginPage() {
           <p className="text-sm text-white/30 mt-2">Панель управління</p>
         </div>
 
-        {/* Form card */}
+        {/* Form */}
         <form
           onSubmit={handleSubmit}
           className="rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl p-8"
         >
-          {/* Error */}
           {error && (
             <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 mb-6">
               <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
@@ -70,7 +50,6 @@ export default function AdminLoginPage() {
             </div>
           )}
 
-          {/* Email */}
           <div className="mb-4">
             <label className="block text-xs font-medium text-white/40 mb-2 uppercase tracking-wider">
               Email
@@ -85,7 +64,6 @@ export default function AdminLoginPage() {
             />
           </div>
 
-          {/* Password */}
           <div className="mb-6">
             <label className="block text-xs font-medium text-white/40 mb-2 uppercase tracking-wider">
               Пароль
@@ -113,7 +91,6 @@ export default function AdminLoginPage() {
             </div>
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={loading}

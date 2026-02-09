@@ -2,76 +2,37 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ShoppingBag, Zap, Plus, Minus, Package, ChevronDown, Check } from "lucide-react";
-import { useCartStore } from "@/lib/store/cart";
-import { showToast } from "@/components/ui/Toast";
-import { formatPrice } from "@/utils/format";
+import { ChevronDown, Truck, CreditCard, Shield, RotateCcw, Banknote } from "lucide-react";
+
+type Tab = "description" | "properties" | "delivery";
 
 interface ProductInfoProps {
-  productId: string;
-  slug: string;
   name: string;
   sku: string | null;
-  price: number;
-  oldPrice: number | null;
-  quantity: number;
-  status: string;
   brand: { name: string; slug: string } | null;
   properties: Record<string, string>;
   description: string | null;
-  image: string | null;
 }
 
+const TABS: { id: Tab; label: string }[] = [
+  { id: "description", label: "Опис" },
+  { id: "properties", label: "Характеристики" },
+  { id: "delivery", label: "Доставка та оплата" },
+];
+
 export function ProductInfo({
-  productId,
-  slug,
   name,
   sku,
-  price,
-  oldPrice,
-  quantity,
-  status,
   brand,
   properties,
   description,
-  image,
 }: ProductInfoProps) {
-  const [qty, setQty] = useState(1);
+  const [activeTab, setActiveTab] = useState<Tab>(
+    description ? "description" : "properties",
+  );
   const [descExpanded, setDescExpanded] = useState(false);
-  const [added, setAdded] = useState(false);
-
-  const addItem = useCartStore((s) => s.addItem);
-  const cartItems = useCartStore((s) => s.items);
-  const inCart = cartItems.find((i) => i.product_id === productId);
-
-  const isAvailable = status === "active" && quantity > 0;
-  const isLow = isAvailable && quantity < 5;
-  const maxQty = quantity || 0;
-  const discount =
-    oldPrice && oldPrice > price
-      ? Math.round(((oldPrice - price) / oldPrice) * 100)
-      : 0;
-
   const propertyEntries = Object.entries(properties);
-  const descriptionLong = description && description.length > 400;
-
-  function handleAddToCart() {
-    addItem({
-      product_id: productId,
-      name,
-      slug,
-      image,
-      price,
-      old_price: oldPrice,
-      quantity: qty,
-      sku,
-      max_quantity: maxQty,
-      weight: null,
-    });
-    showToast("Товар додано в кошик");
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
-  }
+  const descLong = description && description.length > 500;
 
   return (
     <div className="flex flex-col gap-5">
@@ -79,162 +40,234 @@ export function ProductInfo({
       {brand && (
         <Link
           href={`/catalog?brands=${brand.slug}`}
-          className="font-unbounded inline-flex w-fit text-[10px] font-bold uppercase tracking-[3px] text-coral transition-colors hover:text-coral-2"
+          className="inline-flex w-fit text-[13px] font-medium text-[#007aff] hover:underline"
         >
           {brand.name}
         </Link>
       )}
 
-      {/* Name */}
-      <h1 className="font-unbounded text-xl font-black leading-tight text-dark sm:text-2xl">
+      {/* Product name */}
+      <h1 className="text-[20px] font-bold leading-tight text-[#222] sm:text-[24px]">
         {name}
       </h1>
 
-      {/* SKU */}
+      {/* SKU + meta */}
       {sku && (
-        <div className="text-sm text-[var(--t2)]">
-          Артикул: <span className="font-price text-[var(--t)]">{sku}</span>
-        </div>
+        <p className="text-[13px] text-[#999]">
+          Артикул: <span className="font-price text-[#666]">{sku}</span>
+        </p>
       )}
 
-      <div className="h-px bg-[var(--border)]" />
-
-      {/* Price block */}
-      <div className="flex items-end gap-3">
-        <span
-          className={`font-price text-3xl font-bold sm:text-4xl ${
-            discount > 0 ? "text-coral" : "text-dark"
-          }`}
-        >
-          {formatPrice(price)}
-        </span>
-        {oldPrice && oldPrice > price && (
-          <span className="font-price mb-1 text-xl text-[var(--t3)] line-through">
-            {formatPrice(oldPrice)}
-          </span>
-        )}
-        {discount > 0 && (
-          <span className="font-unbounded mb-1 rounded-[8px] bg-coral px-2.5 py-0.5 text-[9px] font-extrabold text-white">
-            &minus;{discount}%
-          </span>
-        )}
-      </div>
-
-      {/* Availability */}
-      <div className="flex items-center gap-2 text-sm">
-        <Package size={15} className="text-[var(--t3)]" />
-        {isLow ? (
-          <span className="text-amber">Закінчується (залишилось {quantity})</span>
-        ) : isAvailable ? (
-          <span className="text-green">В наявності</span>
-        ) : (
-          <span className="text-red">Немає в наявності</span>
-        )}
-      </div>
-
-      <div className="h-px bg-[var(--border)]" />
-
-      {/* Quantity + Cart */}
-      <div className="flex flex-col gap-3">
-        <div className="flex h-12 w-fit items-center rounded-[10px] border border-[var(--border)] bg-white">
-          <button
-            onClick={() => setQty(Math.max(1, qty - 1))}
-            className="flex h-full w-12 items-center justify-center text-[var(--t3)] transition-colors hover:text-dark"
-            aria-label="Менше"
-          >
-            <Minus size={16} />
-          </button>
-          <span className="font-price w-10 text-center text-sm font-semibold text-dark">
-            {qty}
-          </span>
-          <button
-            onClick={() => setQty(Math.min(qty + 1, maxQty || 999))}
-            disabled={qty >= maxQty && maxQty > 0}
-            className="flex h-full w-12 items-center justify-center text-[var(--t3)] transition-colors hover:text-dark disabled:opacity-30"
-            aria-label="Більше"
-          >
-            <Plus size={16} />
-          </button>
+      {/* ── Tabs ── */}
+      <div className="border-b border-[#f0f0f0]">
+        <div className="scrollbar-none flex gap-0 overflow-x-auto">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`shrink-0 border-b-2 px-4 py-3 text-[13px] font-medium transition-colors ${
+                activeTab === tab.id
+                  ? "border-[#222] text-[#222]"
+                  : "border-transparent text-[#999] hover:text-[#666]"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
+      </div>
 
-        <button
-          onClick={handleAddToCart}
-          disabled={!isAvailable}
-          className={`font-unbounded flex h-12 w-full items-center justify-center gap-2 rounded-pill text-[13px] font-bold text-white transition-all duration-300 disabled:opacity-40 disabled:shadow-none ${
-            added
-              ? "bg-green"
-              : "bg-coral hover:bg-coral-2 hover:glow-coral"
-          }`}
-        >
-          {added ? (
+      {/* ── Tab: Опис ── */}
+      {activeTab === "description" && (
+        <div>
+          {description ? (
             <>
-              <Check size={16} />
-              Додано
-              {inCart ? ` (${inCart.quantity} шт)` : ""}
+              <div
+                className={`prose prose-sm max-w-none text-[13px] leading-relaxed text-[#555] ${
+                  !descExpanded && descLong ? "line-clamp-[12]" : ""
+                }`}
+                dangerouslySetInnerHTML={{ __html: description }}
+              />
+              {descLong && (
+                <button
+                  onClick={() => setDescExpanded(!descExpanded)}
+                  className="mt-3 flex items-center gap-1 text-[13px] font-medium text-[#007aff] hover:underline"
+                >
+                  {descExpanded ? "Згорнути" : "Читати повністю"}
+                  <ChevronDown
+                    size={14}
+                    className={`transition-transform ${descExpanded ? "rotate-180" : ""}`}
+                  />
+                </button>
+              )}
             </>
           ) : (
-            <>
-              <ShoppingBag size={16} />
-              {!isAvailable ? "Немає в наявності" : "Додати в кошик"}
-            </>
+            <p className="text-[13px] text-[#999]">Опис товару відсутній</p>
           )}
-        </button>
-
-        <button
-          disabled={!isAvailable}
-          className="flex h-11 w-full items-center justify-center gap-2 rounded-pill border border-[var(--border)] text-sm font-medium text-[var(--t2)] transition-all hover:border-dark hover:text-dark disabled:opacity-40"
-        >
-          <Zap size={16} />
-          Купити в 1 клік
-        </button>
-      </div>
-
-      {/* Properties */}
-      {propertyEntries.length > 0 && (
-        <div className="mt-2 overflow-x-auto">
-          <h3 className="font-unbounded mb-3 text-[10px] font-bold uppercase tracking-wider text-[var(--t3)]">
-            Характеристики
-          </h3>
-          <div className="min-w-0 overflow-hidden rounded-card border border-[var(--border)]">
-            {propertyEntries.map(([key, value], i) => (
-              <div
-                key={key}
-                className={`flex gap-4 px-4 py-2.5 text-sm ${
-                  i % 2 === 0 ? "bg-sand/50" : "bg-white"
-                }`}
-              >
-                <span className="w-2/5 shrink-0 text-[var(--t2)]">{key}</span>
-                <span className="min-w-0 break-words text-dark">{value}</span>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 
-      {/* Description */}
-      {description && (
-        <div className="mt-2">
-          <h3 className="font-unbounded mb-3 text-[10px] font-bold uppercase tracking-wider text-[var(--t3)]">
-            Опис
-          </h3>
-          <div
-            className={`prose prose-sm max-w-none text-sm leading-relaxed text-[var(--t2)] ${
-              !descExpanded && descriptionLong ? "line-clamp-6" : ""
-            }`}
-            dangerouslySetInnerHTML={{ __html: description }}
-          />
-          {descriptionLong && (
-            <button
-              onClick={() => setDescExpanded(!descExpanded)}
-              className="mt-2 flex items-center gap-1 text-sm font-medium text-coral transition-colors hover:text-coral-2"
-            >
-              {descExpanded ? "Згорнути" : "Читати повністю"}
-              <ChevronDown
-                size={14}
-                className={`transition-transform ${descExpanded ? "rotate-180" : ""}`}
-              />
-            </button>
+      {/* ── Tab: Характеристики ── */}
+      {activeTab === "properties" && (
+        <div>
+          {propertyEntries.length > 0 ? (
+            <div className="overflow-hidden rounded-xl border border-[#f0f0f0]">
+              {propertyEntries.map(([key, value], i) => (
+                <div
+                  key={key}
+                  className={`flex gap-4 px-4 py-3 text-[13px] ${
+                    i % 2 === 0 ? "bg-[#fafafa]" : "bg-white"
+                  }`}
+                >
+                  <span className="w-2/5 shrink-0 text-[#999]">{key}</span>
+                  <span className="min-w-0 break-words font-medium text-[#222]">
+                    {value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[13px] text-[#999]">
+              Характеристики не вказані
+            </p>
           )}
+        </div>
+      )}
+
+      {/* ── Tab: Доставка та оплата ── */}
+      {activeTab === "delivery" && (
+        <div className="flex flex-col gap-6">
+          {/* Delivery */}
+          <div>
+            <h3 className="mb-3 flex items-center gap-2 text-[14px] font-bold text-[#222]">
+              <Truck size={16} className="text-[#00c853]" />
+              Доставка
+            </h3>
+            <div className="overflow-hidden rounded-xl border border-[#f0f0f0]">
+              <div className="flex items-start gap-3 border-b border-[#f0f0f0] bg-white px-4 py-3">
+                <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[#00c853]" />
+                <div>
+                  <p className="text-[13px] font-medium text-[#222]">
+                    Нова Пошта — відділення
+                  </p>
+                  <p className="text-[12px] text-[#999]">
+                    1-3 робочих дні. Вартість за тарифами перевізника.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 border-b border-[#f0f0f0] bg-[#fafafa] px-4 py-3">
+                <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[#00c853]" />
+                <div>
+                  <p className="text-[13px] font-medium text-[#222]">
+                    Нова Пошта — кур&apos;єр
+                  </p>
+                  <p className="text-[12px] text-[#999]">
+                    1-3 робочих дні. Доставка до дверей.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 border-b border-[#f0f0f0] bg-white px-4 py-3">
+                <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[#007aff]" />
+                <div>
+                  <p className="text-[13px] font-medium text-[#222]">
+                    Укрпошта
+                  </p>
+                  <p className="text-[12px] text-[#999]">
+                    3-7 робочих днів. Економний варіант.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 bg-[#f0faf0] px-4 py-3">
+                <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[#00c853]" />
+                <div>
+                  <p className="text-[13px] font-semibold text-[#00c853]">
+                    Безкоштовна доставка
+                  </p>
+                  <p className="text-[12px] text-[#666]">
+                    При замовленні від 3 000 ₴ — Нова Пошта безкоштовно.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment */}
+          <div>
+            <h3 className="mb-3 flex items-center gap-2 text-[14px] font-bold text-[#222]">
+              <CreditCard size={16} className="text-[#007aff]" />
+              Оплата
+            </h3>
+            <div className="overflow-hidden rounded-xl border border-[#f0f0f0]">
+              <div className="flex items-start gap-3 border-b border-[#f0f0f0] bg-white px-4 py-3">
+                <Banknote size={16} className="mt-0.5 shrink-0 text-[#00c853]" />
+                <div>
+                  <p className="text-[13px] font-medium text-[#222]">
+                    Оплата при отриманні (накладений платіж)
+                  </p>
+                  <p className="text-[12px] text-[#999]">
+                    Оплатіть замовлення при отриманні на пошті або кур&apos;єру.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 border-b border-[#f0f0f0] bg-[#fafafa] px-4 py-3">
+                <CreditCard size={16} className="mt-0.5 shrink-0 text-[#007aff]" />
+                <div>
+                  <p className="text-[13px] font-medium text-[#222]">
+                    Онлайн оплата карткою
+                  </p>
+                  <p className="text-[12px] text-[#999]">
+                    Visa, Mastercard, Apple Pay, Google Pay. Безпечно через платіжну систему.
+                  </p>
+                  {/* Payment icons */}
+                  <div className="mt-2 flex gap-2">
+                    {["Visa", "MC", "GPay", "APay"].map((label) => (
+                      <span
+                        key={label}
+                        className="rounded-md border border-[#e0e0e0] bg-white px-2 py-0.5 text-[10px] font-bold text-[#666]"
+                      >
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 bg-white px-4 py-3">
+                <Banknote size={16} className="mt-0.5 shrink-0 text-[#ff9500]" />
+                <div>
+                  <p className="text-[13px] font-medium text-[#222]">
+                    Безготівковий розрахунок (для юр. осіб)
+                  </p>
+                  <p className="text-[12px] text-[#999]">
+                    Оплата за рахунком-фактурою з ПДВ для B2B клієнтів.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Guarantees */}
+          <div>
+            <h3 className="mb-3 flex items-center gap-2 text-[14px] font-bold text-[#222]">
+              <Shield size={16} className="text-[#00c853]" />
+              Гарантії
+            </h3>
+            <div className="overflow-hidden rounded-xl border border-[#f0f0f0] bg-white">
+              <div className="flex items-start gap-3 border-b border-[#f0f0f0] px-4 py-3">
+                <Shield size={16} className="mt-0.5 shrink-0 text-[#00c853]" />
+                <p className="text-[13px] text-[#444]">
+                  Всі товари мають сертифікати та гарантії від виробника.
+                  100% оригінальна продукція.
+                </p>
+              </div>
+              <div className="flex items-start gap-3 px-4 py-3">
+                <RotateCcw size={16} className="mt-0.5 shrink-0 text-[#007aff]" />
+                <p className="text-[13px] text-[#444]">
+                  Повернути товар можна протягом 14 днів після покупки
+                  відповідно до Закону України «Про захист прав споживачів».
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

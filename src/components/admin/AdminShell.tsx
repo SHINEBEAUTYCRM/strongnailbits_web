@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
   ChevronLeft,
@@ -16,23 +16,10 @@ import {
   X,
 } from "lucide-react";
 import { adminNavigation, type NavItem } from "@/lib/admin/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { SearchModal } from "./SearchModal";
 
-interface AdminUser {
-  email: string;
-  name: string;
-  role: string;
-}
-
-interface AdminShellProps {
-  children: React.ReactNode;
-  user: AdminUser;
-}
-
-export function AdminShell({ children, user }: AdminShellProps) {
+export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -44,19 +31,16 @@ export function AdminShell({ children, user }: AdminShellProps) {
       const saved = localStorage.getItem("admin-sidebar-collapsed");
       if (saved !== null) setCollapsed(JSON.parse(saved));
     } catch {
-      // ignore
+      /* ignore */
     }
   }, []);
 
   // Persist sidebar state
   useEffect(() => {
     try {
-      localStorage.setItem(
-        "admin-sidebar-collapsed",
-        JSON.stringify(collapsed),
-      );
+      localStorage.setItem("admin-sidebar-collapsed", JSON.stringify(collapsed));
     } catch {
-      // ignore
+      /* ignore */
     }
   }, [collapsed]);
 
@@ -66,7 +50,7 @@ export function AdminShell({ children, user }: AdminShellProps) {
     setUserMenuOpen(false);
   }, [pathname]);
 
-  // Keyboard shortcuts: Cmd+K for search
+  // Keyboard shortcuts: Cmd+K
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -78,19 +62,13 @@ export function AdminShell({ children, user }: AdminShellProps) {
     return () => document.removeEventListener("keydown", handler);
   }, []);
 
-  // Close user menu on click outside
+  // Close user menu on outside click
   useEffect(() => {
     if (!userMenuOpen) return;
     const handler = () => setUserMenuOpen(false);
     document.addEventListener("click", handler);
     return () => document.removeEventListener("click", handler);
   }, [userMenuOpen]);
-
-  const handleLogout = useCallback(async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/admin/login");
-  }, [router]);
 
   const isActive = (href: string) => {
     if (href === "/admin") return pathname === "/admin";
@@ -113,14 +91,11 @@ export function AdminShell({ children, user }: AdminShellProps) {
   })();
 
   const sidebarWidth = collapsed ? 72 : 260;
-  const userInitial =
-    user.name?.[0]?.toUpperCase() || user.email[0]?.toUpperCase() || "A";
 
   return (
     <div
-      style={
-        { "--sidebar-w": `${sidebarWidth}px` } as React.CSSProperties
-      }
+      className="h-full"
+      style={{ "--sidebar-w": `${sidebarWidth}px` } as React.CSSProperties}
     >
       {/* Mobile overlay */}
       {mobileOpen && (
@@ -135,12 +110,15 @@ export function AdminShell({ children, user }: AdminShellProps) {
         className={`
           fixed top-0 left-0 bottom-0 z-[50]
           flex flex-col
-          bg-[#0a0a0f] border-r border-white/[0.06]
+          border-r border-white/[0.06]
           transition-all duration-200 ease-out
           ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0
         `}
-        style={{ width: mobileOpen ? 260 : sidebarWidth }}
+        style={{
+          width: mobileOpen ? 260 : sidebarWidth,
+          background: "#0a0a0f",
+        }}
       >
         {/* Sidebar header */}
         <div className="h-16 flex items-center px-4 border-b border-white/[0.06] shrink-0">
@@ -160,7 +138,6 @@ export function AdminShell({ children, user }: AdminShellProps) {
               </span>
             </Link>
           )}
-          {/* Mobile close */}
           <button
             onClick={() => setMobileOpen(false)}
             className="ml-auto text-white/30 hover:text-white lg:hidden transition-colors"
@@ -194,30 +171,24 @@ export function AdminShell({ children, user }: AdminShellProps) {
 
         {/* Sidebar footer */}
         <div className="border-t border-white/[0.06] p-3 shrink-0">
-          {/* User info */}
           {!collapsed || mobileOpen ? (
             <div className="flex items-center gap-3 px-2 py-2 mb-2">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                {userInitial}
+                A
               </div>
               <div className="min-w-0">
-                <p className="text-sm text-white/80 truncate">
-                  {user.name || user.email}
-                </p>
-                <p className="text-[11px] text-white/30 capitalize">
-                  {user.role}
-                </p>
+                <p className="text-sm text-white/80 truncate">Admin</p>
+                <p className="text-[11px] text-white/30">admin</p>
               </div>
             </div>
           ) : (
             <div className="flex justify-center py-2 mb-2">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
-                {userInitial}
+                A
               </div>
             </div>
           )}
 
-          {/* Collapse button (desktop only) */}
           <button
             onClick={() => setCollapsed(!collapsed)}
             className="hidden lg:flex w-full items-center justify-center gap-2 px-3 py-2 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/[0.04] transition-all duration-150 text-xs"
@@ -235,10 +206,9 @@ export function AdminShell({ children, user }: AdminShellProps) {
       </aside>
 
       {/* ─── Content wrapper ─── */}
-      <div className="lg:ml-[var(--sidebar-w)] transition-[margin] duration-200 min-h-screen">
+      <div className="lg:ml-[var(--sidebar-w)] transition-[margin] duration-200 h-full flex flex-col">
         {/* ─── TopBar ─── */}
-        <header className="sticky top-0 z-[30] h-16 flex items-center gap-4 px-4 lg:px-6 bg-[#08080c]/80 backdrop-blur-xl border-b border-white/[0.06]">
-          {/* Mobile burger */}
+        <header className="shrink-0 h-16 flex items-center gap-4 px-4 lg:px-6 bg-[#08080c]/80 backdrop-blur-xl border-b border-white/[0.06]">
           <button
             onClick={() => setMobileOpen(true)}
             className="lg:hidden text-white/60 hover:text-white transition-colors"
@@ -246,7 +216,7 @@ export function AdminShell({ children, user }: AdminShellProps) {
             <Menu className="w-5 h-5" />
           </button>
 
-          {/* Breadcrumbs (desktop) */}
+          {/* Breadcrumbs */}
           <div className="hidden lg:flex items-center gap-2 text-sm">
             {breadcrumbs.map((crumb, i) => (
               <span key={crumb.href} className="flex items-center gap-2">
@@ -267,7 +237,7 @@ export function AdminShell({ children, user }: AdminShellProps) {
 
           <div className="flex-1" />
 
-          {/* Search trigger */}
+          {/* Search */}
           <button
             onClick={() => setSearchOpen(true)}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-white/30 hover:text-white/50 hover:bg-white/[0.06] transition-all duration-150 text-sm"
@@ -307,36 +277,39 @@ export function AdminShell({ children, user }: AdminShellProps) {
               }}
               className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold hover:opacity-90 transition-opacity"
             >
-              {userInitial}
+              A
             </button>
 
             {userMenuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-56 rounded-xl bg-[#0a0a0f] border border-white/[0.08] shadow-2xl overflow-hidden">
+              <div className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-white/[0.08] shadow-2xl overflow-hidden" style={{ background: "#0a0a0f" }}>
                 <div className="px-4 py-3 border-b border-white/[0.06]">
-                  <p className="text-sm text-white/80 truncate">
-                    {user.name || user.email}
-                  </p>
-                  <p className="text-xs text-white/30 mt-0.5">{user.email}</p>
+                  <p className="text-sm text-white/80">Admin</p>
+                  <p className="text-xs text-white/30 mt-0.5">admin@shineshop.com</p>
                 </div>
                 <div className="p-1.5">
-                  <DropdownLink
-                    icon={User}
-                    label="Профіль"
+                  <Link
                     href="/admin/settings"
-                  />
-                  <DropdownLink
-                    icon={Store}
-                    label="Перейти до магазину"
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-white/60 hover:text-white hover:bg-white/[0.04] transition-colors"
+                  >
+                    <User className="w-4 h-4" />
+                    Профіль
+                  </Link>
+                  <a
                     href="/"
-                    external
-                  />
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-white/60 hover:text-white hover:bg-white/[0.04] transition-colors"
+                  >
+                    <Store className="w-4 h-4" />
+                    Перейти до магазину
+                  </a>
+                  <Link
+                    href="/admin/login"
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-red-500/10 transition-colors"
                   >
                     <LogOut className="w-4 h-4" />
                     Вийти
-                  </button>
+                  </Link>
                 </div>
               </div>
             )}
@@ -344,7 +317,7 @@ export function AdminShell({ children, user }: AdminShellProps) {
         </header>
 
         {/* ─── Main content ─── */}
-        <main className="p-4 lg:p-6">
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           <div className="max-w-[1400px] mx-auto">{children}</div>
         </main>
       </div>
@@ -381,7 +354,6 @@ function SidebarItem({
       `}
       title={collapsed ? item.label : undefined}
     >
-      {/* Active indicator */}
       {active && (
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-gradient-to-b from-purple-500 to-pink-500" />
       )}
@@ -406,38 +378,6 @@ function SidebarItem({
           {item.badge}
         </span>
       )}
-    </Link>
-  );
-}
-
-/* ─── Dropdown Link ─── */
-function DropdownLink({
-  icon: Icon,
-  label,
-  href,
-  external,
-}: {
-  icon: typeof User;
-  label: string;
-  href: string;
-  external?: boolean;
-}) {
-  const classes =
-    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-white/60 hover:text-white hover:bg-white/[0.04] transition-colors";
-
-  if (external) {
-    return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className={classes}>
-        <Icon className="w-4 h-4" />
-        {label}
-      </a>
-    );
-  }
-
-  return (
-    <Link href={href} className={classes}>
-      <Icon className="w-4 h-4" />
-      {label}
     </Link>
   );
 }

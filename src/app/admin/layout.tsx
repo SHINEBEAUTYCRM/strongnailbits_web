@@ -1,28 +1,4 @@
-import type { Metadata } from "next";
-import { Outfit, JetBrains_Mono } from "next/font/google";
-import { AdminBodyLock } from "@/components/admin/AdminBodyLock";
-
-const outfit = Outfit({
-  variable: "--font-outfit",
-  subsets: ["latin", "latin-ext"],
-  weight: ["300", "400", "500", "600", "700"],
-  display: "swap",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains-admin",
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  display: "swap",
-});
-
-export const metadata: Metadata = {
-  title: {
-    default: "SHINE ADMIN",
-    template: "%s | SHINE ADMIN",
-  },
-  description: "Shine Shop — Панель управління",
-};
+import { AdminShell } from "@/components/admin/AdminShell";
 
 export default function AdminLayout({
   children,
@@ -31,15 +7,14 @@ export default function AdminLayout({
 }) {
   return (
     <div
-      className={`${outfit.variable} ${jetbrainsMono.variable} fixed inset-0 z-[9999] overflow-auto`}
+      className="fixed inset-0 z-[9999] overflow-hidden"
       style={{
-        fontFamily: "var(--font-outfit), system-ui, sans-serif",
         background: "#08080c",
         color: "#ffffff",
+        fontFamily: "system-ui, -apple-system, sans-serif",
       }}
     >
-      <AdminBodyLock />
-      {children}
+      <AdminShell>{children}</AdminShell>
     </div>
   );
 }

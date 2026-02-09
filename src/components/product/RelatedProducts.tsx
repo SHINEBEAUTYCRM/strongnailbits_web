@@ -1,17 +1,12 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ProductCard } from "@/components/product/ProductCard";
-import { ProductGrid } from "@/components/product/ProductGrid";
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import { RelatedCarousel } from "./RelatedCarousel";
 
-interface RelatedProductsProps {
+interface Props {
   categoryId: string;
   excludeProductId: string;
 }
 
-export async function RelatedProducts({
-  categoryId,
-  excludeProductId,
-}: RelatedProductsProps) {
+export async function RelatedProducts({ categoryId, excludeProductId }: Props) {
   const supabase = createAdminClient();
 
   const { data: products } = await supabase
@@ -21,41 +16,36 @@ export async function RelatedProducts({
     )
     .eq("category_id", categoryId)
     .eq("status", "active")
+    .gt("quantity", 0)
     .neq("id", excludeProductId)
     .order("position", { ascending: true })
-    .limit(8);
+    .limit(12);
 
   if (!products || products.length === 0) return null;
 
+  const items = products.map((p) => {
+    const bd = p.brands as { name: string } | { name: string }[] | null;
+    const brandName = Array.isArray(bd) ? bd[0]?.name : bd?.name;
+    return {
+      id: p.id,
+      slug: p.slug,
+      name: p.name_uk,
+      price: p.price,
+      oldPrice: p.old_price,
+      imageUrl: p.main_image_url,
+      brand: brandName ?? null,
+      isNew: p.is_new,
+      status: p.status,
+      quantity: p.quantity,
+    };
+  });
+
   return (
     <section className="mt-16">
-      <SectionHeader title="Схожі товари" />
-      <ProductGrid>
-        {products.map((product) => {
-          const brandData = product.brands as
-            | { name: string }
-            | { name: string }[]
-            | null;
-          const brandName = Array.isArray(brandData)
-            ? brandData[0]?.name
-            : brandData?.name;
-          return (
-            <ProductCard
-              key={product.id}
-              id={product.id}
-              slug={product.slug}
-              name={product.name_uk}
-              price={product.price}
-              oldPrice={product.old_price}
-              imageUrl={product.main_image_url}
-              brand={brandName ?? null}
-              isNew={product.is_new}
-              status={product.status}
-              quantity={product.quantity}
-            />
-          );
-        })}
-      </ProductGrid>
+      <h2 className="mb-5 text-[20px] font-bold text-[#222]">
+        Подивіться ще
+      </h2>
+      <RelatedCarousel items={items} />
     </section>
   );
 }

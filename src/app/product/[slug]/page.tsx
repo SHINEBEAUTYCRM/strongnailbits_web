@@ -4,31 +4,13 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/catalog/Breadcrumbs";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductInfo } from "@/components/product/ProductInfo";
+import { ProductBuySidebar } from "@/components/product/ProductBuySidebar";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
+
+/* ------------------------------------------------------------------ */
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
-}
-
-interface ProductRow {
-  id: string;
-  slug: string;
-  name_uk: string;
-  sku: string | null;
-  price: number;
-  old_price: number | null;
-  quantity: number;
-  status: string;
-  main_image_url: string | null;
-  images: string[] | null;
-  description_uk: string | null;
-  meta_title: string | null;
-  meta_description: string | null;
-  properties: Record<string, string> | null;
-  category_id: string | null;
-  brand_id: string | null;
-  weight: number | null;
-  is_new: boolean;
 }
 
 async function getProduct(slug: string) {
@@ -67,18 +49,15 @@ async function buildBreadcrumbs(
           .eq("cs_cart_id", currentParentId)
           .single();
 
-        const parentCat = data as {
+        const cat = data as {
           slug: string;
           name_uk: string;
           parent_cs_cart_id: number | null;
         } | null;
 
-        if (!parentCat) break;
-        ancestors.unshift({
-          label: parentCat.name_uk,
-          href: `/catalog/${parentCat.slug}`,
-        });
-        currentParentId = parentCat.parent_cs_cart_id;
+        if (!cat) break;
+        ancestors.unshift({ label: cat.name_uk, href: `/catalog/${cat.slug}` });
+        currentParentId = cat.parent_cs_cart_id;
       }
       crumbs.push(...ancestors);
     }
@@ -90,16 +69,17 @@ async function buildBreadcrumbs(
   return crumbs;
 }
 
+/* ------------------------------------------------------------------ */
+
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProduct(slug);
-
   if (!product) return { title: "Товар не знайдено" };
 
   const title = product.meta_title || `${product.name_uk} | Купити в SHINE SHOP`;
   const description =
     product.meta_description ||
-    `${product.name_uk} ціна від ${product.price} ₴. Доставка по Україні. Замовити в SHINE SHOP`;
+    `${product.name_uk} ціна від ${product.price} ₴. Доставка по Україні.`;
 
   return {
     title,
@@ -115,6 +95,8 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   };
 }
 
+/* ------------------------------------------------------------------ */
+
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
   const product = await getProduct(slug);
@@ -127,22 +109,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const brand = Array.isArray(brandData) ? brandData[0] ?? null : brandData;
 
   const categoryData = product.categories as
-    | {
-        slug: string;
-        name_uk: string;
-        parent_cs_cart_id: number | null;
-        cs_cart_id: number;
-      }
-    | {
-        slug: string;
-        name_uk: string;
-        parent_cs_cart_id: number | null;
-        cs_cart_id: number;
-      }[]
+    | { slug: string; name_uk: string; parent_cs_cart_id: number | null; cs_cart_id: number }
+    | { slug: string; name_uk: string; parent_cs_cart_id: number | null; cs_cart_id: number }[]
     | null;
-  const category = Array.isArray(categoryData)
-    ? categoryData[0] ?? null
-    : categoryData;
+  const category = Array.isArray(categoryData) ? categoryData[0] ?? null : categoryData;
 
   const allImages: string[] = [];
   if (product.main_image_url) allImages.push(product.main_image_url);
@@ -193,34 +163,73 @@ export default async function ProductPage({ params }: ProductPageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <div className="mx-auto max-w-[1280px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <div className="mx-auto max-w-[1400px] px-4 py-6 md:px-6 lg:py-8">
         <Breadcrumbs items={breadcrumbs} />
 
-        <div className="flex flex-col gap-6 lg:flex-row lg:gap-10">
-          <div className="w-full lg:w-[55%] lg:max-w-[600px]">
+        {/* Mobile: product name + brand ABOVE gallery */}
+        <div className="mt-4 lg:hidden">
+          {brand && (
+            <a
+              href={`/catalog?brands=${brand.slug}`}
+              className="mb-1 inline-block text-[13px] font-medium text-[#007aff]"
+            >
+              {brand.name}
+            </a>
+          )}
+          <h1 className="mb-4 text-[18px] font-bold leading-tight text-[#222]">
+            {product.name_uk}
+          </h1>
+        </div>
+
+        {/* ── 3-column layout (desktop) ── */}
+        <div className="flex flex-col gap-6 lg:mt-4 lg:flex-row lg:gap-8">
+          {/* Left — Gallery */}
+          <div className="w-full lg:w-[42%]">
             <ProductGallery images={allImages} name={product.name_uk} />
           </div>
 
-          <div className="w-full lg:w-[45%]">
+          {/* Center — Details (desktop only, on mobile appears after sidebar) */}
+          <div className="hidden w-full lg:block lg:w-[30%]">
+            <ProductInfo
+              name={product.name_uk}
+              sku={product.sku}
+              brand={brand}
+              properties={properties}
+              description={product.description_uk}
+            />
+          </div>
+
+          {/* Right — Buy sidebar */}
+          <div className="w-full lg:w-[28%]">
             <div className="lg:sticky lg:top-[80px]">
-              <ProductInfo
+              <ProductBuySidebar
                 productId={product.id}
                 slug={product.slug}
                 name={product.name_uk}
-                sku={product.sku}
                 price={product.price}
                 oldPrice={product.old_price}
                 quantity={product.quantity}
                 status={product.status}
-                brand={brand}
-                properties={properties}
-                description={product.description_uk}
+                sku={product.sku}
                 image={product.main_image_url}
+                brand={brand?.name ?? null}
               />
             </div>
           </div>
+
+          {/* Mobile: details below sidebar */}
+          <div className="w-full lg:hidden">
+            <ProductInfo
+              name={product.name_uk}
+              sku={product.sku}
+              brand={brand}
+              properties={properties}
+              description={product.description_uk}
+            />
+          </div>
         </div>
 
+        {/* Related products */}
         {product.category_id && (
           <RelatedProducts
             categoryId={product.category_id}
