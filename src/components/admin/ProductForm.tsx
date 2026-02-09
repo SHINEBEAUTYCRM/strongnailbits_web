@@ -57,13 +57,14 @@ export function ProductForm({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [newImageUrl, setNewImageUrl] = useState("");
 
   const set = (key: keyof ProductData, val: string | boolean | string[]) => setForm((f) => ({ ...f, [key]: val }));
 
   const handleSave = async () => {
     if (!form.name_uk || !form.price) { setError("Назва та ціна обов'язкові"); return; }
-    setSaving(true); setError("");
+    setSaving(true); setError(""); setSuccess("");
     try {
       const res = await fetch("/api/admin/products", {
         method: isEdit ? "PUT" : "POST",
@@ -75,6 +76,8 @@ export function ProductForm({
       if (!isEdit && data.product?.id) {
         router.push(`/admin/products/${data.product.id}`);
       } else {
+        setSuccess("Збережено");
+        setTimeout(() => setSuccess(""), 3000);
         router.refresh();
       }
     } catch { setError("Network error"); }
@@ -127,6 +130,7 @@ export function ProductForm({
       </div>
 
       {error && <div className="mb-4 px-4 py-2.5 rounded-lg text-sm" style={{ color: "#f87171", background: "#450a0a", border: "1px solid #7f1d1d" }}>{error}</div>}
+      {success && <div className="mb-4 px-4 py-2.5 rounded-lg text-sm" style={{ color: "#4ade80", background: "#052e16", border: "1px solid #166534" }}>{success}</div>}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left column — main info */}

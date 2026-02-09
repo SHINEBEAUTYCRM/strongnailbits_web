@@ -83,10 +83,16 @@ export async function PUT(request: NextRequest) {
     const fields = [
       "name_uk", "name_ru", "slug", "sku", "description_uk", "description_ru",
       "status", "main_image_url", "images", "properties",
-      "meta_title", "meta_description", "category_id", "brand_id",
+      "meta_title", "meta_description",
     ];
     for (const f of fields) {
       if (body[f] !== undefined) update[f] = body[f];
+    }
+
+    // FK fields: convert empty string to null (Postgres requires UUID or null)
+    const fkFields = ["category_id", "brand_id"];
+    for (const f of fkFields) {
+      if (body[f] !== undefined) update[f] = body[f] || null;
     }
 
     const numFields = ["price", "old_price", "wholesale_price", "cost_price", "quantity", "weight", "position"];
