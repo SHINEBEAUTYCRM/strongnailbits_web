@@ -15,7 +15,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
   const [results, setResults] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const router = useRouter();
 
   useEffect(() => { if (open) { setQuery(""); setResults(null); setTimeout(() => inputRef.current?.focus(), 100); } }, [open]);
