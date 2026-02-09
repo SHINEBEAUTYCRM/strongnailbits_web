@@ -78,9 +78,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                 const pr = o.profiles as { first_name?: string; last_name?: string; phone?: string } | null;
                 const name = [pr?.first_name, pr?.last_name].filter(Boolean).join(" ") || "—";
                 return (
-                  <tr key={o.id} className="transition-colors cursor-default" style={{ borderBottom: "1px solid #141420" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "#111118"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
+                  <tr key={o.id} className="transition-colors cursor-default hover:bg-[#111118]" style={{ borderBottom: "1px solid #141420" }}>
                     <td className="px-4 py-3">
                       <span className="font-medium" style={{ color: "#e4e4e7" }}>#{o.order_number}</span>
                       {o.ttn && <p className="text-[10px] mt-0.5 font-mono" style={{ color: "#3f3f46" }}>ТТН: {o.ttn}</p>}

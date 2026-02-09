@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Package, Plus, Pencil, ExternalLink } from "lucide-react";
+import { Package, Plus, Pencil } from "lucide-react";
 import { getProducts } from "@/lib/admin/data";
 import { AdminSearch } from "@/components/admin/AdminSearch";
 import { ExportButton } from "@/components/admin/ExportButton";
@@ -74,9 +74,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                 const sc = pr.quantity === 0 ? "#f87171" : pr.quantity < 5 ? "#fbbf24" : "#4ade80";
                 const stC = pr.status === "active" ? { c: "#4ade80", bg: "#052e16" } : { c: "#71717a", bg: "#18181b" };
                 return (
-                  <tr key={pr.id} className="transition-colors" style={{ borderBottom: "1px solid #141420" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "#111118"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
+                  <tr key={pr.id} className="transition-colors hover:bg-[#111118]" style={{ borderBottom: "1px solid #141420" }}>
                     <td className="px-4 py-3">
                       <Link href={`/admin/products/${pr.id}`} className="flex items-center gap-3">
                         {pr.main_image_url
