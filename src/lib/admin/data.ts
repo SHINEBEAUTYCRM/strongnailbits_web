@@ -52,6 +52,12 @@ export async function getProducts(params: { page?: number; limit?: number; statu
   return { products: data ?? [], total: count ?? 0 };
 }
 
+export async function getProductById(id: string) {
+  const supabase = createAdminClient();
+  const { data } = await supabase.from("products").select("*").eq("id", id).single();
+  return data;
+}
+
 /* ─── Categories ─── */
 export async function getCategories() {
   const supabase = createAdminClient();
@@ -59,10 +65,22 @@ export async function getCategories() {
   return data ?? [];
 }
 
+export async function getCategoryList() {
+  const supabase = createAdminClient();
+  const { data } = await supabase.from("categories").select("id, name_uk").eq("status", "active").order("name_uk", { ascending: true });
+  return data ?? [];
+}
+
 /* ─── Brands ─── */
 export async function getBrands() {
   const supabase = createAdminClient();
   const { data } = await supabase.from("brands").select("id, cs_cart_id, name, slug, logo_url, is_featured, position, country").order("position", { ascending: true });
+  return data ?? [];
+}
+
+export async function getBrandList() {
+  const supabase = createAdminClient();
+  const { data } = await supabase.from("brands").select("id, name").order("name", { ascending: true });
   return data ?? [];
 }
 
