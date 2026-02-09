@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Users } from "lucide-react";
 import { getClients } from "@/lib/admin/data";
 import { AdminSearch } from "@/components/admin/AdminSearch";
+import { ExportButton } from "@/components/admin/ExportButton";
 
 function fmt(v: number) { return v.toLocaleString("uk-UA"); }
 function fmtD(d: string) { return new Date(d).toLocaleDateString("uk-UA", { day: "2-digit", month: "2-digit", year: "2-digit" }); }
@@ -17,7 +18,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div><h1 className="text-2xl font-semibold mb-1 flex items-center gap-3" style={{ color: "#f4f4f5" }}><Users className="w-6 h-6" style={{ color: "#a855f7" }} />Клієнти</h1><p className="text-sm" style={{ color: "#52525b" }}>{total} клієнтів</p></div>
-        <AdminSearch placeholder="Пошук за ім'ям, email, телефоном..." />
+        <div className="flex items-center gap-3"><AdminSearch placeholder="Пошук за ім'ям, email, телефоном..." /><ExportButton entity="clients" label="Експорт" /></div>
       </div>
       <div className="flex flex-wrap gap-2 mb-6">{types.map((t) => { const a = (p.type || "all") === t.k; return (
         <Link key={t.k} href={`/admin/clients?type=${t.k}`} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={a ? { background: "#1e1030", color: "#c084fc", border: "1px solid #581c87" } : { background: "#111116", color: "#71717a", border: "1px solid #1e1e2a" }}>{t.l}</Link>

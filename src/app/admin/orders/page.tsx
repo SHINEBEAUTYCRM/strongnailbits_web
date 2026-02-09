@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import { getOrders } from "@/lib/admin/data";
 import { AdminSearch } from "@/components/admin/AdminSearch";
+import { ExportButton } from "@/components/admin/ExportButton";
 
 const SM: Record<string, { label: string; c: string; bg: string }> = { new: { label: "Нове", c: "#60a5fa", bg: "#172554" }, processing: { label: "В обробці", c: "#fbbf24", bg: "#422006" }, shipped: { label: "Відправлено", c: "#a78bfa", bg: "#2e1065" }, delivered: { label: "Доставлено", c: "#4ade80", bg: "#052e16" }, cancelled: { label: "Скасовано", c: "#f87171", bg: "#450a0a" } };
 const PM: Record<string, string> = { pending: "Очікує", paid: "Оплачено", failed: "Помилка" };
@@ -19,7 +20,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div><h1 className="text-2xl font-semibold mb-1 flex items-center gap-3" style={{ color: "#f4f4f5" }}><ShoppingBag className="w-6 h-6" style={{ color: "#a855f7" }} />Замовлення</h1><p className="text-sm" style={{ color: "#52525b" }}>{total} замовлень</p></div>
-        <AdminSearch placeholder="Пошук за номером, ТТН..." />
+        <div className="flex items-center gap-3"><AdminSearch placeholder="Пошук за номером, ТТН..." /><ExportButton entity="orders" /></div>
       </div>
       <div className="flex flex-wrap gap-2 mb-6">{statuses.map((s) => { const a = (p.status || "all") === s; const l = s === "all" ? "Всі" : SM[s]?.label ?? s; return (
         <Link key={s} href={`/admin/orders?status=${s}${p.search ? `&search=${p.search}` : ""}`} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors" style={a ? { background: "#1e1030", color: "#c084fc", border: "1px solid #581c87" } : { background: "#111116", color: "#71717a", border: "1px solid #1e1e2a" }}>{l}</Link>

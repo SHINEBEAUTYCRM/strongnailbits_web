@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Package } from "lucide-react";
 import { getProducts } from "@/lib/admin/data";
 import { AdminSearch } from "@/components/admin/AdminSearch";
+import { ExportButton } from "@/components/admin/ExportButton";
 
 function fmt(v: number) { return v.toLocaleString("uk-UA"); }
 
@@ -16,7 +17,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div><h1 className="text-2xl font-semibold mb-1 flex items-center gap-3" style={{ color: "#f4f4f5" }}><Package className="w-6 h-6" style={{ color: "#a855f7" }} />Товари</h1><p className="text-sm" style={{ color: "#52525b" }}>{total} товарів</p></div>
-        <AdminSearch placeholder="Пошук за назвою, SKU..." />
+        <div className="flex items-center gap-3"><AdminSearch placeholder="Пошук за назвою, SKU..." /><ExportButton entity="products" /></div>
       </div>
       <div className="flex flex-wrap gap-2 mb-6">{statuses.map((s) => { const a = (p.status || "all") === s.k; return (
         <Link key={s.k} href={`/admin/products?status=${s.k}${p.search ? `&search=${p.search}` : ""}`} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={a ? { background: "#1e1030", color: "#c084fc", border: "1px solid #581c87" } : { background: "#111116", color: "#71717a", border: "1px solid #1e1e2a" }}>{s.l}</Link>
