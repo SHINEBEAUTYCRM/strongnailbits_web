@@ -182,9 +182,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Field({ label, value, onChange, type = "text", placeholder }: { label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string }) {
   return (
     <div>
-      <label className="block text-xs font-medium mb-1" style={{ color: "#52525b" }}>{label}</label>
+      <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>{label}</label>
       <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-        className="w-full px-3 py-2 rounded-lg text-sm outline-none" style={{ background: "#111116", border: "1px solid #1e1e2a", color: "#e4e4e7" }} />
+        className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
+        style={{ background: "#111116", border: "1px solid #1e1e2a", color: "#e4e4e7" }}
+        onFocus={(e) => { e.currentTarget.style.borderColor = "#7c3aed"; }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = "#1e1e2a"; }} />
     </div>
   );
 }
@@ -192,9 +195,12 @@ function Field({ label, value, onChange, type = "text", placeholder }: { label: 
 function TextArea({ label, value, onChange, rows = 4 }: { label: string; value: string; onChange: (v: string) => void; rows?: number }) {
   return (
     <div>
-      <label className="block text-xs font-medium mb-1" style={{ color: "#52525b" }}>{label}</label>
+      <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>{label}</label>
       <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={rows}
-        className="w-full px-3 py-2 rounded-lg text-sm outline-none resize-y" style={{ background: "#111116", border: "1px solid #1e1e2a", color: "#e4e4e7" }} />
+        className="w-full px-3 py-2.5 rounded-lg text-sm outline-none resize-y transition-colors"
+        style={{ background: "#111116", border: "1px solid #1e1e2a", color: "#e4e4e7" }}
+        onFocus={(e) => { e.currentTarget.style.borderColor = "#7c3aed"; }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = "#1e1e2a"; }} />
     </div>
   );
 }
@@ -202,9 +208,12 @@ function TextArea({ label, value, onChange, rows = 4 }: { label: string; value: 
 function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { v: string; l: string }[] }) {
   return (
     <div>
-      <label className="block text-xs font-medium mb-1" style={{ color: "#52525b" }}>{label}</label>
+      <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>{label}</label>
       <select value={value} onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 rounded-lg text-sm outline-none" style={{ background: "#111116", border: "1px solid #1e1e2a", color: "#e4e4e7" }}>
+        className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors cursor-pointer"
+        style={{ background: "#111116", border: "1px solid #1e1e2a", color: "#e4e4e7" }}
+        onFocus={(e) => { e.currentTarget.style.borderColor = "#7c3aed"; }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = "#1e1e2a"; }}>
         {options.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
       </select>
     </div>

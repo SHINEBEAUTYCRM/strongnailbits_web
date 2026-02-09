@@ -283,7 +283,9 @@ export function CategoryTable({ categories }: { categories: Cat[] }) {
                 </button>
 
                 {/* Edit */}
-                <Link href={`/admin/categories/${root.id}`} className="shrink-0 p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "#71717a" }} title="Редагувати">
+                <Link href={`/admin/categories/${root.id}`} className="shrink-0 p-2 rounded-lg transition-colors" style={{ color: "#3f3f46" }} title="Редагувати"
+                  onMouseEnter={(e) => { e.currentTarget.style.color = "#a1a1aa"; e.currentTarget.style.background = "#141420"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = "#3f3f46"; e.currentTarget.style.background = "transparent"; }}>
                   <Pencil className="w-4 h-4" />
                 </Link>
               </div>
@@ -338,7 +340,9 @@ export function CategoryTable({ categories }: { categories: Cat[] }) {
                               </button>
                             </td>
                             <td className="px-3 py-2">
-                              <Link href={`/admin/categories/${sub.id}`} className="p-1 rounded-lg opacity-0 group-hover/sub:opacity-100 transition-opacity inline-flex" style={{ color: "#52525b" }}>
+                              <Link href={`/admin/categories/${sub.id}`} className="p-1 rounded-lg transition-colors inline-flex" style={{ color: "#27272a" }}
+                                onMouseEnter={(e) => { e.currentTarget.style.color = "#a1a1aa"; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.color = "#27272a"; }}>
                                 <Pencil className="w-3.5 h-3.5" />
                               </Link>
                             </td>

@@ -25,7 +25,12 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   const breadcrumbs = (() => {
     const c: { label: string; href: string }[] = [{ label: "Dashboard", href: "/admin" }];
-    if (pathname !== "/admin") { const item = adminNavigation.flatMap((g) => g.items).find((i) => isActive(i.href)); if (item) c.push({ label: item.label, href: item.href }); }
+    if (pathname === "/admin") return c;
+    const item = adminNavigation.flatMap((g) => g.items).find((i) => isActive(i.href));
+    if (item) c.push({ label: item.label, href: item.href });
+    // Sub-routes
+    if (pathname.endsWith("/new")) c.push({ label: "Новий", href: pathname });
+    else if (/\/[0-9a-f-]{36}$/.test(pathname)) c.push({ label: "Редагувати", href: pathname });
     return c;
   })();
 
@@ -117,9 +122,28 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
 function SidebarItem({ item, active, collapsed }: { item: NavItem; active: boolean; collapsed: boolean }) {
   const Icon = item.icon;
+
+  if (item.soon) {
+    return (
+      <div className={`relative flex items-center gap-3 rounded-lg cursor-default ${collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2"}`}
+        style={{ opacity: 0.35 }} title={collapsed ? `${item.label} (скоро)` : undefined}>
+        <Icon className="w-[18px] h-[18px] shrink-0" style={{ color: "#3f3f46" }} />
+        {!collapsed && (
+          <>
+            <span className="text-sm font-medium truncate" style={{ color: "#3f3f46" }}>{item.label}</span>
+            <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded-full" style={{ color: "#3f3f46", background: "#141420" }}>скоро</span>
+          </>
+        )}
+        {collapsed && <div className="absolute left-full ml-2 px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 z-[60]" style={{ background: "#1e1e2a", border: "1px solid #27272a", color: "#52525b" }}>{item.label} (скоро)</div>}
+      </div>
+    );
+  }
+
   return (
-    <Link href={item.href} className={`group relative flex items-center gap-3 rounded-lg transition-colors duration-150 ${collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2"}`}
-      style={{ background: active ? "#18182a" : "transparent", color: active ? "#f4f4f5" : "#a1a1aa" }} title={collapsed ? item.label : undefined}>
+    <Link href={item.href} className={`group relative flex items-center gap-3 rounded-lg transition-all duration-150 ${collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2"}`}
+      style={{ background: active ? "#18182a" : "transparent", color: active ? "#f4f4f5" : "#a1a1aa" }} title={collapsed ? item.label : undefined}
+      onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "#0f0f1a"; }}
+      onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "transparent"; }}>
       {active && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full" style={{ background: "#a855f7" }} />}
       <Icon className="w-[18px] h-[18px] shrink-0" style={{ color: active ? "#a855f7" : "#71717a" }} />
       {!collapsed && <><span className="text-sm font-medium truncate">{item.label}</span>{item.badge !== undefined && <span className="ml-auto shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold text-white" style={{ background: "#7c3aed" }}>{item.badge}</span>}</>}
