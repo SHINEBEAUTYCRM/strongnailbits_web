@@ -54,21 +54,13 @@ export const adminNavigation: NavGroup[] = [
     label: "КЛІЄНТИ",
     items: [
       { label: "Клієнти", href: "/admin/clients", icon: Users },
-      {
-        label: "Групи клієнтів",
-        href: "/admin/client-groups",
-        icon: UserCog,
-      },
+      { label: "Групи клієнтів", href: "/admin/client-groups", icon: UserCog },
     ],
   },
   {
     label: "МАРКЕТИНГ",
     items: [
-      {
-        label: "Знижки / Промокоди",
-        href: "/admin/discounts",
-        icon: Percent,
-      },
+      { label: "Знижки / Промокоди", href: "/admin/discounts", icon: Percent },
       { label: "Банери", href: "/admin/banners", icon: ImageIcon },
     ],
   },

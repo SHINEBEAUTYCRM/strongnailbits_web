@@ -1,139 +1,60 @@
 import Link from "next/link";
 import { Package } from "lucide-react";
 import { getProducts } from "@/lib/admin/data";
+import { AdminSearch } from "@/components/admin/AdminSearch";
 
-function formatPrice(v: number) {
-  return v.toLocaleString("uk-UA");
-}
+function fmt(v: number) { return v.toLocaleString("uk-UA"); }
 
-export default async function ProductsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ page?: string; status?: string; search?: string }>;
-}) {
-  const params = await searchParams;
-  const page = Number(params.page) || 1;
-  const { products, total } = await getProducts({
-    page,
-    status: params.status,
-    search: params.search,
-  });
-  const totalPages = Math.ceil(total / 25);
-
-  const statuses = [
-    { key: "all", label: "Всі" },
-    { key: "active", label: "Активні" },
-    { key: "disabled", label: "Вимкнені" },
-    { key: "hidden", label: "Приховані" },
-  ];
+export default async function ProductsPage({ searchParams }: { searchParams: Promise<{ page?: string; status?: string; search?: string }> }) {
+  const p = await searchParams;
+  const page = Number(p.page) || 1;
+  const { products, total } = await getProducts({ page, status: p.status, search: p.search });
+  const tp = Math.ceil(total / 25);
+  const statuses = [{ k: "all", l: "Всі" }, { k: "active", l: "Активні" }, { k: "disabled", l: "Вимкнені" }, { k: "hidden", l: "Приховані" }];
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-white mb-1 flex items-center gap-3">
-            <Package className="w-6 h-6 text-purple-400" />
-            Товари
-          </h1>
-          <p className="text-sm text-white/40">{total} товарів</p>
-        </div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div><h1 className="text-2xl font-semibold mb-1 flex items-center gap-3" style={{ color: "#f4f4f5" }}><Package className="w-6 h-6" style={{ color: "#a855f7" }} />Товари</h1><p className="text-sm" style={{ color: "#52525b" }}>{total} товарів</p></div>
+        <AdminSearch placeholder="Пошук за назвою, SKU..." />
       </div>
-
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {statuses.map((s) => {
-          const active = (params.status || "all") === s.key;
-          return (
-            <Link
-              key={s.key}
-              href={`/admin/products?status=${s.key}${params.search ? `&search=${params.search}` : ""}`}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${
-                active
-                  ? "bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-white border border-purple-500/30"
-                  : "text-white/40 hover:text-white/60 bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06]"
-              }`}
-            >
-              {s.label}
-            </Link>
-          );
-        })}
-      </div>
-
-      {/* Table */}
-      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-white/[0.06]">
-                <th className="text-left px-4 py-3 text-[11px] font-medium text-white/30 uppercase tracking-wider">Товар</th>
-                <th className="text-left px-4 py-3 text-[11px] font-medium text-white/30 uppercase tracking-wider">SKU</th>
-                <th className="text-left px-4 py-3 text-[11px] font-medium text-white/30 uppercase tracking-wider">Категорія</th>
-                <th className="text-left px-4 py-3 text-[11px] font-medium text-white/30 uppercase tracking-wider">Бренд</th>
-                <th className="text-right px-4 py-3 text-[11px] font-medium text-white/30 uppercase tracking-wider">Ціна</th>
-                <th className="text-right px-4 py-3 text-[11px] font-medium text-white/30 uppercase tracking-wider">Залишок</th>
-                <th className="text-center px-4 py-3 text-[11px] font-medium text-white/30 uppercase tracking-wider">Статус</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((p) => {
-                const cat = p.categories as { name_uk?: string } | null;
-                const brand = p.brands as { name?: string } | null;
-                const stockColor = p.quantity === 0 ? "text-red-400" : p.quantity < 5 ? "text-amber-400" : "text-green-400";
-                const statusColor = p.status === "active" ? "bg-green-500/20 text-green-400" : "bg-white/10 text-white/30";
-                return (
-                  <tr key={p.id} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        {p.main_image_url ? (
-                          <img src={p.main_image_url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0 bg-white/5" />
-                        ) : (
-                          <div className="w-10 h-10 rounded-lg bg-white/[0.04] shrink-0" />
-                        )}
-                        <span className="text-white/80 truncate max-w-[250px]">{p.name_uk}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-white/40 font-mono text-xs">{p.sku || "—"}</td>
-                    <td className="px-4 py-3 text-white/40 text-xs">{cat?.name_uk || "—"}</td>
-                    <td className="px-4 py-3 text-white/40 text-xs">{brand?.name || "—"}</td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums text-white/70">
-                      {formatPrice(Number(p.price))} ₴
-                      {p.old_price && (
-                        <span className="block text-[10px] text-white/20 line-through">{formatPrice(Number(p.old_price))} ₴</span>
-                      )}
-                    </td>
-                    <td className={`px-4 py-3 text-right font-mono tabular-nums text-xs ${stockColor}`}>
-                      {p.quantity}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${statusColor}`}>
-                        {p.status === "active" ? "Актив" : p.status}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-              {products.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-white/20">Товарів не знайдено</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.06]">
-            <p className="text-xs text-white/30">Сторінка {page} з {totalPages}</p>
-            <div className="flex gap-1">
-              {page > 1 && (
-                <Link href={`/admin/products?page=${page - 1}&status=${params.status || "all"}`} className="px-3 py-1 rounded-lg text-xs text-white/50 hover:text-white bg-white/[0.03] hover:bg-white/[0.06] transition-colors">←</Link>
-              )}
-              {page < totalPages && (
-                <Link href={`/admin/products?page=${page + 1}&status=${params.status || "all"}`} className="px-3 py-1 rounded-lg text-xs text-white/50 hover:text-white bg-white/[0.03] hover:bg-white/[0.06] transition-colors">→</Link>
-              )}
-            </div>
+      <div className="flex flex-wrap gap-2 mb-6">{statuses.map((s) => { const a = (p.status || "all") === s.k; return (
+        <Link key={s.k} href={`/admin/products?status=${s.k}${p.search ? `&search=${p.search}` : ""}`} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={a ? { background: "#1e1030", color: "#c084fc", border: "1px solid #581c87" } : { background: "#111116", color: "#71717a", border: "1px solid #1e1e2a" }}>{s.l}</Link>
+      ); })}</div>
+      <div className="rounded-2xl overflow-hidden" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
+        <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr style={{ borderBottom: "1px solid #1e1e2a" }}>
+          <th className="text-left px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Товар</th>
+          <th className="text-left px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>SKU</th>
+          <th className="text-left px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Категорія</th>
+          <th className="text-left px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Бренд</th>
+          <th className="text-right px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Ціна</th>
+          <th className="text-right px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Залишок</th>
+          <th className="text-center px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Статус</th>
+        </tr></thead><tbody>{products.map((pr) => {
+          const cat = pr.categories as { name_uk?: string } | null;
+          const brand = pr.brands as { name?: string } | null;
+          const sc = pr.quantity === 0 ? "#f87171" : pr.quantity < 5 ? "#fbbf24" : "#4ade80";
+          const stC = pr.status === "active" ? { c: "#4ade80", bg: "#052e16" } : { c: "#71717a", bg: "#18181b" };
+          return (<tr key={pr.id} style={{ borderBottom: "1px solid #141420" }}>
+            <td className="px-4 py-3"><div className="flex items-center gap-3">
+              {pr.main_image_url ? <img src={pr.main_image_url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" style={{ background: "#1a1a24" }} /> : <div className="w-10 h-10 rounded-lg shrink-0" style={{ background: "#141420" }} />}
+              <span className="truncate max-w-[250px]" style={{ color: "#a1a1aa" }}>{pr.name_uk}</span>
+            </div></td>
+            <td className="px-4 py-3 font-mono text-xs" style={{ color: "#52525b" }}>{pr.sku || "—"}</td>
+            <td className="px-4 py-3 text-xs" style={{ color: "#52525b" }}>{cat?.name_uk || "—"}</td>
+            <td className="px-4 py-3 text-xs" style={{ color: "#52525b" }}>{brand?.name || "—"}</td>
+            <td className="px-4 py-3 text-right font-mono tabular-nums" style={{ color: "#a1a1aa" }}>{fmt(Number(pr.price))} ₴{pr.old_price && <span className="block text-[10px] line-through" style={{ color: "#3f3f46" }}>{fmt(Number(pr.old_price))} ₴</span>}</td>
+            <td className="px-4 py-3 text-right font-mono tabular-nums text-xs" style={{ color: sc }}>{pr.quantity}</td>
+            <td className="px-4 py-3 text-center"><span className="px-2 py-0.5 rounded-full text-[10px] font-medium" style={{ color: stC.c, background: stC.bg }}>{pr.status === "active" ? "Актив" : pr.status}</span></td>
+          </tr>);
+        })}{products.length === 0 && <tr><td colSpan={7} className="px-4 py-12 text-center" style={{ color: "#3f3f46" }}>Товарів не знайдено</td></tr>}</tbody></table></div>
+        {tp > 1 && <div className="flex items-center justify-between px-4 py-3" style={{ borderTop: "1px solid #1e1e2a" }}>
+          <p className="text-xs" style={{ color: "#3f3f46" }}>Сторінка {page} з {tp}</p>
+          <div className="flex gap-1">
+            {page > 1 && <Link href={`/admin/products?page=${page - 1}&status=${p.status || "all"}`} className="px-3 py-1 rounded-lg text-xs" style={{ color: "#71717a", background: "#111116" }}>←</Link>}
+            {page < tp && <Link href={`/admin/products?page=${page + 1}&status=${p.status || "all"}`} className="px-3 py-1 rounded-lg text-xs" style={{ color: "#71717a", background: "#111116" }}>→</Link>}
           </div>
-        )}
+        </div>}
       </div>
     </div>
   );

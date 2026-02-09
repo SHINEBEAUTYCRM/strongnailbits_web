@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogIn, Eye, EyeOff, AlertCircle, Loader2 } from "lucide-react";
@@ -8,106 +7,41 @@ export default function AdminLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    // TODO: Replace with real Supabase auth
-    setTimeout(() => {
-      router.push("/admin");
-      setLoading(false);
-    }, 500);
+    if (!email || !password) { setError("Заповніть всі поля"); return; }
+    setLoading(true); setError("");
+    setTimeout(() => { router.push("/admin"); setLoading(false); }, 500);
   };
 
   return (
-    <div className="min-h-full flex items-center justify-center p-4">
-      <div className="w-full max-w-[400px]">
-        {/* Logo */}
-        <div className="text-center mb-10">
-          <h1 className="text-2xl font-bold tracking-wider">
-            <span className="bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
-              SHINE
-            </span>{" "}
-            <span className="text-white/60">ADMIN</span>
-          </h1>
-          <p className="text-sm text-white/30 mt-2">Панель управління</p>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center" style={{ background: "#08080c" }}>
+      <div className="w-full max-w-[400px] mx-4">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold tracking-wider mb-2"><span style={{ color: "#a855f7" }}>SHINE</span> <span style={{ color: "#71717a" }}>ADMIN</span></h1>
+          <p className="text-sm" style={{ color: "#52525b" }}>Увійдіть в панель управління</p>
         </div>
-
-        {/* Form */}
-        <form
-          onSubmit={handleSubmit}
-          className="rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl p-8"
-        >
-          {error && (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 mb-6">
-              <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-              <p className="text-sm text-red-400">{error}</p>
-            </div>
-          )}
-
+        <form onSubmit={handleSubmit} className="rounded-2xl p-6" style={{ background: "#0c0c12", border: "1px solid #1e1e2a" }}>
+          {error && <div className="flex items-center gap-2 px-3 py-2 rounded-lg mb-4 text-sm" style={{ background: "#1c1017", border: "1px solid #7f1d1d", color: "#ef4444" }}><AlertCircle className="w-4 h-4 shrink-0" />{error}</div>}
           <div className="mb-4">
-            <label className="block text-xs font-medium text-white/40 mb-2 uppercase tracking-wider">
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="admin@shineshop.com"
-              className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white text-sm placeholder:text-white/20 outline-none focus:border-purple-500/50 transition-colors"
-            />
+            <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>Email</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@shineshop.com" className="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style={{ background: "#111116", border: "1px solid #1e1e2a", color: "#e4e4e7" }} />
           </div>
-
           <div className="mb-6">
-            <label className="block text-xs font-medium text-white/40 mb-2 uppercase tracking-wider">
-              Пароль
-            </label>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>Пароль</label>
             <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="••••••••"
-                className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white text-sm placeholder:text-white/20 outline-none focus:border-purple-500/50 transition-colors pr-11"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
-              >
-                {showPassword ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
-              </button>
+              <input type={showPw ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="w-full px-3 py-2.5 rounded-lg text-sm outline-none pr-10" style={{ background: "#111116", border: "1px solid #1e1e2a", color: "#e4e4e7" }} />
+              <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "#52525b" }}>{showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
             </div>
           </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-all duration-150 flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <LogIn className="w-4 h-4" />
-            )}
-            {loading ? "Вхід..." : "Увійти"}
+          <button type="submit" disabled={loading} className="w-full py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-50 flex items-center justify-center gap-2" style={{ background: "#7c3aed" }}>
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />} Увійти
           </button>
         </form>
-
-        <p className="text-center text-[11px] text-white/15 mt-8">
-          SHINE SHOP Admin Panel v1.0
-        </p>
       </div>
     </div>
   );
