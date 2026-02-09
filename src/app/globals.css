@@ -1,0 +1,192 @@
+@import "tailwindcss";
+
+/* ================================================================ */
+/*  SHINE SHOP — Comfy-inspired Clean Theme                         */
+/* ================================================================ */
+
+@theme inline {
+  /* Brand colors */
+  --color-coral: #FF2D55;
+  --color-coral-2: #e0264a;
+  --color-coral-light: rgba(255, 45, 85, 0.06);
+  --color-violet: #8B5CF6;
+  --color-dark: #1a1a1a;
+  --color-pearl: #FAFAF8;
+  --color-sand: #F3F1EE;
+  --color-green: #00C853;
+  --color-amber: #FF9500;
+  --color-red: #FF3B30;
+
+  /* Semantic */
+  --color-background: #f5f5f7;
+  --color-foreground: #1a1a1a;
+
+  /* Fonts */
+  --font-sans: var(--font-inter), "Inter", system-ui, sans-serif;
+  --font-heading: var(--font-unbounded), "Unbounded", cursive;
+  --font-mono: var(--font-jetbrains), "JetBrains Mono", monospace;
+
+  /* Radii */
+  --radius-card: 16px;
+  --radius-pill: 50px;
+}
+
+/* ================================================================ */
+/*  CSS Variables                                                     */
+/* ================================================================ */
+
+:root {
+  --bg: #f5f5f7;
+  --bg2: #e8e8e8;
+  --card: #FFFFFF;
+  --coral: #FF2D55;
+  --coral2: #e0264a;
+  --violet: #8B5CF6;
+  --dark: #1a1a1a;
+  --t: #1a1a1a;
+  --t2: #6b6b7b;
+  --t3: #b0b0be;
+  --green: #00C853;
+  --amber: #FF9500;
+  --red: #FF3B30;
+  --border: #f0f0f0;
+}
+
+/* ================================================================ */
+/*  Base                                                              */
+/* ================================================================ */
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: var(--bg);
+  color: var(--t);
+  font-family: var(--font-inter), "Inter", system-ui, sans-serif;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+/* ================================================================ */
+/*  Selection                                                         */
+/* ================================================================ */
+
+::selection {
+  background: rgba(255, 45, 85, 0.15);
+  color: var(--dark);
+}
+
+/* ================================================================ */
+/*  Focus                                                             */
+/* ================================================================ */
+
+*:focus-visible {
+  outline: 2px solid rgba(255, 45, 85, 0.4);
+  outline-offset: 2px;
+}
+
+/* ================================================================ */
+/*  Scrollbar                                                         */
+/* ================================================================ */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ================================================================ */
+/*  Font utilities                                                    */
+/* ================================================================ */
+
+.font-unbounded {
+  font-family: var(--font-unbounded), "Unbounded", cursive;
+}
+
+.font-price {
+  font-family: var(--font-jetbrains), "JetBrains Mono", monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ================================================================ */
+/*  Gradient text                                                     */
+/* ================================================================ */
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--coral), var(--violet));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ================================================================ */
+/*  Sale pulse dot                                                    */
+/* ================================================================ */
+
+@keyframes sale-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.sale-dot {
+  animation: sale-pulse 2s ease-in-out infinite;
+}
+
+/* ================================================================ */
+/*  Scroll reveal                                                     */
+/* ================================================================ */
+
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+.reveal.revealed {
+  animation: reveal-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ================================================================ */
+/*  CTA glow                                                          */
+/* ================================================================ */
+
+.glow-coral {
+  box-shadow: 0 8px 24px rgba(255, 45, 85, 0.25);
+}
+
+.glow-violet {
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.25);
+}
