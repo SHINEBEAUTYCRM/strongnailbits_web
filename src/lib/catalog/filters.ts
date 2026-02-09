@@ -215,7 +215,9 @@ export async function fetchFilteredProducts({
     query = query.gt("old_price", 0);
   }
 
-  // Sort
+  // Sort: always push out-of-stock (quantity=0) to the bottom
+  query = query.order("quantity", { ascending: false, nullsFirst: false });
+  // Then apply user's chosen sort as secondary
   const sortDef = SORT_MAP[filters.sort];
   query = query.order(sortDef.column, { ascending: sortDef.ascending });
 
