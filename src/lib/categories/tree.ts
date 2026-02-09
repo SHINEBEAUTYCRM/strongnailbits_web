@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { unstable_cache } from "next/cache";
 
 export interface CategoryNode {
   id: string;
@@ -42,7 +43,7 @@ function pruneEmpty(nodes: CategoryNode[]): CategoryNode[] {
     .filter((n) => n.total_product_count > 0 || n.children.length > 0);
 }
 
-export async function getCategoryTree(): Promise<CategoryNode[]> {
+async function _fetchCategoryTree(): Promise<CategoryNode[]> {
   const supabase = createAdminClient();
 
   const { data: categories } = await supabase
@@ -53,7 +54,6 @@ export async function getCategoryTree(): Promise<CategoryNode[]> {
 
   if (!categories) return [];
 
-  // Filter out blacklisted names
   const clean = categories.filter((cat) => !isHidden(cat.name_uk));
 
   const map = new Map<number, CategoryNode>();
@@ -65,31 +65,29 @@ export async function getCategoryTree(): Promise<CategoryNode[]> {
 
   for (const cat of clean) {
     const node = map.get(cat.cs_cart_id)!;
-
     if (cat.parent_cs_cart_id === null || cat.parent_cs_cart_id === 0) {
-      // True root — parent_id was 0 in CS-Cart
       roots.push(node);
     } else if (map.has(cat.parent_cs_cart_id)) {
-      // Valid parent exists in the active set
       map.get(cat.parent_cs_cart_id)!.children.push(node);
     }
-    // else: orphan — parent is disabled/hidden → silently drop
   }
-
-  /* ------------------------------------------------------------------ */
-  /* Deduplicate roots: CS-Cart may have a second storefront whose       */
-  /* root categories (parent_id=0, position=0) duplicate categories      */
-  /* from the main store. Keep only roots with position > 0 when both    */
-  /* positioned and unpositioned roots exist.                             */
-  /* ------------------------------------------------------------------ */
 
   const hasPositionedRoots = roots.some((r) => r.position > 0);
   const deduped = hasPositionedRoots
     ? roots.filter((r) => r.position > 0)
     : roots;
 
-  // Compute total product counts (including descendants)
   computeTotals(deduped);
-
   return pruneEmpty(deduped);
 }
+
+/**
+ * Cached category tree — revalidates every 5 minutes.
+ * This avoids hitting Supabase on every page render for
+ * homepage sidebar, catalog, header menu, etc.
+ */
+export const getCategoryTree = unstable_cache(
+  _fetchCategoryTree,
+  ["category-tree"],
+  { revalidate: 300 }, // 5 minutes
+);

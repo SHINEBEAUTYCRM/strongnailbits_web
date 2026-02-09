@@ -3,6 +3,9 @@ import { getCategoryTree } from "@/lib/categories/tree";
 import { HomeSidebar } from "@/components/home/HomeSidebar";
 import { HeroBanner } from "@/components/home/HeroBanner";
 import { QuickCategories } from "@/components/home/QuickCategories";
+
+/** ISR: revalidate homepage every 2 minutes */
+export const revalidate = 120;
 import { CatalogButton } from "@/components/home/CatalogButton";
 import { ProductSection } from "@/components/home/ProductSection";
 import { Features } from "@/components/home/Features";

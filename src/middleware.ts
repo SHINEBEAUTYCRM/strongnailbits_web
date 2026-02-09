@@ -1,14 +1,28 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+/**
+ * Performance-optimized middleware:
+ * - Only runs auth check on routes that NEED it (/account, /login, /register)
+ * - All other routes pass through instantly (no Supabase call)
+ */
+
+/** Routes that require authentication checking */
+const AUTH_ROUTES = ["/account", "/login", "/register"];
+
+function needsAuthCheck(pathname: string): boolean {
+  return AUTH_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"));
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // ─── TEMPORARY: Skip ALL admin routes (no auth checks) ───
-  if (pathname.startsWith("/admin")) {
+  // ── Fast path: skip auth for all public pages ──
+  if (!needsAuthCheck(pathname)) {
     return NextResponse.next({ request });
   }
 
+  // ── Auth check only for /account, /login, /register ──
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -43,10 +57,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (
-    user &&
-    (pathname === "/login" || pathname === "/register")
-  ) {
+  if (user && (pathname === "/login" || pathname === "/register")) {
     const url = request.nextUrl.clone();
     url.pathname = "/account";
     return NextResponse.redirect(url);

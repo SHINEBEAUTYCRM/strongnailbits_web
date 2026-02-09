@@ -7,6 +7,9 @@ import { ProductInfo } from "@/components/product/ProductInfo";
 import { ProductBuySidebar } from "@/components/product/ProductBuySidebar";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
 
+/** ISR: revalidate product pages every 3 minutes */
+export const revalidate = 180;
+
 /* ------------------------------------------------------------------ */
 
 interface ProductPageProps {

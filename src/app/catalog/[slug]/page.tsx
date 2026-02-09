@@ -16,6 +16,9 @@ import {
   getCategoryScopeData,
 } from "@/lib/catalog/filters";
 
+/** ISR: revalidate category pages every 2 minutes */
+export const revalidate = 120;
+
 interface CategoryPageProps {
   params: Promise<{ slug: string }>;
   searchParams: Promise<Record<string, string | undefined>>;

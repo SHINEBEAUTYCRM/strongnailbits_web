@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Unbounded, Inter, JetBrains_Mono } from "next/font/google";
+import { Unbounded, Inter } from "next/font/google";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ToastContainer } from "@/components/ui/Toast";
@@ -8,21 +8,14 @@ import "./globals.css";
 const unbounded = Unbounded({
   variable: "--font-unbounded",
   subsets: ["latin", "cyrillic"],
-  weight: ["400", "500", "600", "700", "800", "900"],
+  weight: ["500", "700", "900"],
   display: "swap",
 });
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin", "cyrillic"],
-  weight: ["300", "400", "500", "600", "700"],
-  display: "swap",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains",
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -59,7 +52,7 @@ export default function RootLayout({
   return (
     <html lang="uk">
       <body
-        className={`${unbounded.variable} ${inter.variable} ${jetbrainsMono.variable} antialiased`}
+        className={`${unbounded.variable} ${inter.variable} antialiased`}
       >
         <Header />
         <main className="min-h-[calc(100dvh-80px)]">{children}</main>

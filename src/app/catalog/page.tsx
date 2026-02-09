@@ -13,6 +13,9 @@ import {
 } from "@/lib/catalog/filters";
 import type { Metadata } from "next";
 
+/** ISR: revalidate catalog every 2 minutes */
+export const revalidate = 120;
+
 export const metadata: Metadata = {
   title: "Каталог",
   description:

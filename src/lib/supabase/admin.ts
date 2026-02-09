@@ -1,11 +1,15 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * Supabase Admin Client — обходить RLS (Row Level Security).
- * НІКОЛИ не використовувати в клієнтському коді або браузері.
- * Тільки для серверних операцій: sync engine, міграції, адмін-задачі.
+ * Singleton pattern — reuses the same client instance across all calls
+ * within a single server runtime (avoids reconnection overhead).
  */
-export function createAdminClient() {
+let _adminClient: SupabaseClient | null = null;
+
+export function createAdminClient(): SupabaseClient {
+  if (_adminClient) return _adminClient;
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -15,10 +19,12 @@ export function createAdminClient() {
     );
   }
 
-  return createClient(supabaseUrl, serviceRoleKey, {
+  _adminClient = createClient(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
     },
   });
+
+  return _adminClient;
 }

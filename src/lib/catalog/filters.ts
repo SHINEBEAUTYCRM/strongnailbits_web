@@ -211,16 +211,16 @@ export async function fetchFilteredProducts({
 
   // ── Two-pass: in-stock first, out-of-stock at the bottom ──
 
-  // 1) Count in-stock products matching all filters
-  const { count: rawInStock } = await applyFilters(
-    supabase.from("products").select("id", { count: "exact", head: true }),
-  ).gt("quantity", 0);
+  // 1+2) Count in-stock and out-of-stock in parallel
+  const [{ count: rawInStock }, { count: rawOutOfStock }] = await Promise.all([
+    applyFilters(
+      supabase.from("products").select("id", { count: "exact", head: true }),
+    ).gt("quantity", 0),
+    applyFilters(
+      supabase.from("products").select("id", { count: "exact", head: true }),
+    ).lte("quantity", 0),
+  ]);
   const inStockCount = rawInStock ?? 0;
-
-  // 2) Count out-of-stock products matching all filters
-  const { count: rawOutOfStock } = await applyFilters(
-    supabase.from("products").select("id", { count: "exact", head: true }),
-  ).lte("quantity", 0);
   const outOfStockCount = rawOutOfStock ?? 0;
 
   const totalAll = inStockCount + outOfStockCount;
@@ -277,55 +277,75 @@ export async function fetchBrandsForFilter(
 ): Promise<{ brands: BrandFilterItem[]; minPrice: number; maxPrice: number }> {
   const supabase = createAdminClient();
 
-  // Get all active products in this scope to compute brand counts & price range
-  let query = supabase
+  // ── Parallel: price range + brand_id list (only 2 small columns) ──
+  const priceQuery = supabase
     .from("products")
-    .select("brand_id, price")
-    .eq("status", "active");
+    .select("price")
+    .eq("status", "active")
+    .gt("price", 0)
+    .order("price", { ascending: true })
+    .limit(1);
+
+  const priceQueryMax = supabase
+    .from("products")
+    .select("price")
+    .eq("status", "active")
+    .gt("price", 0)
+    .order("price", { ascending: false })
+    .limit(1);
+
+  let brandQuery = supabase
+    .from("products")
+    .select("brand_id")
+    .eq("status", "active")
+    .not("brand_id", "is", null);
 
   if (categoryIds && categoryIds.length > 0) {
-    query = query.in("category_id", categoryIds);
+    brandQuery = brandQuery.in("category_id", categoryIds);
   }
 
-  const { data: rows } = await query;
-  const products = rows ?? [];
-
-  if (products.length === 0) {
-    return { brands: [], minPrice: 0, maxPrice: 0 };
+  // Apply category filter to price queries too
+  let pqMin = priceQuery;
+  let pqMax = priceQueryMax;
+  if (categoryIds && categoryIds.length > 0) {
+    pqMin = pqMin.in("category_id", categoryIds);
+    pqMax = pqMax.in("category_id", categoryIds);
   }
 
-  // Price range
-  const prices = products.map((p) => Number(p.price)).filter((p) => p > 0);
-  const minPrice = prices.length > 0 ? Math.floor(Math.min(...prices)) : 0;
-  const maxPrice = prices.length > 0 ? Math.ceil(Math.max(...prices)) : 0;
+  const [minRes, maxRes, brandRes] = await Promise.all([
+    pqMin,
+    pqMax,
+    brandQuery,
+  ]);
 
-  // Brand counts
-  const brandCounts = new Map<string, number>();
-  for (const p of products) {
-    if (p.brand_id) {
-      brandCounts.set(p.brand_id, (brandCounts.get(p.brand_id) ?? 0) + 1);
-    }
-  }
+  const minPrice = minRes.data?.[0]?.price ? Math.floor(Number(minRes.data[0].price)) : 0;
+  const maxPrice = maxRes.data?.[0]?.price ? Math.ceil(Number(maxRes.data[0].price)) : 0;
 
-  if (brandCounts.size === 0) {
+  const brandRows = brandRes.data ?? [];
+  if (brandRows.length === 0) {
     return { brands: [], minPrice, maxPrice };
   }
 
-  // Fetch brand names
-  const { data: brandRows } = await supabase
+  // Count brands in JS (still faster than loading full products)
+  const brandCounts = new Map<string, number>();
+  for (const p of brandRows) {
+    brandCounts.set(p.brand_id, (brandCounts.get(p.brand_id) ?? 0) + 1);
+  }
+
+  // Fetch brand names for the unique brand IDs found
+  const { data: brandNameRows } = await supabase
     .from("brands")
     .select("id, slug, name")
     .in("id", [...brandCounts.keys()])
     .order("name", { ascending: true });
 
-  const brands: BrandFilterItem[] = (brandRows ?? []).map((b) => ({
+  const brands: BrandFilterItem[] = (brandNameRows ?? []).map((b) => ({
     id: b.id,
     slug: b.slug,
     name: b.name,
     count: brandCounts.get(b.id) ?? 0,
   }));
 
-  // Sort by count descending
   brands.sort((a, b) => b.count - a.count);
 
   return { brands, minPrice, maxPrice };
