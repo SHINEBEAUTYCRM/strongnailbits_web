@@ -181,7 +181,8 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
           {products.length > 0 ? (
             <>
               <ProductGrid>
-                {products.map((product) => {
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {products.map((product: any) => {
                   const brandData = product.brands as
                     | { name: string }
                     | { name: string }[]
