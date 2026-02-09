@@ -41,8 +41,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         <div className="h-16 flex items-center px-5 shrink-0" style={{ borderBottom: "1px solid #1e1e2a" }}>
           {!collapsed || mobileOpen ? (
             <Link href="/admin" className="flex items-center gap-2">
-              <span className="text-lg font-bold tracking-wider" style={{ color: "#a855f7" }}>SHINE</span>
-              <span className="text-sm font-medium" style={{ color: "#71717a" }}>ADMIN</span>
+              <span className="text-lg font-bold tracking-wider" style={{ color: "#a855f7" }}>ShineShop</span>
+              <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: "#52525b" }}>OS</span>
             </Link>
           ) : (
             <Link href="/admin" className="w-full flex justify-center"><span className="text-lg font-bold" style={{ color: "#a855f7" }}>S</span></Link>
@@ -67,6 +67,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             </div>
           ) : (
             <div className="flex justify-center py-2 mb-2"><div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: "#7c3aed" }}>A</div></div>
+          )}
+          {(!collapsed || mobileOpen) && (
+            <p className="text-center text-[10px] tracking-wider pb-1" style={{ color: "#27272a" }}>powered by <span style={{ color: "#3f3f46" }}>DANGROW</span></p>
           )}
         </div>
       </aside>

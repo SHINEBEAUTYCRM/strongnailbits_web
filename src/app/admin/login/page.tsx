@@ -22,7 +22,7 @@ export default function AdminLoginPage() {
     <div className="fixed inset-0 z-[9999] flex items-center justify-center" style={{ background: "#08080c" }}>
       <div className="w-full max-w-[400px] mx-4">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold tracking-wider mb-2"><span style={{ color: "#a855f7" }}>SHINE</span> <span style={{ color: "#71717a" }}>ADMIN</span></h1>
+          <h1 className="text-2xl font-bold tracking-wider mb-1"><span style={{ color: "#a855f7" }}>ShineShop</span> <span style={{ color: "#52525b", fontSize: "14px", letterSpacing: "0.15em" }}>OPERATING SYSTEM</span></h1>
           <p className="text-sm" style={{ color: "#52525b" }}>Увійдіть в панель управління</p>
         </div>
         <form onSubmit={handleSubmit} className="rounded-2xl p-6" style={{ background: "#0c0c12", border: "1px solid #1e1e2a" }}>
@@ -42,6 +42,7 @@ export default function AdminLoginPage() {
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />} Увійти
           </button>
         </form>
+        <p className="text-center text-[10px] tracking-wider mt-6" style={{ color: "#27272a" }}>powered by <span style={{ color: "#3f3f46" }}>DANGROW</span></p>
       </div>
     </div>
   );
