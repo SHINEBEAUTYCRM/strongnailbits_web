@@ -39,6 +39,16 @@ export async function getOrders(params: { page?: number; limit?: number; status?
   return { orders: data ?? [], total: count ?? 0 };
 }
 
+export async function getOrderById(id: string) {
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("orders")
+    .select("*, profiles(id, first_name, last_name, email, phone, company, type)")
+    .eq("id", id)
+    .single();
+  return data;
+}
+
 /* ─── Products ─── */
 export async function getProducts(params: { page?: number; limit?: number; status?: string; search?: string }) {
   const { page = 1, limit = 25, status, search } = params;

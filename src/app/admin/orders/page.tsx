@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, ChevronRight } from "lucide-react";
 import { getOrders } from "@/lib/admin/data";
 import { AdminSearch } from "@/components/admin/AdminSearch";
 import { ExportButton } from "@/components/admin/ExportButton";
@@ -69,6 +69,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                 <th className="text-center px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Статус</th>
                 <th className="text-center px-4 py-3 text-[11px] font-medium uppercase tracking-wider hidden md:table-cell" style={{ color: "#3f3f46" }}>Оплата</th>
                 <th className="text-right px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Сума</th>
+                <th className="w-8 px-2 py-3" />
               </tr>
             </thead>
             <tbody>
@@ -80,7 +81,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                 return (
                   <tr key={o.id} className="transition-colors cursor-default hover:bg-[#111118]" style={{ borderBottom: "1px solid #141420" }}>
                     <td className="px-4 py-3">
-                      <span className="font-medium" style={{ color: "#e4e4e7" }}>#{o.order_number}</span>
+                      <Link href={`/admin/orders/${o.id}`} className="font-medium hover:underline" style={{ color: "#e4e4e7" }}>#{o.order_number}</Link>
                       {o.ttn && <p className="text-[10px] mt-0.5 font-mono" style={{ color: "#3f3f46" }}>ТТН: {o.ttn}</p>}
                     </td>
                     <td className="px-4 py-3 text-xs hidden sm:table-cell" style={{ color: "#71717a" }}>{fmtD(o.created_at)}</td>
@@ -95,11 +96,14 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                     <td className="px-4 py-3 text-right">
                       <span className="font-semibold font-mono tabular-nums" style={{ color: "#e4e4e7" }}>{fmt(Number(o.total))} ₴</span>
                     </td>
+                    <td className="px-2 py-3">
+                      <Link href={`/admin/orders/${o.id}`} style={{ color: "#3f3f46" }}><ChevronRight className="w-4 h-4" /></Link>
+                    </td>
                   </tr>
                 );
               })}
               {orders.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-12 text-center" style={{ color: "#3f3f46" }}>Замовлень не знайдено</td></tr>
+                <tr><td colSpan={7} className="px-4 py-12 text-center" style={{ color: "#3f3f46" }}>Замовлень не знайдено</td></tr>
               )}
             </tbody>
           </table>
