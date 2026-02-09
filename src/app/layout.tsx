@@ -1,14 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Unbounded, Inter, JetBrains_Mono } from "next/font/google";
-import dynamic from "next/dynamic";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { ToastContainer } from "@/components/ui/Toast";
 import "./globals.css";
-
-const ToastContainer = dynamic(
-  () => import("@/components/ui/Toast").then((m) => m.ToastContainer),
-  { ssr: false },
-);
 
 const unbounded = Unbounded({
   variable: "--font-unbounded",

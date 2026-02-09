@@ -248,40 +248,61 @@ export async function syncProducts(): Promise<SyncResult> {
 
     console.log(`[sync:products] Category map loaded: ${categoryMap.size} entries`);
 
-    /* ---- 3. Завантажити ВСІ активні товари з CS-Cart ---- */
+    /* ---- 3. Завантажити ВСІ активні товари з CS-Cart (UK + RU) ---- */
 
-    const allProducts: CSCartProduct[] = [];
-    let page = 1;
-    let hasMore = true;
-    let totalPages = "?";
+    async function fetchAllProducts(langCode: string): Promise<CSCartProduct[]> {
+      const all: CSCartProduct[] = [];
+      let pg = 1;
+      let more = true;
+      let tp = "?";
 
-    while (hasMore) {
-      const response = await csCart.getProducts(page, ITEMS_PER_PAGE, { status: "A" });
-      const products = response.products ?? [];
+      while (more) {
+        const response = await csCart.getProducts(pg, ITEMS_PER_PAGE, {
+          status: "A",
+          lang_code: langCode,
+        });
+        const products = response.products ?? [];
+        all.push(...products);
 
-      allProducts.push(...products);
+        const totalItems = Number(response.params?.total_items ?? 0);
+        const fetched = pg * ITEMS_PER_PAGE;
 
-      const totalItems = Number(response.params?.total_items ?? 0);
-      const fetched = page * ITEMS_PER_PAGE;
+        if (tp === "?") {
+          tp = String(Math.ceil(totalItems / ITEMS_PER_PAGE));
+        }
 
-      if (totalPages === "?") {
-        totalPages = String(Math.ceil(totalItems / ITEMS_PER_PAGE));
+        console.log(
+          `[sync:products] [${langCode.toUpperCase()}] Page ${pg}/${tp}: got ${products.length} items (${Math.min(fetched, totalItems)}/${totalItems})`,
+        );
+
+        more = products.length === ITEMS_PER_PAGE && fetched < totalItems;
+        pg++;
       }
 
-      console.log(
-        `[sync:products] Page ${page}/${totalPages}: got ${products.length} items (${Math.min(fetched, totalItems)}/${totalItems})`,
-      );
-
-      hasMore = products.length === ITEMS_PER_PAGE && fetched < totalItems;
-      page++;
+      return all;
     }
 
-    console.log(`[sync:products] Total fetched from CS-Cart: ${allProducts.length}`);
+    console.log("[sync:products] Fetching UK and RU products in parallel...");
+
+    const [allProducts, allProductsRu] = await Promise.all([
+      fetchAllProducts("uk"),
+      fetchAllProducts("ru"),
+    ]);
+
+    console.log(
+      `[sync:products] Total fetched: UK=${allProducts.length}, RU=${allProductsRu.length}`,
+    );
+
+    // Build RU lookup map by product_id
+    const ruMap = new Map<number, CSCartProduct>();
+    for (const p of allProductsRu) {
+      ruMap.set(p.product_id, p);
+    }
 
     /* ---- 4. Маппінг та підготовка рядків ---- */
 
     const rows = deduplicateSlugs(
-      allProducts.map((p) => mapProduct(p, categoryMap)),
+      allProducts.map((p) => mapProduct(p, categoryMap, ruMap.get(p.product_id))),
     );
     const activeCsCartIds = rows.map((r) => r.cs_cart_id);
     itemsProcessed = rows.length;

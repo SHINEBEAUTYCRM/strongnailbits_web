@@ -59,6 +59,7 @@ export interface CSCartCategory {
   category_id: number;
   parent_id: number;
   category: string;
+  description?: string;
   status: string;
   product_count: number;
   position: number;

@@ -23,6 +23,9 @@ interface CategoryRow {
   cs_cart_id: number;
   parent_cs_cart_id: number | null;
   name_uk: string;
+  name_ru: string | null;
+  description_uk: string | null;
+  description_ru: string | null;
   slug: string;
   image_url: string | null;
   position: number;
@@ -62,11 +65,17 @@ function isBlacklisted(name: string): boolean {
 /*  Маппінг CS-Cart → Supabase                                        */
 /* ------------------------------------------------------------------ */
 
-function mapCategory(cat: CSCartCategory): CategoryRow {
+function mapCategory(
+  cat: CSCartCategory,
+  ruCat?: CSCartCategory | null,
+): CategoryRow {
   return {
     cs_cart_id: cat.category_id,
     parent_cs_cart_id: cat.parent_id === 0 ? null : cat.parent_id,
     name_uk: cat.category,
+    name_ru: ruCat?.category || null,
+    description_uk: cat.description || null,
+    description_ru: ruCat?.description || null,
     slug: slugify(cat.category) || `category-${cat.category_id}`,
     image_url: cat.main_pair?.detailed?.image_path ?? null,
     position: cat.position ?? 0,
@@ -149,32 +158,53 @@ export async function syncCategories(
       }
     }
 
-    /* ---- 2. Завантажити ВСІ активні категорії з CS-Cart ---- */
+    /* ---- 2. Завантажити ВСІ активні категорії з CS-Cart (UK + RU) ---- */
 
-    const allCategories: CSCartCategory[] = [];
-    let page = 1;
-    let hasMore = true;
+    async function fetchAllCategories(langCode: string): Promise<CSCartCategory[]> {
+      const all: CSCartCategory[] = [];
+      let pg = 1;
+      let more = true;
 
-    while (hasMore) {
-      console.log(`[sync:categories] Fetching page ${page}...`);
+      while (more) {
+        console.log(`[sync:categories] [${langCode.toUpperCase()}] Fetching page ${pg}...`);
 
-      const response = await csCart.getCategories(page, ITEMS_PER_PAGE, { status: "A" });
-      const categories = response.categories ?? [];
+        const response = await csCart.getCategories(pg, ITEMS_PER_PAGE, {
+          status: "A",
+          lang_code: langCode,
+        });
+        const categories = response.categories ?? [];
+        all.push(...categories);
 
-      allCategories.push(...categories);
+        const totalItems = Number(response.params?.total_items ?? 0);
+        const fetched = pg * ITEMS_PER_PAGE;
 
-      const totalItems = Number(response.params?.total_items ?? 0);
-      const fetched = page * ITEMS_PER_PAGE;
+        console.log(
+          `[sync:categories] [${langCode.toUpperCase()}] Page ${pg}: got ${categories.length} items (${Math.min(fetched, totalItems)}/${totalItems})`,
+        );
 
-      console.log(
-        `[sync:categories] Page ${page}: got ${categories.length} items (${Math.min(fetched, totalItems)}/${totalItems})`,
-      );
+        more = categories.length === ITEMS_PER_PAGE && fetched < totalItems;
+        pg++;
+      }
 
-      hasMore = categories.length === ITEMS_PER_PAGE && fetched < totalItems;
-      page++;
+      return all;
     }
 
-    console.log(`[sync:categories] Total fetched from CS-Cart: ${allCategories.length}`);
+    console.log("[sync:categories] Fetching UK and RU categories in parallel...");
+
+    const [allCategories, allCategoriesRu] = await Promise.all([
+      fetchAllCategories("uk"),
+      fetchAllCategories("ru"),
+    ]);
+
+    console.log(
+      `[sync:categories] Total fetched: UK=${allCategories.length}, RU=${allCategoriesRu.length}`,
+    );
+
+    // Build RU lookup map by category_id
+    const ruMap = new Map<number, CSCartCategory>();
+    for (const c of allCategoriesRu) {
+      ruMap.set(c.category_id, c);
+    }
 
     /* ---- 3. Маппінг та підготовка рядків ---- */
 
@@ -191,7 +221,9 @@ export async function syncCategories(
       `[sync:categories] After blacklist filter: ${cleanCategories.length} (removed ${allCategories.length - cleanCategories.length})`,
     );
 
-    const rows = deduplicateSlugs(cleanCategories.map(mapCategory));
+    const rows = deduplicateSlugs(
+      cleanCategories.map((cat) => mapCategory(cat, ruMap.get(cat.category_id))),
+    );
     const activeCsCartIds = new Set(rows.map((r) => r.cs_cart_id));
     itemsProcessed = rows.length;
 
