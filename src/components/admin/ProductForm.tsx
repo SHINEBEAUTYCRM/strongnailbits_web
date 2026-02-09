@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Save, Loader2, Trash2, ArrowLeft, Plus, X, ImageIcon } from "lucide-react";
+import { Save, Loader2, Trash2, ArrowLeft, Plus, X, ImageIcon, Camera } from "lucide-react";
 import Link from "next/link";
+import { ImageUpload } from "./ImageUpload";
 
 interface Category { id: string; name_uk: string; }
 interface Brand { id: string; name: string; }
@@ -153,14 +154,31 @@ export function ProductForm({
 
           {/* Images */}
           <Section title="Зображення">
-            <Field label="Головне зображення (URL)" value={form.main_image_url} onChange={(v) => set("main_image_url", v)} placeholder="https://..." />
-            {form.main_image_url && (
-              <div className="mt-2">
-                <img src={form.main_image_url} alt="" className="w-24 h-24 rounded-lg object-cover" style={{ background: "#141420" }} />
-              </div>
-            )}
-            <div className="mt-4">
-              <p className="text-xs font-medium mb-2" style={{ color: "#71717a" }}>Додаткові зображення</p>
+            <div>
+              <p className="text-xs font-medium mb-3" style={{ color: "#71717a" }}>Головне зображення</p>
+              {form.main_image_url ? (
+                <div className="flex items-start gap-4 mb-3">
+                  <div className="relative">
+                    <img src={form.main_image_url} alt="" className="w-32 h-32 rounded-lg object-cover" style={{ background: "#141420" }} />
+                    <button onClick={() => set("main_image_url", "")} className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "#450a0a", color: "#f87171", border: "1px solid #7f1d1d" }}>
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[10px] mb-1" style={{ color: "#3f3f46" }}>Замінити:</p>
+                    <ImageUpload onUpload={(url) => set("main_image_url", url)} currentUrl={form.main_image_url} compact />
+                  </div>
+                </div>
+              ) : (
+                <ImageUpload
+                  onUpload={(url) => set("main_image_url", url)}
+                  label=""
+                />
+              )}
+            </div>
+
+            <div className="mt-4 pt-4" style={{ borderTop: "1px solid #1e1e2a" }}>
+              <p className="text-xs font-medium mb-3" style={{ color: "#71717a" }}>Додаткові зображення</p>
               <div className="flex flex-wrap gap-2 mb-3">
                 {form.images.map((url, i) => (
                   <div key={i} className="relative group">
@@ -168,12 +186,19 @@ export function ProductForm({
                     <button onClick={() => removeImage(i)} className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "#450a0a", color: "#f87171" }}><X className="w-3 h-3" /></button>
                   </div>
                 ))}
-                {form.images.length === 0 && <p className="text-xs" style={{ color: "#3f3f46" }}>Немає додаткових зображень</p>}
+                <ImageUpload onUpload={(url) => set("images", [...form.images, url])} compact />
               </div>
-              <div className="flex gap-2">
-                <input type="text" value={newImageUrl} onChange={(e) => setNewImageUrl(e.target.value)} placeholder="URL зображення" className="flex-1 px-3 py-2 rounded-lg text-sm outline-none" style={{ background: "#111116", border: "1px solid #1e1e2a", color: "#e4e4e7" }} onKeyDown={(e) => e.key === "Enter" && addImage()} />
-                <button onClick={addImage} className="px-3 py-2 rounded-lg" style={{ background: "#141420", color: "#71717a", border: "1px solid #1e1e2a" }}><Plus className="w-4 h-4" /></button>
-              </div>
+
+              {/* Manual URL fallback */}
+              <details className="mt-2">
+                <summary className="text-[10px] cursor-pointer" style={{ color: "#3f3f46" }}>
+                  Або додати за URL...
+                </summary>
+                <div className="flex gap-2 mt-2">
+                  <input type="text" value={newImageUrl} onChange={(e) => setNewImageUrl(e.target.value)} placeholder="URL зображення" className="flex-1 px-3 py-2 rounded-lg text-sm outline-none" style={{ background: "#111116", border: "1px solid #1e1e2a", color: "#e4e4e7" }} onKeyDown={(e) => e.key === "Enter" && addImage()} />
+                  <button onClick={addImage} className="px-3 py-2 rounded-lg" style={{ background: "#141420", color: "#71717a", border: "1px solid #1e1e2a" }}><Plus className="w-4 h-4" /></button>
+                </div>
+              </details>
             </div>
           </Section>
 
