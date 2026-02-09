@@ -68,9 +68,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           ) : (
             <div className="flex justify-center py-2 mb-2"><div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: "#7c3aed" }}>A</div></div>
           )}
-          <button onClick={() => setCollapsed(!collapsed)} className="hidden lg:flex w-full items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ color: "#52525b" }}>
-            {collapsed ? <ChevronRight className="w-4 h-4" /> : <><ChevronLeft className="w-4 h-4" /><span>Згорнути</span></>}
-          </button>
         </div>
       </aside>
 
