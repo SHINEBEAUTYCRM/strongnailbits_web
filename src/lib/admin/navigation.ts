@@ -35,6 +35,7 @@ import {
   ScrollText,
   Plug,
   FlaskConical,
+  Shield,
 } from "lucide-react";
 
 export interface NavItem {
@@ -171,6 +172,7 @@ export const adminNavigation: NavGroup[] = [
       { label: "Логи", href: "/admin/settings/logs", icon: ScrollText, soon: true },
       { label: "Синхронізація", href: "/admin/sync", icon: RefreshCw },
       { label: "PageSpeed", href: "/admin/pagespeed", icon: Gauge },
+      { label: "Користувачі", href: "/admin/users", icon: Shield },
       { label: "Налаштування", href: "/admin/settings", icon: Settings, soon: true },
       { label: "API ключі", href: "/admin/api-keys", icon: Key },
     ],
