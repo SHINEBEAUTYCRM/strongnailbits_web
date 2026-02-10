@@ -7,6 +7,7 @@ import { ProductInfo } from "@/components/product/ProductInfo";
 import { ProductBuySidebar } from "@/components/product/ProductBuySidebar";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
 import { getLanguage, localizedName, localizedDescription } from "@/lib/language";
+import { TrackProductView } from "@/components/analytics/TrackProductView";
 
 /** ISR: revalidate product pages every 3 minutes */
 export const revalidate = 180;
@@ -168,6 +169,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <>
+      <TrackProductView
+        productId={product.id}
+        name={productName}
+        price={product.price}
+        brand={brand?.name}
+        category={categoryName || undefined}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

@@ -7,6 +7,7 @@ import { ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart";
 import { showToast } from "@/components/ui/Toast";
 import { useLanguage, localizedName } from "@/hooks/useLanguage";
+import { trackAddToCart } from "@/lib/analytics/tracker";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -76,6 +77,13 @@ export function DealOfDay({ product }: DealOfDayProps) {
       sku: null,
       max_quantity: 999,
       weight: null,
+    });
+    trackAddToCart({
+      item_id: product!.id,
+      item_name: localizedName(product!, lang),
+      price: product!.price,
+      quantity: 1,
+      discount: product!.old_price > product!.price ? product!.old_price - product!.price : 0,
     });
     showToast("Товар додано в кошик");
   }

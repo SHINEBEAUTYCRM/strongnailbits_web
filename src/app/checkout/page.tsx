@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart";
 import { OrderSummary } from "@/components/checkout/OrderSummary";
+import { TrackCheckout } from "@/components/analytics/TrackCheckout";
+import { trackPurchase } from "@/lib/analytics/tracker";
 
 interface FormData {
   firstName: string;
@@ -325,6 +327,20 @@ export default function CheckoutPage() {
       }
 
       const { orderNumber } = await res.json();
+
+      // Track purchase event before clearing cart
+      trackPurchase({
+        transaction_id: orderNumber,
+        value: getTotal(),
+        currency: "UAH",
+        items: items.map((i) => ({
+          item_id: i.product_id,
+          item_name: i.name,
+          price: i.price,
+          quantity: i.quantity,
+        })),
+      });
+
       clearCart();
       router.push(`/checkout/success?order=${orderNumber}`);
     } catch (err) {
@@ -345,6 +361,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6 lg:px-8">
+      <TrackCheckout />
       <Link
         href="/catalog"
         className="mb-6 inline-flex items-center gap-1 text-sm text-[var(--t2)] transition-colors hover:text-dark"

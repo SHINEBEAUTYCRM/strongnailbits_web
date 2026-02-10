@@ -3,6 +3,8 @@ import { Unbounded, Inter, JetBrains_Mono } from "next/font/google";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ToastContainer } from "@/components/ui/Toast";
+import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
+import { getAnalyticsConfig } from "@/lib/analytics/config";
 import "./globals.css";
 
 const unbounded = Unbounded({
@@ -66,16 +68,43 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const analytics = getAnalyticsConfig();
+
   return (
     <html lang="uk">
       <head>
         <link rel="dns-prefetch" href="https://kqgtxmdruxwtocmvsvwh.supabase.co" />
         <link rel="preconnect" href="https://kqgtxmdruxwtocmvsvwh.supabase.co" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://shine-shop.com.ua" />
+        {analytics.ga4MeasurementId && (
+          <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+        )}
+        {analytics.clarityProjectId && (
+          <link rel="dns-prefetch" href="https://www.clarity.ms" />
+        )}
       </head>
       <body
         className={`${unbounded.variable} ${inter.variable} ${jetbrainsMono.variable} antialiased`}
       >
+        {/* GTM noscript fallback */}
+        {analytics.gtmContainerId && (
+          <noscript>
+            <iframe
+              src={`https://www.googletagmanager.com/ns.html?id=${analytics.gtmContainerId}`}
+              height="0"
+              width="0"
+              style={{ display: "none", visibility: "hidden" }}
+            />
+          </noscript>
+        )}
+        <AnalyticsProvider
+          ga4Id={analytics.ga4MeasurementId}
+          gtmId={analytics.gtmContainerId}
+          clarityId={analytics.clarityProjectId}
+          posthogKey={analytics.posthogKey}
+          posthogHost={analytics.posthogHost}
+          fbPixelId={analytics.fbPixelId}
+        />
         <Header />
         <main className="min-h-[calc(100dvh-80px)]">{children}</main>
         <Footer />

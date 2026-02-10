@@ -19,6 +19,7 @@ import { useCartStore } from "@/lib/store/cart";
 import { useWishlistStore } from "@/lib/store/wishlist";
 import { showToast } from "@/components/ui/Toast";
 import { formatPrice } from "@/utils/format";
+import { trackAddToCart } from "@/lib/analytics/tracker";
 
 interface Props {
   productId: string;
@@ -80,6 +81,14 @@ export function ProductBuySidebar({
       sku,
       max_quantity: maxQty,
       weight: null,
+    });
+    trackAddToCart({
+      item_id: productId,
+      item_name: name,
+      item_brand: brand || undefined,
+      price,
+      quantity: qty,
+      discount: oldPrice && oldPrice > price ? oldPrice - price : 0,
     });
     showToast("Додано в кошик");
     setAdded(true);

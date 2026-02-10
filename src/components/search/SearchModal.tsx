@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createPortal } from "react-dom";
 import { Search, X, Loader2, ArrowRight, Tag, Grid3X3 } from "lucide-react";
 import { useLanguage, localizedName } from "@/hooks/useLanguage";
+import { trackSearch } from "@/lib/analytics/tracker";
 
 interface SearchProduct {
   id: string;
@@ -120,6 +121,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
       if (res.ok) {
         const data: SearchResults = await res.json();
         setResults(data);
+        trackSearch(q, data.products.length + data.categories.length + data.brands.length);
       }
     } catch {
       // silently ignore

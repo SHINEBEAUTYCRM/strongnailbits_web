@@ -7,6 +7,7 @@ import { Heart, ShoppingCart, Check, Package } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart";
 import { useWishlistStore } from "@/lib/store/wishlist";
 import { showToast } from "@/components/ui/Toast";
+import { trackAddToCart } from "@/lib/analytics/tracker";
 
 interface ProductCardProps {
   id: string;
@@ -71,6 +72,14 @@ export function ProductCard({
       sku: null,
       max_quantity: quantity,
       weight: null,
+    });
+    trackAddToCart({
+      item_id: id,
+      item_name: name,
+      item_brand: brand || undefined,
+      price,
+      quantity: 1,
+      discount: oldPrice && oldPrice > price ? oldPrice - price : 0,
     });
     showToast("Товар додано в кошик");
     setAdded(true);
