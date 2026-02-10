@@ -41,6 +41,38 @@ const EVENT_META: Record<string, { label: string; icon: any; color: string }> = 
   begin_checkout: { label: "Checkout",  icon: MousePointerClick,  color: "text-pink-400" },
 };
 
+/* Human-readable page names for paths */
+const PAGE_NAMES: Record<string, string> = {
+  "/": "Головна",
+  "/catalog": "Каталог",
+  "/search": "Пошук",
+  "/checkout": "Оформлення",
+  "/checkout/success": "Замовлення оформлено",
+  "/login": "Вхід",
+  "/register": "Реєстрація",
+  "/account": "Кабінет",
+  "/account/orders": "Мої замовлення",
+  "/wishlist": "Обране",
+  "/brands": "Бренди",
+  "/wholesale": "Опт",
+  "/delivery": "Доставка",
+  "/contacts": "Контакти",
+  "/about": "Про нас",
+  "/privacy": "Політика конфіденційності",
+};
+
+function friendlyPath(path: string): string {
+  if (!path) return "—";
+  if (PAGE_NAMES[path]) return PAGE_NAMES[path];
+  // /catalog/gel-laki → Каталог › gel-laki
+  if (path.startsWith("/catalog/")) return "Каталог › " + decodeURIComponent(path.slice(9));
+  // /product/baza-dark → Товар › baza-dark
+  if (path.startsWith("/product/")) return "Товар › " + decodeURIComponent(path.slice(9));
+  // /admin/... → Адмін › ...
+  if (path.startsWith("/admin")) return "Адмін › " + (path.slice(7) || "Dashboard");
+  return path;
+}
+
 export default function MarketingDashboard() {
   const [data, setData] = useState<MarketingData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -212,7 +244,7 @@ export default function MarketingDashboard() {
                     <Icon className={`h-3 w-3 shrink-0 ${m.color}`} />
                     <span className={`w-14 shrink-0 text-[10px] font-medium ${m.color}`}>{m.label}</span>
                     <span className="min-w-0 flex-1 truncate text-[11px] text-zinc-400">
-                      {e.product_name || e.search_query || e.order_id || e.page_path || "—"}
+                      {e.product_name || e.search_query || e.order_id || friendlyPath(e.page_path) || "—"}
                     </span>
                     {e.revenue && <span className="text-[10px] font-bold text-emerald-400">{Number(e.revenue).toLocaleString()} ₴</span>}
                     <span className="w-10 text-right text-[9px] text-zinc-600">{timeAgo(e.created_at)}</span>
@@ -236,7 +268,7 @@ export default function MarketingDashboard() {
                   <div className="min-w-0 flex-1">
                     <div className="relative h-5 overflow-hidden rounded bg-zinc-800/50">
                       <div className="absolute inset-y-0 left-0 rounded bg-indigo-500/15" style={{ width: `${(p.count / (d.topPages[0]?.count || 1)) * 100}%` }} />
-                      <span className="relative flex h-full items-center px-1.5 text-[11px] text-zinc-400">{p.path}</span>
+                      <span className="relative flex h-full items-center px-1.5 text-[11px] text-zinc-400">{friendlyPath(p.path)}</span>
                     </div>
                   </div>
                   <span className="w-8 text-right text-zinc-500">{p.count}</span>

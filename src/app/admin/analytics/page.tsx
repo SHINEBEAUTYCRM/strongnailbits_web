@@ -54,6 +54,34 @@ const EVENT_LABELS: Record<string, { label: string; icon: typeof Eye; color: str
   begin_checkout: { label: "Checkout", icon: MousePointerClick, color: "text-pink-400" },
 };
 
+const PAGE_NAMES: Record<string, string> = {
+  "/": "Головна",
+  "/catalog": "Каталог",
+  "/search": "Пошук",
+  "/checkout": "Оформлення",
+  "/checkout/success": "Замовлення оформлено",
+  "/login": "Вхід",
+  "/register": "Реєстрація",
+  "/account": "Кабінет",
+  "/account/orders": "Мої замовлення",
+  "/wishlist": "Обране",
+  "/brands": "Бренди",
+  "/wholesale": "Опт",
+  "/delivery": "Доставка",
+  "/contacts": "Контакти",
+  "/about": "Про нас",
+  "/privacy": "Політика конфіденційності",
+};
+
+function friendlyPath(path: string): string {
+  if (!path) return "—";
+  if (PAGE_NAMES[path]) return PAGE_NAMES[path];
+  if (path.startsWith("/catalog/")) return "Каталог › " + decodeURIComponent(path.slice(9));
+  if (path.startsWith("/product/")) return "Товар › " + decodeURIComponent(path.slice(9));
+  if (path.startsWith("/admin")) return "Адмін › " + (path.slice(7) || "Dashboard");
+  return path;
+}
+
 export default function AnalyticsPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -252,7 +280,7 @@ export default function AnalyticsPage() {
                       {event.product_name ||
                         event.search_query ||
                         event.order_id ||
-                        event.page_path ||
+                        friendlyPath(event.page_path || "") ||
                         "—"}
                     </span>
                     {event.revenue && (
@@ -295,7 +323,7 @@ export default function AnalyticsPage() {
                         }}
                       />
                       <span className="relative flex h-full items-center px-2 text-xs text-zinc-300">
-                        {page.path}
+                        {friendlyPath(page.path)}
                       </span>
                     </div>
                   </div>
