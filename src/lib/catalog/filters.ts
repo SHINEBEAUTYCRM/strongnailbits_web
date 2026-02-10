@@ -86,7 +86,7 @@ export async function getCategoryScopeData(
   const supabase = createAdminClient();
   const { data: allCats } = await supabase
     .from("categories")
-    .select("id, cs_cart_id, parent_cs_cart_id, name_uk, slug, product_count, position")
+    .select("id, cs_cart_id, parent_cs_cart_id, name_uk, name_ru, slug, product_count, position")
     .eq("status", "active")
     .order("position", { ascending: true });
 
@@ -179,7 +179,7 @@ export async function fetchFilteredProducts({
 
   const sortDef = SORT_MAP[filters.sort];
   const COLUMNS =
-    "id, slug, name_uk, price, old_price, main_image_url, status, quantity, is_new, is_featured, brand_id, brands!products_brand_id_fkey(name)";
+    "id, slug, name_uk, name_ru, price, old_price, main_image_url, status, quantity, is_new, is_featured, brand_id, brands!products_brand_id_fkey(name)";
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   type Q = any;

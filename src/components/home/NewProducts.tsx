@@ -1,11 +1,15 @@
+"use client";
+
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ProductGrid } from "@/components/product/ProductGrid";
+import { useLanguage, localizedName } from "@/hooks/useLanguage";
 
 interface NewProduct {
   id: string;
   slug: string;
   name_uk: string;
+  name_ru?: string | null;
   price: number;
   old_price: number | null;
   main_image_url: string | null;
@@ -21,6 +25,8 @@ interface NewProductsProps {
 }
 
 export function NewProducts({ products }: NewProductsProps) {
+  const { lang } = useLanguage();
+
   if (products.length === 0) return null;
 
   return (
@@ -44,7 +50,7 @@ export function NewProducts({ products }: NewProductsProps) {
               key={p.id}
               id={p.id}
               slug={p.slug}
-              name={p.name_uk}
+              name={localizedName(p, lang)}
               price={p.price}
               oldPrice={p.old_price}
               imageUrl={p.main_image_url}

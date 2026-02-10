@@ -4,11 +4,13 @@ import { useRef } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductCard } from "@/components/product/ProductCard";
+import { localizedName, type Lang } from "@/hooks/useLanguage";
 
 interface Product {
   id: string;
   slug: string;
   name_uk: string;
+  name_ru?: string | null;
   price: number;
   old_price: number | null;
   main_image_url: string | null;
@@ -22,6 +24,7 @@ interface Product {
 interface Props {
   title: string;
   products: Product[];
+  lang: Lang;
   linkHref?: string;
   linkText?: string;
 }
@@ -29,6 +32,7 @@ interface Props {
 export function ProductSection({
   title,
   products,
+  lang,
   linkHref,
   linkText,
 }: Props) {
@@ -97,7 +101,7 @@ export function ProductSection({
               <ProductCard
                 id={p.id}
                 slug={p.slug}
-                name={p.name_uk}
+                name={localizedName(p, lang)}
                 price={p.price}
                 oldPrice={p.old_price}
                 imageUrl={p.main_image_url}

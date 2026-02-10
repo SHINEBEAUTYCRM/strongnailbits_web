@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useState, useCallback } from "react";
 import { ChevronDown } from "lucide-react";
 import { useCategoryTree, type CatNode } from "@/hooks/useCategoryTree";
+import { useLanguage, localizedName } from "@/hooks/useLanguage";
 
 export function CategoryNav() {
   const tree = useCategoryTree();
+  const { lang } = useLanguage();
   const [hoverCatId, setHoverCatId] = useState<number | null>(null);
 
   const hoveredCat = hoverCatId
@@ -58,7 +60,7 @@ export function CategoryNav() {
                     : "text-white/70 hover:text-white"
                 }`}
               >
-                {cat.name_uk}
+                {localizedName(cat, lang)}
                 {cat.children.length > 0 && (
                   <ChevronDown
                     size={12}
@@ -87,7 +89,7 @@ export function CategoryNav() {
                 href={`/catalog/${hoveredCat.slug}`}
                 className="font-unbounded text-base font-bold text-dark hover:text-coral"
               >
-                {hoveredCat.name_uk}
+                {localizedName(hoveredCat, lang)}
               </Link>
               <Link
                 href={`/catalog/${hoveredCat.slug}`}
@@ -105,7 +107,7 @@ export function CategoryNav() {
                     href={`/catalog/${child.slug}`}
                     className="text-sm font-semibold text-dark transition-colors hover:text-coral"
                   >
-                    {child.name_uk}
+                    {localizedName(child, lang)}
                   </Link>
 
                   {child.children.length > 0 && (
@@ -116,7 +118,7 @@ export function CategoryNav() {
                             href={`/catalog/${gc.slug}`}
                             className="text-[13px] text-[var(--t2)] transition-colors hover:text-coral"
                           >
-                            {gc.name_uk}
+                            {localizedName(gc, lang)}
                           </Link>
                         </li>
                       ))}

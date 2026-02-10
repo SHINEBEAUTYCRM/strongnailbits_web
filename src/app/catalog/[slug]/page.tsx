@@ -15,6 +15,7 @@ import {
   buildFilteredUrl,
   getCategoryScopeData,
 } from "@/lib/catalog/filters";
+import { getLanguage, localizedName, type Lang } from "@/lib/language";
 
 /** ISR: revalidate category pages every 2 minutes */
 export const revalidate = 120;
@@ -28,11 +29,13 @@ interface CategoryRow {
   id: string;
   slug: string;
   name_uk: string;
+  name_ru: string | null;
   cs_cart_id: number;
   parent_cs_cart_id: number | null;
   image_url: string | null;
   product_count: number;
   description_uk: string | null;
+  description_ru: string | null;
   meta_title: string | null;
   meta_description: string | null;
 }
@@ -48,7 +51,7 @@ async function getCategory(slug: string) {
   return data as CategoryRow | null;
 }
 
-async function buildBreadcrumbs(category: CategoryRow): Promise<BreadcrumbItem[]> {
+async function buildBreadcrumbs(category: CategoryRow, lang: Lang): Promise<BreadcrumbItem[]> {
   const crumbs: BreadcrumbItem[] = [];
   const supabase = createAdminClient();
   let currentParentId = category.parent_cs_cart_id;
@@ -58,15 +61,15 @@ async function buildBreadcrumbs(category: CategoryRow): Promise<BreadcrumbItem[]
     visited.add(currentParentId);
     const { data: parent } = await supabase
       .from("categories")
-      .select("slug, name_uk, parent_cs_cart_id")
+      .select("slug, name_uk, name_ru, parent_cs_cart_id")
       .eq("cs_cart_id", currentParentId)
       .single();
     if (!parent) break;
-    crumbs.unshift({ label: parent.name_uk, href: `/catalog/${parent.slug}` });
+    crumbs.unshift({ label: localizedName(parent, lang), href: `/catalog/${parent.slug}` });
     currentParentId = parent.parent_cs_cart_id;
   }
 
-  crumbs.push({ label: category.name_uk });
+  crumbs.push({ label: localizedName(category, lang) });
   return crumbs;
 }
 
@@ -88,6 +91,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   const { slug } = await params;
   const sp = await searchParams;
   const filters = parseSearchParams(sp);
+  const lang = await getLanguage();
 
   const category = await getCategory(slug);
   if (!category) notFound();
@@ -96,7 +100,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
   const [scopeData, breadcrumbs] = await Promise.all([
     getCategoryScopeData(category.cs_cart_id),
-    buildBreadcrumbs(category),
+    buildBreadcrumbs(category, lang),
   ]);
 
   const { descendantIds, children } = scopeData;
@@ -116,13 +120,13 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
       {children.length > 0 && (
         <div className="-mx-4 mb-4 px-4 lg:hidden">
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-            {children.map((child) => (
+              {children.map((child) => (
               <Link
                 key={child.id}
                 href={`/catalog/${child.slug}`}
                 className="shrink-0 rounded-pill border border-[var(--border)] bg-white px-4 py-2 text-xs font-medium text-[var(--t2)] transition-all hover:border-coral hover:text-coral"
               >
-                {child.name_uk}
+                {localizedName(child, lang)}
               </Link>
             ))}
           </div>
@@ -145,7 +149,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                         href={`/catalog/${child.slug}`}
                         className="block border-b border-[var(--border)] py-1.5 text-sm text-[var(--t2)] transition-colors hover:text-coral"
                       >
-                        {child.name_uk}
+                        {localizedName(child, lang)}
                       </Link>
                     </li>
                   ))}
@@ -157,7 +161,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
             <div>
               <h3 className="font-unbounded mb-3 text-[10px] font-bold uppercase tracking-wider text-[var(--t3)]">
-                Фільтри
+                {lang === "ru" ? "Фильтры" : "Фільтри"}
               </h3>
               <Filters brands={brands} minPrice={minPrice} maxPrice={maxPrice} />
             </div>
@@ -168,7 +172,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
         <div className="min-w-0 flex-1">
           <div className="mb-6">
             <h1 className="font-unbounded text-2xl font-black text-dark sm:text-3xl">
-              {category.name_uk}
+              {localizedName(category, lang)}
             </h1>
           </div>
 
@@ -178,7 +182,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
             minPrice={minPrice}
             maxPrice={maxPrice}
             subcategories={children}
-            categoryName={category.name_uk}
+            categoryName={localizedName(category, lang)}
           />
 
           {products.length > 0 ? (
@@ -198,7 +202,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                       key={product.id}
                       id={product.id}
                       slug={product.slug}
-                      name={product.name_uk}
+                      name={lang === "ru" ? (product.name_ru || product.name_uk) : product.name_uk}
                       price={product.price}
                       oldPrice={product.old_price}
                       imageUrl={product.main_image_url}

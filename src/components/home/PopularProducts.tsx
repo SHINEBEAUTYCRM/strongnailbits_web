@@ -4,11 +4,13 @@ import { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Package } from "lucide-react";
+import { useLanguage, localizedName } from "@/hooks/useLanguage";
 
 interface Product {
   id: string;
   slug: string;
   name_uk: string;
+  name_ru?: string | null;
   price: number;
   old_price: number | null;
   main_image_url: string | null;
@@ -33,6 +35,7 @@ export function PopularProducts({
   linkHref,
   linkText,
 }: PopularProductsProps) {
+  const { lang } = useLanguage();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   if (products.length === 0) return null;
@@ -106,7 +109,7 @@ export function PopularProducts({
                 {p.main_image_url ? (
                   <Image
                     src={p.main_image_url}
-                    alt={p.name_uk}
+                    alt={localizedName(p, lang)}
                     fill
                     sizes="180px"
                     className="object-contain p-3"
@@ -126,7 +129,7 @@ export function PopularProducts({
               {/* Info */}
               <div className="p-2.5">
                 <p className="line-clamp-2 min-h-[2.2rem] text-xs leading-snug text-dark">
-                  {p.name_uk}
+                  {localizedName(p, lang)}
                 </p>
                 <div className="mt-1.5 flex items-baseline gap-1.5">
                   <span

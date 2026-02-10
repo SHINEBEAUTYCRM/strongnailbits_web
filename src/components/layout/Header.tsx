@@ -356,7 +356,7 @@ export function Header() {
                     onClick={() => setCatalogOpen(false)}
                     className="font-unbounded mb-5 inline-block text-[16px] font-bold text-[#1a1a1a] transition-colors hover:text-coral"
                   >
-                    {hoveredCat.name_uk} →
+                    {localizedName(hoveredCat, lang)} →
                   </Link>
                   <div className="grid grid-cols-3 gap-x-8 gap-y-5 xl:grid-cols-4">
                     {hoveredCat.children.map((child) => (
@@ -366,7 +366,7 @@ export function Header() {
                           onClick={() => setCatalogOpen(false)}
                           className="text-[13px] font-semibold text-[#1a1a1a] transition-colors hover:text-coral"
                         >
-                          {child.name_uk}
+                          {localizedName(child, lang)}
                         </Link>
                         {child.children.length > 0 && (
                           <ul className="mt-1.5 space-y-1">
@@ -377,7 +377,7 @@ export function Header() {
                                   onClick={() => setCatalogOpen(false)}
                                   className="text-[12px] text-[#888] transition-colors hover:text-coral"
                                 >
-                                  {gc.name_uk}
+                                  {localizedName(gc, lang)}
                                 </Link>
                               </li>
                             ))}
@@ -470,7 +470,7 @@ export function Header() {
                 className="flex items-center justify-between border-b border-[#f0f0f0] bg-[#fafafa] px-5 py-3 active:bg-[#f0f0f0]"
               >
                 <span className="text-sm font-medium text-coral">
-                  Дивитись все в &quot;{currentParent.name_uk}&quot;
+                  {lang === "ru" ? "Смотреть всё в" : "Дивитись все в"} &quot;{localizedName(currentParent, lang)}&quot;
                 </span>
                 <ChevronRight size={16} className="text-coral" />
               </Link>
@@ -485,7 +485,7 @@ export function Header() {
                   className="flex w-full items-center justify-between border-b border-[#f0f0f0] px-5 py-4 text-left active:bg-[#f8f8f8]"
                 >
                   <span className="text-base font-medium text-[#1a1a1a]">
-                    {cat.name_uk}
+                    {localizedName(cat, lang)}
                   </span>
                   <ChevronRight size={18} className="text-[#c4c4cc]" />
                 </button>
@@ -497,7 +497,7 @@ export function Header() {
                   className="flex items-center justify-between border-b border-[#f0f0f0] px-5 py-4 active:bg-[#f8f8f8]"
                 >
                   <span className="text-base text-[#1a1a1a]">
-                    {cat.name_uk}
+                    {localizedName(cat, lang)}
                   </span>
                   <ChevronRight size={18} className="text-[#c4c4cc]" />
                 </Link>
@@ -564,7 +564,8 @@ export function Header() {
                   </div>
                 </div>
 
-                <div className="flex gap-3 px-4 py-4">
+                <div className="flex items-center gap-3 px-4 py-4">
+                  <LanguageSwitcher />
                   <Link
                     href="/account"
                     onClick={closeMobileMenu}

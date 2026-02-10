@@ -5,11 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { createPortal } from "react-dom";
 import { Search, X, Loader2, ArrowRight, Tag, Grid3X3 } from "lucide-react";
+import { useLanguage, localizedName } from "@/hooks/useLanguage";
 
 interface SearchProduct {
   id: string;
   slug: string;
   name_uk: string;
+  name_ru?: string | null;
   price: number;
   old_price: number | null;
   main_image_url: string | null;
@@ -22,6 +24,7 @@ interface SearchCategory {
   id: string;
   slug: string;
   name_uk: string;
+  name_ru?: string | null;
   product_count: number;
 }
 
@@ -58,6 +61,7 @@ interface SearchModalProps {
 }
 
 export function SearchModal({ open, onClose }: SearchModalProps) {
+  const { lang } = useLanguage();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResults | null>(null);
   const [loading, setLoading] = useState(false);
@@ -259,7 +263,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
                           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-coral-light text-coral">
                             <Grid3X3 size={14} />
                           </div>
-                          <span className="text-sm text-dark">{cat.name_uk}</span>
+                          <span className="text-sm text-dark">{localizedName(cat, lang)}</span>
                           <span className="ml-auto text-[10px] text-[var(--t3)]">
                             {cat.product_count} товарів
                           </span>
@@ -311,7 +315,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
                             {p.main_image_url ? (
                               <Image
                                 src={p.main_image_url}
-                                alt={p.name_uk}
+                                alt={localizedName(p, lang)}
                                 fill
                                 sizes="48px"
                                 className="object-contain p-0.5"
@@ -323,7 +327,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="line-clamp-1 text-sm text-dark">{p.name_uk}</p>
+                            <p className="line-clamp-1 text-sm text-dark">{localizedName(p, lang)}</p>
                             {p.sku && (
                               <p className="font-price text-[10px] text-[var(--t3)]">{p.sku}</p>
                             )}

@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import type { CategoryNode } from "@/lib/categories/tree";
+import { localizedName, type Lang } from "@/lib/language";
 
 interface Props {
   categories: CategoryNode[];
+  lang: Lang;
 }
 
-export function HomeSidebar({ categories }: Props) {
+export function HomeSidebar({ categories, lang }: Props) {
   return (
     <aside className="hidden w-[240px] shrink-0 lg:block">
       <div className="sticky top-[80px] overflow-hidden rounded-2xl bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
@@ -38,7 +40,7 @@ export function HomeSidebar({ categories }: Props) {
               i < categories.length - 1 ? "border-b border-[#f0f0f0]" : ""
             }`}
           >
-            <span className="line-clamp-1">{cat.name_uk}</span>
+            <span className="line-clamp-1">{localizedName(cat, lang)}</span>
             {cat.children.length > 0 && (
               <ChevronRight size={14} className="shrink-0 text-[#c4c4cc]" />
             )}

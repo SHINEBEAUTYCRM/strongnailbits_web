@@ -6,6 +6,7 @@ import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductInfo } from "@/components/product/ProductInfo";
 import { ProductBuySidebar } from "@/components/product/ProductBuySidebar";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
+import { getLanguage, localizedName, localizedDescription } from "@/lib/language";
 
 /** ISR: revalidate product pages every 3 minutes */
 export const revalidate = 180;
@@ -21,7 +22,7 @@ async function getProduct(slug: string) {
   const { data } = await supabase
     .from("products")
     .select(
-      "*, brands(name, slug), categories(slug, name_uk, parent_cs_cart_id, cs_cart_id)",
+      "*, brands(name, slug), categories(slug, name_uk, name_ru, parent_cs_cart_id, cs_cart_id)",
     )
     .eq("slug", slug)
     .single();
@@ -48,13 +49,14 @@ async function buildBreadcrumbs(
         visited.add(currentParentId);
         const { data } = await supabase
           .from("categories")
-          .select("slug, name_uk, parent_cs_cart_id")
+          .select("slug, name_uk, name_ru, parent_cs_cart_id")
           .eq("cs_cart_id", currentParentId)
           .single();
 
         const cat = data as {
           slug: string;
           name_uk: string;
+          name_ru: string | null;
           parent_cs_cart_id: number | null;
         } | null;
 
@@ -104,6 +106,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
   const product = await getProduct(slug);
   if (!product) notFound();
+  const lang = await getLanguage();
 
   const brandData = product.brands as
     | { name: string; slug: string }
@@ -112,8 +115,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const brand = Array.isArray(brandData) ? brandData[0] ?? null : brandData;
 
   const categoryData = product.categories as
-    | { slug: string; name_uk: string; parent_cs_cart_id: number | null; cs_cart_id: number }
-    | { slug: string; name_uk: string; parent_cs_cart_id: number | null; cs_cart_id: number }[]
+    | { slug: string; name_uk: string; name_ru: string | null; parent_cs_cart_id: number | null; cs_cart_id: number }
+    | { slug: string; name_uk: string; name_ru: string | null; parent_cs_cart_id: number | null; cs_cart_id: number }[]
     | null;
   const category = Array.isArray(categoryData) ? categoryData[0] ?? null : categoryData;
 
@@ -126,11 +129,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
     }
   }
 
+  const productName = localizedName(product, lang);
+  const productDescription = localizedDescription(product, lang);
+  const categoryName = category ? localizedName(category, lang) : null;
+
   const breadcrumbs = await buildBreadcrumbs(
     category?.slug ?? null,
-    category?.name_uk ?? null,
+    categoryName,
     category?.parent_cs_cart_id ?? null,
-    product.name_uk,
+    productName,
     product.slug,
   );
 
@@ -142,9 +149,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: product.name_uk,
+    name: productName,
     image: allImages.length > 0 ? allImages : undefined,
-    description: product.meta_description || product.name_uk,
+    description: product.meta_description || productName,
     sku: product.sku || undefined,
     brand: brand ? { "@type": "Brand", name: brand.name } : undefined,
     offers: {
@@ -180,7 +187,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </a>
           )}
           <h1 className="mb-4 text-[18px] font-bold leading-tight text-[#222]">
-            {product.name_uk}
+            {productName}
           </h1>
         </div>
 
@@ -188,17 +195,17 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <div className="flex flex-col gap-6 lg:mt-4 lg:flex-row lg:gap-8">
           {/* Left — Gallery */}
           <div className="w-full lg:w-[42%]">
-            <ProductGallery images={allImages} name={product.name_uk} />
+            <ProductGallery images={allImages} name={productName} />
           </div>
 
           {/* Center — Details (desktop only, on mobile appears after sidebar) */}
           <div className="hidden w-full lg:block lg:w-[30%]">
             <ProductInfo
-              name={product.name_uk}
+              name={productName}
               sku={product.sku}
               brand={brand}
               properties={properties}
-              description={product.description_uk}
+              description={productDescription}
             />
           </div>
 
@@ -208,7 +215,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <ProductBuySidebar
                 productId={product.id}
                 slug={product.slug}
-                name={product.name_uk}
+                name={productName}
                 price={product.price}
                 oldPrice={product.old_price}
                 quantity={product.quantity}
@@ -223,11 +230,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
           {/* Mobile: details below sidebar */}
           <div className="w-full lg:hidden">
             <ProductInfo
-              name={product.name_uk}
+              name={productName}
               sku={product.sku}
               brand={brand}
               properties={properties}
-              description={product.description_uk}
+              description={productDescription}
             />
           </div>
         </div>

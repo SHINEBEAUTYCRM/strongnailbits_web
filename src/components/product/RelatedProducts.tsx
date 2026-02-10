@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getLanguage, localizedName } from "@/lib/language";
 import { RelatedCarousel } from "./RelatedCarousel";
 
 interface Props {
@@ -7,12 +8,13 @@ interface Props {
 }
 
 export async function RelatedProducts({ categoryId, excludeProductId }: Props) {
+  const lang = await getLanguage();
   const supabase = createAdminClient();
 
   const { data: products } = await supabase
     .from("products")
     .select(
-      "id, slug, name_uk, price, old_price, main_image_url, status, is_new, quantity, brands(name)",
+      "id, slug, name_uk, name_ru, price, old_price, main_image_url, status, is_new, quantity, brands(name)",
     )
     .eq("category_id", categoryId)
     .eq("status", "active")
@@ -29,7 +31,7 @@ export async function RelatedProducts({ categoryId, excludeProductId }: Props) {
     return {
       id: p.id,
       slug: p.slug,
-      name: p.name_uk,
+      name: localizedName(p, lang),
       price: p.price,
       oldPrice: p.old_price,
       imageUrl: p.main_image_url,

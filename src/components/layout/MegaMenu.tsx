@@ -9,6 +9,7 @@ import {
   MAIN_MENU_ITEMS,
   type MenuItemCategory,
 } from "@/lib/config/menu";
+import { useLanguage, localizedName } from "@/hooks/useLanguage";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -406,6 +407,8 @@ function ChildrenGrid({
   items: CategoryNode[];
   onClose: () => void;
 }) {
+  const { lang } = useLanguage();
+
   return (
     <div className="grid grid-cols-3 gap-x-8 gap-y-6 xl:grid-cols-4">
       {items.map((child) => (
@@ -415,7 +418,7 @@ function ChildrenGrid({
             onClick={onClose}
             className="mb-2 block text-sm font-semibold text-white transition-colors hover:text-purple-400"
           >
-            {child.name_uk}
+            {localizedName(child, lang)}
           </Link>
           {child.children.length > 0 && (
             <ul className="flex flex-col gap-1.5">
@@ -426,7 +429,7 @@ function ChildrenGrid({
                     onClick={onClose}
                     className="block text-sm text-zinc-400 transition-colors hover:text-white"
                   >
-                    {gc.name_uk}
+                    {localizedName(gc, lang)}
                   </Link>
                 </li>
               ))}

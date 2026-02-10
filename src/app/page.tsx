@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCategoryTree } from "@/lib/categories/tree";
+import { getLanguage } from "@/lib/language";
 import { HomeSidebar } from "@/components/home/HomeSidebar";
 import { HeroBanner } from "@/components/home/HeroBanner";
 import { QuickCategories } from "@/components/home/QuickCategories";
@@ -13,7 +14,7 @@ import { B2BCta } from "@/components/home/B2BCta";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 
 const PRODUCT_FIELDS =
-  "id, name_uk, slug, price, old_price, main_image_url, status, quantity, is_new, is_featured, brands(name)";
+  "id, name_uk, name_ru, slug, price, old_price, main_image_url, status, quantity, is_new, is_featured, brands(name)";
 
 async function getHomeData() {
   const supabase = createAdminClient();
@@ -53,8 +54,8 @@ async function getHomeData() {
 }
 
 export default async function HomePage() {
-  const [{ popularProducts, saleProducts, newProducts }, categories] =
-    await Promise.all([getHomeData(), getCategoryTree()]);
+  const [{ popularProducts, saleProducts, newProducts }, categories, lang] =
+    await Promise.all([getHomeData(), getCategoryTree(), getLanguage()]);
 
   return (
     <div className="pb-12 md:pb-16">
@@ -62,7 +63,7 @@ export default async function HomePage() {
       <div className="mx-auto max-w-[1400px] px-4 pt-4 md:px-6 md:pt-5">
         <div className="flex gap-5">
           {/* Desktop sidebar */}
-          <HomeSidebar categories={categories} />
+          <HomeSidebar categories={categories} lang={lang} />
 
           {/* Main column */}
           <div className="min-w-0 flex-1">
@@ -71,7 +72,7 @@ export default async function HomePage() {
 
             {/* Quick category chips */}
             <div className="mt-4">
-              <QuickCategories categories={categories} />
+              <QuickCategories categories={categories} lang={lang} />
             </div>
           </div>
         </div>
@@ -87,6 +88,7 @@ export default async function HomePage() {
         <ProductSection
           title="Популярні товари"
           products={popularProducts}
+          lang={lang}
           linkHref="/catalog"
           linkText="Дивитись всі →"
         />
@@ -94,6 +96,7 @@ export default async function HomePage() {
         <ProductSection
           title="Зі знижкою"
           products={saleProducts}
+          lang={lang}
           linkHref="/catalog?in_stock=true&sort=discount"
           linkText="Всі акції →"
         />
@@ -101,6 +104,7 @@ export default async function HomePage() {
         <ProductSection
           title="Новинки"
           products={newProducts}
+          lang={lang}
           linkHref="/catalog?sort=newest"
           linkText="Всі новинки →"
         />

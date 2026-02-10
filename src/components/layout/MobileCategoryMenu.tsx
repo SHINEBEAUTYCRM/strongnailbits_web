@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import type { CategoryNode } from "@/lib/categories/tree";
 import { MAIN_MENU_ITEMS } from "@/lib/config/menu";
+import { useLanguage, localizedName } from "@/hooks/useLanguage";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -54,6 +55,7 @@ export function MobileCategoryMenu({
   onClose,
   categories,
 }: MobileCategoryMenuProps) {
+  const { lang } = useLanguage();
   const [stack, setStack] = useState<StackLevel[]>([]);
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -67,6 +69,7 @@ export function MobileCategoryMenu({
           id: `link-${item.href}`,
           slug: item.href.replace(/^\//, ""),
           name_uk: item.label,
+          name_ru: null,
           cs_cart_id: 0,
           parent_cs_cart_id: null,
           position: 0,
@@ -86,6 +89,7 @@ export function MobileCategoryMenu({
           id: `fallback-${item.csCartId}`,
           slug: item.fallbackSlug,
           name_uk: item.label,
+          name_ru: null,
           cs_cart_id: item.csCartId,
           parent_cs_cart_id: null,
           position: 0,
@@ -121,7 +125,7 @@ export function MobileCategoryMenu({
   function pushLevel(cat: CategoryNode) {
     setStack((s) => [
       ...s,
-      { title: cat.name_uk, slug: cat.slug, items: cat.children },
+      { title: localizedName(cat, lang), slug: cat.slug, items: cat.children },
     ]);
   }
 
@@ -210,7 +214,7 @@ export function MobileCategoryMenu({
                             }`}
                           >
                             {isHighlight && <Tag size={14} className="text-pink-400" />}
-                            {cat.name_uk}
+                            {localizedName(cat, lang)}
                           </Link>
                         </div>
                       );
@@ -223,7 +227,7 @@ export function MobileCategoryMenu({
                             onClick={() => pushLevel(cat)}
                             className="flex w-full items-center justify-between px-5 py-3.5 text-left text-base text-zinc-300 transition-all hover:bg-zinc-900 hover:text-white"
                           >
-                            <span className="line-clamp-1">{cat.name_uk}</span>
+                            <span className="line-clamp-1">{localizedName(cat, lang)}</span>
                             <ChevronRight size={14} className="shrink-0 text-zinc-600" />
                           </button>
                         ) : (
@@ -232,7 +236,7 @@ export function MobileCategoryMenu({
                             onClick={onClose}
                             className="flex w-full items-center justify-between px-5 py-3.5 text-base text-zinc-300 transition-all hover:bg-zinc-900 hover:text-white"
                           >
-                            <span className="line-clamp-1">{cat.name_uk}</span>
+                            <span className="line-clamp-1">{localizedName(cat, lang)}</span>
                           </Link>
                         )}
                       </div>

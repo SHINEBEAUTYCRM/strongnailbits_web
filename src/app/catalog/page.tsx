@@ -11,6 +11,7 @@ import {
   fetchBrandsForFilter,
   buildFilteredUrl,
 } from "@/lib/catalog/filters";
+import { getLanguage, localizedName, type Lang } from "@/lib/language";
 import type { Metadata } from "next";
 
 /** ISR: revalidate catalog every 2 minutes */
@@ -31,6 +32,7 @@ const PER_PAGE = 24;
 export default async function CatalogPage({ searchParams }: CatalogPageProps) {
   const sp = await searchParams;
   const filters = parseSearchParams(sp);
+  const lang = await getLanguage();
 
   const hasFilters =
     filters.priceMin !== null ||
@@ -78,6 +80,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
             <CategoryRow
               key={cat.id}
               cat={cat}
+              lang={lang}
               isLast={i === tree.length - 1}
             />
           ))}
@@ -151,7 +154,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
                       key={product.id}
                       id={product.id}
                       slug={product.slug}
-                      name={product.name_uk}
+                      name={lang === "ru" ? (product.name_ru || product.name_uk) : product.name_uk}
                       price={product.price}
                       oldPrice={product.old_price}
                       imageUrl={product.main_image_url}
@@ -236,9 +239,11 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
 /* ── Hierarchical category row ── */
 function CategoryRow({
   cat,
+  lang,
   isLast,
 }: {
   cat: CategoryNode;
+  lang: Lang;
   isLast: boolean;
 }) {
   const hasChildren = cat.children.length > 0;
@@ -250,7 +255,7 @@ function CategoryRow({
         href={`/catalog/${cat.slug}`}
         className="flex items-center justify-between px-5 py-4 transition-colors hover:bg-sand"
       >
-        <span className="text-base font-medium text-dark">{cat.name_uk}</span>
+        <span className="text-base font-medium text-dark">{localizedName(cat, lang)}</span>
         <ChevronRight size={18} className="text-[var(--t3)]" />
       </Link>
 
@@ -264,7 +269,7 @@ function CategoryRow({
                 href={`/catalog/${child.slug}`}
                 className="py-1 text-[13px] text-[var(--t2)] transition-colors hover:text-coral"
               >
-                {child.name_uk}
+                {localizedName(child, lang)}
               </Link>
             ))}
           </div>

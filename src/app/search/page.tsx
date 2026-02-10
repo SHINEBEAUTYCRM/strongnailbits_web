@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getLanguage, localizedName } from "@/lib/language";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { Breadcrumbs } from "@/components/catalog/Breadcrumbs";
@@ -66,6 +67,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     );
   }
 
+  const lang = await getLanguage();
   const supabase = createAdminClient();
   const safeQ = sanitize(query);
   const words = safeQ.split(/\s+/).filter((w) => w.length >= 2);
@@ -93,7 +95,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   let productQuery = supabase
     .from("products")
     .select(
-      "id, slug, name_uk, price, old_price, main_image_url, status, quantity, is_new, is_featured, brand_id, brands!products_brand_id_fkey(name)",
+      "id, slug, name_uk, name_ru, price, old_price, main_image_url, status, quantity, is_new, is_featured, brand_id, brands!products_brand_id_fkey(name)",
       { count: "exact" },
     )
     .eq("status", "active");
@@ -145,7 +147,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                   key={product.id}
                   id={product.id}
                   slug={product.slug}
-                  name={product.name_uk}
+                  name={localizedName(product, lang)}
                   price={Number(product.price)}
                   oldPrice={product.old_price ? Number(product.old_price) : null}
                   imageUrl={product.main_image_url}

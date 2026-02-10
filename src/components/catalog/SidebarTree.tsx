@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
+import { useLanguage, localizedName } from "@/hooks/useLanguage";
 
 interface CategoryNode {
   id: string;
@@ -39,6 +40,7 @@ function SidebarItem({
   currentSlug?: string;
   level: number;
 }) {
+  const { lang } = useLanguage();
   const isActive = node.slug === currentSlug;
   const hasChildren = node.children.length > 0;
   const [expanded, setExpanded] = useState(
@@ -57,7 +59,7 @@ function SidebarItem({
           }`}
         >
           <span className="flex items-center justify-between gap-2">
-            <span className="line-clamp-1">{node.name_uk}</span>
+            <span className="line-clamp-1">{localizedName(node, lang)}</span>
             {node.product_count > 0 && (
               <span className="shrink-0 text-[10px] text-[var(--text-muted)]">
                 {node.product_count}

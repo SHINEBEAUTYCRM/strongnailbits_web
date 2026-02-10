@@ -10,12 +10,14 @@ import {
   X,
 } from "lucide-react";
 import { useCategoryTree, type CatNode } from "@/hooks/useCategoryTree";
+import { useLanguage, localizedName } from "@/hooks/useLanguage";
 
 export function CatalogButton() {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [menuStack, setMenuStack] = useState<CatNode[]>([]);
   const tree = useCategoryTree();
+  const { lang } = useLanguage();
 
   useEffect(() => {
     setMounted(true);
@@ -42,7 +44,7 @@ export function CatalogButton() {
     menuStack.length > 0 ? menuStack[menuStack.length - 1] : null;
   const currentItems = currentParent ? currentParent.children : tree;
   const currentTitle = currentParent
-    ? currentParent.name_uk
+    ? localizedName(currentParent, lang)
     : "Каталог товарів";
 
   const modal =
@@ -115,7 +117,7 @@ export function CatalogButton() {
                     className="flex items-center justify-between border-b border-[#f0f0f0] bg-[#fafafa] px-5 py-3 hover:bg-[#f0f0f0]"
                   >
                     <span className="text-sm font-medium text-coral">
-                      Дивитись все в &quot;{currentParent.name_uk}&quot;
+                      Дивитись все в &quot;{localizedName(currentParent, lang)}&quot;
                     </span>
                     <ChevronRight size={16} className="text-coral" />
                   </Link>
@@ -129,7 +131,7 @@ export function CatalogButton() {
                       className="flex w-full items-center justify-between border-b border-[#f0f0f0] px-5 py-4 text-left hover:bg-[#f8f8f8]"
                     >
                       <span className="text-base font-medium text-[#1a1a1a]">
-                        {cat.name_uk}
+                        {localizedName(cat, lang)}
                       </span>
                       <ChevronRight size={18} className="text-[#c4c4cc]" />
                     </button>
@@ -141,7 +143,7 @@ export function CatalogButton() {
                       className="flex items-center justify-between border-b border-[#f0f0f0] px-5 py-4 hover:bg-[#f8f8f8]"
                     >
                       <span className="text-base text-[#1a1a1a]">
-                        {cat.name_uk}
+                        {localizedName(cat, lang)}
                       </span>
                       <ChevronRight size={18} className="text-[#c4c4cc]" />
                     </Link>

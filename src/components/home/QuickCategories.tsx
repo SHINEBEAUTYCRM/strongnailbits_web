@@ -1,15 +1,17 @@
 import Link from "next/link";
 import type { CategoryNode } from "@/lib/categories/tree";
+import { localizedName, type Lang } from "@/lib/language";
 
 interface Props {
   categories: CategoryNode[];
+  lang: Lang;
 }
 
 /**
  * Horizontal scrollable category chips below the banner.
  * Shows first-level subcategories of the first root category + other root categories.
  */
-export function QuickCategories({ categories }: Props) {
+export function QuickCategories({ categories, lang }: Props) {
   /* Build chip list: subcategories of first root + remaining roots */
   const chips: { label: string; href: string }[] = [];
 
@@ -17,11 +19,11 @@ export function QuickCategories({ categories }: Props) {
     const first = categories[0];
     /* Add subcategories of the first root (e.g., "Ногти" → Гель-лаки, Бази, Топи...) */
     for (const child of first.children.slice(0, 6)) {
-      chips.push({ label: child.name_uk, href: `/catalog/${child.slug}` });
+      chips.push({ label: localizedName(child, lang), href: `/catalog/${child.slug}` });
     }
     /* Add remaining root categories */
     for (const cat of categories.slice(1)) {
-      chips.push({ label: cat.name_uk, href: `/catalog/${cat.slug}` });
+      chips.push({ label: localizedName(cat, lang), href: `/catalog/${cat.slug}` });
     }
   }
 

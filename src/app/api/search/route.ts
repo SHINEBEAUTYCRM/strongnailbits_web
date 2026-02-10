@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
   let productQuery = supabase
     .from("products")
     .select(
-      "id, slug, name_uk, price, old_price, main_image_url, sku, quantity, status, brand_id",
+      "id, slug, name_uk, name_ru, price, old_price, main_image_url, sku, quantity, status, brand_id",
     )
     .eq("status", "active");
 
@@ -76,7 +76,7 @@ export async function GET(req: NextRequest) {
   /* ── 3. Categories — multi-word AND, transliterated variants ── */
   let catQuery = supabase
     .from("categories")
-    .select("id, slug, name_uk, product_count")
+    .select("id, slug, name_uk, name_ru, product_count")
     .eq("status", "active")
     .gt("product_count", 0);
 

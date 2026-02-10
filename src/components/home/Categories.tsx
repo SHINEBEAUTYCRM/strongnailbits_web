@@ -2,10 +2,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { Grid3X3 } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
+import { localizedName, type Lang } from "@/lib/language";
 
 interface CategoryItem {
   id: string;
   name_uk: string;
+  name_ru?: string | null;
   slug: string;
   image_url: string | null;
   product_count: number;
@@ -13,9 +15,10 @@ interface CategoryItem {
 
 interface CategoriesProps {
   categories: CategoryItem[];
+  lang: Lang;
 }
 
-export function Categories({ categories }: CategoriesProps) {
+export function Categories({ categories, lang }: CategoriesProps) {
   if (categories.length === 0) return null;
 
   return (
@@ -38,7 +41,7 @@ export function Categories({ categories }: CategoriesProps) {
               {cat.image_url ? (
                 <Image
                   src={cat.image_url}
-                  alt={cat.name_uk}
+                  alt={localizedName(cat, lang)}
                   fill
                   sizes="64px"
                   className="object-contain p-1.5"
@@ -48,7 +51,7 @@ export function Categories({ categories }: CategoriesProps) {
               )}
             </div>
             <span className="font-unbounded line-clamp-2 text-[11px] font-bold leading-snug text-dark group-hover:text-coral">
-              {cat.name_uk}
+              {localizedName(cat, lang)}
             </span>
             <span className="text-[11px] text-[var(--t3)]">
               {cat.product_count}

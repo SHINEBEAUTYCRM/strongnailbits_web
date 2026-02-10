@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart";
 import { showToast } from "@/components/ui/Toast";
+import { useLanguage, localizedName } from "@/hooks/useLanguage";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -15,6 +16,7 @@ export interface DealProduct {
   id: string;
   slug: string;
   name_uk: string;
+  name_ru?: string | null;
   price: number;
   old_price: number;
   main_image_url: string | null;
@@ -53,6 +55,7 @@ function useCountdown() {
 
 export function DealOfDay({ product }: DealOfDayProps) {
   const { hours, minutes, seconds } = useCountdown();
+  const { lang } = useLanguage();
   const addItem = useCartStore((s) => s.addItem);
 
   if (!product) return null;
@@ -64,7 +67,7 @@ export function DealOfDay({ product }: DealOfDayProps) {
   function handleAdd() {
     addItem({
       product_id: product!.id,
-      name: product!.name_uk,
+      name: localizedName(product!, lang),
       slug: product!.slug,
       image: product!.main_image_url,
       price: product!.price,
@@ -98,7 +101,7 @@ export function DealOfDay({ product }: DealOfDayProps) {
           {product.main_image_url ? (
             <Image
               src={product.main_image_url}
-              alt={product.name_uk}
+              alt={localizedName(product, lang)}
               fill
               sizes="300px"
               className="object-contain p-4 transition-transform duration-300 group-hover:scale-105"
@@ -122,7 +125,7 @@ export function DealOfDay({ product }: DealOfDayProps) {
           </span>
         )}
         <h3 className="mb-3 line-clamp-2 text-sm font-medium text-zinc-300 group-hover:text-white">
-          {product.name_uk}
+          {localizedName(product, lang)}
         </h3>
 
         {/* Price */}
