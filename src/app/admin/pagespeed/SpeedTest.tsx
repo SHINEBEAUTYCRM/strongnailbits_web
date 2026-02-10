@@ -147,7 +147,7 @@ export function SpeedTest() {
         );
       }
 
-      setResult(data as PSIResult);
+      setResult(data as unknown as PSIResult);
       setElapsed(Math.round((Date.now() - t0) / 1000));
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
