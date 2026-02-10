@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     "професійна косметика",
   ],
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2bcomua.vercel.app",
+    process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com",
   ),
   openGraph: {
     type: "website",

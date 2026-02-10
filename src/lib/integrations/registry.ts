@@ -801,7 +801,7 @@ const seoServices: ServiceDefinition[] = [
     docsUrl: 'https://search.google.com/search-console',
     phase: 3,
     requiredFields: [
-      { key: 'site_url', label: 'Site URL', type: 'url', placeholder: 'https://shineshop.b2b.com.ua', required: true },
+      { key: 'site_url', label: 'Site URL', type: 'url', placeholder: 'https://shineshopb2b.com', required: true },
       { key: 'service_account_json', label: 'Service Account JSON', type: 'password', required: false, helpText: 'JSON ключ сервісного акаунту Google' },
     ],
   },

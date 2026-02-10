@@ -27,7 +27,7 @@ CREATE TRIGGER trg_tenant_settings_updated_at
 
 -- Один тенант за замовчуванням
 INSERT INTO tenant_settings (name, domain)
-VALUES ('Shine Shop', 'shineshop.b2b.com.ua')
+VALUES ('Shine Shop', 'shineshopb2b.com')
 ON CONFLICT DO NOTHING;
 
 COMMENT ON TABLE tenant_settings IS 'Налаштування тенанта (White-label OS). Один рядок для Shine Shop, більше для мультитенанта.';

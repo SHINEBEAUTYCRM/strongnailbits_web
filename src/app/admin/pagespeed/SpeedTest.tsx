@@ -47,7 +47,7 @@ interface PSIResult {
 type Strategy = "mobile" | "desktop";
 
 const SITE_URL = typeof window !== "undefined"
-  ? (process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2bcomua.vercel.app")
+  ? (process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com")
   : "";
 
 const PAGES = [
