@@ -72,10 +72,21 @@ export function AuthForm({ mode, redirect }: AuthFormProps) {
     }, 1000);
   }
 
-  /** Format phone input as +38 (0XX) XXX-XX-XX */
+  /** Format phone input — keep only digits and "+" */
   function handlePhoneInput(value: string) {
     // Allow only digits and "+"
-    const clean = value.replace(/[^\d+]/g, "");
+    let clean = value.replace(/[^\d+]/g, "");
+
+    // Auto-add +380 prefix if user starts typing 0 (local format)
+    if (clean === "0" || clean === "0,") {
+      clean = "+380";
+    }
+
+    // If just digits without +, and starts with 0, convert to +380...
+    if (!clean.startsWith("+") && clean.startsWith("0")) {
+      clean = "+38" + clean;
+    }
+
     setPhone(clean);
   }
 

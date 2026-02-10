@@ -39,10 +39,13 @@ export async function POST(request: NextRequest) {
 
     const phone = normalizePhone(rawPhone);
 
-    // Validate Ukrainian phone
+    // Validate Ukrainian phone (must be 12 digits starting with 380)
     if (!phone.match(/^380\d{9}$/)) {
+      console.error("[OTP] Invalid phone:", rawPhone, "→ normalized:", phone);
       return NextResponse.json(
-        { error: "Невірний формат номеру. Використовуйте українській номер" },
+        {
+          error: `Невірний формат номеру. Введіть номер у форматі +380XXXXXXXXX або 0XXXXXXXXX`,
+        },
         { status: 400 },
       );
     }

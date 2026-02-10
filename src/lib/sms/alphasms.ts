@@ -19,21 +19,24 @@ function getConfig() {
 
 /** Normalise phone number to digits only (380XXXXXXXXX) */
 export function normalizePhone(phone: string): string {
-  // Remove all non-digit characters
+  // Remove everything except digits
   let digits = phone.replace(/\D/g, "");
 
-  // Handle Ukrainian numbers
-  if (digits.startsWith("0") && digits.length === 10) {
-    digits = "38" + digits;
-  } else if (digits.startsWith("80") && digits.length === 11) {
-    digits = "3" + digits;
-  } else if (digits.startsWith("+")) {
-    digits = phone.replace(/\D/g, "");
-  }
-  // Handle 1C short format: 637443889 (9 digits, no country code, no leading 0)
-  if (digits.length === 9 && !digits.startsWith("0") && !digits.startsWith("38")) {
+  // 9 digits: 1C format (637443889) → 380637443889
+  if (digits.length === 9) {
     digits = "380" + digits;
   }
+  // 10 digits starting with 0: local format (0637443889) → 380637443889
+  else if (digits.length === 10 && digits.startsWith("0")) {
+    digits = "38" + digits;
+  }
+  // 11 digits starting with 80: missing leading 3 (80637443889) → 380637443889
+  else if (digits.length === 11 && digits.startsWith("80")) {
+    digits = "3" + digits;
+  }
+  // 12 digits starting with 380: already correct
+  // 12 digits starting with something else: leave as-is
+  // Any other length: leave as-is
 
   return digits;
 }
