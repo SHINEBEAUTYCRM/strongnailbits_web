@@ -46,15 +46,14 @@ interface PSIResult {
 
 type Strategy = "mobile" | "desktop";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2bcomua.vercel.app";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com";
+const PSI_KEY = process.env.NEXT_PUBLIC_GOOGLE_PSI_KEY || "";
 
 const PAGES = [
   { label: "Головна", path: "/" },
   { label: "Каталог", path: "/catalog" },
-  { label: "Категорія", path: "/catalog/kosmetyka-dlya-volossia" },
-  { label: "Товар", path: "/product/fanola-no-yellow-shampoo-1000ml" },
-  { label: "Пошук", path: "/search?q=шампунь" },
   { label: "Бренди", path: "/brands" },
+  { label: "Пошук", path: "/search?q=база" },
   { label: "Checkout", path: "/checkout" },
   { label: "Логін", path: "/login" },
   { label: "Доставка", path: "/delivery" },
@@ -117,33 +116,24 @@ export function SpeedTest() {
     const pagePath = selectedPage === -1 ? (customPath.startsWith("/") ? customPath : `/${customPath}`) : PAGES[selectedPage].path;
     const targetUrl = `${SITE_URL}${pagePath}`;
 
+    // Call Google PSI API directly from browser — no proxy needed
+    const apiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(targetUrl)}&strategy=${strategy}&category=performance&category=accessibility&category=best-practices&category=seo${PSI_KEY ? `&key=${PSI_KEY}` : ""}`;
+
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 120000);
+      const timeout = setTimeout(() => controller.abort(), 180000); // 3 min
 
-      // Use our server-side proxy to avoid browser rate limits
-      const proxyUrl = `/api/admin/pagespeed?url=${encodeURIComponent(targetUrl)}&strategy=${strategy}`;
-      console.log("[PSI] Requesting:", proxyUrl);
-      const res = await fetch(proxyUrl, { signal: controller.signal });
+      const res = await fetch(apiUrl, { signal: controller.signal });
       clearTimeout(timeout);
 
-      const text = await res.text();
-      let data: Record<string, unknown>;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        throw new Error(`Невалідна відповідь (${res.status}): ${text.slice(0, 200)}`);
-      }
+      const data = await res.json();
 
       if (!res.ok) {
-        const msg = (data?.error as string) || `Помилка ${res.status}`;
-        console.error("[PSI] Error:", res.status, data);
+        const msg = data?.error?.message || `Google API error ${res.status}`;
         throw new Error(
           res.status === 429
-            ? "Ліміт запитів Google перевищено. Додайте GOOGLE_PSI_KEY в Vercel Environment Variables (безкоштовно, 25K запитів/день)."
-            : res.status === 504
-              ? "Google API не відповів за 120с. Спробуйте ще раз."
-              : msg,
+            ? "Ліміт запитів перевищено. Спробуйте через хвилину."
+            : msg,
         );
       }
 
@@ -151,7 +141,7 @@ export function SpeedTest() {
       setElapsed(Math.round((Date.now() - t0) / 1000));
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
-        setError("Тест перевищив 120 секунд. Спробуйте ще раз.");
+        setError("Тест перевищив 3 хвилини. Спробуйте ще раз.");
       } else {
         setError(err instanceof Error ? err.message : "Помилка тесту");
       }
