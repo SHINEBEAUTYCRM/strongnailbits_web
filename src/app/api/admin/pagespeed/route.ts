@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// Google PSI API takes 20-120s to respond — need extended timeout
+export const maxDuration = 120; // seconds (Hobby: max 60, Pro: max 300)
+export const dynamic = "force-dynamic";
+
 /**
  * Server-side proxy for PageSpeed Insights API.
  * Using a server-side key avoids browser rate-limiting issues.
