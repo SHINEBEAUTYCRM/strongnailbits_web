@@ -50,7 +50,6 @@ export async function POST(
       slug,
       action,
       params: actionParams,
-      phase: service.phase,
     }, { status: 501 });
   } catch (err) {
     return NextResponse.json(

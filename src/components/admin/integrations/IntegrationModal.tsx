@@ -118,7 +118,6 @@ export function IntegrationModal({
   if (!isOpen) return null;
 
   const hasFields = service.requiredFields.length > 0;
-  const isFree = service.price.includes("FREE") || service.price === "Вбудовано";
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center">
@@ -141,10 +140,7 @@ export function IntegrationModal({
               />
             </div>
             <div className="flex items-center gap-3 mt-1">
-              <span className={`text-xs ${isFree ? "text-emerald-400" : "text-zinc-500"}`}>
-                {service.price}
-              </span>
-              <span className="text-xs text-zinc-600">Фаза {service.phase}</span>
+              <span className="text-xs text-zinc-500">{service.module}</span>
             </div>
           </div>
           <button
@@ -294,9 +290,6 @@ export function IntegrationModal({
                 <div className="text-center py-6">
                   <p className="text-sm text-zinc-400 mb-2">
                     Вбудована функція — не потребує API-ключів
-                  </p>
-                  <p className="text-xs text-zinc-600">
-                    Буде реалізовано на фазі {service.phase}
                   </p>
                 </div>
               )}

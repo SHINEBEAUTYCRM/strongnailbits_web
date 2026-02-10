@@ -73,11 +73,9 @@ export interface ServiceDefinition {
   module: string;            // Назва модуля адмінки
   icon: string;              // Lucide icon name
   description: string;
-  price: string;             // 'FREE' | '~2800 ₴/міс' тощо
   requiredFields: FieldDef[];
   isRequired: boolean;       // Рекомендовано для мінімального старту
   docsUrl?: string;
-  phase: number;             // Тиждень впровадження за таймлайном
 }
 
 // -----------------------------------------------------------------

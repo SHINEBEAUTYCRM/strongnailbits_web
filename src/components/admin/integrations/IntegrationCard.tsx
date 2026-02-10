@@ -36,7 +36,6 @@ interface IntegrationCardProps {
 
 export function IntegrationCard({ service, status, onClick }: IntegrationCardProps) {
   const Icon = ICON_MAP[service.icon] || BarChart3;
-  const isFree = service.price.includes("FREE") || service.price === "Вбудовано";
   const isRequired = service.isRequired;
 
   return (
@@ -62,14 +61,7 @@ export function IntegrationCard({ service, status, onClick }: IntegrationCardPro
           </div>
           <p className="text-[11px] text-zinc-500 line-clamp-2 mb-2">{service.description}</p>
 
-          <div className="flex items-center justify-between">
-            <span
-              className={`text-[10px] font-medium ${
-                isFree ? "text-emerald-400" : "text-zinc-500"
-              }`}
-            >
-              {service.price}
-            </span>
+          <div className="flex items-center justify-end">
             <IntegrationStatus
               isActive={status?.isActive ?? false}
               isVerified={status?.isVerified ?? false}
