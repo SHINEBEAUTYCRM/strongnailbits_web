@@ -18,22 +18,24 @@ export async function GET(request: NextRequest) {
 
   const apiKey = process.env.GOOGLE_PSI_KEY || "";
 
-  const psiUrl = new URL("https://www.googleapis.com/pagespeedonline/v5/runPagespeed");
-  psiUrl.searchParams.set("url", url);
-  psiUrl.searchParams.set("strategy", strategy);
-  psiUrl.searchParams.set("category", "performance");
-  psiUrl.searchParams.append("category", "accessibility");
-  psiUrl.searchParams.append("category", "best-practices");
-  psiUrl.searchParams.append("category", "seo");
-  if (apiKey) {
-    psiUrl.searchParams.set("key", apiKey);
-  }
+  // Build URL string manually — URLSearchParams encodes "category" duplicates
+  // and "best-practices" inconsistently across runtimes
+  const params = [
+    `url=${encodeURIComponent(url)}`,
+    `strategy=${strategy}`,
+    `category=performance`,
+    `category=accessibility`,
+    `category=best-practices`,
+    `category=seo`,
+  ];
+  if (apiKey) params.push(`key=${apiKey}`);
+  const psiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?${params.join("&")}`;
 
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 120_000); // 2 min
 
-    const res = await fetch(psiUrl.toString(), {
+    const res = await fetch(psiUrl, {
       signal: controller.signal,
       headers: { "Accept": "application/json" },
     });
