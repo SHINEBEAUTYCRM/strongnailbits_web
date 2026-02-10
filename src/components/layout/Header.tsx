@@ -20,6 +20,8 @@ import { useCartStore } from "@/lib/store/cart";
 import { useWishlistStore } from "@/lib/store/wishlist";
 import { formatPrice } from "@/utils/format";
 import { useCategoryTree, type CatNode } from "@/hooks/useCategoryTree";
+import { useLanguage, localizedName } from "@/hooks/useLanguage";
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 
 const CartDrawer = dynamic(
   () => import("@/components/cart/CartDrawer").then((m) => m.CartDrawer),
@@ -45,6 +47,8 @@ export function Header() {
   /* Desktop catalog hover */
   const [hoveredCatId, setHoveredCatId] = useState<number | null>(null);
   const catalogRef = useRef<HTMLDivElement>(null);
+
+  const { lang } = useLanguage();
 
   const totalSum = useCartStore((s) => s.getTotal());
   const count = useCartStore((s) => s.getCount());
@@ -115,7 +119,7 @@ export function Header() {
   const currentParent =
     menuStack.length > 0 ? menuStack[menuStack.length - 1] : null;
   const currentItems = currentParent ? currentParent.children : tree;
-  const currentTitle = currentParent ? currentParent.name_uk : "Каталог";
+  const currentTitle = currentParent ? localizedName(currentParent, lang) : (lang === "ru" ? "Каталог" : "Каталог");
 
   const hoveredCat = hoveredCatId
     ? tree.find((c) => c.cs_cart_id === hoveredCatId) ?? null
@@ -179,6 +183,8 @@ export function Header() {
 
           {/* Actions */}
           <div className="flex shrink-0 items-center gap-1">
+            <LanguageSwitcher />
+
             <Link
               href="/account"
               className="flex h-11 w-11 items-center justify-center rounded-2xl text-[#6b6b7b] transition-colors hover:bg-[#f5f5f5] hover:text-[#1a1a1a]"
@@ -331,7 +337,7 @@ export function Header() {
                         : setHoveredCatId(null)
                     }
                   >
-                    <span>{cat.name_uk}</span>
+                    <span>{localizedName(cat, lang)}</span>
                     {cat.children.length > 0 && (
                       <ChevronRight
                         size={14}

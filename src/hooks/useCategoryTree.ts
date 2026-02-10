@@ -7,6 +7,7 @@ export interface CatNode {
   id: string;
   cs_cart_id: number;
   name_uk: string;
+  name_ru: string | null;
   slug: string;
   product_count: number;
   total_product_count: number;
@@ -27,7 +28,7 @@ function buildTree(): Promise<CatNode[]> {
   _promise = Promise.resolve(
     createClient()
       .from("categories")
-      .select("id, cs_cart_id, parent_cs_cart_id, name_uk, slug, product_count, position")
+      .select("id, cs_cart_id, parent_cs_cart_id, name_uk, name_ru, slug, product_count, position")
       .eq("status", "active")
       .order("position", { ascending: true }),
   ).then(({ data }) => {

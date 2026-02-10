@@ -5,6 +5,7 @@ export interface CategoryNode {
   id: string;
   slug: string;
   name_uk: string;
+  name_ru: string | null;
   cs_cart_id: number;
   parent_cs_cart_id: number | null;
   position: number;
@@ -48,7 +49,7 @@ async function _fetchCategoryTree(): Promise<CategoryNode[]> {
 
   const { data: categories } = await supabase
     .from("categories")
-    .select("id, slug, name_uk, cs_cart_id, parent_cs_cart_id, position, product_count")
+    .select("id, slug, name_uk, name_ru, cs_cart_id, parent_cs_cart_id, position, product_count")
     .eq("status", "active")
     .order("position", { ascending: true });
 
