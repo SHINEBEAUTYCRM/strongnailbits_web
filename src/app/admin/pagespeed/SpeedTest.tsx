@@ -123,13 +123,21 @@ export function SpeedTest() {
 
       // Use our server-side proxy to avoid browser rate limits
       const proxyUrl = `/api/admin/pagespeed?url=${encodeURIComponent(targetUrl)}&strategy=${strategy}`;
+      console.log("[PSI] Requesting:", proxyUrl);
       const res = await fetch(proxyUrl, { signal: controller.signal });
       clearTimeout(timeout);
 
-      const data = await res.json();
+      const text = await res.text();
+      let data: Record<string, unknown>;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(`Невалідна відповідь (${res.status}): ${text.slice(0, 200)}`);
+      }
 
       if (!res.ok) {
-        const msg = data?.error || `Помилка ${res.status}`;
+        const msg = (data?.error as string) || `Помилка ${res.status}`;
+        console.error("[PSI] Error:", res.status, data);
         throw new Error(
           res.status === 429
             ? "Ліміт запитів Google перевищено. Додайте GOOGLE_PSI_KEY в Vercel Environment Variables (безкоштовно, 25K запитів/день)."

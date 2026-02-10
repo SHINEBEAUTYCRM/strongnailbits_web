@@ -31,6 +31,8 @@ export async function GET(request: NextRequest) {
   if (apiKey) params.push(`key=${apiKey}`);
   const psiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?${params.join("&")}`;
 
+  console.log("[PSI Proxy] url:", url, "strategy:", strategy, "hasKey:", !!apiKey);
+
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 120_000); // 2 min
@@ -41,10 +43,19 @@ export async function GET(request: NextRequest) {
     });
     clearTimeout(timeout);
 
-    const data = await res.json();
+    const text = await res.text();
+    let data: Record<string, unknown>;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      console.error("[PSI Proxy] Invalid JSON:", text.slice(0, 500));
+      return NextResponse.json({ error: `Invalid response from Google: ${text.slice(0, 200)}` }, { status: 502 });
+    }
 
     if (!res.ok) {
-      const msg = data?.error?.message || `Google API error ${res.status}`;
+      const errObj = data?.error as Record<string, unknown> | undefined;
+      const msg = (errObj?.message as string) || `Google API error ${res.status}`;
+      console.error("[PSI Proxy] Google error:", res.status, msg);
       return NextResponse.json({ error: msg }, { status: res.status });
     }
 
