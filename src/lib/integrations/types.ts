@@ -195,4 +195,5 @@ export interface IntegrationStatusItem {
   verifiedAt: string | null;
   errorMessage: string | null;
   hasConfig: boolean;
+  source?: 'db' | 'env' | null;
 }

@@ -16,7 +16,13 @@ import type { IntegrationKeyRow } from '@/lib/integrations/types';
  */
 export async function GET() {
   try {
-    const tenantId = await getDefaultTenantId();
+    let tenantId: string;
+    try {
+      tenantId = await getDefaultTenantId();
+    } catch {
+      return NextResponse.json({ data: [], dbAvailable: false });
+    }
+
     const supabase = createAdminClient();
 
     const { data, error } = await supabase
@@ -37,7 +43,7 @@ export async function GET() {
       ),
     }));
 
-    return NextResponse.json({ data: masked });
+    return NextResponse.json({ data: masked, dbAvailable: true });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Internal error' },
@@ -75,7 +81,16 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const tenantId = await getDefaultTenantId();
+    let tenantId: string;
+    try {
+      tenantId = await getDefaultTenantId();
+    } catch {
+      return NextResponse.json(
+        { error: 'Таблиці інтеграцій ще не створені. Виконайте schema-integrations.sql в Supabase SQL Editor.' },
+        { status: 503 }
+      );
+    }
+
     const supabase = createAdminClient();
 
     // Зашифрувати конфігурацію
@@ -126,7 +141,16 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const tenantId = await getDefaultTenantId();
+    let tenantId: string;
+    try {
+      tenantId = await getDefaultTenantId();
+    } catch {
+      return NextResponse.json(
+        { error: 'Таблиці інтеграцій ще не створені.' },
+        { status: 503 }
+      );
+    }
+
     const supabase = createAdminClient();
 
     const { error } = await supabase
