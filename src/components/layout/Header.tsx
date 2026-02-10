@@ -256,6 +256,14 @@ export function Header() {
             <Search size={20} />
           </button>
 
+          <Link
+            href="/account"
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-[#6b6b7b]"
+            aria-label="Акаунт"
+          >
+            <User size={20} />
+          </Link>
+
           <button
             onClick={() => setCartOpen(true)}
             className="relative flex h-10 w-10 items-center justify-center rounded-xl text-[#1a1a1a]"

@@ -170,6 +170,7 @@ export const adminNavigation: NavGroup[] = [
       { label: "Cron Jobs", href: "/admin/settings/cron", icon: Clock, soon: true },
       { label: "Тригери", href: "/admin/settings/triggers", icon: Zap, soon: true },
       { label: "Логи", href: "/admin/settings/logs", icon: ScrollText, soon: true },
+      { label: "Монітор 1С", href: "/admin/1c", icon: Zap },
       { label: "Синхронізація", href: "/admin/sync", icon: RefreshCw },
       { label: "PageSpeed", href: "/admin/pagespeed", icon: Gauge },
       { label: "Користувачі", href: "/admin/users", icon: Shield },

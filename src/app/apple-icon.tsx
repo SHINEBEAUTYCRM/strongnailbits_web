@@ -10,19 +10,19 @@ export default function AppleIcon() {
         style={{
           width: 180,
           height: 180,
+          borderRadius: 36,
+          background: "linear-gradient(135deg, #FF3B5C 0%, #E0264A 100%)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#222",
-          borderRadius: 40,
         }}
       >
         <span
           style={{
             fontSize: 100,
             fontWeight: 900,
-            color: "#FF2D55",
-            fontFamily: "system-ui",
+            color: "white",
+            lineHeight: 1,
           }}
         >
           S

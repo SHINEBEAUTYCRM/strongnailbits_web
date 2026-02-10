@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAdmin } from "@/lib/admin/requireAdmin";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,7 @@ function toCsv(rows: Record<string, unknown>[], columns: { key: string; label: s
 }
 
 export async function GET(request: NextRequest) {
+  const auth = await requireAdmin(); if (auth.error) return auth.error;
   const entity = request.nextUrl.searchParams.get("entity");
   const supabase = createAdminClient();
 

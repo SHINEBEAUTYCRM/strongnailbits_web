@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/catalog/Breadcrumbs";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductInfo } from "@/components/product/ProductInfo";
@@ -147,6 +148,25 @@ export default async function ProductPage({ params }: ProductPageProps) {
       ? (product.properties as Record<string, string>)
       : {};
 
+  // Check B2B individual price for logged-in user
+  let b2bPrice: number | null = null;
+  try {
+    const userSupabase = await createClient();
+    const { data: { user } } = await userSupabase.auth.getUser();
+    if (user && product.external_id) {
+      const { data: profile } = await userSupabase.from("profiles").select("external_id, is_b2b").eq("id", user.id).single();
+      if (profile?.is_b2b && profile.external_id) {
+        const admin = createAdminClient();
+        const { data: cp } = await admin.from("customer_prices")
+          .select("price")
+          .eq("customer_external_id", profile.external_id)
+          .eq("product_external_id", product.external_id)
+          .single();
+        if (cp?.price) b2bPrice = Number(cp.price);
+      }
+    }
+  } catch { /* no b2b price */ }
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -224,13 +244,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 productId={product.id}
                 slug={product.slug}
                 name={productName}
-                price={product.price}
-                oldPrice={product.old_price}
+                price={b2bPrice ?? product.price}
+                oldPrice={b2bPrice ? product.price : product.old_price}
                 quantity={product.quantity}
                 status={product.status}
                 sku={product.sku}
                 image={product.main_image_url}
                 brand={brand?.name ?? null}
+                isB2bPrice={!!b2bPrice}
               />
             </div>
           </div>

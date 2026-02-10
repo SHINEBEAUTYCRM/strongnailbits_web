@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAdmin } from "@/lib/admin/requireAdmin";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,7 @@ function generateSlug(name: string): string {
 
 /* ─── GET — single category by id ─── */
 export async function GET(request: NextRequest) {
+  const auth = await requireAdmin(); if (auth.error) return auth.error;
   const id = request.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
   const supabase = createAdminClient();
@@ -33,6 +35,7 @@ export async function GET(request: NextRequest) {
 /* ─── POST — create category ─── */
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAdmin(); if (auth.error) return auth.error;
     const body = await request.json();
     const supabase = createAdminClient();
 
@@ -69,6 +72,7 @@ export async function POST(request: NextRequest) {
 /* ─── PUT — update category ─── */
 export async function PUT(request: NextRequest) {
   try {
+    const auth = await requireAdmin(); if (auth.error) return auth.error;
     const body = await request.json();
     const supabase = createAdminClient();
 
@@ -95,6 +99,7 @@ export async function PUT(request: NextRequest) {
 /* ─── DELETE — delete category ─── */
 export async function DELETE(request: NextRequest) {
   try {
+    const auth = await requireAdmin(); if (auth.error) return auth.error;
     const { id } = await request.json();
     if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 });
     const supabase = createAdminClient();
@@ -125,6 +130,7 @@ export async function DELETE(request: NextRequest) {
 /* ─── PATCH — bulk & quick actions ─── */
 export async function PATCH(request: NextRequest) {
   try {
+    const auth = await requireAdmin(); if (auth.error) return auth.error;
     const body = await request.json();
     const supabase = createAdminClient();
     const { action } = body;

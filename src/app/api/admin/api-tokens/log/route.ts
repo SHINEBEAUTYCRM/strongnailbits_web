@@ -6,11 +6,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getDefaultTenantId } from '@/lib/integrations/base';
+import { requireAdmin } from '@/lib/admin/requireAdmin';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdmin(); if (auth.error) return auth.error;
     const tenantId = await getDefaultTenantId();
     const supabase = createAdminClient();
 

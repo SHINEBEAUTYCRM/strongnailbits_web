@@ -1,19 +1,30 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Menu, Search, ExternalLink, Bell, LogOut, User, Store, X } from "lucide-react";
+import { Menu, Search, ExternalLink, Bell, LogOut, User, Store, X, Crown, UserCog, Loader2 } from "lucide-react";
 import { adminNavigation, type NavItem } from "@/lib/admin/navigation";
 import { SearchModal } from "./SearchModal";
 import { DangrowBadge } from "./DangrowBadge";
+import { createClient } from "@/lib/supabase/client";
 
-export function AdminShell({ children }: { children: React.ReactNode }) {
+interface AdminUser {
+  id: string;
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+  role: string;
+}
+
+export function AdminShell({ children, adminUser }: { children: React.ReactNode; adminUser: AdminUser | null }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => { try { const s = localStorage.getItem("admin-sidebar-collapsed"); if (s !== null) setCollapsed(JSON.parse(s)); } catch {} }, []);
   useEffect(() => { try { localStorage.setItem("admin-sidebar-collapsed", JSON.stringify(collapsed)); } catch {} }, [collapsed]);
@@ -23,12 +34,30 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   const isActive = (href: string) => href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
 
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      router.push("/admin/login");
+      router.refresh();
+    } catch {
+      setLoggingOut(false);
+    }
+  };
+
+  const displayName = adminUser
+    ? [adminUser.first_name, adminUser.last_name].filter(Boolean).join(" ") || adminUser.email.split("@")[0]
+    : "Admin";
+  const displayEmail = adminUser?.email || "admin@shineshop.com";
+  const displayInitial = (adminUser?.first_name?.[0] || adminUser?.email?.[0] || "A").toUpperCase();
+  const isAdmin = adminUser?.role === "admin";
+
   const breadcrumbs = (() => {
     const c: { label: string; href: string }[] = [{ label: "Dashboard", href: "/admin" }];
     if (pathname === "/admin") return c;
     const item = adminNavigation.flatMap((g) => g.items).find((i) => isActive(i.href));
     if (item) c.push({ label: item.label, href: item.href });
-    // Sub-routes
     if (pathname.endsWith("/new")) c.push({ label: "Новий", href: pathname });
     else if (/\/[0-9a-f-]{36}$/.test(pathname)) c.push({ label: "Редагувати", href: pathname });
     return c;
@@ -68,11 +97,25 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         <div className="p-3 shrink-0" style={{ borderTop: "1px solid #1e1e2a" }}>
           {!collapsed || mobileOpen ? (
             <div className="flex items-center gap-3 px-2 py-2 mb-2">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{ background: "#7c3aed" }}>A</div>
-              <div className="min-w-0"><p className="text-sm font-medium truncate" style={{ color: "#d4d4d8" }}>Admin</p><p className="text-[11px]" style={{ color: "#52525b" }}>admin</p></div>
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                style={{ background: isAdmin ? "#7c3aed" : "#1e3a5f" }}>
+                {displayInitial}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate flex items-center gap-1.5" style={{ color: "#d4d4d8" }}>
+                  {displayName}
+                  {isAdmin ? <Crown className="w-3 h-3 shrink-0" style={{ color: "#a855f7" }} /> : <UserCog className="w-3 h-3 shrink-0" style={{ color: "#60a5fa" }} />}
+                </p>
+                <p className="text-[11px] truncate" style={{ color: "#52525b" }}>{displayEmail}</p>
+              </div>
             </div>
           ) : (
-            <div className="flex justify-center py-2 mb-2"><div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: "#7c3aed" }}>A</div></div>
+            <div className="flex justify-center py-2 mb-2">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                style={{ background: isAdmin ? "#7c3aed" : "#1e3a5f" }}>
+                {displayInitial}
+              </div>
+            </div>
           )}
           {(!collapsed || mobileOpen) && (
             <div className="flex justify-center pb-1"><DangrowBadge compact /></div>
@@ -98,16 +141,36 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             <kbd className="hidden sm:inline px-1.5 py-0.5 rounded text-[10px] font-mono ml-2" style={{ background: "#1a1a24", color: "#52525b" }}>⌘K</kbd>
           </button>
           <a href="/" target="_blank" rel="noopener noreferrer" className="hidden sm:flex items-center gap-1.5 text-sm" style={{ color: "#71717a" }}><ExternalLink className="w-4 h-4" /><span className="hidden md:inline">Магазин</span></a>
-          <button className="relative" style={{ color: "#71717a" }}><Bell className="w-5 h-5" /><span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[9px] font-bold text-white flex items-center justify-center" style={{ background: "#7c3aed" }}>3</span></button>
+          <button className="relative" style={{ color: "#71717a" }}><Bell className="w-5 h-5" /></button>
           <div className="relative">
-            <button onClick={(e) => { e.stopPropagation(); setUserMenuOpen(!userMenuOpen); }} className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: "#7c3aed" }}>A</button>
+            <button onClick={(e) => { e.stopPropagation(); setUserMenuOpen(!userMenuOpen); }}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
+              style={{ background: isAdmin ? "#7c3aed" : "#1e3a5f" }}>
+              {displayInitial}
+            </button>
             {userMenuOpen && (
               <div className="absolute right-0 top-full mt-2 w-56 rounded-xl shadow-2xl overflow-hidden z-[60]" style={{ background: "#111116", border: "1px solid #1e1e2a" }}>
-                <div className="px-4 py-3" style={{ borderBottom: "1px solid #1e1e2a" }}><p className="text-sm" style={{ color: "#d4d4d8" }}>Admin</p><p className="text-xs mt-0.5" style={{ color: "#52525b" }}>admin@shineshop.com</p></div>
+                <div className="px-4 py-3" style={{ borderBottom: "1px solid #1e1e2a" }}>
+                  <p className="text-sm flex items-center gap-1.5" style={{ color: "#d4d4d8" }}>
+                    {displayName}
+                    {isAdmin
+                      ? <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ color: "#a855f7", background: "#1e1030" }}>admin</span>
+                      : <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ color: "#60a5fa", background: "#172554" }}>manager</span>
+                    }
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: "#52525b" }}>{displayEmail}</p>
+                </div>
                 <div className="p-1.5">
-                  <Link href="/admin/settings" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm" style={{ color: "#a1a1aa" }}><User className="w-4 h-4" /> Профіль</Link>
-                  <a href="/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm" style={{ color: "#a1a1aa" }}><Store className="w-4 h-4" /> Магазин</a>
-                  <Link href="/admin/login" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm" style={{ color: "#ef4444" }}><LogOut className="w-4 h-4" /> Вийти</Link>
+                  <Link href="/admin/users" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-[#141420]" style={{ color: "#a1a1aa" }}>
+                    <User className="w-4 h-4" /> Користувачі
+                  </Link>
+                  <a href="/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-[#141420]" style={{ color: "#a1a1aa" }}>
+                    <Store className="w-4 h-4" /> Магазин
+                  </a>
+                  <button onClick={handleLogout} disabled={loggingOut}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-[#1c1017]" style={{ color: "#ef4444" }}>
+                    {loggingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />} Вийти
+                  </button>
                 </div>
               </div>
             )}

@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getDefaultTenantId } from '@/lib/integrations/base';
 import { generateApiToken } from '@/lib/api/middleware';
+import { requireAdmin } from '@/lib/admin/requireAdmin';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +17,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
+    const auth = await requireAdmin(); if (auth.error) return auth.error;
     const tenantId = await getDefaultTenantId();
     const supabase = createAdminClient();
 
@@ -72,6 +74,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAdmin(); if (auth.error) return auth.error;
     const body = await request.json();
     const { name, permissions, rate_limit, expires_in_days } = body as {
       name: string;
@@ -144,6 +147,7 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const auth = await requireAdmin(); if (auth.error) return auth.error;
     const body = await request.json();
     const { id, is_active, rate_limit, name, permissions } = body as {
       id: string;
@@ -192,6 +196,7 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const auth = await requireAdmin(); if (auth.error) return auth.error;
     const body = await request.json();
     const { id } = body as { id: string };
 

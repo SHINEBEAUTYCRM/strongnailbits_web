@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAdmin } from "@/lib/admin/requireAdmin";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,7 @@ const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
  */
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAdmin(); if (auth.error) return auth.error;
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
 

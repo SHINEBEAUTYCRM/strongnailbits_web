@@ -32,6 +32,7 @@ interface Props {
   sku: string | null;
   image: string | null;
   brand: string | null;
+  isB2bPrice?: boolean;
 }
 
 export function ProductBuySidebar({
@@ -45,6 +46,7 @@ export function ProductBuySidebar({
   sku,
   image,
   brand,
+  isB2bPrice,
 }: Props) {
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
@@ -127,6 +129,13 @@ export function ProductBuySidebar({
             </span>
           )}
         </div>
+
+        {/* B2B badge */}
+        {isB2bPrice && (
+          <div className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-[#7c3aed]/10 px-2.5 py-1">
+            <span className="text-[11px] font-bold text-[#7c3aed]">B2B ціна</span>
+          </div>
+        )}
 
         {/* Discount info */}
         {discount > 0 && savings > 0 && (

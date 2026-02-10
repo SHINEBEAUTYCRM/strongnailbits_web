@@ -17,10 +17,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <div className="w-full">
         <div className="mb-8 text-center">
           <h1 className="font-unbounded text-2xl font-black text-dark">
-            Вхід в акаунт
+            Вхід
           </h1>
           <p className="mt-2 text-sm text-[var(--t2)]">
-            Увійдіть, щоб переглядати замовлення та отримувати знижки
+            Увійдіть за номером телефону, щоб переглядати замовлення та
+            отримувати знижки
           </p>
         </div>
 

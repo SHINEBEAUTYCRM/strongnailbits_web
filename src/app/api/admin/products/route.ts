@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAdmin } from "@/lib/admin/requireAdmin";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,7 @@ function generateSlug(name: string): string {
 /* POST — Create product */
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAdmin(); if (auth.error) return auth.error;
     const body = await request.json();
     const supabase = createAdminClient();
 
@@ -73,6 +75,7 @@ export async function POST(request: NextRequest) {
 /* PUT — Update product */
 export async function PUT(request: NextRequest) {
   try {
+    const auth = await requireAdmin(); if (auth.error) return auth.error;
     const body = await request.json();
     const supabase = createAdminClient();
 
@@ -116,6 +119,7 @@ export async function PUT(request: NextRequest) {
 /* DELETE — Delete product */
 export async function DELETE(request: NextRequest) {
   try {
+    const auth = await requireAdmin(); if (auth.error) return auth.error;
     const { id } = await request.json();
     if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 });
     const supabase = createAdminClient();

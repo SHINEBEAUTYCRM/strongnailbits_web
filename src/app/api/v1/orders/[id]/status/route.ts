@@ -46,8 +46,8 @@ export const PATCH = withApiAuth('orders:write', async (req: NextRequest) => {
     return apiValidationError('Validation failed', errors);
   }
 
-  if (!status && !ttn_number && !payment_status) {
-    return apiValidationError('At least one field is required: status, ttn_number, payment_status');
+  if (!status && !ttn_number && !shipped_at && !payment_status) {
+    return apiValidationError('At least one field is required: status, ttn_number, shipped_at, payment_status');
   }
 
   const supabase = createAdminClient();

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAdmin } from "@/lib/admin/requireAdmin";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,7 @@ const VALID_PAYMENT = ["pending", "paid", "failed"];
 /* ─── PUT — update order (status, TTN, payment_status, notes) ─── */
 export async function PUT(request: NextRequest) {
   try {
+    const auth = await requireAdmin(); if (auth.error) return auth.error;
     const body = await request.json();
     const supabase = createAdminClient();
 
