@@ -51,8 +51,14 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2bcomua.
 const PAGES = [
   { label: "Головна", path: "/" },
   { label: "Каталог", path: "/catalog" },
-  { label: "Про нас", path: "/about" },
+  { label: "Категорія", path: "/catalog/kosmetyka-dlya-volossia" },
+  { label: "Товар", path: "/product/fanola-no-yellow-shampoo-1000ml" },
+  { label: "Пошук", path: "/search?q=шампунь" },
+  { label: "Бренди", path: "/brands" },
+  { label: "Checkout", path: "/checkout" },
+  { label: "Логін", path: "/login" },
   { label: "Доставка", path: "/delivery" },
+  { label: "Оптовикам", path: "/wholesale" },
 ];
 
 function scoreColor(score: number | null): string {
@@ -96,6 +102,7 @@ const METRIC_ICONS: Record<string, typeof Zap> = {
 export function SpeedTest() {
   const [strategy, setStrategy] = useState<Strategy>("mobile");
   const [selectedPage, setSelectedPage] = useState(0);
+  const [customPath, setCustomPath] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PSIResult | null>(null);
   const [error, setError] = useState("");
@@ -107,7 +114,8 @@ export function SpeedTest() {
     setResult(null);
     const t0 = Date.now();
 
-    const targetUrl = `${SITE_URL}${PAGES[selectedPage].path}`;
+    const pagePath = selectedPage === -1 ? (customPath.startsWith("/") ? customPath : `/${customPath}`) : PAGES[selectedPage].path;
+    const targetUrl = `${SITE_URL}${pagePath}`;
 
     try {
       const controller = new AbortController();
@@ -153,17 +161,31 @@ export function SpeedTest() {
       <div className="rounded-xl p-5" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
           {/* Page selector */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>Сторінка</label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {PAGES.map((p, i) => (
-                <button key={p.path} onClick={() => setSelectedPage(i)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-                  style={selectedPage === i ? { background: "#1e1030", color: "#c084fc", border: "1px solid #581c87" } : { background: "#111116", color: "#71717a", border: "1px solid #1e1e2a" }}>
+                <button key={p.path} onClick={() => { setSelectedPage(i); setCustomPath(""); }}
+                  className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all"
+                  style={selectedPage === i ? { background: "#1e1030", color: "#c084fc", border: "1px solid #581c87" } : { background: "#111116", color: "#52525b", border: "1px solid #1e1e2a" }}>
                   {p.label}
                 </button>
               ))}
+              <button onClick={() => setSelectedPage(-1)}
+                className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all"
+                style={selectedPage === -1 ? { background: "#1e1030", color: "#c084fc", border: "1px solid #581c87" } : { background: "#111116", color: "#52525b", border: "1px solid #1e1e2a" }}>
+                Свій URL
+              </button>
             </div>
+            {selectedPage === -1 && (
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-xs shrink-0" style={{ color: "#52525b" }}>{SITE_URL}</span>
+                <input type="text" value={customPath} onChange={(e) => setCustomPath(e.target.value)}
+                  placeholder="/catalog/your-category"
+                  className="flex-1 px-2.5 py-1.5 rounded-md text-xs font-mono"
+                  style={{ background: "#111116", color: "#e4e4e7", border: "1px solid #1e1e2a", outline: "none" }} />
+              </div>
+            )}
           </div>
 
           {/* Strategy */}
@@ -193,7 +215,7 @@ export function SpeedTest() {
         </div>
 
         <p className="text-[10px] mt-3" style={{ color: "#3f3f46" }}>
-          URL: {SITE_URL}{PAGES[selectedPage].path} · Google PageSpeed Insights API · ~20-60с
+          URL: {SITE_URL}{selectedPage === -1 ? (customPath.startsWith("/") ? customPath : `/${customPath}`) : PAGES[selectedPage]?.path} · Google PageSpeed Insights API · ~20-60с
         </p>
       </div>
 
@@ -311,7 +333,7 @@ export function SpeedTest() {
           {/* Footer info */}
           <div className="flex items-center justify-between text-[10px] px-1" style={{ color: "#3f3f46" }}>
             <span>Тест зайняв {elapsed}с · {new Date(lhr.fetchTime).toLocaleString("uk-UA")}</span>
-            <a href={`https://pagespeed.web.dev/analysis?url=${encodeURIComponent(SITE_URL + PAGES[selectedPage].path)}&form_factor=${strategy}`}
+            <a href={`https://pagespeed.web.dev/analysis?url=${encodeURIComponent(SITE_URL + (selectedPage === -1 ? (customPath.startsWith("/") ? customPath : `/${customPath}`) : PAGES[selectedPage]?.path || "/"))}&form_factor=${strategy}`}
               target="_blank" rel="noopener" className="flex items-center gap-1" style={{ color: "#71717a" }}>
               Повний звіт <ExternalLink className="w-3 h-3" />
             </a>
