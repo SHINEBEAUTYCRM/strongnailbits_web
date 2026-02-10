@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { normalizePhone } from "@/lib/sms/alphasms";
+import { normalizePhone, phoneVariants } from "@/lib/sms/alphasms";
 
 export const dynamic = "force-dynamic";
 
@@ -49,11 +49,13 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Check if profile with this phone already exists
+      // Check if profile with this phone already exists (all formats including 1C)
+      const variants = phoneVariants(phone);
       const { data: existingProfile } = await supabase
         .from("profiles")
         .select("id")
-        .eq("phone", phone)
+        .in("phone", variants)
+        .limit(1)
         .single();
 
       if (existingProfile) {
@@ -123,10 +125,12 @@ export async function POST(request: NextRequest) {
 
     // ACTION: get-login-email — get the fake email for existing user to login
     if (action === "get-login-email") {
+      const variants = phoneVariants(phone);
       const { data: profile } = await supabase
         .from("profiles")
         .select("id, email")
-        .eq("phone", phone)
+        .in("phone", variants)
+        .limit(1)
         .single();
 
       if (!profile) {
@@ -151,10 +155,12 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      const variants = phoneVariants(phone);
       const { data: profile } = await supabase
         .from("profiles")
         .select("id")
-        .eq("phone", phone)
+        .in("phone", variants)
+        .limit(1)
         .single();
 
       if (!profile) {
@@ -180,6 +186,46 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
+    // ACTION: otp-login — login existing user after OTP verification (no password)
+    if (action === "otp-login") {
+      const variants = phoneVariants(phone);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id, email")
+        .in("phone", variants)
+        .limit(1)
+        .single();
+
+      if (!profile) {
+        return NextResponse.json(
+          { error: "Користувач не знайдений" },
+          { status: 404 },
+        );
+      }
+
+      // Generate a temporary password and set it, then return credentials
+      const tempPassword = crypto.randomUUID();
+
+      const { error: updateError } =
+        await supabase.auth.admin.updateUserById(profile.id, {
+          password: tempPassword,
+        });
+
+      if (updateError) {
+        console.error("[Phone Auth] OTP login update error:", updateError);
+        return NextResponse.json(
+          { error: "Помилка авторизації" },
+          { status: 500 },
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        loginEmail: profile.email,
+        tempPassword,
+      });
+    }
+
     return NextResponse.json({ error: "Невідома дія" }, { status: 400 });
   } catch (err) {
     console.error("[Phone Auth] Error:", err);
@@ -200,16 +246,18 @@ async function autoLinkWith1C(
   phone: string,
 ) {
   try {
-    // Look for 1C customer profile that matches by phone
-    // The 1C sync creates profiles with external_id set
+    // Look for 1C customer profile that matches by phone (all formats)
+    // 1C stores phones as "637443889" (9 digits), we store "380637443889"
+    const variants = phoneVariants(phone);
     const { data: c1Profile } = await supabase
       .from("profiles")
       .select(
         "external_id, loyalty_points, loyalty_tier, balance, credit_limit, discount_percent, manager_name",
       )
-      .eq("phone", phone)
+      .in("phone", variants)
       .not("external_id", "is", null)
       .neq("id", userId)
+      .limit(1)
       .single();
 
     if (c1Profile && c1Profile.external_id) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { normalizePhone } from "@/lib/sms/alphasms";
+import { normalizePhone, phoneVariants } from "@/lib/sms/alphasms";
 
 export const dynamic = "force-dynamic";
 
@@ -88,11 +88,13 @@ export async function POST(request: NextRequest) {
       .update({ used: true })
       .eq("id", otpRecord.id);
 
-    // Check if user already exists by phone
+    // Check if user already exists by phone (try all formats including 1C short format)
+    const variants = phoneVariants(phone);
     const { data: existingProfile } = await supabase
       .from("profiles")
       .select("id, phone, email, first_name, last_name")
-      .eq("phone", phone)
+      .in("phone", variants)
+      .limit(1)
       .single();
 
     return NextResponse.json({

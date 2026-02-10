@@ -12,11 +12,12 @@ interface AuthFormProps {
 }
 
 type Step =
-  | "phone"          // Enter phone number
-  | "otp"            // Enter OTP code
-  | "register-form"  // Fill name + password (new users)
-  | "login-password"  // Enter password (existing users)
-  | "reset-password"; // Reset password after OTP
+  | "phone"               // Enter phone number
+  | "otp"                 // Enter OTP code
+  | "register-form"       // Fill name + password (new users)
+  | "login-password"      // Main login screen (phone + SMS/password choice)
+  | "login-password-form" // Login with phone + password form
+  | "reset-password";     // Reset password after OTP
 
 export function AuthForm({ mode, redirect }: AuthFormProps) {
   const router = useRouter();
@@ -191,8 +192,9 @@ export function AuthForm({ mode, redirect }: AuthFormProps) {
         // After OTP verification in reset flow, go to set new password
         setStep("reset-password");
       } else if (data.existingUser) {
-        // User exists — ask for password to login
-        setStep("login-password");
+        // User exists — auto-login via OTP (no password needed)
+        await handleOtpLogin();
+        return; // handleOtpLogin handles navigation
       } else {
         // New user — show registration form
         setStep("register-form");
@@ -287,6 +289,45 @@ export function AuthForm({ mode, redirect }: AuthFormProps) {
           throw new Error("Невірний пароль");
         }
         throw signInError;
+      }
+
+      router.push(redirect || "/account");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Помилка входу");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ────── STEP 3b-alt: Login via OTP (no password) ──────
+  async function handleOtpLogin() {
+    setError(null);
+    setLoading(true);
+
+    try {
+      const supabase = createClient();
+
+      // Get temp credentials for OTP-verified user
+      const res = await fetch("/api/auth/phone-auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, action: "otp-login" }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Користувач не знайдений");
+      }
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: data.loginEmail,
+        password: data.tempPassword,
+      });
+
+      if (signInError) {
+        throw new Error("Помилка автоматичного входу");
       }
 
       router.push(redirect || "/account");
@@ -679,9 +720,110 @@ export function AuthForm({ mode, redirect }: AuthFormProps) {
     );
   }
 
-  // ────── RENDER: Login with phone + password ──────
+  // ────── RENDER: Login with phone + password form ──────
+  if (step === "login-password-form") {
+    return (
+      <form onSubmit={handleLogin} className="flex flex-col gap-4">
+        <button
+          type="button"
+          onClick={() => {
+            setStep("login-password");
+            setError(null);
+          }}
+          className="flex items-center gap-1 text-sm text-[var(--t2)] hover:text-dark"
+        >
+          <ArrowLeft size={14} />
+          Назад
+        </button>
+
+        {error && (
+          <div className="rounded-card border border-red/20 bg-red/5 px-4 py-3 text-sm text-red">
+            {error}
+          </div>
+        )}
+
+        <div>
+          <label className="mb-1 block text-xs font-medium text-[var(--t2)]">
+            Номер телефону
+          </label>
+          <div className="relative">
+            <Phone
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--t3)]"
+            />
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => handlePhoneInput(e.target.value)}
+              required
+              className="h-12 w-full rounded-[10px] border border-[var(--border)] bg-white pl-10 pr-3 text-sm text-dark outline-none transition-colors focus:border-coral"
+              placeholder="+380 (XX) XXX-XX-XX"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs font-medium text-[var(--t2)]">
+            Пароль
+          </label>
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoFocus
+              minLength={6}
+              className="h-11 w-full rounded-[10px] border border-[var(--border)] bg-white px-3 pr-10 text-sm text-dark outline-none transition-colors focus:border-coral"
+              placeholder="Мінімум 6 символів"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--t3)] transition-colors hover:text-dark"
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading || phone.replace(/\D/g, "").length < 10}
+          className="font-unbounded mt-1 flex h-12 w-full items-center justify-center gap-2 rounded-pill bg-coral text-[13px] font-bold text-white transition-all hover:bg-coral-2 hover:glow-coral disabled:opacity-60"
+        >
+          {loading ? (
+            <Loader2 size={18} className="animate-spin" />
+          ) : (
+            "Увійти"
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setIsResetFlow(true);
+            setStep("phone");
+            setError(null);
+          }}
+          className="text-center text-sm text-[var(--t3)] hover:text-coral transition-colors"
+        >
+          Забули пароль?
+        </button>
+      </form>
+    );
+  }
+
+  // ────── RENDER: Login with phone (SMS first, password as fallback) ──────
   return (
-    <form onSubmit={handleLogin} className="flex flex-col gap-4">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        // Default action is send OTP for login
+        handleSendOtp();
+      }}
+      className="flex flex-col gap-4"
+    >
       {error && (
         <div className="rounded-card border border-red/20 bg-red/5 px-4 py-3 text-sm text-red">
           {error}
@@ -707,32 +849,12 @@ export function AuthForm({ mode, redirect }: AuthFormProps) {
             placeholder="+380 (XX) XXX-XX-XX"
           />
         </div>
+        <p className="mt-1.5 text-[11px] text-[var(--t3)]">
+          Ми відправимо SMS з кодом для входу
+        </p>
       </div>
 
-      <div>
-        <label className="mb-1 block text-xs font-medium text-[var(--t2)]">
-          Пароль
-        </label>
-        <div className="relative">
-          <input
-            type={showPassword ? "text" : "password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-            className="h-11 w-full rounded-[10px] border border-[var(--border)] bg-white px-3 pr-10 text-sm text-dark outline-none transition-colors focus:border-coral"
-            placeholder="Мінімум 6 символів"
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--t3)] transition-colors hover:text-dark"
-          >
-            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-          </button>
-        </div>
-      </div>
-
+      {/* Primary: Login via SMS */}
       <button
         type="submit"
         disabled={loading || phone.replace(/\D/g, "").length < 10}
@@ -741,33 +863,28 @@ export function AuthForm({ mode, redirect }: AuthFormProps) {
         {loading ? (
           <Loader2 size={18} className="animate-spin" />
         ) : (
-          "Увійти"
+          "Отримати SMS-код"
         )}
       </button>
 
-      <div className="flex flex-col gap-2 text-center text-sm">
-        <button
-          type="button"
-          onClick={() => {
-            setIsResetFlow(true);
-            setStep("phone");
-            setError(null);
-          }}
-          className="text-[var(--t3)] hover:text-coral transition-colors"
-        >
-          Забули пароль?
-        </button>
+      {/* Secondary: Login with password (for those who have it) */}
+      <button
+        type="button"
+        onClick={() => setStep("login-password-form")}
+        className="flex h-11 w-full items-center justify-center gap-2 rounded-pill border border-[var(--border)] text-[13px] font-medium text-[var(--t2)] transition-all hover:border-coral hover:text-coral"
+      >
+        Увійти з паролем
+      </button>
 
-        <p className="text-[var(--t2)]">
-          Немає акаунту?{" "}
-          <Link
-            href="/register"
-            className="font-medium text-coral hover:text-coral-2"
-          >
-            Зареєструватись
-          </Link>
-        </p>
-      </div>
+      <p className="text-center text-sm text-[var(--t2)]">
+        Немає акаунту?{" "}
+        <Link
+          href="/register"
+          className="font-medium text-coral hover:text-coral-2"
+        >
+          Зареєструватись
+        </Link>
+      </p>
     </form>
   );
 }

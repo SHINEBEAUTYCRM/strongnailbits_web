@@ -30,8 +30,34 @@ export function normalizePhone(phone: string): string {
   } else if (digits.startsWith("+")) {
     digits = phone.replace(/\D/g, "");
   }
+  // Handle 1C short format: 637443889 (9 digits, no country code, no leading 0)
+  if (digits.length === 9 && !digits.startsWith("0") && !digits.startsWith("38")) {
+    digits = "380" + digits;
+  }
 
   return digits;
+}
+
+/**
+ * Get all possible phone formats for DB search.
+ * 1C stores phones as "637443889" (9 digits without 38 and leading 0).
+ * We store as "380637443889".
+ * This returns all variants to match against.
+ *
+ * Input: "380637443889"
+ * Returns: ["380637443889", "0637443889", "637443889", "+380637443889"]
+ */
+export function phoneVariants(phone: string): string[] {
+  const full = normalizePhone(phone); // 380XXXXXXXXX (12 digits)
+  if (full.length !== 12 || !full.startsWith("38")) {
+    return [full, phone];
+  }
+
+  const withZero = "0" + full.slice(2);   // 0XXXXXXXXX (10 digits)
+  const short = full.slice(3);            // XXXXXXXXX  (9 digits — 1C format)
+  const withPlus = "+" + full;            // +380XXXXXXXXX
+
+  return [full, withZero, short, withPlus];
 }
 
 /** Format phone for display: +38 (0XX) XXX-XX-XX */
