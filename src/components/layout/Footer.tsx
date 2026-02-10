@@ -33,7 +33,7 @@ export function Footer() {
                 SHOP
               </span>
             </Link>
-            <p className="mt-4 text-sm leading-relaxed text-white/40">
+            <p className="mt-4 text-sm leading-relaxed text-white/60">
               Професійна nail-косметика для майстрів та салонів. Оптові ціни від
               1 одиниці. Доставка по Україні та за кордон.
             </p>
@@ -43,7 +43,7 @@ export function Footer() {
                 href="https://www.instagram.com/shineshop.com.ua/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-white/40 transition-colors hover:border-coral hover:text-coral"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-white/60 transition-colors hover:border-coral hover:text-coral"
                 aria-label="Instagram"
               >
                 <svg
@@ -59,7 +59,7 @@ export function Footer() {
                 href="https://t.me/shineshop_ua"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-white/40 transition-colors hover:border-coral hover:text-coral"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-white/60 transition-colors hover:border-coral hover:text-coral"
                 aria-label="Telegram"
               >
                 <svg
@@ -75,7 +75,7 @@ export function Footer() {
                 href="https://www.facebook.com/shineshop.com.ua/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-white/40 transition-colors hover:border-coral hover:text-coral"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-white/60 transition-colors hover:border-coral hover:text-coral"
                 aria-label="Facebook"
               >
                 <svg
@@ -100,7 +100,7 @@ export function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-white/40 transition-colors hover:text-coral"
+                    className="text-sm text-white/60 transition-colors hover:text-coral"
                   >
                     {link.label}
                   </Link>
@@ -119,7 +119,7 @@ export function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-white/40 transition-colors hover:text-coral"
+                    className="text-sm text-white/60 transition-colors hover:text-coral"
                   >
                     {link.label}
                   </Link>
@@ -133,7 +133,7 @@ export function Footer() {
             <h3 className="font-unbounded mb-4 text-xs font-bold uppercase tracking-wider">
               Контакти
             </h3>
-            <ul className="flex flex-col gap-3 text-sm text-white/40">
+            <ul className="flex flex-col gap-3 text-sm text-white/60">
               <li>
                 <a
                   href="tel:+380937443889"
@@ -159,7 +159,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 border-t border-white/10 pt-6 text-center text-xs text-white/30">
+        <div className="mt-12 border-t border-white/10 pt-6 text-center text-xs text-white/50">
           <p>
             &copy; {new Date().getFullYear()} SHINE SHOP. Усі права захищені.{" "}
             <Link

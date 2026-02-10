@@ -91,6 +91,7 @@ export default async function HomePage() {
           lang={lang}
           linkHref="/catalog"
           linkText="Дивитись всі →"
+          priorityCount={4}
         />
 
         <ProductSection

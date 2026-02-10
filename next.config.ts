@@ -23,11 +23,11 @@ const nextConfig: NextConfig = {
     // Optimized device sizes for common viewports
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256],
-    minimumCacheTTL: 3600, // Cache optimized images for 1 hour
+    minimumCacheTTL: 86400, // Cache optimized images for 24 hours (was 1 hour)
   },
-  // Enable compression
+  // Enable compression (Brotli on Vercel, gzip fallback)
   compress: true,
-  // Long cache for static assets (fonts, JS, CSS)
+  // Long cache for static assets (fonts, JS, CSS, images)
   headers: async () => [
     {
       source: "/:all*(svg|jpg|jpeg|png|gif|ico|webp|avif)",
@@ -47,10 +47,42 @@ const nextConfig: NextConfig = {
         },
       ],
     },
+    // Font files — long cache
+    {
+      source: "/:all*(woff|woff2|ttf|otf|eot)",
+      headers: [
+        {
+          key: "Cache-Control",
+          value: "public, max-age=31536000, immutable",
+        },
+      ],
+    },
+    // Security & performance headers for all pages
+    {
+      source: "/(.*)",
+      headers: [
+        {
+          key: "X-DNS-Prefetch-Control",
+          value: "on",
+        },
+        {
+          key: "X-Content-Type-Options",
+          value: "nosniff",
+        },
+        {
+          key: "Referrer-Policy",
+          value: "origin-when-cross-origin",
+        },
+      ],
+    },
   ],
   // Experimental optimizations
   experimental: {
-    optimizePackageImports: ["lucide-react"],
+    // Tree-shake barrel imports for smaller bundles
+    optimizePackageImports: [
+      "lucide-react",
+      "@supabase/supabase-js",
+    ],
   },
 };
 

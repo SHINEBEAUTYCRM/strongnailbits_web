@@ -172,11 +172,11 @@ export function Header() {
             onClick={() => setSearchOpen(true)}
             className="flex h-11 flex-1 items-center gap-3 rounded-2xl border border-[#e8e8e8] bg-[#f8f8f8] px-4 text-left transition-colors hover:border-coral/30"
           >
-            <Search size={18} className="shrink-0 text-[#b0b0be]" />
-            <span className="text-sm text-[#b0b0be]">
+            <Search size={18} className="shrink-0 text-[#6b6b7b]" />
+            <span className="text-sm text-[#6b6b7b]">
               Пошук товарів...
             </span>
-            <span className="ml-auto hidden items-center gap-1 rounded-lg border border-[#e8e8e8] bg-white px-2 py-0.5 text-[10px] font-medium text-[#b0b0be] xl:flex">
+            <span className="ml-auto hidden items-center gap-1 rounded-lg border border-[#e8e8e8] bg-white px-2 py-0.5 text-[10px] font-medium text-[#6b6b7b] xl:flex">
               ⌘K
             </span>
           </button>

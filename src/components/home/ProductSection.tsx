@@ -27,6 +27,8 @@ interface Props {
   lang: Lang;
   linkHref?: string;
   linkText?: string;
+  /** Number of product images to preload eagerly (above the fold) */
+  priorityCount?: number;
 }
 
 export function ProductSection({
@@ -35,6 +37,7 @@ export function ProductSection({
   lang,
   linkHref,
   linkText,
+  priorityCount = 0,
 }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -87,7 +90,7 @@ export function ProductSection({
         ref={scrollRef}
         className="scrollbar-none -mx-4 mt-4 flex gap-3 overflow-x-auto px-4 pb-2 md:-mx-0 md:gap-4 md:px-0"
       >
-        {products.map((p) => {
+        {products.map((p, idx) => {
           const brandData = p.brands;
           const brandName = Array.isArray(brandData)
             ? brandData[0]?.name
@@ -110,6 +113,7 @@ export function ProductSection({
                 isFeatured={p.is_featured}
                 status={p.status ?? "active"}
                 quantity={p.quantity ?? 0}
+                priority={idx < priorityCount}
               />
             </div>
           );
