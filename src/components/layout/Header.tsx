@@ -21,7 +21,7 @@ import { useWishlistStore } from "@/lib/store/wishlist";
 import { formatPrice } from "@/utils/format";
 import { useCategoryTree, type CatNode } from "@/hooks/useCategoryTree";
 import { useLanguage, localizedName } from "@/hooks/useLanguage";
-import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
+import { LanguageSwitcher, LanguageSwitcherMini } from "@/components/ui/LanguageSwitcher";
 
 const CartDrawer = dynamic(
   () => import("@/components/cart/CartDrawer").then((m) => m.CartDrawer),
@@ -565,7 +565,7 @@ export function Header() {
                 </div>
 
                 <div className="flex items-center gap-3 px-4 py-4">
-                  <LanguageSwitcher />
+                  <LanguageSwitcherMini />
                   <Link
                     href="/account"
                     onClick={closeMobileMenu}
