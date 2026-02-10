@@ -7,6 +7,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // -----------------------------------------------------------------
+//  Внутрішній трекер (Supabase site_events)
+// -----------------------------------------------------------------
+
+function sendSiteEvent(eventType: string, data?: Record<string, unknown>) {
+  if (typeof window === 'undefined') return;
+  try {
+    const sid = sessionStorage.getItem('_ss_sid') || '';
+    fetch('/api/analytics/event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event_type: eventType, session_id: sid, ...data }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch { /* noop */ }
+}
+
+// -----------------------------------------------------------------
 //  Типы e-commerce событий
 // -----------------------------------------------------------------
 
@@ -77,6 +94,13 @@ export function trackPageView(url: string, title?: string) {
 // -----------------------------------------------------------------
 
 export function trackViewItem(item: ProductItem) {
+  // Site events (Supabase)
+  sendSiteEvent('view_item', {
+    product_id: item.item_id,
+    product_name: item.item_name,
+    page_path: typeof window !== 'undefined' ? window.location.pathname : undefined,
+  });
+
   // GA4
   gtag('event', 'view_item', {
     currency: item.currency || 'UAH',
@@ -108,6 +132,13 @@ export function trackViewItem(item: ProductItem) {
 // -----------------------------------------------------------------
 
 export function trackAddToCart(item: ProductItem) {
+  // Site events
+  sendSiteEvent('add_to_cart', {
+    product_id: item.item_id,
+    product_name: item.item_name,
+    revenue: item.price * (item.quantity || 1),
+  });
+
   // GA4
   gtag('event', 'add_to_cart', {
     currency: item.currency || 'UAH',
@@ -190,6 +221,12 @@ export function trackBeginCheckout(items: ProductItem[], value: number) {
 // -----------------------------------------------------------------
 
 export function trackPurchase(data: PurchaseData) {
+  // Site events
+  sendSiteEvent('purchase', {
+    order_id: data.transaction_id,
+    revenue: data.value,
+  });
+
   // GA4
   gtag('event', 'purchase', {
     transaction_id: data.transaction_id,
@@ -223,6 +260,12 @@ export function trackPurchase(data: PurchaseData) {
 // -----------------------------------------------------------------
 
 export function trackSearch(query: string, resultsCount?: number) {
+  // Site events
+  sendSiteEvent('search', {
+    search_query: query,
+    metadata: { results_count: resultsCount },
+  });
+
   // GA4
   gtag('event', 'search', {
     search_term: query,

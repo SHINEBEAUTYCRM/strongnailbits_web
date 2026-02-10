@@ -4,6 +4,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ToastContainer } from "@/components/ui/Toast";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
+import { SiteTracker } from "@/components/analytics/SiteTracker";
 import { getAnalyticsConfig } from "@/lib/analytics/config";
 import "./globals.css";
 
@@ -112,6 +113,7 @@ export default function RootLayout({
           posthogHost={analytics.posthogHost}
           fbPixelId={analytics.fbPixelId}
         />
+        <SiteTracker />
         <Header />
         <main className="min-h-[calc(100dvh-80px)]">{children}</main>
         <Footer />
