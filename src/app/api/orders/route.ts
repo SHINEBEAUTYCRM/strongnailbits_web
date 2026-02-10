@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendFBServerPurchaseEvent } from "@/lib/analytics/fb-capi-server";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -217,6 +218,27 @@ export async function POST(req: NextRequest) {
         { status: 500 },
       );
     }
+
+    // Send FB Conversions API event (server-side, non-blocking)
+    sendFBServerPurchaseEvent({
+      orderNumber,
+      total: subtotal,
+      items: verifiedItems.map((i) => ({
+        id: i.product_id,
+        name: i.name,
+        price: i.price,
+        quantity: i.quantity,
+      })),
+      email: body.contact.email,
+      phone: body.contact.phone,
+      firstName: body.contact.firstName,
+      lastName: body.contact.lastName,
+      clientIP:
+        req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        req.headers.get("x-real-ip") ||
+        undefined,
+      userAgent: req.headers.get("user-agent") || undefined,
+    });
 
     // Decrease product quantities
     for (const item of verifiedItems) {

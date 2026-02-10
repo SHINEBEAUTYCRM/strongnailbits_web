@@ -73,14 +73,21 @@ export default function RootLayout({
   return (
     <html lang="uk">
       <head>
-        <link rel="dns-prefetch" href="https://kqgtxmdruxwtocmvsvwh.supabase.co" />
+        {/* Preconnect to critical origins (saves DNS+TCP+TLS per origin) */}
         <link rel="preconnect" href="https://kqgtxmdruxwtocmvsvwh.supabase.co" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://shine-shop.com.ua" />
-        {analytics.ga4MeasurementId && (
+        <link rel="preconnect" href="https://shine-shop.com.ua" crossOrigin="anonymous" />
+        {/* DNS prefetch for analytics (non-critical, loaded later) */}
+        {analytics.gtmContainerId && (
+          <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+        )}
+        {analytics.ga4MeasurementId && !analytics.gtmContainerId && (
           <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         )}
         {analytics.clarityProjectId && (
           <link rel="dns-prefetch" href="https://www.clarity.ms" />
+        )}
+        {analytics.fbPixelId && (
+          <link rel="dns-prefetch" href="https://connect.facebook.net" />
         )}
       </head>
       <body

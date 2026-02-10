@@ -47,7 +47,7 @@ function hashSHA256(value: string): string {
 function normalizeUserData(userData: CAPIEvent["user_data"]) {
   if (!userData) return {};
 
-  const normalized: Record<string, string> = {};
+  const normalized: Record<string, unknown> = {};
 
   if (userData.em) normalized.em = [hashSHA256(userData.em)];
   if (userData.ph) normalized.ph = [hashSHA256(userData.ph.replace(/\D/g, ""))];
