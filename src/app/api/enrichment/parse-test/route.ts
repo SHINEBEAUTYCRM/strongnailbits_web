@@ -1,12 +1,11 @@
 // POST /api/enrichment/parse-test
 // Body: { brand_id, product_id? }
-// Response: RawParsedData (preview of parsing 1 product)
+// Tests parser on 1 product from brand: finds it on brand site, parses with selectors
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminUser } from '@/lib/admin/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { testParser, findProductPage, parseProductPage } from '@/lib/enrichment/parser';
-import type { EnrichmentBrand } from '@/lib/enrichment/types';
+import * as cheerio from 'cheerio';
 
 export async function POST(request: NextRequest) {
   const admin = await getAdminUser();
@@ -23,7 +22,7 @@ export async function POST(request: NextRequest) {
 
   const supabase = createAdminClient();
 
-  // Get brand
+  // 1. Получить бренд с parse_config
   const { data: brand, error: brandError } = await supabase
     .from('brands')
     .select('*')
@@ -31,56 +30,236 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (brandError || !brand) {
-    return NextResponse.json({ error: 'Brand not found' }, { status: 404 });
+    return NextResponse.json({ error: 'Бренд не знайдено' }, { status: 404 });
+  }
+
+  if (!brand.parse_config?.selectors) {
+    return NextResponse.json({ error: 'Селектори не налаштовані. Спочатку натисніть "Налаштувати автоматично".' }, { status: 400 });
+  }
+
+  // 2. Получить товар для теста
+  let product;
+  if (product_id) {
+    const { data } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', product_id)
+      .single();
+    product = data;
+  } else {
+    // Берём первый товар бренда у которого есть артикул
+    const { data } = await supabase
+      .from('products')
+      .select('*')
+      .eq('brand_id', brand_id)
+      .not('sku', 'is', null)
+      .limit(1)
+      .single();
+    product = data;
+  }
+
+  if (!product) {
+    return NextResponse.json({ error: 'Товар не знайдено для цього бренду' }, { status: 404 });
   }
 
   try {
-    // Validate parse_config exists
-    const parseConfig = brand.parse_config as EnrichmentBrand['parse_config'] | null;
-    if (!parseConfig?.selectors) {
-      return NextResponse.json(
-        { error: 'Brand has no parse_config. Run auto-detect first.' },
-        { status: 400 },
-      );
-    }
+    // 3. Найти страницу товара на сайте бренда
+    const productUrl = await findProductOnBrandSite(brand, product);
 
-    // If product_id specified — test on that specific product
-    if (product_id) {
-      const { data: product } = await supabase
-        .from('products')
-        .select('*')
-        .eq('id', product_id)
-        .single();
-
-      if (!product) {
-        return NextResponse.json({ error: 'Product not found' }, { status: 404 });
-      }
-
-      const pageUrl = await findProductPage(brand as EnrichmentBrand, product);
-      if (!pageUrl) {
-        return NextResponse.json({
-          error: 'Product page not found on brand website',
-          product_name: product.name_uk,
-          sku: product.sku,
-        }, { status: 404 });
-      }
-
-      const parsed = await parseProductPage(pageUrl, parseConfig.selectors, parseConfig.parse_options);
-
+    if (!productUrl) {
       return NextResponse.json({
-        url: pageUrl,
-        parsed,
+        error: `Не вдалося знайти товар "${product.name_uk}" на сайті бренду`,
         product_name: product.name_uk,
-        sku: product.sku,
-      });
+        product_code: product.sku,
+      }, { status: 404 });
     }
 
-    // Otherwise — test on any product from brand's website
-    const result = await testParser(brand as EnrichmentBrand);
-    return NextResponse.json(result);
+    // 4. Парсить страницу найденными селекторами
+    const parsed = await parseProductPage(productUrl, brand.parse_config.selectors);
+
+    return NextResponse.json({
+      success: true,
+      product_name: product.name_uk,
+      product_code: product.sku,
+      product_url: productUrl,
+      parsed,
+    });
   } catch (err) {
     return NextResponse.json({
-      error: err instanceof Error ? err.message : 'Parse test failed',
+      error: err instanceof Error ? err.message : 'Помилка тестування парсера',
     }, { status: 500 });
   }
+}
+
+
+// ────── Поиск товара на сайте бренда ──────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function findProductOnBrandSite(brand: any, product: any): Promise<string | null> {
+  const config = brand.parse_config;
+  const baseUrl = brand.photo_source_url || brand.info_source_url;
+  if (!baseUrl) return null;
+
+  const origin = new URL(baseUrl).origin;
+  const article = product.sku || '';
+  const name = product.name_uk || '';
+  const fetchOpts = {
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ShineShopBot/1.0)' },
+    signal: AbortSignal.timeout(10000),
+  };
+
+  // Стратегия 1: URL-паттерн (если есть)
+  if (config.product_url_pattern && article) {
+    const url = config.product_url_pattern
+      .replace('{article}', encodeURIComponent(article))
+      .replace('{slug}', article.toLowerCase().replace(/\s+/g, '-'));
+
+    try {
+      const fullUrl = url.startsWith('http') ? url : origin + url;
+      const res = await fetch(fullUrl, { ...fetchOpts, method: 'HEAD' });
+      if (res.ok) return fullUrl;
+    } catch { /* try next strategy */ }
+  }
+
+  // Стратегия 2: Поиск на сайте (если есть search_url_pattern)
+  if (config.search_url_pattern && article) {
+    const searchUrl = config.search_url_pattern
+      .replace('{query}', encodeURIComponent(article))
+      .replace('{article}', encodeURIComponent(article));
+
+    try {
+      const fullUrl = searchUrl.startsWith('http') ? searchUrl : origin + searchUrl;
+      const res = await fetch(fullUrl, fetchOpts);
+      if (res.ok) {
+        const html = await res.text();
+        const $ = cheerio.load(html);
+        // Ищем первую ссылку на товар в результатах
+        const link = $('a[href*="product"], a[href*="tovar"], a[href*="catalog"] img, a[href*="shop"] img')
+          .closest('a')
+          .first()
+          .attr('href');
+        if (link) {
+          return link.startsWith('http') ? link : origin + link;
+        }
+      }
+    } catch { /* try next strategy */ }
+  }
+
+  // Стратегия 3: Поиск по каталогу бренда — ищем ссылку содержащую артикул или часть названия
+  if (article || name) {
+    try {
+      const res = await fetch(baseUrl, fetchOpts);
+      if (res.ok) {
+        const html = await res.text();
+        const $ = cheerio.load(html);
+
+        let found: string | null = null;
+        const searchTerms = [
+          article.toLowerCase(),
+          // Также ищем по первому слову названия длиннее 3 символов
+          ...name.toLowerCase().split(/\s+/).filter((w: string) => w.length > 3),
+        ].filter(Boolean);
+
+        $('a[href]').each((_, el) => {
+          const href = $(el).attr('href') || '';
+          const text = $(el).text().toLowerCase();
+
+          for (const term of searchTerms) {
+            if (
+              href.toLowerCase().includes(term) ||
+              text.includes(term)
+            ) {
+              found = href.startsWith('http') ? href : origin + href;
+              return false; // break
+            }
+          }
+        });
+
+        if (found) return found;
+      }
+    } catch { /* no result */ }
+  }
+
+  return null;
+}
+
+
+// ────── Парсинг страницы товара CSS-селекторами ──────
+
+async function parseProductPage(url: string, selectors: Record<string, string | null>) {
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ShineShopBot/1.0)' },
+    signal: AbortSignal.timeout(10000),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Не вдалося завантажити ${url}: ${res.status}`);
+  }
+
+  const html = await res.text();
+  const $ = cheerio.load(html);
+  const pageOrigin = new URL(url).origin;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result: Record<string, any> = {};
+
+  // Назва
+  if (selectors.title) {
+    result.title = $(selectors.title).first().text().trim() || null;
+  }
+
+  // Опис
+  if (selectors.description) {
+    result.description = $(selectors.description).first().text().trim() || null;
+  }
+
+  // Фото
+  if (selectors.photo) {
+    const photos: string[] = [];
+    $(selectors.photo).each((_, el) => {
+      const src = $(el).attr('src') || $(el).attr('data-src') || $(el).attr('data-lazy') || $(el).attr('href');
+      if (src && !src.startsWith('data:')) {
+        const fullUrl = src.startsWith('http') ? src : (src.startsWith('/') ? pageOrigin + src : pageOrigin + '/' + src);
+        if (!photos.includes(fullUrl)) photos.push(fullUrl);
+      }
+    });
+    result.photos = photos;
+    result.photo_count = photos.length;
+  }
+
+  // Характеристики
+  if (selectors.specs) {
+    const specs: Record<string, string> = {};
+    // Попробовать как таблицу
+    $(selectors.specs).find('tr').each((_, row) => {
+      const cells = $(row).find('td, th');
+      if (cells.length >= 2) {
+        const key = $(cells[0]).text().trim();
+        const val = $(cells[1]).text().trim();
+        if (key && val) specs[key] = val;
+      }
+    });
+    // Попробовать как dl/dt/dd
+    if (Object.keys(specs).length === 0) {
+      $(selectors.specs).find('dt').each((_, dt) => {
+        const key = $(dt).text().trim();
+        const val = $(dt).next('dd').text().trim();
+        if (key && val) specs[key] = val;
+      });
+    }
+    result.specs = specs;
+    result.specs_count = Object.keys(specs).length;
+  }
+
+  // Склад
+  if (selectors.composition) {
+    result.composition = $(selectors.composition).first().text().trim() || null;
+  }
+
+  // Інструкція
+  if (selectors.instructions) {
+    result.instructions = $(selectors.instructions).first().text().trim() || null;
+  }
+
+  return result;
 }

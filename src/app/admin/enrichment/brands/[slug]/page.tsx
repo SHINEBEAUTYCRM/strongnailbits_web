@@ -40,14 +40,19 @@ interface BrandConfig {
 }
 
 interface TestResult {
-  url: string;
+  success: boolean;
+  product_name: string;
+  product_code: string;
+  product_url: string;
   parsed: {
     title?: string;
     description?: string;
     specs?: Record<string, string>;
+    specs_count?: number;
     composition?: string;
     instructions?: string;
-    photo_urls?: string[];
+    photos?: string[];
+    photo_count?: number;
   };
 }
 
@@ -63,6 +68,7 @@ export default function BrandEnrichmentPage({ params }: { params: Promise<{ slug
   const [success, setSuccess] = useState<string | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [testError, setTestError] = useState<string | null>(null);
 
   // Form state
   const [sourceUrl, setSourceUrl] = useState('');
@@ -209,7 +215,7 @@ export default function BrandEnrichmentPage({ params }: { params: Promise<{ slug
     if (!brand) return;
     setTesting(true);
     setTestResult(null);
-    setError(null);
+    setTestError(null);
     try {
       const res = await fetch('/api/enrichment/parse-test', {
         method: 'POST',
@@ -217,11 +223,13 @@ export default function BrandEnrichmentPage({ params }: { params: Promise<{ slug
         body: JSON.stringify({ brand_id: brand.id }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) {
+        setTestError(data.error || 'Помилка тестування');
+        return;
+      }
       setTestResult(data);
-      setSuccess('Тест парсера пройшов успішно');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Parser test failed');
+    } catch {
+      setTestError('Не вдалося виконати тест');
     } finally {
       setTesting(false);
     }
@@ -362,44 +370,120 @@ export default function BrandEnrichmentPage({ params }: { params: Promise<{ slug
         )}
       </section>
 
-      {/* ═══════ Test Result ═══════ */}
-      {testResult && (
-        <section className="bg-white/[0.03] rounded-xl border border-white/[0.06] p-5 space-y-3">
-          <div className="flex items-center gap-2">
-            <TestTube className="w-4 h-4 text-[#06b6d4]" />
-            <h2 className="text-sm font-semibold text-white">Результат тесту</h2>
+      {/* ═══════ Test Parser Section ═══════ */}
+      {isConfigured && (
+        <section className="bg-white/[0.03] rounded-xl border border-white/[0.06] p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <TestTube className="w-4 h-4 text-[#06b6d4]" />
+              <h2 className="text-sm font-semibold text-white">Тест парсера</h2>
+            </div>
+            <button
+              onClick={handleTestParser}
+              disabled={testing}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#06b6d4]/10 hover:bg-[#06b6d4]/20 text-[#06b6d4] text-sm font-medium border border-[#06b6d4]/20 transition-colors disabled:opacity-50"
+            >
+              {testing ? <Loader2 className="w-4 h-4 animate-spin" /> : <TestTube className="w-4 h-4" />}
+              {testing ? 'Парсинг...' : 'Тестувати на 1 товарі'}
+            </button>
           </div>
-          <div className="text-xs text-white/40">
-            URL: <a href={testResult.url} target="_blank" rel="noopener noreferrer" className="text-[#06b6d4] hover:underline">{testResult.url}</a>
-          </div>
-          <div className="bg-white/[0.02] rounded-lg p-3 space-y-2 text-xs">
-            {testResult.parsed.title && (
-              <div><span className="text-white/40">Назва:</span> <span className="text-white">{testResult.parsed.title}</span></div>
-            )}
-            {testResult.parsed.description && (
-              <div><span className="text-white/40">Опис:</span> <span className="text-white/70">{testResult.parsed.description.slice(0, 200)}...</span></div>
-            )}
-            {testResult.parsed.photo_urls && (
-              <div><span className="text-white/40">Фото:</span> <span className="text-[#22c55e]">{testResult.parsed.photo_urls.length} знайдено</span></div>
-            )}
-            {testResult.parsed.specs && (
-              <div><span className="text-white/40">Характеристики:</span> <span className="text-white/70">{Object.keys(testResult.parsed.specs).length} полів</span></div>
-            )}
-            {testResult.parsed.composition && (
-              <div><span className="text-white/40">Склад:</span> <span className="text-white/70">{testResult.parsed.composition.slice(0, 150)}</span></div>
-            )}
-            {!testResult.parsed.title && !testResult.parsed.description && !testResult.parsed.photo_urls && (
-              <div className="text-white/30">Парсер не знайшов даних — спробуйте налаштувати селектори вручну (розширені)</div>
-            )}
-          </div>
-          <button
-            onClick={handleTestParser}
-            disabled={testing}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#06b6d4]/10 hover:bg-[#06b6d4]/20 text-[#06b6d4] text-xs font-medium transition-colors"
-          >
-            {testing ? <Loader2 className="w-3 h-3 animate-spin" /> : <TestTube className="w-3 h-3" />}
-            Тест ще раз
-          </button>
+
+          {/* Test Result */}
+          {testResult && (
+            <div className="space-y-3">
+              <div className="text-xs text-white/40">
+                Товар: <span className="text-white/70">{testResult.product_name}</span>
+                {' · '}Артикул: <span className="font-mono text-white/70">{testResult.product_code}</span>
+                {' · '}
+                <a href={testResult.product_url} target="_blank" rel="noopener noreferrer" className="text-[#a855f7] hover:underline">
+                  Сторінка на сайті ↗
+                </a>
+              </div>
+
+              {/* Назва */}
+              {testResult.parsed.title && (
+                <div className="p-3 rounded-lg bg-white/[0.02]">
+                  <span className="text-xs text-[#22c55e]/70">📝 Назва:</span>
+                  <p className="text-sm text-white/80 mt-1">{testResult.parsed.title}</p>
+                </div>
+              )}
+
+              {/* Фото */}
+              {testResult.parsed.photos && testResult.parsed.photos.length > 0 && (
+                <div className="p-3 rounded-lg bg-white/[0.02]">
+                  <span className="text-xs text-[#22c55e]/70">📸 Фото: {testResult.parsed.photo_count}</span>
+                  <div className="flex gap-2 mt-2 overflow-x-auto">
+                    {testResult.parsed.photos.slice(0, 5).map((url, i) => (
+                      <img key={i} src={url} alt="" className="w-20 h-20 object-cover rounded border border-white/10" />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Опис */}
+              {testResult.parsed.description && (
+                <div className="p-3 rounded-lg bg-white/[0.02]">
+                  <span className="text-xs text-[#22c55e]/70">📄 Опис:</span>
+                  <p className="text-sm text-white/60 mt-1 line-clamp-4">{testResult.parsed.description}</p>
+                </div>
+              )}
+
+              {/* Характеристики */}
+              {testResult.parsed.specs_count && testResult.parsed.specs_count > 0 && (
+                <div className="p-3 rounded-lg bg-white/[0.02]">
+                  <span className="text-xs text-[#22c55e]/70">📋 Характеристики: {testResult.parsed.specs_count}</span>
+                  <div className="mt-1 space-y-1">
+                    {Object.entries(testResult.parsed.specs || {}).map(([key, val]) => (
+                      <div key={key} className="flex text-xs">
+                        <span className="text-white/40 w-32 shrink-0">{key}</span>
+                        <span className="text-white/70">{val as string}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Склад */}
+              {testResult.parsed.composition && (
+                <div className="p-3 rounded-lg bg-white/[0.02]">
+                  <span className="text-xs text-[#22c55e]/70">⚗️ Склад:</span>
+                  <p className="text-sm text-white/60 mt-1">{testResult.parsed.composition}</p>
+                </div>
+              )}
+
+              {/* Інструкція */}
+              {testResult.parsed.instructions && (
+                <div className="p-3 rounded-lg bg-white/[0.02]">
+                  <span className="text-xs text-[#22c55e]/70">📖 Інструкція:</span>
+                  <p className="text-sm text-white/60 mt-1">{testResult.parsed.instructions}</p>
+                </div>
+              )}
+
+              {/* Що не знайдено */}
+              {(() => {
+                const missing: string[] = [];
+                if (!testResult.parsed.title) missing.push('назва');
+                if (!testResult.parsed.photos?.length) missing.push('фото');
+                if (!testResult.parsed.description) missing.push('опис');
+                if (!testResult.parsed.specs_count) missing.push('характеристики');
+                if (!testResult.parsed.composition) missing.push('склад');
+                if (!testResult.parsed.instructions) missing.push('інструкція');
+                if (missing.length === 0) return null;
+                return (
+                  <div className="text-xs text-amber-400/60 mt-2">
+                    ⚠️ Не знайдено: {missing.join(', ')}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          {/* Test Error */}
+          {testError && (
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400">
+              {testError}
+            </div>
+          )}
         </section>
       )}
 
