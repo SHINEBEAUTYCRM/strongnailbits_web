@@ -1,219 +1,253 @@
 // ================================================================
 //  Shine Shop B2B — AI Auto-detect CSS Selectors
-//  Uses Claude Sonnet to analyze HTML and find selectors
+//  Логика: каталог → находим товар (скоринг) → fetch товара → Claude
 // ================================================================
 
 import * as cheerio from 'cheerio';
-import { autoDetectSelectors as claudeAutoDetect } from '@/lib/claude';
-import { fetchPage } from './parser';
+import { parseClaudeJSON } from '@/lib/parse-claude-json';
 import type { AutoDetectResult } from './types';
 
 /**
  * Auto-detect CSS selectors for a brand's product pages.
- * 1. Fetch catalog page
- * 2. Find a product link (tries multiple strategies)
- * 3. Fetch product page
- * 4. Send HTML to Claude Sonnet for selector detection
+ * 1. Fetch catalog page, найти URL товара (по скорингу)
+ * 2. Fetch страницу товара
+ * 3. Claude анализирует HTML товара
  */
-export async function autoDetectSelectors(sourceUrl: string): Promise<AutoDetectResult> {
-  // 1. Fetch catalog/main page
-  const catalogHtml = await fetchPage(sourceUrl);
-  const $catalog = cheerio.load(catalogHtml);
-
-  // 2. Find a product link — try multiple strategies
-  let productUrl = findProductLink($catalog, sourceUrl);
-
-  // If catalog page is the main page, try finding a catalog/category link first
-  if (!productUrl) {
-    const catalogLink = findCatalogLink($catalog, sourceUrl);
-    if (catalogLink) {
-      const subHtml = await fetchPage(catalogLink);
-      const $sub = cheerio.load(subHtml);
-      productUrl = findProductLink($sub, catalogLink);
-    }
-  }
+export async function autoDetectSelectors(catalogUrl: string): Promise<AutoDetectResult> {
+  // ШАГ 1: Найти URL товара из каталога
+  const productUrl = await findProductUrl(catalogUrl);
 
   if (!productUrl) {
     throw new Error(
-      `Не знайдено жодного посилання на сторінку товару на ${sourceUrl}. ` +
-      `Перевірте URL — він повинен вести на каталог або категорію з товарами.`,
+      `Не вдалося знайти посилання на товар на сторінці ${catalogUrl}. ` +
+      `Перевірте: 1) URL веде на каталог з товарами, 2) Сайт не SPA (не рендериться через JS)`,
     );
   }
 
-  // 3. Fetch product page
-  const productHtml = await fetchPage(productUrl);
+  // ШАГ 2: Fetch страницу товара
+  const productResponse = await fetch(productUrl, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ShineShopBot/1.0)' },
+    signal: AbortSignal.timeout(15000),
+  });
 
-  // Basic check — is this really a product page? (should have images and some content)
-  const $product = cheerio.load(productHtml);
-  const imgCount = $product('img').length;
-  const textLen = $product('body').text().length;
-  if (imgCount < 1 || textLen < 500) {
-    throw new Error(
-      `Сторінка ${productUrl} не схожа на товар (${imgCount} зображень, ${textLen} символів). ` +
-      `Можливо, сайт потребує JavaScript (SPA) і парсинг статичного HTML не підтримується.`,
-    );
+  if (!productResponse.ok) {
+    throw new Error(`Не вдалося завантажити сторінку товару: ${productUrl} (${productResponse.status})`);
   }
 
-  // 4. Claude Sonnet analyzes HTML
-  const { selectors, confidence } = await claudeAutoDetect(productHtml, productUrl);
+  const productHtml = await productResponse.text();
+
+  // Очистка HTML
+  const cleanHtml = cleanupHtml(productHtml);
+
+  // ШАГ 3: Claude анализирует HTML товара
+  const result = await detectWithClaude(cleanHtml, productUrl);
 
   return {
-    selectors,
+    selectors: result.selectors,
     sample_product_url: productUrl,
-    confidence,
+    confidence: result.confidence,
   };
 }
 
-/**
- * Find a product link on the catalog page.
- * Tries common patterns for e-commerce sites.
- */
-function findProductLink($: cheerio.CheerioAPI, baseUrl: string): string | null {
-  // Common product link patterns — ordered by specificity
-  const productPatterns = [
-    // Explicit product URLs
-    'a[href*="/product/"]',
-    'a[href*="/products/"]',
-    'a[href*="/tovar/"]',
-    'a[href*="/tovary/"]',
-    'a[href*="/item/"]',
-    'a[href*="/p/"]',
-    // Common in Ukrainian e-commerce
-    'a[href*="-p-"]',
-    'a[href*="/ua/product"]',
-    'a[href*="/uk/product"]',
-    // OpenCart pattern
-    'a[href*="product_id="]',
-    'a[href*="route=product"]',
-    // WooCommerce
-    'a[href*="/shop/"][href$="/"]',
-    // Class-based patterns
-    '.product-card a',
-    '.product-item a',
-    '.product-name a',
-    '.product-title a',
-    '.product a',
-    '.catalog-item a',
-    '.goods-item a',
-    '[class*="product"] a[href]',
-    '[class*="card"] a[href]',
-    '[class*="goods"] a[href]',
-    // Data attributes
-    '[data-product] a',
-    'a[data-product-id]',
-    'a[data-id]',
-    // Image grid items (common catalog layout)
-    '.grid a[href]:has(img)',
-    '.catalog a[href]:has(img)',
-    'li a[href]:has(img)',
-  ];
+// ────── ШАГ 1: Найти URL товара (скоринг) ──────
 
-  const base = new URL(baseUrl);
+async function findProductUrl(catalogUrl: string): Promise<string | null> {
+  const response = await fetch(catalogUrl, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ShineShopBot/1.0)' },
+    signal: AbortSignal.timeout(15000),
+  });
 
-  for (const pattern of productPatterns) {
-    const links = $(pattern).toArray();
-    for (const el of links) {
-      const href = $(el).attr('href');
-      if (!href) continue;
-
-      const resolved = resolveProductUrl(href, baseUrl);
-      if (!resolved) continue;
-
-      // Skip navigation / category links (too short path)
-      try {
-        const url = new URL(resolved);
-        if (url.hostname !== base.hostname) continue;
-        const segments = url.pathname.split('/').filter(Boolean);
-        if (segments.length >= 2) return resolved;
-      } catch { continue; }
-    }
+  if (!response.ok) {
+    throw new Error(`Не вдалося завантажити каталог: ${catalogUrl} (${response.status})`);
   }
 
-  // Fallback: find links that look like product pages
-  // (deepest path on same domain, with at least 2 segments)
-  const candidates: { url: string; depth: number; hasImg: boolean }[] = [];
+  const html = await response.text();
+  const $ = cheerio.load(html);
+  const baseUrl = new URL(catalogUrl).origin;
+
+  // Собираем все ссылки и оцениваем каждую
+  const links: { href: string; score: number }[] = [];
 
   $('a[href]').each((_, el) => {
-    const href = $(el).attr('href');
+    let href = $(el).attr('href');
     if (!href) return;
 
+    // Абсолютный URL
+    if (href.startsWith('/')) href = baseUrl + href;
+    if (href.startsWith('//')) href = 'https:' + href;
+    if (!href.startsWith('http')) return;
+
+    // Тот же домен
     try {
-      const resolved = new URL(href, base);
-      if (resolved.hostname !== base.hostname) return;
+      if (new URL(href).origin !== baseUrl) return;
+    } catch { return; }
 
-      const segments = resolved.pathname.split('/').filter(Boolean);
-      if (segments.length < 2) return;
+    // ── Скоринг ──
+    let score = 0;
 
-      // Skip common non-product paths
-      const path = resolved.pathname.toLowerCase();
-      if (/\/(cart|checkout|login|register|account|about|contact|blog|news|faq|terms|privacy|delivery|payment|return|wishlist)/.test(path)) return;
+    // Позитивные сигналы (похоже на товар)
+    if (/\/(product|tovar|catalog|shop|item)\/[^/]+\/?$/i.test(href)) score += 3;
+    if (/\/[a-z0-9-]+-\d+\.html$/i.test(href)) score += 2; // slug-123.html
+    if (/[?&]product_id=/i.test(href)) score += 3; // OpenCart
+    if (/[?&]route=product/i.test(href)) score += 3; // OpenCart
+    if (/\/p\/[^/]+/i.test(href)) score += 2; // /p/slug pattern
+    if ($(el).find('img').length > 0) score += 2; // есть картинка
+    if ($(el).find('.price, [class*=price]').length > 0) score += 3; // есть цена
+    if ($(el).closest('[class*=product], [class*=card], [class*=item], [class*=goods]').length > 0) score += 2;
 
-      const hasImg = $(el).find('img').length > 0 || $(el).closest('[class*="product"]').length > 0;
+    // Проверяем родителя — если это карточка товара
+    const parent = $(el).parent();
+    if (parent.find('img').length > 0 && parent.text().match(/\d+\s*(₴|грн|UAH)/)) score += 3;
 
-      candidates.push({
-        url: resolved.toString(),
-        depth: segments.length,
-        hasImg,
-      });
-    } catch {
-      // skip invalid URLs
+    // Глубина URL — товары обычно имеют 2+ сегмента
+    try {
+      const segments = new URL(href).pathname.split('/').filter(Boolean).length;
+      if (segments >= 2) score += 1;
+      if (segments >= 3) score += 1;
+    } catch { /* skip */ }
+
+    // Негативные сигналы (НЕ товар)
+    if (/\/(cart|login|register|personal|order|checkout|about|contact|blog|news|faq|terms|privacy|delivery|payment|return|wishlist|compare|account)/i.test(href)) score -= 10;
+    if (/\/(category|categories|brands|brand)\/?$/i.test(href)) score -= 5;
+    if (href === catalogUrl) score -= 10;
+    if (href === baseUrl || href === baseUrl + '/') score -= 10;
+    if (href.includes('#')) score -= 2;
+    if (href.includes('javascript:')) score -= 10;
+
+    if (score > 0) {
+      links.push({ href, score });
     }
   });
 
-  // Prefer links with images, then by depth
-  candidates.sort((a, b) => {
-    if (a.hasImg !== b.hasImg) return b.hasImg ? 1 : -1;
-    return b.depth - a.depth;
+  // Сортируем по скору, берём лучшую
+  links.sort((a, b) => b.score - a.score);
+
+  // Дедупликация
+  const seen = new Set<string>();
+  const unique = links.filter(l => {
+    if (seen.has(l.href)) return false;
+    seen.add(l.href);
+    return true;
   });
 
-  return candidates[0]?.url || null;
+  return unique.length > 0 ? unique[0].href : null;
 }
 
-/**
- * Find a catalog/category link when the source URL is the homepage.
- */
-function findCatalogLink($: cheerio.CheerioAPI, baseUrl: string): string | null {
-  const catalogPatterns = [
-    'a[href*="/catalog"]',
-    'a[href*="/catalogue"]',
-    'a[href*="/shop"]',
-    'a[href*="/products"]',
-    'a[href*="/tovary"]',
-    'a[href*="/category"]',
-    'a[href*="/kategorii"]',
-    'a[href*="/collection"]',
-    'nav a[href]',
-  ];
+// ────── Очистка HTML (cheerio) ──────
 
-  const base = new URL(baseUrl);
+function cleanupHtml(html: string): string {
+  const $ = cheerio.load(html);
 
-  for (const pattern of catalogPatterns) {
-    const links = $(pattern).toArray();
-    for (const el of links) {
-      const href = $(el).attr('href');
-      if (!href) continue;
+  // Убираем ненужные элементы
+  $('script, style, svg, noscript, iframe, link, meta').remove();
+  $('header, footer, nav').remove(); // навигация не нужна
+  $('[class*="cookie"], [class*="popup"], [class*="modal"], [class*="banner"]').remove();
+  $('[class*="Cookie"], [class*="Popup"], [class*="Modal"], [class*="Banner"]').remove();
 
-      const resolved = resolveProductUrl(href, baseUrl);
-      if (!resolved) continue;
+  // Берём body
+  let clean = $('body').html() || $.html();
 
-      try {
-        const url = new URL(resolved);
-        if (url.hostname !== base.hostname) continue;
-        if (url.pathname === '/' || url.pathname === base.pathname) continue;
-        return resolved;
-      } catch { continue; }
+  // Убираем data-URI (очень большие)
+  clean = clean.replace(/data:[^"'\s]+/g, 'data:...');
+
+  // Убираем лишние пробелы
+  clean = clean.replace(/\s+/g, ' ').trim();
+
+  // Лимит ~15000 символов
+  if (clean.length > 15000) {
+    clean = clean.substring(0, 15000) + '... [обрізано]';
+  }
+
+  return clean;
+}
+
+// ────── ШАГ 3: Claude определяет селекторы ──────
+
+async function detectWithClaude(
+  html: string,
+  productUrl: string,
+): Promise<{ selectors: AutoDetectResult['selectors']; confidence: number }> {
+  const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
+  if (!apiKey) throw new Error('ANTHROPIC_API_KEY not set');
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 2000,
+      messages: [
+        {
+          role: 'user',
+          content: `Проаналізуй HTML сторінки товару nail-косметики (${productUrl}).
+
+Знайди CSS-селектори для кожного елемента. Шукай РЕАЛЬНІ селектори що є в HTML.
+
+HTML сторінки товару:
+${html}
+
+Поверни ТІЛЬКИ JSON без markdown-обгортки, без \`\`\`json:
+{
+  "selectors": {
+    "title": "CSS-селектор назви товару або null",
+    "description": "CSS-селектор опису товару або null",
+    "photo": "CSS-селектор головного фото (img тег) або null",
+    "specs": "CSS-селектор таблиці характеристик або null",
+    "composition": "CSS-селектор складу або null",
+    "instructions": "CSS-селектор інструкції або null"
+  },
+  "confidence": 0.0
+}
+
+Правила:
+- Для title шукай h1 або великий заголовок з назвою товару
+- Для photo шукай img в галереї/слайдері товару, не логотип чи іконки
+- Для specs шукай table, dl/dt/dd, або списки з "Об'єм:", "Колір:" тощо
+- Для description шукай блок тексту (не назва, не характеристики)
+- Якщо елемент не знайдено — поверни null
+- Селектори мають бути максимально специфічними
+- confidence — від 0 до 1, наскільки ти впевнений у результатах`,
+        },
+      ],
+    }),
+    signal: AbortSignal.timeout(60000),
+  });
+
+  const data = await response.json();
+  const text = data.content?.[0]?.text;
+
+  if (!text) {
+    if (data.error) {
+      throw new Error(`Claude API помилка: ${data.error.message || JSON.stringify(data.error)}`);
+    }
+    throw new Error('Claude повернув порожню відповідь');
+  }
+
+  const result = parseClaudeJSON<{ selectors: Record<string, string | null>; confidence: number }>(text);
+
+  // Фильтруем null-селекторы
+  const selectors: Record<string, string | undefined> = {};
+  if (result.selectors) {
+    for (const [key, val] of Object.entries(result.selectors)) {
+      selectors[key] = (val && val !== 'null') ? val : undefined;
     }
   }
 
-  return null;
-}
-
-function resolveProductUrl(href: string, baseUrl: string): string | null {
-  try {
-    if (href.startsWith('http')) return href;
-    if (href.startsWith('//')) return `https:${href}`;
-    return new URL(href, baseUrl).toString();
-  } catch {
-    return null;
+  // Валидация — хотя бы один селектор должен быть найден
+  const hasAny = Object.values(selectors).some(v => v !== undefined);
+  if (!hasAny) {
+    throw new Error(
+      'Claude не знайшов жодного CSS-селектора. ' +
+      'Можливо сайт використовує JavaScript-рендеринг (SPA) і потрібен інший підхід.',
+    );
   }
+
+  return {
+    selectors: selectors as AutoDetectResult['selectors'],
+    confidence: result.confidence || 0,
+  };
 }

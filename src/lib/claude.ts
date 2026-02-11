@@ -6,10 +6,11 @@
 // ================================================================
 
 import type { AIMetadata, VisionAnalysisResult } from './enrichment/types';
+import { parseClaudeJSON } from './parse-claude-json';
 
 const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
 const ENRICHMENT_MODEL = 'claude-haiku-4-5-20251001';
-const SMART_MODEL = 'claude-sonnet-4-5-20250929';
+// SMART_MODEL used in auto-detect.ts directly
 
 function getApiKey(): string {
   const key = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
@@ -168,7 +169,7 @@ ${rawParsedData ? `Дані з сайту бренду:
   }
 
   try {
-    const parsed = extractJSON(result.text);
+    const parsed = parseClaudeJSON(result.text);
 
     const metadata: Partial<AIMetadata> = {};
 
@@ -275,7 +276,7 @@ export async function analyzeProductPhoto(
   }
 
   try {
-    const parsed = extractJSON(result.text);
+    const parsed = parseClaudeJSON(result.text);
 
     return {
       result: {
@@ -292,149 +293,6 @@ export async function analyzeProductPhoto(
 }
 
 // ────── Auto-detect: CSS-селекторы ──────
-
-export async function autoDetectSelectors(
-  htmlSample: string,
-  pageUrl: string,
-): Promise<{
-  selectors: {
-    title?: string;
-    description?: string;
-    photo?: string;
-    specs?: string;
-    composition?: string;
-    instructions?: string;
-  };
-  confidence: number;
-  tokens: { input: number; output: number };
-}> {
-  const systemPrompt = `Ти — експерт з веб-скрейпінгу та CSS-селекторів.
-Проаналізуй HTML-сторінку товару та знайди CSS-селектори для:
-1. title — назва товару (зазвичай h1 або .product-title)
-2. description — опис товару (блок тексту з описом)
-3. photo — фотографії товару (img всередині product gallery/slider)
-4. specs — таблиця характеристик (dl, table або .specs)
-5. composition — склад (якщо є окремий блок)
-6. instructions — інструкція з використання (якщо є)
-
-ВАЖЛИВО:
-- Шукай реальні CSS-селектори що є в цьому HTML
-- Перевіряй що елемент за селектором реально існує в наданому HTML
-- Якщо бачиш конкретні class-атрибути — використовуй їх
-- Якщо блок не знайдений, постав null
-- Для фото шукай img в контейнері галереї/слайдера, а не логотипи чи іконки
-
-Поверни ТІЛЬКИ чистий JSON без markdown-обгортки:
-{
-  "selectors": {
-    "title": "CSS selector або null",
-    "description": "CSS selector або null",
-    "photo": "CSS selector або null",
-    "specs": "CSS selector або null",
-    "composition": "CSS selector або null",
-    "instructions": "CSS selector або null"
-  },
-  "confidence": число від 0 до 1,
-  "notes": "коротке пояснення що знайшов"
-}`;
-
-  // Trim HTML to avoid token limits — keep meaningful parts
-  const trimmedHtml = trimHtmlSmart(htmlSample, 15000);
-
-  const result = await callClaude({
-    model: SMART_MODEL,
-    system: systemPrompt,
-    messages: [{
-      role: 'user',
-      content: `URL сторінки товару: ${pageUrl}\n\nHTML:\n${trimmedHtml}`,
-    }],
-    maxTokens: 1024,
-    temperature: 0.1,
-  });
-
-  if (!result.success) {
-    throw new Error(`Claude auto-detect failed: ${result.error}`);
-  }
-
-  try {
-    const parsed = extractJSON(result.text);
-
-    // Filter out null selectors
-    const selectors: Record<string, string> = {};
-    if (parsed.selectors && typeof parsed.selectors === 'object') {
-      for (const [key, val] of Object.entries(parsed.selectors as Record<string, unknown>)) {
-        if (val && typeof val === 'string' && val !== 'null') {
-          selectors[key] = val;
-        }
-      }
-    }
-
-    // Warn if all selectors are empty
-    if (Object.keys(selectors).length === 0) {
-      throw new Error(
-        `Claude не знайшов жодного CSS-селектора на сторінці ${pageUrl}. ` +
-        `Можливо, це не сторінка товару, або сайт використовує JavaScript-рендеринг (SPA). ` +
-        (parsed.notes ? `Примітка Claude: ${String(parsed.notes)}` : ''),
-      );
-    }
-
-    return {
-      selectors,
-      confidence: Number(parsed.confidence) || 0,
-      tokens: { input: result.inputTokens, output: result.outputTokens },
-    };
-  } catch (err) {
-    if (err instanceof Error && err.message.includes('не знайшов')) {
-      throw err; // Re-throw our custom error
-    }
-    throw new Error(`Failed to parse auto-detect response: ${result.text.slice(0, 300)}`);
-  }
-}
-
-/**
- * Extract JSON from Claude response, handling markdown code fences and other wrappers.
- */
-function extractJSON(text: string): Record<string, unknown> {
-  // Try direct parse first
-  const trimmed = text.trim();
-  try { return JSON.parse(trimmed); } catch { /* continue */ }
-
-  // Strip markdown code fences (```json ... ``` or ``` ... ```)
-  const codeBlockMatch = trimmed.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
-  if (codeBlockMatch) {
-    try { return JSON.parse(codeBlockMatch[1].trim()); } catch { /* continue */ }
-  }
-
-  // Find first { ... last }
-  const firstBrace = trimmed.indexOf('{');
-  const lastBrace = trimmed.lastIndexOf('}');
-  if (firstBrace !== -1 && lastBrace > firstBrace) {
-    try { return JSON.parse(trimmed.slice(firstBrace, lastBrace + 1)); } catch { /* continue */ }
-  }
-
-  throw new Error('No valid JSON found');
-}
-
-/**
- * Smart HTML trim — remove scripts, styles, SVGs and keep meaningful content.
- */
-function trimHtmlSmart(html: string, maxLen: number): string {
-  let cleaned = html
-    // Remove scripts, styles, SVGs, comments
-    .replace(/<script[\s\S]*?<\/script>/gi, '')
-    .replace(/<style[\s\S]*?<\/style>/gi, '')
-    .replace(/<svg[\s\S]*?<\/svg>/gi, '')
-    .replace(/<!--[\s\S]*?-->/g, '')
-    // Remove data-URIs (they're huge)
-    .replace(/data:[^"'\s]+/g, 'data:...')
-    // Collapse whitespace
-    .replace(/\s{3,}/g, '\n');
-
-  if (cleaned.length > maxLen) {
-    cleaned = cleaned.slice(0, maxLen) + '\n<!-- trimmed -->';
-  }
-  return cleaned;
-}
 
 // ────── Translate to Ukrainian ──────
 
