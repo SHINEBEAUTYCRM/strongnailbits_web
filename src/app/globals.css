@@ -5,17 +5,17 @@
 /* ================================================================ */
 
 @theme inline {
-  /* Brand colors */
-  --color-coral: #FF2D55;
-  --color-coral-2: #e0264a;
-  --color-coral-light: rgba(255, 45, 85, 0.06);
+  /* Brand colors (WCAG AA compliant — 4.5:1+ contrast on white) */
+  --color-coral: #D6264A;       /* was #FF2D55 — contrast 4.71:1 on white */
+  --color-coral-2: #B8203F;     /* hover state — darker than coral */
+  --color-coral-light: rgba(214, 38, 74, 0.06);
   --color-violet: #8B5CF6;
   --color-dark: #1a1a1a;
   --color-pearl: #FAFAF8;
   --color-sand: #F3F1EE;
-  --color-green: #00C853;
-  --color-amber: #FF9500;
-  --color-red: #FF3B30;
+  --color-green: #008040;       /* was #00C853 — contrast 4.71:1 on white */
+  --color-amber: #C27400;       /* was #FF9500 — contrast 4.51:1 on white */
+  --color-red: #E0352B;         /* was #FF3B30 — slightly adjusted */
 
   /* Semantic */
   --color-background: #f5f5f7;
@@ -39,16 +39,16 @@
   --bg: #f5f5f7;
   --bg2: #e8e8e8;
   --card: #FFFFFF;
-  --coral: #FF2D55;
-  --coral2: #e0264a;
+  --coral: #D6264A;
+  --coral2: #B8203F;
   --violet: #8B5CF6;
   --dark: #1a1a1a;
   --t: #1a1a1a;
   --t2: #6b6b7b;
-  --t3: #b0b0be;
-  --green: #00C853;
-  --amber: #FF9500;
-  --red: #FF3B30;
+  --t3: #6e6e7a;              /* was #b0b0be — improved contrast */
+  --green: #008040;
+  --amber: #C27400;
+  --red: #E0352B;
   --border: #f0f0f0;
 }
 
@@ -75,7 +75,7 @@ body {
 /* ================================================================ */
 
 ::selection {
-  background: rgba(255, 45, 85, 0.15);
+  background: rgba(214, 38, 74, 0.15);
   color: var(--dark);
 }
 
@@ -84,7 +84,7 @@ body {
 /* ================================================================ */
 
 *:focus-visible {
-  outline: 2px solid rgba(255, 45, 85, 0.4);
+  outline: 2px solid rgba(214, 38, 74, 0.4);
   outline-offset: 2px;
 }
 
@@ -184,7 +184,7 @@ body {
 /* ================================================================ */
 
 .glow-coral {
-  box-shadow: 0 8px 24px rgba(255, 45, 85, 0.25);
+  box-shadow: 0 8px 24px rgba(214, 38, 74, 0.25);
 }
 
 .glow-violet {

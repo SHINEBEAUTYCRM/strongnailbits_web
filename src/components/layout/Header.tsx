@@ -156,8 +156,8 @@ export function Header() {
               }}
               className={`flex h-11 items-center gap-2.5 rounded-2xl px-5 text-[14px] font-bold text-white transition-all ${
                 catalogOpen
-                  ? "bg-[#e0264a]"
-                  : "bg-coral hover:bg-[#e0264a]"
+                  ? "bg-[#B8203F]"
+                  : "bg-coral hover:bg-[#B8203F]"
               }`}
             >
               {catalogOpen ? <X size={18} /> : <LayoutGrid size={18} />}
@@ -428,7 +428,7 @@ export function Header() {
                 Назад
               </button>
             ) : (
-              <span className="text-sm font-medium text-[#b0b0be]">
+              <span className="text-sm font-medium text-[#6e6e7a]">
                 Навігація
               </span>
             )}

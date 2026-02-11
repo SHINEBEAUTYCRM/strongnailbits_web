@@ -160,7 +160,7 @@ export function CatalogButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex w-full items-center justify-center gap-2.5 rounded-2xl bg-coral px-6 py-4 text-[15px] font-bold text-white transition-all hover:bg-[#e0264a] active:scale-[.98]"
+        className="flex w-full items-center justify-center gap-2.5 rounded-2xl bg-coral px-6 py-4 text-[15px] font-bold text-white transition-all hover:bg-[#B8203F] active:scale-[.98]"
       >
         <LayoutGrid size={20} />
         Каталог товарів

@@ -143,7 +143,7 @@ export function ProductBuySidebar({
             <span className="rounded-md bg-[#ff3b30] px-2 py-0.5 text-[11px] font-bold text-white">
               &minus;{discount}%
             </span>
-            <span className="text-[12px] font-medium text-[#00c853]">
+            <span className="text-[12px] font-medium text-[#008040]">
               Вигода {formatPrice(savings)}
             </span>
           </div>
@@ -160,8 +160,8 @@ export function ProductBuySidebar({
             </>
           ) : isAvailable ? (
             <>
-              <div className="h-2 w-2 rounded-full bg-[#00c853]" />
-              <span className="text-[#00c853]">В наявності</span>
+              <div className="h-2 w-2 rounded-full bg-[#008040]" />
+              <span className="text-[#008040]">В наявності</span>
             </>
           ) : (
             <>
@@ -206,8 +206,8 @@ export function ProductBuySidebar({
           disabled={!isAvailable}
           className={`mt-4 flex h-[52px] w-full items-center justify-center gap-2.5 rounded-xl text-[15px] font-bold text-white transition-all disabled:cursor-not-allowed disabled:opacity-40 ${
             added
-              ? "bg-[#00c853]"
-              : "bg-[#00c853] shadow-[0_4px_16px_rgba(0,200,83,0.3)] hover:bg-[#00b248] active:scale-[0.98]"
+              ? "bg-[#008040]"
+              : "bg-[#008040] shadow-[0_4px_16px_rgba(0,128,64,0.3)] hover:bg-[#006B35] active:scale-[0.98]"
           }`}
         >
           {added ? (
@@ -279,7 +279,7 @@ export function ProductBuySidebar({
 
         <div className="flex flex-col gap-3.5">
           <div className="flex items-start gap-3">
-            <Truck size={16} className="mt-0.5 shrink-0 text-[#00c853]" />
+            <Truck size={16} className="mt-0.5 shrink-0 text-[#008040]" />
             <div>
               <p className="text-[13px] font-medium text-[#222]">
                 Нова Пошта
@@ -315,8 +315,8 @@ export function ProductBuySidebar({
           </div>
 
           <div className="flex items-start gap-3 rounded-lg bg-[#f0faf0] px-3 py-2">
-            <Package size={16} className="mt-0.5 shrink-0 text-[#00c853]" />
-            <p className="text-[12px] font-medium text-[#00c853]">
+            <Package size={16} className="mt-0.5 shrink-0 text-[#008040]" />
+            <p className="text-[12px] font-medium text-[#008040]">
               Безкоштовно від 3 000 ₴
             </p>
           </div>
@@ -327,7 +327,7 @@ export function ProductBuySidebar({
       <div className="rounded-xl border border-[#f0f0f0] bg-white p-5">
         <div className="flex flex-col gap-3">
           <div className="flex items-start gap-3">
-            <Shield size={16} className="mt-0.5 shrink-0 text-[#00c853]" />
+            <Shield size={16} className="mt-0.5 shrink-0 text-[#008040]" />
             <p className="text-[13px] text-[#444]">
               100% оригінальна продукція з сертифікатами від виробника
             </p>

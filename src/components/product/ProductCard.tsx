@@ -166,7 +166,7 @@ export function ProductCard({
           className={`absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200 ${
             mounted && isInWishlist
               ? "bg-coral text-white shadow-md"
-              : "bg-white text-[#b0b0be] shadow-sm hover:text-coral"
+              : "bg-white text-[#6e6e7a] shadow-sm hover:text-coral"
           }`}
           aria-label={
             isInWishlist ? "Видалити з обраного" : "Додати в обране"
@@ -183,7 +183,7 @@ export function ProductCard({
       <div className="flex flex-1 flex-col p-3 sm:p-3.5">
         {/* Brand */}
         {brand && (
-          <span className="mb-1 w-fit rounded bg-coral/[0.07] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-coral">
+          <span className="mb-1 w-fit rounded bg-coral/[0.04] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-coral">
             {brand}
           </span>
         )}
@@ -204,7 +204,7 @@ export function ProductCard({
         <div className="mt-auto flex items-end justify-between gap-2 pt-2">
           <div className="min-w-0">
             {hasDiscount && (
-              <span className="font-price block text-[12px] leading-none text-[#b0b0be] line-through">
+              <span className="font-price block text-[12px] leading-none text-[#6e6e7a] line-through">
                 {fmtPrice(oldPrice)}&thinsp;₴
               </span>
             )}

@@ -140,12 +140,12 @@ export function ProductInfo({
           {/* Delivery */}
           <div>
             <h3 className="mb-3 flex items-center gap-2 text-[14px] font-bold text-[#222]">
-              <Truck size={16} className="text-[#00c853]" />
+              <Truck size={16} className="text-[#008040]" />
               Доставка
             </h3>
             <div className="overflow-hidden rounded-xl border border-[#f0f0f0]">
               <div className="flex items-start gap-3 border-b border-[#f0f0f0] bg-white px-4 py-3">
-                <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[#00c853]" />
+                <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[#008040]" />
                 <div>
                   <p className="text-[13px] font-medium text-[#222]">
                     Нова Пошта — відділення
@@ -156,7 +156,7 @@ export function ProductInfo({
                 </div>
               </div>
               <div className="flex items-start gap-3 border-b border-[#f0f0f0] bg-[#fafafa] px-4 py-3">
-                <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[#00c853]" />
+                <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[#008040]" />
                 <div>
                   <p className="text-[13px] font-medium text-[#222]">
                     Нова Пошта — кур&apos;єр
@@ -178,9 +178,9 @@ export function ProductInfo({
                 </div>
               </div>
               <div className="flex items-start gap-3 bg-[#f0faf0] px-4 py-3">
-                <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[#00c853]" />
+                <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[#008040]" />
                 <div>
-                  <p className="text-[13px] font-semibold text-[#00c853]">
+                  <p className="text-[13px] font-semibold text-[#008040]">
                     Безкоштовна доставка
                   </p>
                   <p className="text-[12px] text-[#666]">
@@ -199,7 +199,7 @@ export function ProductInfo({
             </h3>
             <div className="overflow-hidden rounded-xl border border-[#f0f0f0]">
               <div className="flex items-start gap-3 border-b border-[#f0f0f0] bg-white px-4 py-3">
-                <Banknote size={16} className="mt-0.5 shrink-0 text-[#00c853]" />
+                <Banknote size={16} className="mt-0.5 shrink-0 text-[#008040]" />
                 <div>
                   <p className="text-[13px] font-medium text-[#222]">
                     Оплата при отриманні (накладений платіж)
@@ -248,12 +248,12 @@ export function ProductInfo({
           {/* Guarantees */}
           <div>
             <h3 className="mb-3 flex items-center gap-2 text-[14px] font-bold text-[#222]">
-              <Shield size={16} className="text-[#00c853]" />
+              <Shield size={16} className="text-[#008040]" />
               Гарантії
             </h3>
             <div className="overflow-hidden rounded-xl border border-[#f0f0f0] bg-white">
               <div className="flex items-start gap-3 border-b border-[#f0f0f0] px-4 py-3">
-                <Shield size={16} className="mt-0.5 shrink-0 text-[#00c853]" />
+                <Shield size={16} className="mt-0.5 shrink-0 text-[#008040]" />
                 <p className="text-[13px] text-[#444]">
                   Всі товари мають сертифікати та гарантії від виробника.
                   100% оригінальна продукція.

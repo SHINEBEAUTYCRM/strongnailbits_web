@@ -83,19 +83,23 @@ export function HeroBannerClient({ slides }: Props) {
           <ChevronRight size={20} />
         </button>
 
-        {/* Dots */}
-        <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2">
+        {/* Dots — min 24px tap area for accessibility */}
+        <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 gap-1">
           {slides.map((_, i) => (
             <button
               key={i}
               onClick={() => goTo(i)}
-              className={`h-2 rounded-full transition-all ${
-                i === cur
-                  ? "w-7 bg-white"
-                  : "w-2 bg-white/40 hover:bg-white/60"
-              }`}
+              className="flex h-6 w-6 items-center justify-center"
               aria-label={`Слайд ${i + 1}`}
-            />
+            >
+              <span
+                className={`block h-2 rounded-full transition-all ${
+                  i === cur
+                    ? "w-7 bg-white"
+                    : "w-2 bg-white/40 hover:bg-white/60"
+                }`}
+              />
+            </button>
           ))}
         </div>
       </div>

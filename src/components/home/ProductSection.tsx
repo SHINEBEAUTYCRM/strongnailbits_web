@@ -61,7 +61,7 @@ export function ProductSection({
           {linkHref && linkText && (
             <Link
               href={linkHref}
-              className="hidden text-sm font-medium text-coral transition-colors hover:text-[#e0264a] md:block"
+              className="hidden text-sm font-medium text-coral transition-colors hover:text-[#B8203F] md:block"
             >
               {linkText}
             </Link>

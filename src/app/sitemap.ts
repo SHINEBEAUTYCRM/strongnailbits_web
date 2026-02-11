@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com";
+  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com").trim().replace(/\/+$/, "");
   const supabase = createAdminClient();
 
   // Static pages
