@@ -38,6 +38,9 @@ import {
   Plug,
   FlaskConical,
   Shield,
+  Cable,
+  Activity,
+  Heart,
 } from "lucide-react";
 
 export interface NavItem {
@@ -46,6 +49,7 @@ export interface NavItem {
   icon: LucideIcon;
   badge?: number | string;
   soon?: boolean;
+  description?: string;
 }
 
 export interface NavGroup {
@@ -91,7 +95,7 @@ export const adminNavigation: NavGroup[] = [
   },
 
   // ---------------------------------------------------------------
-  //  МАРКЕТИНГ (розширено)
+  //  МАРКЕТИНГ
   // ---------------------------------------------------------------
   {
     label: "МАРКЕТИНГ",
@@ -118,7 +122,7 @@ export const adminNavigation: NavGroup[] = [
   },
 
   // ---------------------------------------------------------------
-  //  АНАЛІТИКА (розширено)
+  //  АНАЛІТИКА
   // ---------------------------------------------------------------
   {
     label: "АНАЛІТИКА",
@@ -130,7 +134,23 @@ export const adminNavigation: NavGroup[] = [
   },
 
   // ---------------------------------------------------------------
-  //  AI ТА КОНТЕНТ (нова група)
+  //  API & ІНТЕГРАЦІЇ — все что связано с внешними подключениями
+  // ---------------------------------------------------------------
+  {
+    label: "API & ІНТЕГРАЦІЇ",
+    items: [
+      { label: "Огляд API", href: "/admin/api", icon: Cable, description: "Центр управління API" },
+      { label: "Документація", href: "/admin/api-docs", icon: BookOpen, description: "Інтерактивний довідник ендпоінтів" },
+      { label: "API ключі", href: "/admin/api-keys", icon: Key, description: "Токени для 1С та зовнішніх систем" },
+      { label: "Вебхуки", href: "/admin/webhooks", icon: Webhook, description: "Сповіщення зовнішніх сервісів" },
+      { label: "Монітор 1С", href: "/admin/1c", icon: Activity, description: "Статистика обміну з 1С" },
+      { label: "Синхронізація", href: "/admin/sync", icon: RefreshCw, description: "Ручна синхронізація даних" },
+      { label: "Інтеграції", href: "/admin/settings/integrations", icon: Plug, description: "47 сервісів підключення" },
+    ],
+  },
+
+  // ---------------------------------------------------------------
+  //  AI
   // ---------------------------------------------------------------
   {
     label: "AI",
@@ -142,7 +162,7 @@ export const adminNavigation: NavGroup[] = [
   },
 
   // ---------------------------------------------------------------
-  //  МАРКЕТПЛЕЙС (нова група)
+  //  МАРКЕТПЛЕЙС
   // ---------------------------------------------------------------
   {
     label: "МАРКЕТПЛЕЙС",
@@ -154,7 +174,7 @@ export const adminNavigation: NavGroup[] = [
   },
 
   // ---------------------------------------------------------------
-  //  INTERNATIONAL (нова група)
+  //  INTERNATIONAL
   // ---------------------------------------------------------------
   {
     label: "INTERNATIONAL",
@@ -164,23 +184,17 @@ export const adminNavigation: NavGroup[] = [
   },
 
   // ---------------------------------------------------------------
-  //  СИСТЕМА (розширено)
+  //  СИСТЕМА — технічне обслуговування
   // ---------------------------------------------------------------
   {
     label: "СИСТЕМА",
     items: [
-      { label: "Інтеграції", href: "/admin/settings/integrations", icon: Plug },
+      { label: "PageSpeed", href: "/admin/pagespeed", icon: Gauge },
+      { label: "Користувачі", href: "/admin/users", icon: Shield },
       { label: "Cron Jobs", href: "/admin/settings/cron", icon: Clock, soon: true },
       { label: "Тригери", href: "/admin/settings/triggers", icon: Zap, soon: true },
       { label: "Логи", href: "/admin/settings/logs", icon: ScrollText, soon: true },
-      { label: "Монітор 1С", href: "/admin/1c", icon: Zap },
-      { label: "Синхронізація", href: "/admin/sync", icon: RefreshCw },
-      { label: "PageSpeed", href: "/admin/pagespeed", icon: Gauge },
-      { label: "Користувачі", href: "/admin/users", icon: Shield },
       { label: "Налаштування", href: "/admin/settings", icon: Settings, soon: true },
-      { label: "API ключі", href: "/admin/api-keys", icon: Key },
-      { label: "API документація", href: "/admin/api-docs", icon: BookOpen },
-      { label: "Вебхуки", href: "/admin/webhooks", icon: Webhook },
     ],
   },
 ];

@@ -9,6 +9,7 @@ import {
   Webhook, Plus, Trash2, Power, PowerOff, Check, Copy, AlertCircle,
   Send, Eye, X, RefreshCw, Globe,
 } from "lucide-react";
+import { ApiBreadcrumb } from "@/components/admin/ApiBreadcrumb";
 import { WEBHOOK_EVENTS } from "@/lib/api/webhook-events";
 
 interface WebhookItem {
@@ -112,6 +113,7 @@ export default function WebhooksPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
+      <ApiBreadcrumb current="Вебхуки" icon={Webhook} />
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
@@ -119,7 +121,7 @@ export default function WebhooksPage() {
             <Webhook className="h-6 w-6 text-purple-400" /> Вебхуки
           </h1>
           <p className="mt-1 text-sm text-zinc-500">
-            Сповіщення зовнішніх систем про події (замовлення, товари, клієнти)
+            Автоматичні POST-запити на ваш URL при подіях на сайті. Підпис HMAC-SHA256, retry при помилках.
           </p>
         </div>
         <div className="flex gap-2">

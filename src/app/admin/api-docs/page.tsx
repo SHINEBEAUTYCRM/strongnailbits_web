@@ -5,10 +5,11 @@
 // ================================================================
 
 import { useState, useCallback } from "react";
+import Link from "next/link";
 import {
   Package, Users, ShoppingBag, FileText, CreditCard, DollarSign,
   Heart, Gift, ChevronRight, Copy, Check, Play, ArrowRight,
-  Code2, Shield, Zap, AlertTriangle, Globe,
+  Code2, Shield, Zap, AlertTriangle, Globe, Cable,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { API_DOCS, STATUS_CODES, type DocEndpoint, type DocGroup } from "@/lib/api/docs-registry";
@@ -281,6 +282,9 @@ export default function ApiDocsPage() {
       {/* Sidebar */}
       <aside className={`${sidebarOpen ? "w-64" : "w-0"} shrink-0 overflow-y-auto border-r border-[#1e1e2a] bg-[#0a0a0f] transition-all`}>
         <div className="p-4">
+          <Link href="/admin/api" className="flex items-center gap-1 text-[10px] text-zinc-600 hover:text-purple-400 transition-colors mb-3">
+            <Cable className="h-3 w-3" /> ← API & Інтеграції
+          </Link>
           <h2 className="mb-1 text-sm font-bold text-white">API Reference</h2>
           <p className="mb-4 text-[10px] text-zinc-600">v1 · REST · Bearer Auth</p>
 

@@ -1,6 +1,7 @@
 import { RefreshCw, CheckCircle, XCircle, Clock } from "lucide-react";
 import { getSyncLogs } from "@/lib/admin/data";
 import { SyncButtons } from "./SyncButtons";
+import { ApiBreadcrumb } from "@/components/admin/ApiBreadcrumb";
 
 function fmtD(d: string) { return new Date(d).toLocaleDateString("uk-UA", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" }); }
 function dur(s: string, e: string | null) { if (!e) return "—"; const ms = new Date(e).getTime() - new Date(s).getTime(); return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`; }
@@ -9,7 +10,8 @@ export default async function SyncPage() {
   const logs = await getSyncLogs(20);
   return (
     <div>
-      <div className="mb-6"><h1 className="text-2xl font-semibold mb-1 flex items-center gap-3" style={{ color: "#f4f4f5" }}><RefreshCw className="w-6 h-6" style={{ color: "#a855f7" }} />Синхронізація</h1><p className="text-sm" style={{ color: "#52525b" }}>CS-Cart → Supabase</p></div>
+      <ApiBreadcrumb current="Синхронізація" icon={RefreshCw} />
+      <div className="mb-6"><h1 className="text-2xl font-semibold mb-1 flex items-center gap-3" style={{ color: "#f4f4f5" }}><RefreshCw className="w-6 h-6" style={{ color: "#a855f7" }} />Синхронізація</h1><p className="text-sm" style={{ color: "#52525b" }}>Ручна синхронізація даних з CS-Cart → Supabase. Товари, категорії, бренди.</p></div>
       <SyncButtons />
       <div className="rounded-2xl overflow-hidden mt-6" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
         <div className="px-4 py-3" style={{ borderBottom: "1px solid #1e1e2a" }}><h3 className="text-sm font-medium" style={{ color: "#71717a" }}>Історія синхронізацій</h3></div>

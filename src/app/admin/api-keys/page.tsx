@@ -23,6 +23,7 @@ import {
   ChevronUp,
   RefreshCw,
 } from "lucide-react";
+import { ApiBreadcrumb } from "@/components/admin/ApiBreadcrumb";
 
 /* ────────────────────────────────────────────── types ── */
 
@@ -251,6 +252,7 @@ export default function ApiKeysPage() {
   /* ────────────────────────────────── render ── */
   return (
     <div>
+      <ApiBreadcrumb current="API Ключі" icon={Key} />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
@@ -262,7 +264,7 @@ export default function ApiKeysPage() {
             API Ключі
           </h1>
           <p className="text-sm" style={{ color: "#52525b" }}>
-            Управління токенами для 1С та зовнішніх систем
+            Створюйте токени для зовнішніх систем. Кожен токен має свої права, ліміт запитів та опціональний IP whitelist.
           </p>
         </div>
         <div className="flex items-center gap-3">

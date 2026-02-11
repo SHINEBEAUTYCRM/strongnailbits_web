@@ -7,6 +7,7 @@ import {
   Loader2, Clock, Activity, ArrowUpRight, ArrowDownLeft,
   Zap,
 } from "lucide-react";
+import { ApiBreadcrumb } from "@/components/admin/ApiBreadcrumb";
 
 interface Stats {
   overview: {
@@ -104,14 +105,15 @@ export default function Admin1CPage() {
 
   return (
     <div>
+      <ApiBreadcrumb current="Монітор 1С" icon={Activity} />
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold flex items-center gap-3" style={{ color: "#f4f4f5" }}>
-            <Zap className="w-6 h-6" style={{ color: "#a855f7" }} />
+            <Activity className="w-6 h-6" style={{ color: "#a855f7" }} />
             Моніторинг 1С
           </h1>
-          <p className="text-sm mt-1" style={{ color: "#52525b" }}>Статус обміну даними з 1С</p>
+          <p className="text-sm mt-1" style={{ color: "#52525b" }}>Запити, помилки, синхронізовані сутності. Оновлюється в реальному часі.</p>
         </div>
         <button onClick={() => { setLoading(true); fetchStats(); }}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm"
