@@ -168,6 +168,7 @@ export default function EnrichmentPipelinePage() {
           {/* Brand select */}
           <section className="bg-white/[0.03] rounded-xl border border-white/[0.06] p-5 space-y-4">
             <h2 className="text-sm font-semibold text-white">Вибір бренда</h2>
+            <p className="text-xs text-white/30">Оберіть конкретний бренд або «Всі бренди» для масової обробки</p>
             <select
               value={brandId}
               onChange={(e) => setBrandId(e.target.value)}
@@ -185,6 +186,7 @@ export default function EnrichmentPipelinePage() {
           {/* Scope */}
           <section className="bg-white/[0.03] rounded-xl border border-white/[0.06] p-5 space-y-4">
             <h2 className="text-sm font-semibold text-white">Скоуп</h2>
+            <p className="text-xs text-white/30">Які товари обробити: тільки нові, з помилками, або все заново</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
                 { value: 'missing' as const, label: 'Нові', desc: 'Тільки pending' },
@@ -211,6 +213,7 @@ export default function EnrichmentPipelinePage() {
           {/* Steps */}
           <section className="bg-white/[0.03] rounded-xl border border-white/[0.06] p-5 space-y-4">
             <h2 className="text-sm font-semibold text-white">Кроки</h2>
+            <p className="text-xs text-white/30">Оберіть які етапи виконати. Кожен крок можна запускати окремо</p>
             <div className="space-y-2">
               {[
                 { key: 'parse' as const, label: 'Парсинг сайтів брендів', icon: Globe },

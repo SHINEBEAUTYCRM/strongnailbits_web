@@ -270,6 +270,7 @@ export default function BrandEnrichmentPage({ params }: { params: Promise<{ slug
           <Globe className="w-4 h-4 text-[#a855f7]" />
           Джерела даних
         </h2>
+        <p className="text-xs text-white/30">Вкажіть посилання на сайт бренду, звідки парсер збиратиме фото та описи товарів</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs text-white/40 mb-1.5">URL каталогу (для фото)</label>
@@ -309,10 +310,13 @@ export default function BrandEnrichmentPage({ params }: { params: Promise<{ slug
       {/* CSS Selectors */}
       <section className="bg-white/[0.03] rounded-xl border border-white/[0.06] p-5 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-            <Settings className="w-4 h-4 text-[#a855f7]" />
-            CSS-селектори
-          </h2>
+          <div>
+            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+              <Settings className="w-4 h-4 text-[#a855f7]" />
+              CSS-селектори
+            </h2>
+            <p className="text-xs text-white/30 mt-1">Вказують парсеру, де на сторінці товару шукати дані. Натисніть «AI Auto-detect» — Claude знайде їх автоматично</p>
+          </div>
           <button
             onClick={handleAutoDetect}
             disabled={detecting || !sourceUrl}
@@ -342,6 +346,7 @@ export default function BrandEnrichmentPage({ params }: { params: Promise<{ slug
       {/* Parse options */}
       <section className="bg-white/[0.03] rounded-xl border border-white/[0.06] p-5 space-y-4">
         <h2 className="text-sm font-semibold text-white">Що парсити</h2>
+        <p className="text-xs text-white/30">Оберіть які дані збирати з сайту бренду. Зазвичай все окрім Price RRP</p>
         <div className="flex flex-wrap gap-3">
           {(Object.keys(parseOptions) as (keyof typeof parseOptions)[]).map((key) => (
             <label key={key} className="flex items-center gap-2 cursor-pointer">
@@ -360,6 +365,7 @@ export default function BrandEnrichmentPage({ params }: { params: Promise<{ slug
       {/* URL Mapping */}
       <section className="bg-white/[0.03] rounded-xl border border-white/[0.06] p-5 space-y-4">
         <h2 className="text-sm font-semibold text-white">Маппінг артикулу → URL</h2>
+        <p className="text-xs text-white/30">Як за артикулом (SKU) товару знайти його сторінку на сайті бренду. Парсер підставить артикул замість {'{article}'}</p>
         <div className="grid grid-cols-1 gap-3">
           <div>
             <label className="block text-xs text-white/40 mb-1">Product URL pattern</label>
@@ -388,10 +394,13 @@ export default function BrandEnrichmentPage({ params }: { params: Promise<{ slug
       {/* Test Parser */}
       <section className="bg-white/[0.03] rounded-xl border border-white/[0.06] p-5 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-            <TestTube className="w-4 h-4 text-[#06b6d4]" />
-            Тест парсера
-          </h2>
+          <div>
+            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+              <TestTube className="w-4 h-4 text-[#06b6d4]" />
+              Тест парсера
+            </h2>
+            <p className="text-xs text-white/30 mt-1">Перевірте парсер на одному товарі перед запуском pipeline</p>
+          </div>
           <button
             onClick={handleTestParser}
             disabled={testing}
