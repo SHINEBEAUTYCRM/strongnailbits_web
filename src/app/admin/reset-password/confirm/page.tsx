@@ -25,7 +25,7 @@ export default function ConfirmResetPage() {
       }
     });
     // Check if session already exists (user came from recovery link)
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }: { data: { session: unknown } }) => {
       if (session) setReady(true);
     });
     return () => { subscription.unsubscribe(); };
