@@ -4,30 +4,9 @@
 // ================================================================
 
 import { createAdminClient } from '@/lib/supabase/admin';
-
-/** Supported webhook events */
-export type WebhookEvent =
-  | 'order.created'
-  | 'order.status_changed'
-  | 'order.synced'
-  | 'customer.created'
-  | 'customer.synced'
-  | 'product.updated'
-  | 'stock.updated'
-  | 'payment.received'
-  | 'bonus.created';
-
-export const WEBHOOK_EVENTS: { event: WebhookEvent; label: string }[] = [
-  { event: 'order.created', label: 'Нове замовлення' },
-  { event: 'order.status_changed', label: 'Зміна статусу замовлення' },
-  { event: 'order.synced', label: 'Замовлення синхронізовано' },
-  { event: 'customer.created', label: 'Новий клієнт' },
-  { event: 'customer.synced', label: 'Клієнт синхронізовано' },
-  { event: 'product.updated', label: 'Товар оновлено' },
-  { event: 'stock.updated', label: 'Залишки оновлено' },
-  { event: 'payment.received', label: 'Нова оплата' },
-  { event: 'bonus.created', label: 'Бонусна операція' },
-];
+export type { WebhookEvent } from './webhook-events';
+export { WEBHOOK_EVENTS } from './webhook-events';
+import type { WebhookEvent } from './webhook-events';
 
 interface WebhookRow {
   id: string;
@@ -147,23 +126,18 @@ async function logDelivery(
     });
 
     // Update webhook stats
-    const updateData: Record<string, unknown> = {
+    const { data: currentWh } = await supabase.from('webhooks').select('success_count, error_count').eq('id', webhookId).single();
+    const updatePayload: Record<string, unknown> = {
       last_fired_at: new Date().toISOString(),
       last_status: result.statusCode,
+      last_error: result.success ? null : result.error,
     };
     if (result.success) {
-      updateData.success_count = (await supabase.rpc('increment_counter', { row_id: webhookId, column_name: 'success_count' }).then(() => undefined), undefined);
-      // Simple increment via raw update
-      await supabase.from('webhooks').update({
-        ...updateData,
-        last_error: null,
-      }).eq('id', webhookId);
+      updatePayload.success_count = (currentWh?.success_count || 0) + 1;
     } else {
-      await supabase.from('webhooks').update({
-        ...updateData,
-        last_error: result.error,
-      }).eq('id', webhookId);
+      updatePayload.error_count = (currentWh?.error_count || 0) + 1;
     }
+    await supabase.from('webhooks').update(updatePayload).eq('id', webhookId);
   } catch (err) {
     console.error('[Webhooks] Failed to log delivery:', err);
   }

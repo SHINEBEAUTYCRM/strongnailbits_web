@@ -69,6 +69,9 @@ export interface ApiTokenRow {
   id: string;
   tenant_id: string;
   name: string;
+  description: string | null;
+  allowed_ips: string[] | null;
+  allowed_origins: string[] | null;
   token_hash: string;
   token_prefix: string;
   permissions: string[];

@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getDefaultTenantId } from '@/lib/integrations/base';
 import { requireAdmin } from '@/lib/admin/requireAdmin';
-import { generateWebhookSecret, fireWebhook } from '@/lib/api/webhooks';
+import { generateWebhookSecret } from '@/lib/api/webhooks';
 
 export const dynamic = 'force-dynamic';
 

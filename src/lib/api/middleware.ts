@@ -175,6 +175,21 @@ export function withApiAuth(
         return resp;
       }
 
+      // ── 4b. IP Whitelist ──
+      const allowedIps = (row.allowed_ips || []) as string[];
+      if (allowedIps.length > 0 && !allowedIps.includes(ipAddress)) {
+        const resp = apiForbidden(
+          `IP address ${ipAddress} is not in the whitelist for this token`
+        );
+        await logApiRequest({
+          tokenId, tenantId, method, endpoint,
+          statusCode: 403, requestBody: null,
+          responseTimeMs: Date.now() - startTime,
+          errorMessage: `IP ${ipAddress} not whitelisted`, ipAddress,
+        });
+        return resp;
+      }
+
       // ── 5. Перевірити permissions ──
       const permissions = (row.permissions || []) as string[];
       if (!permissions.includes(requiredPermission)) {

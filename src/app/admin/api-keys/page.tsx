@@ -116,6 +116,8 @@ export default function ApiKeysPage() {
   // Create modal
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+  const [newAllowedIps, setNewAllowedIps] = useState("");
   const [newPerms, setNewPerms] = useState<string[]>([]);
   const [newRate, setNewRate] = useState(100);
   const [newExpire, setNewExpire] = useState(0);
@@ -177,6 +179,8 @@ export default function ApiKeysPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: newName,
+          description: newDescription || null,
+          allowed_ips: newAllowedIps ? newAllowedIps.split(/[,\s]+/).map(s => s.trim()).filter(Boolean) : null,
           permissions: newPerms,
           rate_limit: newRate,
           expires_in_days: newExpire || null,
@@ -236,6 +240,8 @@ export default function ApiKeysPage() {
     setShowCreate(false);
     setCreatedToken(null);
     setNewName("");
+    setNewDescription("");
+    setNewAllowedIps("");
     setNewPerms([]);
     setNewRate(100);
     setNewExpire(0);
@@ -677,6 +683,33 @@ export default function ApiKeysPage() {
                     className="w-full px-3 py-2 rounded-lg text-sm"
                     style={{ background: "#141420", color: "#e4e4e7", border: "1px solid #1e1e2a" }}
                   />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>Опис (необов&apos;язково)</label>
+                  <input
+                    type="text"
+                    value={newDescription}
+                    onChange={(e) => setNewDescription(e.target.value)}
+                    placeholder="Токен для обміну даними з 1С бухгалтера Ірини"
+                    className="w-full px-3 py-2 rounded-lg text-sm"
+                    style={{ background: "#141420", color: "#e4e4e7", border: "1px solid #1e1e2a" }}
+                  />
+                </div>
+
+                {/* IP Whitelist */}
+                <div>
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>IP Whitelist (необов&apos;язково)</label>
+                  <input
+                    type="text"
+                    value={newAllowedIps}
+                    onChange={(e) => setNewAllowedIps(e.target.value)}
+                    placeholder="194.44.12.1, 10.0.0.5"
+                    className="w-full px-3 py-2 rounded-lg text-sm"
+                    style={{ background: "#141420", color: "#e4e4e7", border: "1px solid #1e1e2a" }}
+                  />
+                  <p className="mt-1 text-[10px]" style={{ color: "#52525b" }}>Якщо вказано — запити з інших IP будуть відхилені (403). Через кому.</p>
                 </div>
 
                 {/* Permissions */}

@@ -23,7 +23,7 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from('api_tokens')
-      .select('id, name, token_prefix, permissions, rate_limit, is_active, last_used_at, expires_at, created_at')
+      .select('id, name, description, allowed_ips, token_prefix, permissions, rate_limit, is_active, last_used_at, expires_at, created_at')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false });
 
@@ -76,8 +76,10 @@ export async function POST(request: NextRequest) {
   try {
     const auth = await requireAdmin(); if (auth.error) return auth.error;
     const body = await request.json();
-    const { name, permissions, rate_limit, expires_in_days } = body as {
+    const { name, description, allowed_ips, permissions, rate_limit, expires_in_days } = body as {
       name: string;
+      description?: string | null;
+      allowed_ips?: string[] | null;
       permissions: string[];
       rate_limit?: number;
       expires_in_days?: number | null;
@@ -111,6 +113,8 @@ export async function POST(request: NextRequest) {
       .insert({
         tenant_id: tenantId,
         name: name.trim(),
+        description: description || null,
+        allowed_ips: allowed_ips && allowed_ips.length > 0 ? allowed_ips : null,
         token_hash: tokenHash,
         token_prefix: tokenPrefix,
         permissions,

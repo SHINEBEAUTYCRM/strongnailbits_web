@@ -19,6 +19,7 @@ import {
   Settings,
   Key,
   BookOpen,
+  Webhook,
   Gauge,
   Megaphone,
   Target,
@@ -178,6 +179,7 @@ export const adminNavigation: NavGroup[] = [
       { label: "Налаштування", href: "/admin/settings", icon: Settings, soon: true },
       { label: "API ключі", href: "/admin/api-keys", icon: Key },
       { label: "API документація", href: "/admin/api-docs", icon: BookOpen },
+      { label: "Вебхуки", href: "/admin/webhooks", icon: Webhook },
     ],
   },
 ];
