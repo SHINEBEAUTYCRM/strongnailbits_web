@@ -156,10 +156,52 @@ async function callNP<T = unknown>(
   throw lastError || new Error("Nova Poshta API call failed");
 }
 
-// ────── 1. City Search (single page) ──────
+// ────── 1. Settlement Search (for checkout) ──────
 
 /**
- * Search cities by name. Used for direct NP API search (fallback).
+ * Settlement address returned by searchSettlements API.
+ * The Ref here is a SETTLEMENT ref (needed for getWarehouses).
+ * DeliveryCity is the CITY ref from getCities (used for delivery calculations).
+ */
+export interface NPSettlementAddress {
+  Ref: string;              // Settlement ref (use as SettlementRef in getWarehouses!)
+  MainDescription: string;  // City/settlement name in current language
+  Area: string;             // Oblast name
+  Region: string;           // Raion name
+  SettlementTypeCode: string; // "м.", "смт.", "с." etc.
+  DeliveryCity: string;     // City ref from getCities (for calculateDelivery)
+  Warehouses: string;       // Number of warehouses in this settlement
+  Present: number;          // 1 = has delivery
+  AddressDeliveryAllowed: boolean;
+  StreetsAvailability: boolean;
+}
+
+/**
+ * Search settlements by name. Returns SETTLEMENT refs (not city refs!).
+ * Use settlement Ref for getWarehouses (SettlementRef parameter).
+ * Use DeliveryCity ref for calculateDelivery (CitySender/CityRecipient).
+ */
+export async function searchSettlements(query: string, limit = 20): Promise<NPSettlementAddress[]> {
+  const res = await callNP<{ Addresses: NPSettlementAddress[]; TotalCount: string }>(
+    "Address",
+    "searchSettlements",
+    {
+      CityName: query,
+      Limit: String(limit),
+      Page: "1",
+    },
+  );
+
+  // searchSettlements wraps results in Addresses array
+  const rawData = res.data;
+  if (rawData?.[0]?.Addresses) {
+    return rawData[0].Addresses;
+  }
+  return [];
+}
+
+/**
+ * Legacy: Search cities by name (getCities). Used for sync.
  */
 export async function searchCities(query: string, limit = 20): Promise<NPCity[]> {
   const res = await callNP<NPCity>("Address", "getCities", {
@@ -214,10 +256,13 @@ export async function getAllCities(): Promise<NPCity[]> {
 // ────── 2. Warehouse Search (single city) ──────
 
 /**
- * Get warehouses for a city. Used as fallback if Supabase has no data.
+ * Get warehouses for a settlement. Used as fallback if Supabase has no data.
+ *
+ * IMPORTANT: `settlementRef` must be from searchSettlements (not getCities!).
+ * The NP API getWarehouses uses SettlementRef, not CityRef.
  */
 export async function getWarehouses(
-  cityRef: string,
+  settlementRef: string,
   opts?: {
     search?: string;
     type?: "warehouse" | "parcel" | "cargo" | "";
@@ -233,7 +278,7 @@ export async function getWarehouses(
   };
 
   const properties: Record<string, unknown> = {
-    CityRef: cityRef,
+    SettlementRef: settlementRef,
     Page: String(opts?.page || 1),
     Limit: String(opts?.limit || 50),
     Language: "UA",

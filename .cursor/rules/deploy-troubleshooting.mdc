@@ -1,0 +1,75 @@
+---
+description: Диагностика и исправление проблем с деплоем на Vercel. Используй при любых проблемах с git, push, deploy.
+alwaysApply: true
+---
+
+# Deploy: диагностика и починка
+
+## Архитектура деплоя
+
+- Хостинг: **Vercel** (проект `shineshop.b2b.com.ua`, ID: `prj_5zrPSIEVBeS4kOLnLiXK2ELbbh9u`)
+- Репо: `github.com/Aleksdandali/shineshop-b2b` → ветка `main`
+- Автодеплой: push в `main` → GitHub webhook → Vercel build → production
+- CI/CD: нет GitHub Actions, всё через Vercel Git Integration
+
+## Цепочка автодеплоя
+
+```
+Код → git add → git commit → git push origin main → Vercel auto-build
+```
+
+Если любое звено ломается — деплой не произойдёт.
+
+## Частые проблемы и решения
+
+### 1. Git зависает (status/add/commit/diff не завершаются)
+
+**Диагностика:**
+```bash
+ls -la .git/index.lock        # Если файл есть — lock
+git ls-files | wc -l           # Если 0 — индекс пуст/сломан (должно быть ~300+)
+ps aux | grep "git " | grep -v grep  # Зависшие процессы
+```
+
+**Починка:**
+```bash
+# 1. Убить все зависшие git-процессы
+ps aux | grep -E "(git add|git commit|git status|git diff|git reset)" | grep -v grep | awk '{print $2}' | xargs kill -9
+
+# 2. Удалить lock-файл
+rm -f .git/index.lock
+
+# 3. Восстановить индекс из HEAD
+git read-tree HEAD
+
+# 4. Проверить
+git ls-files | wc -l    # Должно быть ~300+
+git status               # Должен отработать за 1-2 сек
+```
+
+### 2. Коммит не пушится
+
+```bash
+git log origin/main..HEAD --oneline   # Непушнутые коммиты
+git fetch --dry-run                    # Проверка связи с GitHub
+git push origin main                   # Пуш
+```
+
+### 3. Vercel не подхватывает push
+
+- Проверить https://vercel.com/dashboard → проект → Deployments
+- Убедиться что Vercel Git Integration подключена к репо
+- Проверить что пуш реально дошёл: `git log origin/main --oneline -3`
+
+### 4. macOS дубликаты файлов
+
+Finder/iCloud создаёт файлы вида `page 2.tsx`. Периодически чистить:
+```bash
+find src -name "* 2.*" -type f -delete
+```
+
+## Профилактика
+
+- Не запускать git-команды параллельно (дождаться пока Cursor закончит фоновые git-операции)
+- Если `git status` висит > 5 секунд — сразу проверять `index.lock` и `git ls-files | wc -l`
+- После починки индекса всегда проверять: `git status` быстрый, `git ls-files | wc -l` показывает ~300+ файлов

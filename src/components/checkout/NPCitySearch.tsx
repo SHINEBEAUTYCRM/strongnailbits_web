@@ -5,16 +5,18 @@ import { MapPin, Loader2, X, ChevronDown, Navigation } from "lucide-react";
 
 interface City {
   ref: string;
+  deliveryCityRef?: string;
   name: string;
   area: string;
   region: string;
   type: string;
+  warehouses?: string;
 }
 
 interface Props {
   value: string;
   cityRef: string;
-  onSelect: (city: { ref: string; name: string }) => void;
+  onSelect: (city: { ref: string; name: string; deliveryCityRef?: string }) => void;
   onClear: () => void;
   error?: string;
 }
@@ -56,7 +58,7 @@ export function NPCitySearch({ value, cityRef, onSelect, onClear, error }: Props
           const data = await res.json();
           if (data.cities?.[0]) {
             const c = data.cities[0];
-            onSelect({ ref: c.ref, name: c.name });
+            onSelect({ ref: c.ref, name: c.name, deliveryCityRef: c.deliveryCityRef });
           }
         }
       })
@@ -106,7 +108,7 @@ export function NPCitySearch({ value, cityRef, onSelect, onClear, error }: Props
 
   function handleSelect(city: City) {
     setQuery(city.name);
-    onSelect({ ref: city.ref, name: city.name });
+    onSelect({ ref: city.ref, name: city.name, deliveryCityRef: city.deliveryCityRef });
     setOpen(false);
     setResults([]);
   }

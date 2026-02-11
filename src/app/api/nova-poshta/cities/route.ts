@@ -1,37 +1,79 @@
 /**
- * Nova Poshta — City Search
+ * Nova Poshta — City / Settlement Search
  *
- * GET /api/nova-poshta/cities?q=Оде       → search (Supabase RPC)
- * GET /api/nova-poshta/cities?popular=1    → top cities
+ * GET /api/nova-poshta/cities?q=Оде       → search (NP API searchSettlements)
+ * GET /api/nova-poshta/cities?popular=1    → top cities (dynamic via NP API)
  *
- * Runtime: Edge (reads from Supabase for <50ms responses)
+ * IMPORTANT: Returns SETTLEMENT refs (not city refs!).
+ * The `ref` field = settlement ref → use with getWarehouses(SettlementRef).
+ * The `deliveryCityRef` field = city ref → use with calculateDelivery.
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { searchCities } from "@/lib/novaposhta/client";
+import { searchSettlements } from "@/lib/novaposhta/client";
 
 export const dynamic = "force-dynamic";
 
-/** Popular cities with pre-known Refs */
-const POPULAR_CITIES = [
-  { ref: "8d5a980d-391b-11dd-90d9-001a92567626", name: "Київ", area: "Київська", type: "місто" },
-  { ref: "db5c88e0-391a-11dd-90d9-001a92567626", name: "Одеса", area: "Одеська", type: "місто" },
-  { ref: "db5c88d0-391a-11dd-90d9-001a92567626", name: "Харків", area: "Харківська", type: "місто" },
-  { ref: "db5c88f0-391a-11dd-90d9-001a92567626", name: "Дніпро", area: "Дніпропетровська", type: "місто" },
-  { ref: "db5c8892-391a-11dd-90d9-001a92567626", name: "Запоріжжя", area: "Запорізька", type: "місто" },
-  { ref: "db5c88c6-391a-11dd-90d9-001a92567626", name: "Львів", area: "Львівська", type: "місто" },
-  { ref: "db5c88de-391a-11dd-90d9-001a92567626", name: "Полтава", area: "Полтавська", type: "місто" },
-  { ref: "db5c88ac-391a-11dd-90d9-001a92567626", name: "Вінниця", area: "Вінницька", type: "місто" },
-  { ref: "db5c88ce-391a-11dd-90d9-001a92567626", name: "Миколаїв", area: "Миколаївська", type: "місто" },
-  { ref: "db5c8904-391a-11dd-90d9-001a92567626", name: "Чернівці", area: "Чернівецька", type: "місто" },
+/**
+ * Popular city names — we search them via NP API at runtime
+ * to get correct settlement refs (not hardcoded UUIDs).
+ */
+const POPULAR_CITY_NAMES = [
+  "Київ",
+  "Одеса",
+  "Харків",
+  "Дніпро",
+  "Запоріжжя",
+  "Львів",
+  "Полтава",
+  "Вінниця",
+  "Миколаїв",
+  "Чернівці",
 ];
+
+/** Cache popular cities for 1 hour */
+let _popularCache: { data: unknown[]; time: number } | null = null;
+const POPULAR_TTL = 60 * 60 * 1000; // 1 hour
 
 export async function GET(req: NextRequest) {
   try {
-    // Popular cities — static, instant
+    // Popular cities — resolved dynamically, cached in memory
     if (req.nextUrl.searchParams.get("popular")) {
-      return NextResponse.json({ cities: POPULAR_CITIES });
+      if (_popularCache && Date.now() - _popularCache.time < POPULAR_TTL) {
+        return NextResponse.json({ cities: _popularCache.data });
+      }
+
+      try {
+        // Search each popular city and take the first result
+        const results = await Promise.all(
+          POPULAR_CITY_NAMES.map(async (name) => {
+            try {
+              const settlements = await searchSettlements(name, 1);
+              if (settlements.length > 0) {
+                const s = settlements[0];
+                return {
+                  ref: s.Ref,              // Settlement ref!
+                  deliveryCityRef: s.DeliveryCity,
+                  name: s.MainDescription,
+                  area: s.Area,
+                  type: s.SettlementTypeCode,
+                  warehouses: s.Warehouses,
+                };
+              }
+            } catch {
+              // Skip failed city
+            }
+            return null;
+          }),
+        );
+
+        const cities = results.filter(Boolean);
+        _popularCache = { data: cities, time: Date.now() };
+        return NextResponse.json({ cities });
+      } catch {
+        // If NP API is down, return empty
+        return NextResponse.json({ cities: [] });
+      }
     }
 
     const q = req.nextUrl.searchParams.get("q")?.trim();
@@ -44,46 +86,23 @@ export async function GET(req: NextRequest) {
       50,
     );
 
-    // 1. Try Supabase RPC (fast, <50ms)
-    try {
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      );
-
-      const { data, error } = await supabase.rpc("search_np_cities", {
-        query: q,
-        max_results: limit,
-      });
-
-      if (!error && data && data.length > 0) {
-        return NextResponse.json({
-          cities: data.map((c: { ref: string; name_ua: string; name_ru: string; area_ua: string; settlement_type: string }) => ({
-            ref: c.ref,
-            name: c.name_ua,
-            nameRu: c.name_ru,
-            area: c.area_ua,
-            type: c.settlement_type,
-            label: [c.name_ua, c.area_ua ? `${c.area_ua} обл.` : ""].filter(Boolean).join(", "),
-          })),
-          source: "supabase",
-        });
-      }
-    } catch {
-      // Supabase not available or table doesn't exist yet — fallback
-    }
-
-    // 2. Fallback: NP API direct
-    const cities = await searchCities(q, limit);
+    // Search settlements via NP API (returns settlement refs)
+    const settlements = await searchSettlements(q, limit);
 
     return NextResponse.json({
-      cities: cities.map((c) => ({
-        ref: c.Ref,
-        name: c.Description,
-        nameRu: c.DescriptionRu,
-        area: c.AreaDescription,
-        type: c.SettlementTypeDescription,
-        label: [c.Description, c.AreaDescription ? `${c.AreaDescription} обл.` : ""].filter(Boolean).join(", "),
+      cities: settlements.map((s) => ({
+        ref: s.Ref,                // Settlement ref (for getWarehouses!)
+        deliveryCityRef: s.DeliveryCity, // City ref (for calculateDelivery!)
+        name: s.MainDescription,
+        area: s.Area,
+        region: s.Region,
+        type: s.SettlementTypeCode,
+        warehouses: s.Warehouses,
+        label: [
+          s.MainDescription,
+          s.Area ? `${s.Area} обл.` : "",
+          s.Region || "",
+        ].filter(Boolean).join(", "),
       })),
       source: "np_api",
     });
