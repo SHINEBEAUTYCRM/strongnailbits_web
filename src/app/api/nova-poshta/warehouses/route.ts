@@ -38,6 +38,15 @@ export async function GET(req: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     );
 
+    // Get total count for this city+category (for UI display)
+    let countQuery = supabase
+      .from("np_warehouses")
+      .select("np_id", { count: "exact", head: true })
+      .eq("is_active", true)
+      .ilike("city_name", city);
+    if (categoryFilter) countQuery = countQuery.eq("category", categoryFilter);
+    const { count: totalInCity } = await countQuery;
+
     // Use RPC function for ranked search
     const { data, error } = await supabase.rpc("search_np_warehouses", {
       city,
@@ -79,6 +88,7 @@ export async function GET(req: NextRequest) {
           status: w.status,
         })),
         total: fallbackData?.length || 0,
+        totalInCity: totalInCity || 0,
         source: "supabase_fallback",
       });
     }
@@ -97,6 +107,7 @@ export async function GET(req: NextRequest) {
         status: w.status,
       })),
       total: data?.length || 0,
+      totalInCity: totalInCity || 0,
       source: "supabase",
     });
   } catch (err) {
