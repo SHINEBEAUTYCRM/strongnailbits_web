@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Package, Loader2, X, Search } from "lucide-react";
+import { Package, Loader2, X, Search, ChevronDown } from "lucide-react";
 
 interface Warehouse {
   ref: string;
@@ -35,16 +35,23 @@ export function NPWarehouseSelect({
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  // Load warehouses when city changes
+  // Load warehouses when city changes — auto-open dropdown
   useEffect(() => {
     if (!cityRef) {
       setWarehouses([]);
+      setTotalCount(0);
       return;
     }
-    loadWarehouses("");
+    loadWarehouses("").then(() => {
+      if (!warehouseRef) {
+        setOpen(true);
+      }
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cityRef, type]);
 
@@ -64,16 +71,12 @@ export function NPWarehouseSelect({
       if (!cityRef) return;
       setLoading(true);
       try {
-        const params = new URLSearchParams({
-          cityRef,
-          type,
-          limit: "50",
-        });
+        const params = new URLSearchParams({ cityRef, type, limit: "50" });
         if (search) params.set("q", search);
-
         const res = await fetch(`/api/nova-poshta/warehouses?${params}`);
         const data = await res.json();
         setWarehouses(data.warehouses || []);
+        setTotalCount(data.total || 0);
       } catch {
         setWarehouses([]);
       } finally {
@@ -86,9 +89,9 @@ export function NPWarehouseSelect({
   function handleSearch(val: string) {
     setQuery(val);
     if (warehouseRef) onClear();
-
+    setOpen(true);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => loadWarehouses(val), 300);
+    debounceRef.current = setTimeout(() => loadWarehouses(val), 250);
   }
 
   function handleSelect(wh: Warehouse) {
@@ -100,12 +103,13 @@ export function NPWarehouseSelect({
   function handleClearSelection() {
     onClear();
     setQuery("");
+    setTimeout(() => inputRef.current?.focus(), 50);
   }
 
   const label = type === "parcel" ? "Поштомат" : "Відділення";
   const placeholder = type === "parcel"
-    ? "Пошук поштомату (номер або адреса)..."
-    : "Пошук відділення (номер або адреса)...";
+    ? "Пошук поштомату (номер або адреса)"
+    : "Пошук відділення (номер або адреса)";
 
   if (!cityRef) {
     return (
@@ -113,14 +117,14 @@ export function NPWarehouseSelect({
         <label className="mb-1.5 block text-xs font-medium text-[var(--t2)]">
           {label} <span className="ml-0.5 text-red">*</span>
         </label>
-        <div className="flex h-10 items-center rounded-[10px] border border-[var(--border)] bg-sand/50 px-3 text-sm text-[var(--t3)]">
+        <div className="flex h-11 items-center gap-2 rounded-[10px] border border-dashed border-[var(--border)] bg-sand/30 px-3 text-sm text-[var(--t3)]">
           Спочатку оберіть місто
         </div>
       </div>
     );
   }
 
-  // Selected state
+  // Selected state — show as badge
   if (warehouseRef && value) {
     return (
       <div>
@@ -129,10 +133,12 @@ export function NPWarehouseSelect({
         </label>
         <div className="flex items-center gap-2 rounded-[10px] border border-green-400/60 bg-green-50/30 px-3 py-2.5">
           <Package size={14} className="shrink-0 text-green-600" />
-          <span className="flex-1 text-sm text-dark">{value}</span>
+          <span className="flex-1 text-sm font-medium text-dark leading-snug">{value}</span>
           <button
+            type="button"
             onClick={handleClearSelection}
-            className="shrink-0 text-[var(--t3)] hover:text-dark"
+            className="shrink-0 rounded-full p-0.5 text-[var(--t3)] transition-colors hover:bg-black/5 hover:text-dark"
+            aria-label="Змінити відділення"
           >
             <X size={14} />
           </button>
@@ -143,52 +149,81 @@ export function NPWarehouseSelect({
 
   return (
     <div ref={wrapperRef} className="relative">
-      <label className="mb-1.5 block text-xs font-medium text-[var(--t2)]">
-        {label} <span className="ml-0.5 text-red">*</span>
+      <label className="mb-1.5 flex items-baseline justify-between text-xs font-medium text-[var(--t2)]">
+        <span>{label} <span className="ml-0.5 text-red">*</span></span>
+        {totalCount > 0 && (
+          <span className="text-[10px] font-normal text-[var(--t3)]">
+            {totalCount} {type === "parcel" ? "поштоматів" : "відділень"}
+          </span>
+        )}
       </label>
 
-      {/* Search input */}
       <div className="relative">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--t3)]" />
+        <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--t3)]" />
         <input
+          ref={inputRef}
           type="text"
           value={query}
           onChange={(e) => handleSearch(e.target.value)}
           onFocus={() => setOpen(true)}
           placeholder={placeholder}
-          className={`h-10 w-full rounded-[10px] border bg-white pl-9 pr-8 text-sm text-dark outline-none placeholder:text-[var(--t3)] transition-colors focus:border-coral/50 ${
+          autoComplete="off"
+          className={`h-11 w-full rounded-[10px] border bg-white pl-9 pr-9 text-sm text-dark outline-none placeholder:text-[var(--t3)] transition-all focus:border-coral/50 focus:ring-2 focus:ring-coral/10 ${
             error ? "border-red/50" : "border-[var(--border)]"
           }`}
         />
-        {loading && (
-          <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-coral" />
+        {loading ? (
+          <Loader2 size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-coral" />
+        ) : (
+          <ChevronDown
+            size={14}
+            className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--t3)] transition-transform ${open ? "rotate-180" : ""}`}
+          />
         )}
       </div>
 
-      {error && (
-        <p className="mt-1 text-[11px] text-red">{error}</p>
-      )}
+      {error && <p className="mt-1 text-[11px] text-red">{error}</p>}
 
       {/* Dropdown */}
-      {open && warehouses.length > 0 && (
-        <div className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-[10px] border border-[var(--border)] bg-white shadow-lg">
+      {open && !loading && warehouses.length > 0 && (
+        <div className="absolute z-50 mt-1 max-h-64 w-full overflow-y-auto rounded-xl border border-[var(--border)] bg-white shadow-xl">
           {warehouses.map((wh) => (
             <button
               key={wh.ref}
+              type="button"
               onClick={() => handleSelect(wh)}
-              className="flex w-full flex-col gap-0.5 border-b border-[var(--border)] px-3 py-2.5 text-left transition-colors last:border-0 hover:bg-coral-light"
+              className="flex w-full items-start gap-2.5 border-b border-[var(--border)] px-3 py-2.5 text-left transition-colors last:border-0 hover:bg-coral/5 active:bg-coral/10"
             >
-              <span className="text-sm font-medium text-dark">{wh.name}</span>
-              <span className="text-[11px] text-[var(--t3)]">{wh.shortAddress}</span>
+              <Package size={12} className="mt-0.5 shrink-0 text-coral/50" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium leading-snug text-dark">{wh.name}</p>
+                <p className="mt-0.5 text-[11px] text-[var(--t3)]">{wh.shortAddress}</p>
+              </div>
             </button>
           ))}
         </div>
       )}
 
+      {/* Loading state */}
+      {open && loading && (
+        <div className="absolute z-50 mt-1 w-full rounded-xl border border-[var(--border)] bg-white px-3 py-4 text-center shadow-xl">
+          <Loader2 size={16} className="mx-auto animate-spin text-coral" />
+          <p className="mt-1.5 text-xs text-[var(--t3)]">Завантажуємо відділення...</p>
+        </div>
+      )}
+
       {/* No results */}
-      {open && !loading && warehouses.length === 0 && query.length > 0 && (
-        <div className="absolute z-50 mt-1 w-full rounded-[10px] border border-[var(--border)] bg-white px-3 py-3 text-center text-sm text-[var(--t3)] shadow-lg">
-          {type === "parcel" ? "Поштоматів не знайдено" : "Відділень не знайдено"}
+      {open && !loading && warehouses.length === 0 && (
+        <div className="absolute z-50 mt-1 w-full rounded-xl border border-[var(--border)] bg-white px-3 py-4 text-center shadow-xl">
+          <p className="text-sm text-[var(--t3)]">
+            {query
+              ? (type === "parcel" ? "Поштоматів не знайдено" : "Відділень не знайдено")
+              : "Немає відділень у цьому місті"
+            }
+          </p>
+          {query && (
+            <p className="mt-1 text-[11px] text-[var(--t3)]/60">Спробуйте інший номер або адресу</p>
+          )}
         </div>
       )}
     </div>

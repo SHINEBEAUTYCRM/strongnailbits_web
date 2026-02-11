@@ -133,26 +133,16 @@ async function callNP<T = unknown>(
 
 /**
  * Search cities by name (autocomplete).
- * Used in checkout for city selection.
+ * Uses getCities with FindByString — returns correct Ref for warehouse lookup.
  */
 export async function searchCities(query: string, limit = 20): Promise<NPCity[]> {
-  const res = await callNP<NPCity>("Address", "searchSettlements", {
-    CityName: query,
+  const res = await callNP<NPCity>("Address", "getCities", {
+    FindByString: query,
     Limit: String(limit),
     Page: "1",
   });
 
-  // searchSettlements returns data in nested format
-  const rawData = res.data as unknown as Array<{
-    Addresses: NPCity[];
-    TotalCount: string;
-  }>;
-
-  if (rawData?.[0]?.Addresses) {
-    return rawData[0].Addresses;
-  }
-
-  return [];
+  return res.data || [];
 }
 
 /**

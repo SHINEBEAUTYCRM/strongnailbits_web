@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Truck, Loader2 } from "lucide-react";
+import { Truck, Loader2, Calendar } from "lucide-react";
 
 interface Props {
   cityRef: string;
@@ -26,7 +26,6 @@ export function NPDeliveryCost({ cityRef, serviceType, weight, cost }: Props) {
       return;
     }
 
-    // Avoid re-fetching for same params
     const key = `${cityRef}-${serviceType}-${weight}-${cost}`;
     if (key === prevRef.current) return;
     prevRef.current = key;
@@ -62,7 +61,7 @@ export function NPDeliveryCost({ cityRef, serviceType, weight, cost }: Props) {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 rounded-[10px] border border-[var(--border)] bg-sand/50 px-3 py-2.5">
+      <div className="flex items-center gap-2 rounded-xl border border-[var(--border)] bg-sand/30 px-4 py-3">
         <Loader2 size={14} className="animate-spin text-coral" />
         <span className="text-xs text-[var(--t2)]">Розраховуємо вартість доставки...</span>
       </div>
@@ -72,15 +71,18 @@ export function NPDeliveryCost({ cityRef, serviceType, weight, cost }: Props) {
   if (!info) return null;
 
   return (
-    <div className="flex items-center gap-3 rounded-[10px] border border-coral/20 bg-coral-light px-3 py-2.5">
-      <Truck size={14} className="shrink-0 text-coral" />
+    <div className="flex items-center gap-3 rounded-xl border border-coral/20 bg-gradient-to-r from-coral/5 to-transparent px-4 py-3">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-coral/10">
+        <Truck size={16} className="text-coral" />
+      </div>
       <div className="flex flex-1 flex-wrap items-center gap-x-4 gap-y-0.5">
-        <span className="text-xs font-medium text-dark">
-          Доставка: <b>{info.cost} ₴</b>
+        <span className="text-sm font-semibold text-dark">
+          {info.cost} ₴
         </span>
         {info.estimatedDate && (
-          <span className="text-[11px] text-[var(--t2)]">
-            Орієнтовно: {info.estimatedDate}
+          <span className="flex items-center gap-1 text-[11px] text-[var(--t2)]">
+            <Calendar size={10} />
+            {info.estimatedDate}
           </span>
         )}
       </div>
