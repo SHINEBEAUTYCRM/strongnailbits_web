@@ -73,12 +73,12 @@ export function NPWarehouseSelect({
       setLoading(true);
       try {
         const npType = type === "parcel" ? "postomat" : "branch";
-        const params = new URLSearchParams({ city: cityName, type: npType, limit: "200" });
+        const params = new URLSearchParams({ city: cityName, type: npType, limit: "500" });
         if (search) params.set("q", search);
         const res = await fetch(`/api/nova-poshta/warehouses?${params}`);
         const data = await res.json();
         setWarehouses(data.warehouses || []);
-        setTotalCount(data.total || 0);
+        setTotalCount(data.totalInCity ?? data.total ?? 0);
       } catch {
         setWarehouses([]);
       } finally {

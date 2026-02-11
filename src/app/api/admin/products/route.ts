@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(sp.get('offset') || '0');
     const limit = Math.min(parseInt(sp.get('limit') || '50'), 100);
     const status = sp.get('enrichment_status');
-    const fields = sp.get('fields') || 'id,name_uk,sku,brand_id,enrichment_status,ai_metadata,photo_sources,main_image_url,description_uk';
+    const fields = sp.get('fields') || 'id,name_uk,sku,slug,brand_id,enrichment_status,ai_metadata,photo_sources,main_image_url,description_uk';
 
     // Build query
     let query = supabase
