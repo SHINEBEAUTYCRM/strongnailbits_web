@@ -6,7 +6,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const user = await getAdminUser();
 
   return (
-    <div className="fixed inset-0 z-[9999] overflow-hidden" style={{ background: "#08080c", color: "#ffffff", fontFamily: "var(--font-inter), system-ui, -apple-system, sans-serif" }}>
+    <div className="fixed inset-0 z-[9999] overflow-hidden" style={{ fontFamily: "var(--font-inter), system-ui, -apple-system, sans-serif" }}>
       <AdminBodyLock />
       <AdminShell adminUser={user}>{children}</AdminShell>
     </div>

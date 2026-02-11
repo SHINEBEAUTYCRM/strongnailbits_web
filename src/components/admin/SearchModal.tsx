@@ -39,49 +39,71 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh]">
-      <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.7)" }} onClick={onClose} />
-      <div className="relative w-full max-w-[640px] mx-4 rounded-2xl shadow-2xl overflow-hidden" style={{ background: "#111116", border: "1px solid #1e1e2a" }}>
-        <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: "1px solid #1e1e2a" }}>
-          {loading ? <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#7c3aed" }} /> : <Search className="w-5 h-5" style={{ color: "#52525b" }} />}
-          <input ref={inputRef} type="text" value={query} onChange={(e) => handleChange(e.target.value)} placeholder="Пошук товарів, категорій, брендів..." className="flex-1 bg-transparent text-sm outline-none" style={{ color: "#e4e4e7" }} />
-          <button onClick={onClose} style={{ color: "#52525b" }}><X className="w-5 h-5" /></button>
+      <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.5)" }} onClick={onClose} />
+      <div className="relative w-full max-w-[640px] mx-4 rounded-2xl shadow-2xl overflow-hidden" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+        <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: "1px solid var(--a-border)" }}>
+          {loading ? <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--a-accent-btn)" }} /> : <Search className="w-5 h-5" style={{ color: "var(--a-text-4)" }} />}
+          <input ref={inputRef} type="text" value={query} onChange={(e) => handleChange(e.target.value)} placeholder="Пошук товарів, категорій, брендів..." className="flex-1 bg-transparent text-sm outline-none" style={{ color: "var(--a-text-body)" }} />
+          <button onClick={onClose} style={{ color: "var(--a-text-4)" }}><X className="w-5 h-5" /></button>
         </div>
         <div className="px-5 py-4 max-h-[420px] overflow-y-auto">
           {!query ? (
-            <div className="text-center text-sm py-8" style={{ color: "#52525b" }}>
+            <div className="text-center text-sm py-8" style={{ color: "var(--a-text-4)" }}>
               <p>Почніть вводити для пошуку</p>
-              <p className="mt-2 text-xs"><kbd className="px-1.5 py-0.5 rounded text-xs font-mono" style={{ background: "#1a1a24", color: "#52525b" }}>⌘K</kbd> щоб відкрити</p>
+              <p className="mt-2 text-xs"><kbd className="px-1.5 py-0.5 rounded text-xs font-mono" style={{ background: "var(--a-bg-muted)", color: "var(--a-text-4)" }}>⌘K</kbd> щоб відкрити</p>
             </div>
           ) : loading && !results ? (
-            <div className="text-center py-8"><Loader2 className="w-5 h-5 animate-spin mx-auto" style={{ color: "#3f3f46" }} /></div>
+            <div className="text-center py-8"><Loader2 className="w-5 h-5 animate-spin mx-auto" style={{ color: "var(--a-text-5)" }} /></div>
           ) : results && !hasResults ? (
-            <div className="text-center text-sm py-8" style={{ color: "#52525b" }}>Нічого не знайдено</div>
+            <div className="text-center text-sm py-8" style={{ color: "var(--a-text-4)" }}>Нічого не знайдено</div>
           ) : (
             <div className="space-y-5">
-              {hasProducts && <div><p className="text-[10px] font-medium uppercase tracking-wider mb-2" style={{ color: "#3f3f46" }}>Товари</p>{results!.products.map((p) => (
-                <button key={p.id} onClick={() => navigate(`/admin/products?search=${encodeURIComponent(p.name_uk)}`)} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left" style={{ color: "#a1a1aa" }}>
-                  {p.main_image_url ? <img src={p.main_image_url} alt="" className="w-8 h-8 rounded-lg object-cover shrink-0" style={{ background: "#1a1a24" }} /> : <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#141420" }}><Package className="w-3.5 h-3.5" style={{ color: "#3f3f46" }} /></div>}
-                  <div className="min-w-0 flex-1"><p className="text-sm truncate">{p.name_uk}</p>{p.sku && <p className="text-[10px] font-mono" style={{ color: "#3f3f46" }}>{p.sku}</p>}</div>
-                  <span className="text-xs font-mono shrink-0" style={{ color: "#71717a" }}>{Number(p.price).toLocaleString("uk-UA")} ₴</span>
+              {hasProducts && <div><p className="text-[10px] font-medium uppercase tracking-wider mb-2" style={{ color: "var(--a-text-5)" }}>Товари</p>{results!.products.map((p) => (
+                <button key={p.id} onClick={() => navigate(`/admin/products?search=${encodeURIComponent(p.name_uk)}`)} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors" style={{ color: "var(--a-text-2)" }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "var(--a-bg-hover)"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
+                  {p.main_image_url ? <img src={p.main_image_url} alt="" className="w-8 h-8 rounded-lg object-cover shrink-0" style={{ background: "var(--a-bg-muted)" }} /> : <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--a-bg-hover)" }}><Package className="w-3.5 h-3.5" style={{ color: "var(--a-text-5)" }} /></div>}
+                  <div className="min-w-0 flex-1"><p className="text-sm truncate">{p.name_uk}</p>{p.sku && <p className="text-[10px] font-mono" style={{ color: "var(--a-text-5)" }}>{p.sku}</p>}</div>
+                  <span className="text-xs font-mono shrink-0" style={{ color: "var(--a-text-3)" }}>{Number(p.price).toLocaleString("uk-UA")} ₴</span>
                 </button>
               ))}</div>}
-              {hasCategories && <div><p className="text-[10px] font-medium uppercase tracking-wider mb-2" style={{ color: "#3f3f46" }}>Категорії</p>{results!.categories.map((c) => (
-                <button key={c.id} onClick={() => navigate("/admin/categories")} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-sm" style={{ color: "#a1a1aa" }}><FolderTree className="w-4 h-4 shrink-0" style={{ color: "#52525b" }} />{c.name_uk}</button>
+              {hasCategories && <div><p className="text-[10px] font-medium uppercase tracking-wider mb-2" style={{ color: "var(--a-text-5)" }}>Категорії</p>{results!.categories.map((c) => (
+                <button key={c.id} onClick={() => navigate("/admin/categories")} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-sm transition-colors" style={{ color: "var(--a-text-2)" }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "var(--a-bg-hover)"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
+                  <FolderTree className="w-4 h-4 shrink-0" style={{ color: "var(--a-text-4)" }} />{c.name_uk}
+                </button>
               ))}</div>}
-              {hasBrands && <div><p className="text-[10px] font-medium uppercase tracking-wider mb-2" style={{ color: "#3f3f46" }}>Бренди</p>{results!.brands.map((b) => (
-                <button key={b.id} onClick={() => navigate("/admin/brands")} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-sm" style={{ color: "#a1a1aa" }}><Award className="w-4 h-4 shrink-0" style={{ color: "#52525b" }} />{b.name}</button>
+              {hasBrands && <div><p className="text-[10px] font-medium uppercase tracking-wider mb-2" style={{ color: "var(--a-text-5)" }}>Бренди</p>{results!.brands.map((b) => (
+                <button key={b.id} onClick={() => navigate("/admin/brands")} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-sm transition-colors" style={{ color: "var(--a-text-2)" }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "var(--a-bg-hover)"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
+                  <Award className="w-4 h-4 shrink-0" style={{ color: "var(--a-text-4)" }} />{b.name}
+                </button>
               ))}</div>}
-              <div><p className="text-[10px] font-medium uppercase tracking-wider mb-2" style={{ color: "#3f3f46" }}>Швидкі переходи</p>
-                <button onClick={() => navigate(`/admin/products?search=${encodeURIComponent(query)}`)} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-sm" style={{ color: "#71717a" }}><Package className="w-4 h-4 shrink-0" />Шукати &quot;{query}&quot; в товарах</button>
-                <button onClick={() => navigate(`/admin/orders?search=${encodeURIComponent(query)}`)} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-sm" style={{ color: "#71717a" }}><ShoppingBag className="w-4 h-4 shrink-0" />Шукати &quot;{query}&quot; в замовленнях</button>
-                <button onClick={() => navigate(`/admin/clients?search=${encodeURIComponent(query)}`)} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-sm" style={{ color: "#71717a" }}><Users className="w-4 h-4 shrink-0" />Шукати &quot;{query}&quot; в клієнтах</button>
+              <div><p className="text-[10px] font-medium uppercase tracking-wider mb-2" style={{ color: "var(--a-text-5)" }}>Швидкі переходи</p>
+                <button onClick={() => navigate(`/admin/products?search=${encodeURIComponent(query)}`)} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-sm transition-colors" style={{ color: "var(--a-text-3)" }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "var(--a-bg-hover)"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
+                  <Package className="w-4 h-4 shrink-0" />Шукати &quot;{query}&quot; в товарах
+                </button>
+                <button onClick={() => navigate(`/admin/orders?search=${encodeURIComponent(query)}`)} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-sm transition-colors" style={{ color: "var(--a-text-3)" }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "var(--a-bg-hover)"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
+                  <ShoppingBag className="w-4 h-4 shrink-0" />Шукати &quot;{query}&quot; в замовленнях
+                </button>
+                <button onClick={() => navigate(`/admin/clients?search=${encodeURIComponent(query)}`)} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-sm transition-colors" style={{ color: "var(--a-text-3)" }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "var(--a-bg-hover)"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
+                  <Users className="w-4 h-4 shrink-0" />Шукати &quot;{query}&quot; в клієнтах
+                </button>
               </div>
             </div>
           )}
         </div>
-        <div className="flex items-center justify-between px-5 py-3 text-[11px]" style={{ borderTop: "1px solid #1e1e2a", color: "#3f3f46" }}>
+        <div className="flex items-center justify-between px-5 py-3 text-[11px]" style={{ borderTop: "1px solid var(--a-border)", color: "var(--a-text-5)" }}>
           <span>Глобальний пошук</span>
-          <span><kbd className="px-1.5 py-0.5 rounded font-mono" style={{ background: "#1a1a24", color: "#52525b" }}>ESC</kbd> щоб закрити</span>
+          <span><kbd className="px-1.5 py-0.5 rounded font-mono" style={{ background: "var(--a-bg-muted)", color: "var(--a-text-4)" }}>ESC</kbd> щоб закрити</span>
         </div>
       </div>
     </div>

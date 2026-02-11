@@ -31,7 +31,8 @@ interface FormData {
   noCall: boolean;
   shippingMethod: string;
   city: string;
-  cityRef: string;
+  cityRef: string;         // Settlement ref (for warehouse search)
+  deliveryCityRef: string; // City ref (for delivery calculation)
   warehouse: string;
   warehouseRef: string;
   street: string;
@@ -61,6 +62,7 @@ const INITIAL_FORM: FormData = {
   shippingMethod: "np_warehouse",
   city: "",
   cityRef: "",
+  deliveryCityRef: "",
   warehouse: "",
   warehouseRef: "",
   street: "",
@@ -474,8 +476,8 @@ export default function CheckoutPage() {
                     <NPCitySearch
                       value={form.city}
                       cityRef={form.cityRef}
-                      onSelect={(c) => { update("city", c.name); update("cityRef", c.ref); update("warehouse", ""); update("warehouseRef", ""); }}
-                      onClear={() => { update("city", ""); update("cityRef", ""); update("warehouse", ""); update("warehouseRef", ""); }}
+                      onSelect={(c) => { update("city", c.name); update("cityRef", c.ref); update("deliveryCityRef", c.deliveryCityRef || c.ref); update("warehouse", ""); update("warehouseRef", ""); }}
+                      onClear={() => { update("city", ""); update("cityRef", ""); update("deliveryCityRef", ""); update("warehouse", ""); update("warehouseRef", ""); }}
                       error={errors.city}
                     />
                   </div>
@@ -491,7 +493,7 @@ export default function CheckoutPage() {
                     />
                   </div>
                   <NPDeliveryCost
-                    cityRef={form.cityRef}
+                    cityRef={form.deliveryCityRef || form.cityRef}
                     serviceType="WarehouseWarehouse"
                     weight={items.reduce((s, i) => s + (i.weight ?? 0) * i.quantity, 0) || 1}
                     cost={getTotal()}
@@ -504,8 +506,8 @@ export default function CheckoutPage() {
                     <NPCitySearch
                       value={form.city}
                       cityRef={form.cityRef}
-                      onSelect={(c) => { update("city", c.name); update("cityRef", c.ref); update("street", ""); update("streetRef", ""); }}
-                      onClear={() => { update("city", ""); update("cityRef", ""); update("street", ""); update("streetRef", ""); }}
+                      onSelect={(c) => { update("city", c.name); update("cityRef", c.ref); update("deliveryCityRef", c.deliveryCityRef || c.ref); update("street", ""); update("streetRef", ""); }}
+                      onClear={() => { update("city", ""); update("cityRef", ""); update("deliveryCityRef", ""); update("street", ""); update("streetRef", ""); }}
                       error={errors.city}
                     />
                   </div>
@@ -522,7 +524,7 @@ export default function CheckoutPage() {
                     <div data-field="house"><Input label="Будинок, квартира" required value={form.house} onChange={(v) => update("house", v)} error={errors.house} placeholder="1, кв. 2" /></div>
                   </div>
                   <NPDeliveryCost
-                    cityRef={form.cityRef}
+                    cityRef={form.deliveryCityRef || form.cityRef}
                     serviceType="WarehouseDoors"
                     weight={items.reduce((s, i) => s + (i.weight ?? 0) * i.quantity, 0) || 1}
                     cost={getTotal()}
