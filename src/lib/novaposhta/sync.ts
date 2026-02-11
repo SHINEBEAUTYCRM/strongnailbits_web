@@ -9,9 +9,8 @@
  */
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getAllCities, getDivisionsArchiveUrl, getDivisionsByCity, mapDivisionCategory } from "./client";
+import { getAllCities, getDivisionsArchiveUrl, mapDivisionCategory } from "./client";
 import type { NPCity } from "./types";
-import type { NPDivision } from "./client";
 
 const BATCH_SIZE = 500;
 
@@ -137,7 +136,7 @@ export async function syncWarehouses(): Promise<SyncResult> {
     const supabase = createAdminClient();
     await logSync({ ...result, status: "started" as SyncResult["status"] });
 
-    let allDivisions: NPDivision[] = [];
+    let allDivisions: Record<string, unknown>[] = [];
 
     // Try archive first
     try {
@@ -151,10 +150,8 @@ export async function syncWarehouses(): Promise<SyncResult> {
       console.warn("[NP Sync] Archive failed, falling back to API:", err instanceof Error ? err.message : err);
     }
 
-    // Fallback: paginated API calls
     if (allDivisions.length === 0) {
-      console.log("[NP Sync] Using paginated API fallback...");
-      allDivisions = await fetchAllDivisionsPaginated();
+      throw new Error("Archive returned 0 divisions — check URL or format");
     }
 
     // Filter: only Ukraine (archive has all countries)
@@ -223,47 +220,38 @@ export async function syncWarehouses(): Promise<SyncResult> {
 /**
  * Download and parse the gzip archive of all divisions.
  * Archive format: { items: [...] } where each item has countryCode, etc.
+ * The .json.gz file needs manual gzip decompression.
  */
-async function downloadAndParseArchive(url: string): Promise<NPDivision[]> {
+async function downloadAndParseArchive(url: string): Promise<Record<string, unknown>[]> {
+  const { gunzipSync } = await import("zlib");
+
   const res = await fetch(url, { signal: AbortSignal.timeout(120000) });
   if (!res.ok) throw new Error(`Archive download HTTP ${res.status}`);
 
-  const data = await res.json();
+  const buffer = Buffer.from(await res.arrayBuffer());
+  console.log(`[NP Sync] Archive downloaded: ${(buffer.length / 1024 / 1024).toFixed(1)} MB`);
+
+  // Decompress gzip
+  let jsonStr: string;
+  try {
+    const decompressed = gunzipSync(buffer);
+    jsonStr = decompressed.toString("utf-8");
+  } catch {
+    // Maybe it's not gzipped (already decompressed by CDN)
+    jsonStr = buffer.toString("utf-8");
+  }
+
+  const data = JSON.parse(jsonStr);
 
   // Archive format: { items: [...] } or flat array
   if (Array.isArray(data)) {
-    return data as NPDivision[];
+    return data;
   }
   if (data && Array.isArray(data.items)) {
-    return data.items as NPDivision[];
+    return data.items;
   }
 
   throw new Error("Archive format unexpected: not an array or { items: [] }");
-}
-
-/**
- * Fallback: fetch all UA divisions via paginated API calls.
- */
-async function fetchAllDivisionsPaginated(): Promise<NPDivision[]> {
-  const all: NPDivision[] = [];
-  let page = 1;
-
-  while (true) {
-    try {
-      // Fetch all UA divisions page by page (no city filter)
-      const divisions = await getDivisionsByCity("*", null, 100, page);
-      if (!divisions || divisions.length === 0) break;
-      all.push(...divisions);
-      if (divisions.length < 100) break;
-      page++;
-      if (page > 500) break; // Safety: ~50k/100 = 500 pages max
-    } catch (err) {
-      console.error(`[NP Sync] Paginated fetch page ${page} failed:`, err);
-      break;
-    }
-  }
-
-  return all;
 }
 
 // ────── Sync All ──────
