@@ -31,8 +31,13 @@ export interface NPCity {
   SettlementTypeDescription: string;
   Area: string;
   AreaDescription: string;
+  AreaDescriptionRu?: string;
   Region: string;
   RegionsDescription: string;
+  CityID?: string;
+  Delivery1?: string;  // Has Warehouse-Warehouse delivery
+  Delivery3?: string;  // Has Warehouse-Doors delivery
+  Delivery7?: string;  // Has delivery in general
 }
 
 // ────── Warehouse ──────
@@ -46,9 +51,13 @@ export interface NPWarehouse {
   CityRef: string;
   CityDescription: string;
   TypeOfWarehouse: string;
+  CategoryOfWarehouse: string;
+  PostMachineType?: string;
   ShortAddress: string;
   ShortAddressRu: string;
   Phone: string;
+  Latitude?: string | number;
+  Longitude?: string | number;
   Schedule: {
     Monday: string;
     Tuesday: string;
@@ -60,8 +69,9 @@ export interface NPWarehouse {
   };
   PlaceMaxWeightAllowed: number;
   TotalMaxWeightAllowed: number;
+  POSTerminal?: string;
+  PostFinance?: string;
   WarehouseStatus: string;
-  CategoryOfWarehouse: string;
 }
 
 // ────── Street ──────
@@ -135,6 +145,14 @@ export interface NPContactPerson {
   LastName: string;
   MiddleName: string;
   Phones: string;
+}
+
+// ────── Warehouse Type ──────
+
+export interface NPWarehouseType {
+  Ref: string;
+  Description: string;
+  DescriptionRu: string;
 }
 
 // ────── Config ──────

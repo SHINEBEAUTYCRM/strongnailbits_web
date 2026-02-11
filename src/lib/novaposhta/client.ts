@@ -1,11 +1,15 @@
 /**
  * Nova Poshta API v2.0 — Client
  *
- * Full integration:
+ * Server-only module. NEVER import on client side.
+ *
+ * Features:
  * - City/warehouse/street search (checkout)
+ * - Full data download for Supabase sync (getAllCities, getAllWarehouses)
  * - Delivery cost calculation
  * - TTN creation (admin)
  * - Shipment tracking
+ * - Retry with exponential backoff
  *
  * Docs: https://developers.novaposhta.ua/documentation
  */
@@ -22,9 +26,13 @@ import type {
   NPInternetDocument,
   NPCounterparty,
   NPContactPerson,
+  NPWarehouseType,
 } from "./types";
 
 const API_URL = "https://api.novaposhta.ua/v2.0/json/";
+
+/** Odesa city ref — our sender city (static) */
+export const SENDER_CITY_REF = "db5c88e0-391a-11dd-90d9-001a92567626";
 
 // ────── Config (ENV → DB fallback) ──────
 
@@ -37,8 +45,8 @@ export async function getConfig(): Promise<NPConfig> {
     return _cachedConfig;
   }
 
-  // 1. ENV vars
-  const envKey = process.env.NOVAPOSHTA_API_KEY;
+  // 1. ENV vars (support both naming conventions)
+  const envKey = process.env.NOVA_POSHTA_API_KEY || process.env.NOVAPOSHTA_API_KEY;
   if (envKey) {
     _cachedConfig = {
       apiKey: envKey,
@@ -81,7 +89,7 @@ export async function getConfig(): Promise<NPConfig> {
   }
 
   throw new Error(
-    "Nova Poshta API key not configured. Add it in Admin → Integrations → Nova Poshta",
+    "Nova Poshta API key not configured. Set NOVA_POSHTA_API_KEY env or add in Admin → Integrations.",
   );
 }
 
@@ -95,45 +103,63 @@ export async function isNPConfigured(): Promise<boolean> {
   }
 }
 
-// ────── Core API Call ──────
+// ────── Core API Call with Retry ──────
+
+const RETRY_DELAYS = [500, 1500]; // exponential backoff
 
 async function callNP<T = unknown>(
   modelName: string,
   calledMethod: string,
   methodProperties: Record<string, unknown>,
+  retries = 2,
 ): Promise<NPResponse<T>> {
   const { apiKey } = await getConfig();
 
-  const res = await fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      apiKey,
-      modelName,
-      calledMethod,
-      methodProperties,
-    }),
-    signal: AbortSignal.timeout(15000),
-  });
+  let lastError: Error | null = null;
 
-  if (!res.ok) {
-    throw new Error(`Nova Poshta API HTTP ${res.status}`);
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          apiKey,
+          modelName,
+          calledMethod,
+          methodProperties,
+        }),
+        signal: AbortSignal.timeout(10000),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Nova Poshta API HTTP ${res.status}`);
+      }
+
+      const data: NPResponse<T> = await res.json();
+
+      if (!data.success && data.errors.length > 0) {
+        console.error("[NovaPoshta] API error:", data.errors);
+      }
+
+      return data;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+
+      // Don't retry on last attempt
+      if (attempt < retries) {
+        const delay = RETRY_DELAYS[attempt] || 2000;
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
   }
 
-  const data: NPResponse<T> = await res.json();
-
-  if (!data.success && data.errors.length > 0) {
-    console.error("[NovaPoshta] API error:", data.errors);
-  }
-
-  return data;
+  throw lastError || new Error("Nova Poshta API call failed");
 }
 
-// ────── 1. City Search ──────
+// ────── 1. City Search (single page) ──────
 
 /**
- * Search cities by name (autocomplete).
- * Uses getCities with FindByString — returns correct Ref for warehouse lookup.
+ * Search cities by name. Used for direct NP API search (fallback).
  */
 export async function searchCities(query: string, limit = 20): Promise<NPCity[]> {
   const res = await callNP<NPCity>("Address", "getCities", {
@@ -141,7 +167,6 @@ export async function searchCities(query: string, limit = 20): Promise<NPCity[]>
     Limit: String(limit),
     Page: "1",
   });
-
   return res.data || [];
 }
 
@@ -149,21 +174,47 @@ export async function searchCities(query: string, limit = 20): Promise<NPCity[]>
  * Get city by Ref (for displaying saved data).
  */
 export async function getCityByRef(ref: string): Promise<NPCity | null> {
-  const res = await callNP<NPCity>("Address", "getCities", {
-    Ref: ref,
-  });
+  const res = await callNP<NPCity>("Address", "getCities", { Ref: ref });
   return res.data?.[0] || null;
 }
 
-// ────── 2. Warehouse Search ──────
+// ────── 1b. ALL Cities (for sync) ──────
 
 /**
- * Get warehouses for a city.
- * TypeOfWarehouse filters:
- * - "" = all
- * - "841339c7-591a-42e2-8571-2c4a0d683ecf" = regular warehouse (відділення)
- * - "9a68df70-0267-42a8-bb5c-37f427e36ee4" = parcel terminal (поштомат)
- * - "f9316480-5f2d-425d-bc2c-ac7cd29decf0" = cargo warehouse (вантажне)
+ * Download ALL cities from NP API. Paginated by 500.
+ * Used by sync engine to populate np_cities table.
+ * Returns ~1 100 cities.
+ */
+export async function getAllCities(): Promise<NPCity[]> {
+  const allCities: NPCity[] = [];
+  let page = 1;
+
+  while (true) {
+    const res = await callNP<NPCity>("Address", "getCities", {
+      Page: String(page),
+      Limit: "500",
+    });
+
+    if (!res.data || res.data.length === 0) break;
+
+    allCities.push(...res.data);
+
+    // If we got less than 500, that's the last page
+    if (res.data.length < 500) break;
+
+    page++;
+
+    // Safety limit
+    if (page > 20) break;
+  }
+
+  return allCities;
+}
+
+// ────── 2. Warehouse Search (single city) ──────
+
+/**
+ * Get warehouses for a city. Used as fallback if Supabase has no data.
  */
 export async function getWarehouses(
   cityRef: string,
@@ -204,6 +255,53 @@ export async function getWarehouses(
   };
 }
 
+// ────── 2b. ALL Warehouses (for sync) ──────
+
+/**
+ * Download ALL warehouses from NP API. Paginated by 500.
+ * Used by sync engine. Returns ~25 000 records.
+ * Can take 30-60 seconds.
+ */
+export async function getAllWarehouses(): Promise<NPWarehouse[]> {
+  const allWarehouses: NPWarehouse[] = [];
+  let page = 1;
+
+  while (true) {
+    const res = await callNP<NPWarehouse>("Address", "getWarehouses", {
+      Page: String(page),
+      Limit: "500",
+      Language: "UA",
+    });
+
+    if (!res.data || res.data.length === 0) break;
+
+    allWarehouses.push(...res.data);
+
+    if (res.data.length < 500) break;
+
+    page++;
+
+    // Safety: NP has ~25k warehouses = ~50 pages max
+    if (page > 200) break;
+  }
+
+  return allWarehouses;
+}
+
+// ────── 2c. Warehouse Types ──────
+
+/**
+ * Get warehouse type definitions (branch, postomat, cargo).
+ */
+export async function getWarehouseTypes(): Promise<NPWarehouseType[]> {
+  const res = await callNP<NPWarehouseType>(
+    "Address",
+    "getWarehouseTypes",
+    {},
+  );
+  return res.data || [];
+}
+
 // ────── 3. Street Search ──────
 
 /**
@@ -220,7 +318,6 @@ export async function searchStreets(
     Limit: String(limit),
   });
 
-  // Same nested format as cities
   const rawData = res.data as unknown as Array<{
     Addresses: NPStreet[];
     TotalCount: string;
@@ -237,9 +334,10 @@ export async function searchStreets(
 
 /**
  * Calculate delivery cost and estimated date.
+ * citySenderRef defaults to Odesa.
  */
 export async function calculateDelivery(params: {
-  citySenderRef: string;
+  citySenderRef?: string;
   cityRecipientRef: string;
   weight: number;
   cost: number;
@@ -251,7 +349,7 @@ export async function calculateDelivery(params: {
     "InternetDocument",
     "getDocumentPrice",
     {
-      CitySender: params.citySenderRef,
+      CitySender: params.citySenderRef || SENDER_CITY_REF,
       CityRecipient: params.cityRecipientRef,
       Weight: String(params.weight),
       ServiceType: params.serviceType,
@@ -262,6 +360,32 @@ export async function calculateDelivery(params: {
   );
 
   return res.data?.[0] || null;
+}
+
+/**
+ * Get estimated delivery date.
+ */
+export async function getDeliveryDate(
+  citySenderRef: string,
+  cityRecipientRef: string,
+  serviceType = "WarehouseWarehouse",
+): Promise<string | null> {
+  const res = await callNP<{ DeliveryDate: { date: string } }>(
+    "InternetDocument",
+    "getDocumentDeliveryDate",
+    {
+      CitySender: citySenderRef || SENDER_CITY_REF,
+      CityRecipient: cityRecipientRef,
+      ServiceType: serviceType,
+      DateTime: formatNPDate(new Date()),
+    },
+  );
+
+  const item = res.data?.[0];
+  if (item?.DeliveryDate?.date) {
+    return item.DeliveryDate.date.slice(0, 10); // "2026-02-14"
+  }
+  return null;
 }
 
 // ────── 5. Tracking ──────
@@ -279,12 +403,11 @@ export async function trackShipment(
       Documents: [{ DocumentNumber: ttn, Phone: "" }],
     },
   );
-
   return res.data?.[0] || null;
 }
 
 /**
- * Track multiple shipments at once (batch).
+ * Track multiple shipments at once (batch, up to 100).
  */
 export async function trackShipments(
   ttns: string[],
@@ -296,7 +419,6 @@ export async function trackShipments(
       Documents: ttns.map((ttn) => ({ DocumentNumber: ttn, Phone: "" })),
     },
   );
-
   return res.data || [];
 }
 
@@ -310,7 +432,7 @@ export async function createShipment(params: {
   recipientName: string;
   recipientPhone: string;
   recipientCityRef: string;
-  recipientAddressRef: string; // Warehouse Ref or address Ref
+  recipientAddressRef: string;
   serviceType: "WarehouseWarehouse" | "WarehouseDoors";
   weight: number;
   cost: number;
@@ -322,7 +444,7 @@ export async function createShipment(params: {
   backwardDelivery?: {
     payerType: "Sender" | "Recipient";
     cargoType: "Money";
-    redeliveryString: string; // amount
+    redeliveryString: string;
   };
   volumeWeight?: number;
 }): Promise<NPInternetDocument | null> {
@@ -335,20 +457,17 @@ export async function createShipment(params: {
   }
 
   const properties: Record<string, unknown> = {
-    // Sender
     Sender: config.senderRef,
-    CitySender: "", // auto from senderAddress
+    CitySender: "",
     SenderAddress: config.senderAddress,
     ContactSender: config.senderContact,
     SendersPhone: config.senderPhone || "",
-    // Recipient
     RecipientCityName: "",
     RecipientAddressName: "",
     RecipientName: params.recipientName,
     RecipientType: "PrivatePerson",
     RecipientsPhone: params.recipientPhone,
     RecipientAddress: params.recipientAddressRef,
-    // Shipment
     ServiceType: params.serviceType,
     Weight: String(params.weight),
     Cost: String(params.cost),
@@ -360,7 +479,6 @@ export async function createShipment(params: {
     DateTime: formatNPDate(new Date()),
   };
 
-  // Add backward delivery (наложений платіж)
   if (params.backwardDelivery) {
     properties.BackwardDeliveryData = [
       {
@@ -384,91 +502,61 @@ export async function createShipment(params: {
   return res.data?.[0] || null;
 }
 
-// ────── 7. Get Sender Info (for admin setup) ──────
+// ────── 7. Sender Info (admin setup) ──────
 
-/**
- * Get sender counterparties (to pick senderRef).
- */
 export async function getSenderCounterparties(): Promise<NPCounterparty[]> {
-  const res = await callNP<NPCounterparty>(
-    "Counterparty",
-    "getCounterparties",
-    {
-      CounterpartyProperty: "Sender",
-      Page: "1",
-    },
-  );
+  const res = await callNP<NPCounterparty>("Counterparty", "getCounterparties", {
+    CounterpartyProperty: "Sender",
+    Page: "1",
+  });
   return res.data || [];
 }
 
-/**
- * Get contact persons for a counterparty.
- */
-export async function getContactPersons(
-  counterpartyRef: string,
-): Promise<NPContactPerson[]> {
-  const res = await callNP<NPContactPerson>(
-    "Counterparty",
-    "getCounterpartyContactPersons",
-    {
-      Ref: counterpartyRef,
-      Page: "1",
-    },
-  );
+export async function getContactPersons(counterpartyRef: string): Promise<NPContactPerson[]> {
+  const res = await callNP<NPContactPerson>("Counterparty", "getCounterpartyContactPersons", {
+    Ref: counterpartyRef,
+    Page: "1",
+  });
   return res.data || [];
 }
 
-/**
- * Get sender addresses (warehouses registered to sender).
- */
-export async function getSenderAddresses(
-  counterpartyRef: string,
-): Promise<NPWarehouse[]> {
-  const res = await callNP<NPWarehouse>(
-    "Counterparty",
-    "getCounterpartyAddresses",
-    {
-      Ref: counterpartyRef,
-      CounterpartyProperty: "Sender",
-    },
-  );
+export async function getSenderAddresses(counterpartyRef: string): Promise<NPWarehouse[]> {
+  const res = await callNP<NPWarehouse>("Counterparty", "getCounterpartyAddresses", {
+    Ref: counterpartyRef,
+    CounterpartyProperty: "Sender",
+  });
   return res.data || [];
 }
 
 // ────── Status Code Mapping ──────
 
-/**
- * Map NP status codes to human-readable Ukrainian labels.
- */
+export type NPStage = "created" | "in_transit" | "arrived" | "delivered" | "returned" | "problem";
+
 export function getStatusLabel(statusCode: string): {
   label: string;
   emoji: string;
-  stage: "created" | "in_transit" | "arrived" | "delivered" | "returned" | "problem";
+  stage: NPStage;
+  isFinal: boolean;
 } {
   const code = Number(statusCode);
 
-  if (code === 1) return { label: "Створено", emoji: "📝", stage: "created" };
-  if (code === 2) return { label: "Видалено", emoji: "🗑️", stage: "problem" };
-  if (code === 3) return { label: "Не знайдено", emoji: "❓", stage: "problem" };
-  if (code >= 4 && code <= 6)
-    return { label: "В дорозі до міста", emoji: "🚚", stage: "in_transit" };
-  if (code === 7 || code === 8)
-    return { label: "Прибула у відділення", emoji: "📦", stage: "arrived" };
-  if (code === 9) return { label: "Отримано", emoji: "✅", stage: "delivered" };
-  if (code === 10) return { label: "Відмова", emoji: "❌", stage: "returned" };
-  if (code === 11) return { label: "Відмова (в дорозі назад)", emoji: "↩️", stage: "returned" };
-  if (code === 12) return { label: "Повернено відправнику", emoji: "📤", stage: "returned" };
-  if (code === 14) return { label: "Змінено адресу", emoji: "📍", stage: "in_transit" };
-  if (code === 101) return { label: "На шляху до одержувача", emoji: "🚚", stage: "in_transit" };
-  if (code === 102) return { label: "Відмова одержувача", emoji: "❌", stage: "returned" };
-  if (code === 103) return { label: "Відмова (оплачено)", emoji: "💸", stage: "returned" };
-  if (code === 104) return { label: "Змінено адресу", emoji: "📍", stage: "in_transit" };
-  if (code === 106)
-    return { label: "Очікує відправлення", emoji: "⏳", stage: "created" };
-  if (code === 111)
-    return { label: "Зберігається у відділенні", emoji: "📦", stage: "arrived" };
+  if (code === 1) return { label: "Створено", emoji: "📝", stage: "created", isFinal: false };
+  if (code === 2) return { label: "Видалено", emoji: "🗑️", stage: "problem", isFinal: true };
+  if (code === 3) return { label: "Не знайдено", emoji: "❓", stage: "problem", isFinal: false };
+  if (code === 4) return { label: "В місті відправника", emoji: "📦", stage: "in_transit", isFinal: false };
+  if (code === 5) return { label: "В дорозі", emoji: "🚚", stage: "in_transit", isFinal: false };
+  if (code === 6) return { label: "В місті отримувача", emoji: "🏙️", stage: "in_transit", isFinal: false };
+  if (code === 7 || code === 101) return { label: "На відділенні", emoji: "📦", stage: "arrived", isFinal: false };
+  if (code === 8) return { label: "Прибула у відділення", emoji: "📦", stage: "arrived", isFinal: false };
+  if (code === 9) return { label: "Отримано", emoji: "✅", stage: "delivered", isFinal: true };
+  if (code === 10 || code === 11) return { label: "Повертається", emoji: "↩️", stage: "returned", isFinal: false };
+  if (code === 12 || code === 102 || code === 108) return { label: "Повернено", emoji: "📤", stage: "returned", isFinal: true };
+  if (code === 14 || code === 104) return { label: "Змінено адресу", emoji: "📍", stage: "in_transit", isFinal: false };
+  if (code === 103) return { label: "Відмова", emoji: "❌", stage: "returned", isFinal: true };
+  if (code === 106) return { label: "Очікує відправлення", emoji: "⏳", stage: "created", isFinal: false };
+  if (code === 111) return { label: "Зберігається", emoji: "📦", stage: "arrived", isFinal: false };
 
-  return { label: `Статус ${statusCode}`, emoji: "📋", stage: "in_transit" };
+  return { label: `Статус ${statusCode}`, emoji: "📋", stage: "in_transit", isFinal: false };
 }
 
 // ────── Helpers ──────

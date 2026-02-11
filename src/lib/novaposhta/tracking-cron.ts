@@ -9,16 +9,14 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { trackShipments, getStatusLabel, isNPConfigured } from "./client";
 import { notifyOrderStatusChanged } from "@/lib/telegram/notify";
 
-// NP status codes → our order status mapping
-const NP_TO_ORDER_STATUS: Record<string, string> = {
-  // In transit
+// NP status stage → our order status mapping
+const STAGE_TO_ORDER_STATUS: Record<string, string> = {
+  created: "processing",
   in_transit: "shipped",
-  // Arrived at warehouse — still "shipped"
   arrived: "shipped",
-  // Delivered / received
   delivered: "delivered",
-  // Returned — cancelled
   returned: "cancelled",
+  problem: "cancelled",
 };
 
 interface TrackingResult {
@@ -40,12 +38,11 @@ export async function updateShipmentStatuses(): Promise<TrackingResult> {
   try {
     const supabase = createAdminClient();
 
-    // Get orders with TTN that are not yet delivered/cancelled
+    // Get orders with tracking_number (or ttn) that are not yet in final status
     const { data: orders, error } = await supabase
       .from("orders")
-      .select("id, order_number, ttn, status, shipping_address")
-      .not("ttn", "is", null)
-      .not("ttn", "eq", "")
+      .select("id, order_number, ttn, tracking_number, status, np_status, shipping_address")
+      .or("ttn.not.is.null,tracking_number.not.is.null")
       .in("status", ["new", "processing", "shipped"])
       .limit(100);
 
@@ -55,36 +52,55 @@ export async function updateShipmentStatuses(): Promise<TrackingResult> {
 
     result.checked = orders.length;
 
-    // Batch track all TTNs
-    const ttns = orders.map((o) => o.ttn!).filter(Boolean);
+    // Collect TTNs (support both column names)
+    const ttns = orders
+      .map((o) => o.tracking_number || o.ttn)
+      .filter(Boolean) as string[];
+
     if (ttns.length === 0) return result;
 
+    // Batch track all TTNs
     const trackingDocs = await trackShipments(ttns);
-
-    // Create a map: TTN → tracking data
     const trackingMap = new Map(trackingDocs.map((d) => [d.Number, d]));
 
     // Update orders
     for (const order of orders) {
-      const doc = trackingMap.get(order.ttn!);
+      const ttn = order.tracking_number || order.ttn;
+      if (!ttn) continue;
+
+      const doc = trackingMap.get(ttn);
       if (!doc) continue;
 
       const npStatus = getStatusLabel(doc.StatusCode);
-      const newOrderStatus = NP_TO_ORDER_STATUS[npStatus.stage];
+      const newOrderStatus = STAGE_TO_ORDER_STATUS[npStatus.stage];
 
       // Skip if status hasn't changed or no mapping
-      if (!newOrderStatus || newOrderStatus === order.status) continue;
+      if (!newOrderStatus || newOrderStatus === order.status) {
+        // Still update NP status text & last checked
+        await supabase
+          .from("orders")
+          .update({
+            np_status: npStatus.stage,
+            np_status_text: doc.Status,
+            np_last_checked: new Date().toISOString(),
+            np_estimated_delivery: doc.ScheduledDeliveryDate || null,
+          })
+          .eq("id", order.id);
+        continue;
+      }
 
-      // Update order
+      // Update order status + NP tracking info
       const updateData: Record<string, unknown> = {
         status: newOrderStatus,
-        np_status: doc.Status,
-        np_status_code: doc.StatusCode,
+        np_status: npStatus.stage,
+        np_status_text: doc.Status,
+        np_last_checked: new Date().toISOString(),
+        np_estimated_delivery: doc.ScheduledDeliveryDate || null,
       };
 
-      // Set delivered_at for delivered orders
       if (newOrderStatus === "delivered" && doc.ActualDeliveryDate) {
         updateData.delivered_at = doc.ActualDeliveryDate;
+        updateData.np_actual_delivery = doc.ActualDeliveryDate;
       }
 
       const { error: updateError } = await supabase
@@ -105,7 +121,7 @@ export async function updateShipmentStatuses(): Promise<TrackingResult> {
         orderNumber: order.order_number,
         oldStatus: order.status,
         newStatus: newOrderStatus,
-        ttn: order.ttn!,
+        ttn,
         npStatus: `${npStatus.emoji} ${npStatus.label}`,
         customerName: shippingAddr?.recipient || "Невідомий",
       }).catch(() => {});
