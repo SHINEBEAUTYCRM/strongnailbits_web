@@ -18,6 +18,7 @@ import {
   RefreshCw,
   Settings,
   Key,
+  BookOpen,
   Gauge,
   Megaphone,
   Target,
@@ -176,6 +177,7 @@ export const adminNavigation: NavGroup[] = [
       { label: "Користувачі", href: "/admin/users", icon: Shield },
       { label: "Налаштування", href: "/admin/settings", icon: Settings, soon: true },
       { label: "API ключі", href: "/admin/api-keys", icon: Key },
+      { label: "API документація", href: "/admin/api-docs", icon: BookOpen },
     ],
   },
 ];

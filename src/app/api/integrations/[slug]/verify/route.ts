@@ -44,6 +44,65 @@ export async function POST(
       .filter(f => f.required)
       .map(f => f.key);
 
+    // ── Telegram Bot: перевірка токена через getMe ──
+    if (slug === 'telegram-bot' && config.bot_token) {
+      try {
+        const tgRes = await fetch(
+          `https://api.telegram.org/bot${config.bot_token}/getMe`,
+          { signal: AbortSignal.timeout(10000) }
+        );
+        const tgData = await tgRes.json();
+
+        if (!tgData.ok) {
+          const integration = new SimpleKeyIntegration(slug, requiredKeys);
+          await integration.verifyAndSave(config);
+          return NextResponse.json({
+            success: false,
+            message: `Telegram: невірний токен бота`,
+          });
+        }
+
+        // Save config
+        const integration = new SimpleKeyIntegration(slug, requiredKeys);
+        await integration.verifyAndSave(config);
+
+        // Send test message if chat_id provided
+        if (config.chat_id) {
+          try {
+            await fetch(
+              `https://api.telegram.org/bot${config.bot_token}/sendMessage`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: config.chat_id,
+                  text: '✅ ShineShop бот підключено! Сповіщення будуть надходити в цей чат.',
+                  parse_mode: 'HTML',
+                }),
+                signal: AbortSignal.timeout(10000),
+              }
+            );
+          } catch {
+            return NextResponse.json({
+              success: false,
+              message: `Бот @${tgData.result.username} знайдено, але Chat ID невірний. Напишіть боту і спробуйте ще раз.`,
+            });
+          }
+        }
+
+        return NextResponse.json({
+          success: true,
+          message: `Telegram бот @${tgData.result.username} підключено!${config.chat_id ? ' Тестове повідомлення відправлено.' : ' Додайте Chat ID для сповіщень.'}`,
+          details: { botUsername: tgData.result.username },
+        });
+      } catch (err) {
+        return NextResponse.json({
+          success: false,
+          message: `Telegram: помилка з'єднання — ${err instanceof Error ? err.message : 'timeout'}`,
+        });
+      }
+    }
+
     // ── AlphaSMS: реальна перевірка балансу через API ──
     if (slug === 'alphasms' && config.api_key) {
       try {

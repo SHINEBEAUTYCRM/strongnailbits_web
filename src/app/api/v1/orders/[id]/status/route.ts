@@ -7,13 +7,14 @@ import { NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { withApiAuth } from '@/lib/api/middleware';
 import { apiSuccess, apiValidationError, apiNotFound } from '@/lib/api/helpers';
+import { fireWebhook } from '@/lib/api/webhooks';
 
 export const dynamic = 'force-dynamic';
 
 const VALID_STATUSES = ['new', 'processing', 'shipped', 'delivered', 'cancelled'];
 const VALID_PAYMENT_STATUSES = ['pending', 'paid', 'failed'];
 
-export const PATCH = withApiAuth('orders:write', async (req: NextRequest) => {
+export const PATCH = withApiAuth('orders:write', async (req: NextRequest, ctx) => {
   // Отримати id з URL
   const url = new URL(req.url);
   const segments = url.pathname.split('/');
@@ -72,6 +73,14 @@ export const PATCH = withApiAuth('orders:write', async (req: NextRequest) => {
   if (error || !data) {
     return apiNotFound(`Order with id "${orderId}" not found`);
   }
+
+  // Fire webhook
+  fireWebhook('order.status_changed', {
+    order_id: data.id,
+    status: data.status,
+    ttn_number: data.ttn,
+    payment_status: data.payment_status,
+  }, ctx.tenantId).catch(() => {});
 
   return apiSuccess({
     id: data.id,

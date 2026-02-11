@@ -7,6 +7,7 @@ import { NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { withApiAuth } from '@/lib/api/middleware';
 import { apiSuccess, apiValidationError, apiServerError } from '@/lib/api/helpers';
+import { fireWebhook } from '@/lib/api/webhooks';
 import { validateProductUpsert, validateArray } from '@/lib/api/validators';
 import type { ProductUpsertInput } from '@/lib/api/types';
 
@@ -129,6 +130,11 @@ export const POST = withApiAuth('products:write', async (req: NextRequest, ctx) 
         error: err instanceof Error ? err.message : 'Unknown error',
       });
     }
+  }
+
+  // Fire webhooks (non-blocking)
+  if (created > 0 || updated > 0) {
+    fireWebhook('product.updated', { created, updated, total: items.length }, ctx.tenantId).catch(() => {});
   }
 
   return apiSuccess({ created, updated, errors });

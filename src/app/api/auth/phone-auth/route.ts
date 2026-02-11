@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { normalizePhone, phoneVariants } from "@/lib/sms/alphasms";
+import { notifyNewCustomer } from "@/lib/telegram/notify";
 
 export const dynamic = "force-dynamic";
 
@@ -113,7 +114,15 @@ export async function POST(request: NextRequest) {
       }
 
       // Try to auto-link with 1C customer by phone
-      await autoLinkWith1C(supabase, authData.user.id, phone);
+      const linked = await autoLinkWith1C(supabase, authData.user.id, phone);
+
+      // Telegram notification (non-blocking)
+      notifyNewCustomer({
+        name: `${firstName} ${lastName || ""}`.trim(),
+        phone: `+${phone}`,
+        company: company || undefined,
+        linkedTo1C: linked,
+      });
 
       return NextResponse.json({
         success: true,
@@ -244,7 +253,7 @@ async function autoLinkWith1C(
   supabase: ReturnType<typeof createAdminClient>,
   userId: string,
   phone: string,
-) {
+): Promise<boolean> {
   try {
     // Look for 1C customer profile that matches by phone (all formats)
     // 1C stores phones as "637443889" (9 digits), we store "380637443889"
@@ -278,9 +287,12 @@ async function autoLinkWith1C(
       console.log(
         `[1C Link] Linked user ${userId} with 1C customer ${c1Profile.external_id}`,
       );
+      return true;
     }
+    return false;
   } catch (err) {
     // Non-critical — log and continue
     console.error("[1C Link] Auto-link error:", err);
+    return false;
   }
 }

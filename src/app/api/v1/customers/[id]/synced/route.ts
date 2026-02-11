@@ -7,11 +7,12 @@ import { NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { withApiAuth } from '@/lib/api/middleware';
 import { apiSuccess, apiValidationError, apiNotFound } from '@/lib/api/helpers';
+import { fireWebhook } from '@/lib/api/webhooks';
 
 export const dynamic = 'force-dynamic';
 
 export const PATCH = withApiAuth('customers:write', async (
-  req: NextRequest
+  req: NextRequest, ctx
 ) => {
   // Отримати id з URL
   const url = new URL(req.url);
@@ -46,6 +47,8 @@ export const PATCH = withApiAuth('customers:write', async (
   if (error || !data) {
     return apiNotFound(`Customer with id "${customerId}" not found`);
   }
+
+  fireWebhook('customer.synced', { customer_id: data.id, external_id }, ctx.tenantId).catch(() => {});
 
   return apiSuccess({ id: data.id, external_id, synced: true });
 });

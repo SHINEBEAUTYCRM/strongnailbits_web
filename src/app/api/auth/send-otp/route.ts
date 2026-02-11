@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { normalizePhone, sendOtpSms } from "@/lib/sms/alphasms";
+import { notifySmsError } from "@/lib/telegram/notify";
 
 export const dynamic = "force-dynamic";
 
@@ -92,6 +93,12 @@ export async function POST(request: NextRequest) {
 
     if (!smsResult.success) {
       console.error("[OTP] SMS send failed:", smsResult.error);
+      // Notify admin about SMS failure
+      notifySmsError({
+        phone: `+${phone}`,
+        error: smsResult.error || "Unknown error",
+        provider: "AlphaSMS",
+      });
       return NextResponse.json(
         { error: "Помилка відправки SMS. Спробуйте пізніше" },
         { status: 500 },

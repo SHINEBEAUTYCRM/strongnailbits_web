@@ -8,11 +8,12 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { withApiAuth } from '@/lib/api/middleware';
 import { apiSuccess, apiValidationError } from '@/lib/api/helpers';
 import { validateStockUpdate, validateArray } from '@/lib/api/validators';
+import { fireWebhook } from '@/lib/api/webhooks';
 import type { StockUpdateInput } from '@/lib/api/types';
 
 export const dynamic = 'force-dynamic';
 
-export const PATCH = withApiAuth('products:write', async (req: NextRequest) => {
+export const PATCH = withApiAuth('products:write', async (req: NextRequest, ctx) => {
   const body = await req.json();
 
   // Валідація масиву
@@ -54,6 +55,10 @@ export const PATCH = withApiAuth('products:write', async (req: NextRequest) => {
     } else {
       updated++;
     }
+  }
+
+  if (updated > 0) {
+    fireWebhook('stock.updated', { updated, total: items.length }, ctx.tenantId).catch(() => {});
   }
 
   return apiSuccess({ updated, errors: errors.length > 0 ? errors : undefined });

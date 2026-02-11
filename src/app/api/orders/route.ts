@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendFBServerPurchaseEvent } from "@/lib/analytics/fb-capi-server";
+import { notifyNewOrder } from "@/lib/telegram/notify";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -218,6 +219,19 @@ export async function POST(req: NextRequest) {
         { status: 500 },
       );
     }
+
+    // Send Telegram notification (non-blocking)
+    notifyNewOrder({
+      orderId: orderNumber,
+      orderNumber,
+      customerName: `${body.contact.firstName} ${body.contact.lastName}`,
+      customerPhone: body.contact.phone,
+      totalAmount: subtotal,
+      itemCount: verifiedItems.length,
+      paymentMethod: body.payment.method,
+      deliveryMethod: body.shipping.method,
+      comment: body.comment || undefined,
+    });
 
     // Send FB Conversions API event (server-side, non-blocking)
     sendFBServerPurchaseEvent({

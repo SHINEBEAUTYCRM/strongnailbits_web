@@ -7,10 +7,11 @@ import { NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { withApiAuth } from '@/lib/api/middleware';
 import { apiSuccess, apiValidationError, apiNotFound } from '@/lib/api/helpers';
+import { fireWebhook } from '@/lib/api/webhooks';
 
 export const dynamic = 'force-dynamic';
 
-export const PATCH = withApiAuth('orders:write', async (req: NextRequest) => {
+export const PATCH = withApiAuth('orders:write', async (req: NextRequest, ctx) => {
   // Отримати id з URL
   const url = new URL(req.url);
   const segments = url.pathname.split('/');
@@ -43,6 +44,8 @@ export const PATCH = withApiAuth('orders:write', async (req: NextRequest) => {
   if (error || !data) {
     return apiNotFound(`Order with id "${orderId}" not found`);
   }
+
+  fireWebhook('order.synced', { order_id: data.id, external_id }, ctx.tenantId).catch(() => {});
 
   return apiSuccess({ id: data.id, external_id, synced: true });
 });
