@@ -25,7 +25,7 @@ export function NPCitySearch({ value, cityRef, onSelect, onClear, error }: Props
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Sync external value
   useEffect(() => {

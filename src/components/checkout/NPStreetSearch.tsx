@@ -24,7 +24,7 @@ export function NPStreetSearch({ cityRef, value, onSelect, onClear, error }: Pro
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(!!value);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     setQuery(value);
