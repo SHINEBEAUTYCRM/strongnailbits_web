@@ -168,9 +168,7 @@ ${rawParsedData ? `Дані з сайту бренду:
   }
 
   try {
-    // Clean possible markdown code fences
-    const cleanText = result.text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const parsed = JSON.parse(cleanText);
+    const parsed = extractJSON(result.text);
 
     const metadata: Partial<AIMetadata> = {};
 
@@ -277,15 +275,14 @@ export async function analyzeProductPhoto(
   }
 
   try {
-    const cleanText = result.text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const parsed = JSON.parse(cleanText);
+    const parsed = extractJSON(result.text);
 
     return {
       result: {
-        color_hex: parsed.color_hex || null,
-        color_family: parsed.color_family || null,
-        finish: parsed.finish || null,
-        density: parsed.density || null,
+        color_hex: (parsed.color_hex as string) || null,
+        color_family: (parsed.color_family as string) || null,
+        finish: (parsed.finish as string) || null,
+        density: (parsed.density as string) || null,
       },
       tokens: { input: result.inputTokens, output: result.outputTokens },
     };
@@ -311,16 +308,23 @@ export async function autoDetectSelectors(
   confidence: number;
   tokens: { input: number; output: number };
 }> {
-  const systemPrompt = `Ти — експерт з веб-скрейпінгу.
+  const systemPrompt = `Ти — експерт з веб-скрейпінгу та CSS-селекторів.
 Проаналізуй HTML-сторінку товару та знайди CSS-селектори для:
-1. title — назва товару
-2. description — опис товару
-3. photo — фотографії товару (зображення)
-4. specs — таблиця характеристик
-5. composition — склад
-6. instructions — інструкція з використання
+1. title — назва товару (зазвичай h1 або .product-title)
+2. description — опис товару (блок тексту з описом)
+3. photo — фотографії товару (img всередині product gallery/slider)
+4. specs — таблиця характеристик (dl, table або .specs)
+5. composition — склад (якщо є окремий блок)
+6. instructions — інструкція з використання (якщо є)
 
-Поверни ТІЛЬКИ JSON:
+ВАЖЛИВО:
+- Шукай реальні CSS-селектори що є в цьому HTML
+- Перевіряй що елемент за селектором реально існує в наданому HTML
+- Якщо бачиш конкретні class-атрибути — використовуй їх
+- Якщо блок не знайдений, постав null
+- Для фото шукай img в контейнері галереї/слайдера, а не логотипи чи іконки
+
+Поверни ТІЛЬКИ чистий JSON без markdown-обгортки:
 {
   "selectors": {
     "title": "CSS selector або null",
@@ -330,18 +334,19 @@ export async function autoDetectSelectors(
     "composition": "CSS selector або null",
     "instructions": "CSS selector або null"
   },
-  "confidence": число від 0 до 1
+  "confidence": число від 0 до 1,
+  "notes": "коротке пояснення що знайшов"
 }`;
 
-  // Trim HTML to avoid token limits (keep first ~15000 chars)
-  const trimmedHtml = htmlSample.length > 15000 ? htmlSample.slice(0, 15000) + '\n<!-- trimmed -->' : htmlSample;
+  // Trim HTML to avoid token limits — keep meaningful parts
+  const trimmedHtml = trimHtmlSmart(htmlSample, 15000);
 
   const result = await callClaude({
     model: SMART_MODEL,
     system: systemPrompt,
     messages: [{
       role: 'user',
-      content: `URL: ${pageUrl}\n\nHTML:\n${trimmedHtml}`,
+      content: `URL сторінки товару: ${pageUrl}\n\nHTML:\n${trimmedHtml}`,
     }],
     maxTokens: 1024,
     temperature: 0.1,
@@ -352,17 +357,83 @@ export async function autoDetectSelectors(
   }
 
   try {
-    const cleanText = result.text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const parsed = JSON.parse(cleanText);
+    const parsed = extractJSON(result.text);
+
+    // Filter out null selectors
+    const selectors: Record<string, string> = {};
+    if (parsed.selectors) {
+      for (const [key, val] of Object.entries(parsed.selectors)) {
+        if (val && typeof val === 'string' && val !== 'null') {
+          selectors[key] = val;
+        }
+      }
+    }
+
+    // Warn if all selectors are empty
+    if (Object.keys(selectors).length === 0) {
+      throw new Error(
+        `Claude не знайшов жодного CSS-селектора на сторінці ${pageUrl}. ` +
+        `Можливо, це не сторінка товару, або сайт використовує JavaScript-рендеринг (SPA). ` +
+        (parsed.notes ? `Примітка Claude: ${parsed.notes}` : ''),
+      );
+    }
 
     return {
-      selectors: parsed.selectors || {},
+      selectors,
       confidence: parsed.confidence || 0,
       tokens: { input: result.inputTokens, output: result.outputTokens },
     };
-  } catch {
-    throw new Error(`Failed to parse auto-detect response: ${result.text.slice(0, 200)}`);
+  } catch (err) {
+    if (err instanceof Error && err.message.includes('не знайшов')) {
+      throw err; // Re-throw our custom error
+    }
+    throw new Error(`Failed to parse auto-detect response: ${result.text.slice(0, 300)}`);
   }
+}
+
+/**
+ * Extract JSON from Claude response, handling markdown code fences and other wrappers.
+ */
+function extractJSON(text: string): Record<string, unknown> {
+  // Try direct parse first
+  const trimmed = text.trim();
+  try { return JSON.parse(trimmed); } catch { /* continue */ }
+
+  // Strip markdown code fences (```json ... ``` or ``` ... ```)
+  const codeBlockMatch = trimmed.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
+  if (codeBlockMatch) {
+    try { return JSON.parse(codeBlockMatch[1].trim()); } catch { /* continue */ }
+  }
+
+  // Find first { ... last }
+  const firstBrace = trimmed.indexOf('{');
+  const lastBrace = trimmed.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    try { return JSON.parse(trimmed.slice(firstBrace, lastBrace + 1)); } catch { /* continue */ }
+  }
+
+  throw new Error('No valid JSON found');
+}
+
+/**
+ * Smart HTML trim — remove scripts, styles, SVGs and keep meaningful content.
+ */
+function trimHtmlSmart(html: string, maxLen: number): string {
+  let cleaned = html
+    // Remove scripts, styles, SVGs, comments
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<svg[\s\S]*?<\/svg>/gi, '')
+    .replace(/<!--[\s\S]*?-->/g, '')
+    // Remove data-URIs (they're huge)
+    .replace(/data:[^"'\s]+/g, 'data:...')
+    // Collapse whitespace
+    .replace(/\s{3,}/g, '\n');
+
+  if (cleaned.length > maxLen) {
+    cleaned = cleaned.slice(0, maxLen) + '\n<!-- trimmed -->';
+  }
+  return cleaned;
 }
 
 // ────── Translate to Ukrainian ──────
