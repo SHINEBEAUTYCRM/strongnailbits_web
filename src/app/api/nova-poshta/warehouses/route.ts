@@ -5,14 +5,13 @@
  * GET /api/nova-poshta/warehouses?cityRef=xxx&type=postomat
  * GET /api/nova-poshta/warehouses?cityRef=xxx&q=5
  *
- * Runtime: Edge (reads from Supabase with NP API fallback)
+ * Strategy: Supabase first → NP API fallback
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getWarehouses } from "@/lib/novaposhta/client";
 
-export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 const categoryMap: Record<string, string> = {
@@ -39,60 +38,65 @@ export async function GET(req: NextRequest) {
     );
 
     // 1. Try Supabase (fast, <50ms)
+    let supabaseResult: unknown[] | null = null;
     try {
       const supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       );
 
-      let query = supabase
+      let dbQuery = supabase
         .from("np_warehouses")
         .select("ref, city_ref, name_ua, name_ru, short_address_ua, number, category, phone, schedule, max_weight, latitude, longitude")
         .eq("city_ref", cityRef)
         .eq("is_active", true);
 
       if (category) {
-        query = query.eq("category", category);
+        dbQuery = dbQuery.eq("category", category);
       }
 
-      // Search: by number or by name
       if (q) {
         const num = parseInt(q, 10);
         if (!isNaN(num) && String(num) === q.trim()) {
-          query = query.eq("number", num);
+          dbQuery = dbQuery.eq("number", num);
         } else {
-          query = query.ilike("name_ua", `%${q}%`);
+          dbQuery = dbQuery.ilike("name_ua", `%${q}%`);
         }
       }
 
-      query = query.order("number", { ascending: true }).limit(limit);
+      dbQuery = dbQuery.order("number", { ascending: true }).limit(limit);
 
-      const { data, error } = await query;
+      const { data, error } = await dbQuery;
 
       if (!error && data && data.length > 0) {
-        return NextResponse.json({
-          warehouses: data.map((w) => ({
-            ref: w.ref,
-            number: String(w.number),
-            name: w.name_ua,
-            nameRu: w.name_ru,
-            shortAddress: w.short_address_ua,
-            phone: w.phone,
-            maxWeight: w.max_weight,
-            category: w.category,
-            schedule: w.schedule,
-            latitude: w.latitude,
-            longitude: w.longitude,
-          })),
-          total: data.length,
-          source: "supabase",
-        });
+        supabaseResult = data;
       }
     } catch {
-      // Supabase not available — fallback
+      // Supabase not available — fallback below
     }
 
-    // 2. Fallback: NP API direct
+    // Return Supabase data if found
+    if (supabaseResult && (supabaseResult as Record<string, unknown>[]).length > 0) {
+      return NextResponse.json({
+        warehouses: (supabaseResult as Record<string, unknown>[]).map((w) => ({
+          ref: w.ref,
+          number: String(w.number),
+          name: w.name_ua,
+          nameRu: w.name_ru,
+          shortAddress: w.short_address_ua,
+          phone: w.phone,
+          maxWeight: w.max_weight,
+          category: w.category,
+          schedule: w.schedule,
+          latitude: w.latitude,
+          longitude: w.longitude,
+        })),
+        total: (supabaseResult as unknown[]).length,
+        source: "supabase",
+      });
+    }
+
+    // 2. Fallback: NP API direct (always works)
     const npType = rawType === "postomat" || rawType === "parcel"
       ? "parcel" as const
       : rawType === "cargo"

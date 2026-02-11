@@ -11,7 +11,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { searchCities } from "@/lib/novaposhta/client";
 
-export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 /** Popular cities with pre-known Refs */
