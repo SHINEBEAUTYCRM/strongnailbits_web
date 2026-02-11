@@ -35,6 +35,15 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    // Validate parse_config exists
+    const parseConfig = brand.parse_config as EnrichmentBrand['parse_config'] | null;
+    if (!parseConfig?.selectors) {
+      return NextResponse.json(
+        { error: 'Brand has no parse_config. Run auto-detect first.' },
+        { status: 400 },
+      );
+    }
+
     // If product_id specified — test on that specific product
     if (product_id) {
       const { data: product } = await supabase
@@ -56,8 +65,7 @@ export async function POST(request: NextRequest) {
         }, { status: 404 });
       }
 
-      const config = brand.parse_config as EnrichmentBrand['parse_config'];
-      const parsed = await parseProductPage(pageUrl, config.selectors, config.parse_options);
+      const parsed = await parseProductPage(pageUrl, parseConfig.selectors, parseConfig.parse_options);
 
       return NextResponse.json({
         url: pageUrl,

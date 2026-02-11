@@ -223,3 +223,100 @@ body {
   from { opacity: 0; transform: translateY(-6px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ================================================================ */
+/*  Safe area for mobile bottom nav                                  */
+/* ================================================================ */
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ================================================================ */
+/*  Admin panel theme system                                         */
+/* ================================================================ */
+
+/* Dark theme (default) */
+[data-admin-theme="dark"] {
+  --a-bg:          #08080c;
+  --a-bg-sidebar:  #0c0c12;
+  --a-bg-header:   #0a0a10;
+  --a-bg-card:     #0e0e14;
+  --a-bg-input:    #111116;
+  --a-bg-hover:    #0f0f1a;
+  --a-bg-active:   #18182a;
+  --a-bg-muted:    #1a1a24;
+  --a-border:      #1e1e2a;
+  --a-border-sub:  #141420;
+  --a-text:        #f4f4f5;
+  --a-text-name:   #d4d4d8;
+  --a-text-body:   #e4e4e7;
+  --a-text-2:      #a1a1aa;
+  --a-text-3:      #71717a;
+  --a-text-4:      #52525b;
+  --a-text-5:      #3f3f46;
+  --a-text-6:      #27272a;
+  --a-accent:      #a855f7;
+  --a-accent-bg:   #1e1030;
+  --a-accent-btn:  #7c3aed;
+  --a-shadow:      rgba(0,0,0,0.3);
+}
+
+/* Light theme */
+[data-admin-theme="light"] {
+  --a-bg:          #f4f4f6;
+  --a-bg-sidebar:  #ffffff;
+  --a-bg-header:   #ffffff;
+  --a-bg-card:     #ffffff;
+  --a-bg-input:    #f0f0f4;
+  --a-bg-hover:    #f5f5fa;
+  --a-bg-active:   #ede9fe;
+  --a-bg-muted:    #f4f4f5;
+  --a-border:      #e4e4e7;
+  --a-border-sub:  #f0f0f4;
+  --a-text:        #09090b;
+  --a-text-name:   #18181b;
+  --a-text-body:   #27272a;
+  --a-text-2:      #52525b;
+  --a-text-3:      #71717a;
+  --a-text-4:      #a1a1aa;
+  --a-text-5:      #d4d4d8;
+  --a-text-6:      #e4e4e7;
+  --a-accent:      #7c3aed;
+  --a-accent-bg:   #ede9fe;
+  --a-accent-btn:  #7c3aed;
+  --a-shadow:      rgba(0,0,0,0.06);
+}
+
+/* ── Admin light-mode overrides for inline-styled content ── */
+[data-admin-theme="light"] .admin-content [style] {
+  /* Allow CSS variables to cascade even in inline-styled children */
+}
+
+/* Cards, tables, panels — common admin dark backgrounds */
+[data-admin-theme="light"] .admin-card {
+  background: var(--a-bg-card) !important;
+  border-color: var(--a-border) !important;
+  color: var(--a-text-body) !important;
+}
+
+[data-admin-theme="light"] .admin-card th,
+[data-admin-theme="light"] .admin-card td {
+  border-color: var(--a-border-sub) !important;
+}
+
+[data-admin-theme="light"] .admin-card th {
+  color: var(--a-text-4) !important;
+}
+
+[data-admin-theme="light"] .admin-card td {
+  color: var(--a-text-body) !important;
+}
+
+[data-admin-theme="light"] .admin-card tr:hover {
+  background: var(--a-bg-hover) !important;
+}
+
+[data-admin-theme="light"] .admin-card a {
+  color: var(--a-text-body) !important;
+}

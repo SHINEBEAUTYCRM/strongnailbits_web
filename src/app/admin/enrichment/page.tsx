@@ -6,19 +6,11 @@ import {
   BarChart3, Package, ImageIcon, Sparkles, CheckCircle2,
   AlertTriangle, Play, ArrowRight, RefreshCw,
 } from 'lucide-react';
-import { StatusBadge } from '@/components/admin/enrichment/StatusBadge';
 import type { EnrichmentStats } from '@/lib/enrichment/types';
 
 export default function EnrichmentDashboard() {
   const [stats, setStats] = useState<EnrichmentStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [recentLogs, setRecentLogs] = useState<Array<{
-    id: string;
-    action: string;
-    status: string;
-    created_at: string;
-    details: Record<string, unknown>;
-  }>>([]);
 
   useEffect(() => {
     fetchStats();

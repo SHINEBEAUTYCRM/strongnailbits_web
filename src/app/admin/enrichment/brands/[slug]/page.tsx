@@ -4,7 +4,7 @@ import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import {
   Save, Play, Sparkles, Globe, Settings, TestTube,
-  Check, Loader2, AlertTriangle, ChevronDown, ChevronRight, Zap,
+  Check, Loader2, AlertTriangle, ChevronDown, ChevronRight, Zap, ShieldAlert, X,
 } from 'lucide-react';
 
 interface BrandConfig {
@@ -62,6 +62,7 @@ export default function BrandEnrichmentPage({ params }: { params: Promise<{ slug
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   // Form state
   const [sourceUrl, setSourceUrl] = useState('');
@@ -336,7 +337,10 @@ export default function BrandEnrichmentPage({ params }: { params: Promise<{ slug
               className="flex-1 px-3 py-2.5 rounded-lg bg-white/[0.06] border border-white/[0.1] text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-[#a855f7]/50"
             />
             <button
-              onClick={handleAutoSetup}
+              onClick={() => {
+                if (!sourceUrl) { setError('Введіть URL сайту бренду'); return; }
+                setShowConfirm(true);
+              }}
               disabled={detecting || !sourceUrl}
               className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#a855f7] hover:bg-[#9333ea] disabled:opacity-40 text-white text-sm font-medium transition-colors whitespace-nowrap"
             >
@@ -516,6 +520,64 @@ export default function BrandEnrichmentPage({ params }: { params: Promise<{ slug
           </div>
         )}
       </div>
+
+      {/* ═══════ CONFIRMATION DIALOG ═══════ */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#1a1a2e] border border-white/10 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
+                <ShieldAlert className="w-5 h-5 text-amber-400" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-white">Підтвердження</h3>
+                <p className="text-sm text-white/50 mt-1">
+                  Claude проаналізує сайт і збереже нові CSS-селектори для парсингу. Це перезапише попередні налаштування.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="p-1 rounded-lg hover:bg-white/5 text-white/30 hover:text-white/60 transition-colors shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="bg-white/[0.03] rounded-lg p-3 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-white/40">Бренд:</span>
+                <span className="text-white">{brand?.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-white/40">URL:</span>
+                <span className="text-white truncate max-w-[200px]">{sourceUrl}</span>
+              </div>
+              {hasSelectors && (
+                <div className="flex items-start gap-2 pt-1">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-400/70">Існуючі селектори будуть замінені</p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="flex-1 px-4 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 text-sm font-medium transition-colors"
+              >
+                Скасувати
+              </button>
+              <button
+                onClick={() => { setShowConfirm(false); handleAutoSetup(); }}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#a855f7] hover:bg-[#9333ea] text-white text-sm font-medium transition-colors"
+              >
+                <Sparkles className="w-4 h-4" />
+                Підтвердити
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

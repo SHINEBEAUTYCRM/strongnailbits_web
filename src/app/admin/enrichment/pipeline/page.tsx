@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import {
-  Play, Loader2, CheckCircle2, AlertTriangle,
-  Globe, Sparkles, ImageIcon, Eye, Brain, Database,
+  Play, Loader2, CheckCircle2, AlertTriangle, ShieldAlert,
+  Globe, Sparkles, ImageIcon, Eye, Brain, Database, X,
 } from 'lucide-react';
 import type { PipelineProgress } from '@/lib/enrichment/types';
 
@@ -42,6 +42,7 @@ export default function EnrichmentPipelinePage() {
   const [progress, setProgress] = useState<PipelineProgress | null>(null);
   const [finished, setFinished] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -257,13 +258,88 @@ export default function EnrichmentPipelinePage() {
 
           {/* Start button */}
           <button
-            onClick={handleStart}
+            onClick={() => setShowConfirm(true)}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#a855f7] hover:bg-[#9333ea] text-white font-medium transition-colors"
           >
             <Play className="w-5 h-5" />
             Запустити Pipeline
           </button>
         </>
+      )}
+
+      {/* ═══════ CONFIRMATION DIALOG ═══════ */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#1a1a2e] border border-white/10 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
+                <ShieldAlert className="w-5 h-5 text-amber-400" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-white">Підтвердження запуску</h3>
+                <p className="text-sm text-white/50 mt-1">
+                  Pipeline перезапише AI-дані товарів. Переконайтесь, що налаштування вірні.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="p-1 rounded-lg hover:bg-white/5 text-white/30 hover:text-white/60 transition-colors shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="bg-white/[0.03] rounded-lg p-3 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-white/40">Бренд:</span>
+                <span className="text-white">{selectedBrand?.brand_name || 'Всі бренди'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-white/40">Скоуп:</span>
+                <span className="text-white">
+                  {{ missing: 'Нові (pending)', outdated: 'Застарілі', errors: 'З помилками', all: 'ВСІ товари' }[scope]}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-white/40">Кроки:</span>
+                <span className="text-white">{enabledSteps} з 5</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-white/40">Товарів:</span>
+                <span className="text-white font-medium">{estimateProducts.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-white/40">Час / Вартість:</span>
+                <span className="text-white">~{estimateTime} хв / ~${estimateCost}</span>
+              </div>
+            </div>
+
+            {scope === 'all' && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-400/80">
+                  Скоуп «Всі» перезапише навіть вже оброблені товари. Ручні правки будуть збережені.
+                </p>
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="flex-1 px-4 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 text-sm font-medium transition-colors"
+              >
+                Скасувати
+              </button>
+              <button
+                onClick={() => { setShowConfirm(false); handleStart(); }}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#a855f7] hover:bg-[#9333ea] text-white text-sm font-medium transition-colors"
+              >
+                <Play className="w-4 h-4" />
+                Підтвердити та запустити
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Error */}

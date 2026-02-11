@@ -128,7 +128,7 @@ export default function EnrichmentProductDetailPage({
     );
   }
 
-  const metadata = product.ai_metadata || {};
+  const metadata = (product.ai_metadata || {}) as Partial<AIMetadata>;
   const photos = product.photo_sources || [];
   const allPhotoUrls = photos.map(p => p.url).filter(Boolean);
 
@@ -241,7 +241,7 @@ export default function EnrichmentProductDetailPage({
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-white">Опис</h2>
-            {metadata.description_uk && (
+            {metadata.description_uk?.source && (
               <div className="flex items-center gap-2">
                 <SourceBadge source={metadata.description_uk.source} />
                 <button
@@ -255,7 +255,7 @@ export default function EnrichmentProductDetailPage({
             )}
           </div>
           <div className="bg-white/[0.03] rounded-xl border border-white/[0.06] p-4">
-            {metadata.description_uk ? (
+            {metadata.description_uk?.value ? (
               <div className="space-y-3">
                 <p className="text-sm text-white/80 leading-relaxed">
                   {showOriginal

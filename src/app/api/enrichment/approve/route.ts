@@ -34,15 +34,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Log
-  for (const id of product_ids) {
-    await supabase.from('enrichment_log').insert({
+  // Log (bulk insert)
+  await supabase.from('enrichment_log').insert(
+    product_ids.map((id: string) => ({
       product_id: id,
       action: 'approve',
       status: 'success',
       details: { approved_by: admin.email },
-    });
-  }
+    })),
+  );
 
   return NextResponse.json({
     success: true,
