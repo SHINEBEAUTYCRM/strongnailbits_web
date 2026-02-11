@@ -6,6 +6,8 @@
  */
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { executeStageActions } from "@/lib/messaging/funnel-actions";
+import { notifyFunnelConversion, notifyFunnelStageMove } from "@/lib/telegram/notify";
 
 export type FunnelEventType =
   | "page_visit"
@@ -109,6 +111,19 @@ async function processFunnelEvent(
       metadata: data.metadata || {},
     });
 
+    // Execute auto-actions for the entry stage (fire-and-forget)
+    executeStageActions({
+      funnelId,
+      contactId: newContact.id,
+      stageId: triggeredStage.id,
+      profileId: data.profileId,
+      phone: data.phone,
+      contactName: data.name,
+      metadata: data.metadata,
+    }).catch((err) =>
+      console.error("[Funnel] Stage actions error:", err),
+    );
+
     return;
   }
 
@@ -152,6 +167,30 @@ async function processFunnelEvent(
     event_trigger: data.event,
     metadata: data.metadata || {},
   });
+
+  // Execute auto-actions for the new stage (fire-and-forget)
+  executeStageActions({
+    funnelId,
+    contactId: contact.id,
+    stageId: triggeredStage.id,
+    profileId: data.profileId || contact.profile_id,
+    phone: data.phone,
+    contactName: data.name,
+    metadata: data.metadata,
+  }).catch((err) =>
+    console.error("[Funnel] Stage actions error:", err),
+  );
+
+  // Notify admin on conversion or stage movement (fire-and-forget)
+  notifyStageChange(supabase, {
+    funnelId,
+    isLastStage,
+    contactStageId: contact.stage_id,
+    stages,
+    triggeredStageSlug: triggeredStage.slug,
+    name: data.name,
+    phone: data.phone,
+  }).catch(() => {});
 }
 
 function findTriggeredStage(
@@ -246,4 +285,44 @@ async function findContact(
   }
 
   return null;
+}
+
+/** Fire-and-forget admin notification for stage changes */
+async function notifyStageChange(
+  supabase: ReturnType<typeof createAdminClient>,
+  params: {
+    funnelId: string;
+    isLastStage: boolean;
+    contactStageId: string;
+    stages: { id: string; slug: string; position: number }[];
+    triggeredStageSlug: string;
+    name?: string;
+    phone?: string;
+  },
+): Promise<void> {
+  const { data: funnel } = await supabase
+    .from("funnels")
+    .select("name")
+    .eq("id", params.funnelId)
+    .single();
+
+  if (params.isLastStage) {
+    await notifyFunnelConversion({
+      funnelName: funnel?.name || "Unknown",
+      contactName: params.name || "Невідомий",
+      contactPhone: params.phone,
+      stageName: params.triggeredStageSlug,
+    });
+  } else {
+    const fromStage = params.stages.find(
+      (s) => s.id === params.contactStageId,
+    );
+    await notifyFunnelStageMove({
+      funnelName: funnel?.name || "Unknown",
+      contactName: params.name || "Невідомий",
+      contactPhone: params.phone,
+      fromStage: fromStage?.slug || "unknown",
+      toStage: params.triggeredStageSlug,
+    });
+  }
 }

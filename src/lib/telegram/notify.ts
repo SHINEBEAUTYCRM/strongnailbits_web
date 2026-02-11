@@ -87,6 +87,39 @@ export async function notifyOrderStatusChange(data: {
   );
 }
 
+/** Order status changed by Nova Poshta tracking */
+export async function notifyOrderStatusChanged(data: {
+  orderNumber: string;
+  oldStatus: string;
+  newStatus: string;
+  ttn: string;
+  npStatus: string;
+  customerName: string;
+}) {
+  if (!(await isTelegramConfigured())) return;
+
+  const statusEmoji: Record<string, string> = {
+    new: "🆕",
+    processing: "⚙️",
+    shipped: "🚚",
+    delivered: "✅",
+    cancelled: "❌",
+  };
+
+  const emoji = statusEmoji[data.newStatus] || "📋";
+
+  await sendMessage(
+    [
+      `${emoji} <b>НП оновлення: #${escHtml(data.orderNumber)}</b>`,
+      ``,
+      `📦 ТТН: <code>${escHtml(data.ttn)}</code>`,
+      `🔄 ${escHtml(data.oldStatus)} → <b>${escHtml(data.newStatus)}</b>`,
+      `📍 ${escHtml(data.npStatus)}`,
+      `👤 ${escHtml(data.customerName)}`,
+    ].join("\n"),
+  );
+}
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  👤 КЛІЄНТИ
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -283,6 +316,52 @@ export async function notifyFunnelConversion(data: {
       ``,
       `<a href="${ADMIN_URL}/funnels">SmartЛійки →</a>`,
     ].join("\n"),
+  );
+}
+
+/** Funnel stage movement (non-conversion) */
+export async function notifyFunnelStageMove(data: {
+  funnelName: string;
+  contactName: string;
+  contactPhone?: string;
+  fromStage: string;
+  toStage: string;
+}) {
+  if (!(await isTelegramConfigured())) return;
+
+  await sendMessage(
+    [
+      `📊 <b>Рух у воронці</b>`,
+      ``,
+      `🔄 ${escHtml(data.funnelName)}`,
+      `👤 ${escHtml(data.contactName)}${data.contactPhone ? ` (${escHtml(data.contactPhone)})` : ""}`,
+      `${escHtml(data.fromStage)} → <b>${escHtml(data.toStage)}</b>`,
+    ].join("\n"),
+  );
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  🤖 TELEGRAM BOT
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+/** Client linked Telegram */
+export async function notifyTelegramLinked(data: {
+  name: string;
+  phone: string;
+  telegramUsername?: string;
+}) {
+  if (!(await isTelegramConfigured())) return;
+
+  await sendMessage(
+    [
+      `🤖 <b>Клієнт підключив Telegram</b>`,
+      ``,
+      `👤 ${escHtml(data.name)}`,
+      `📱 ${escHtml(data.phone)}`,
+      data.telegramUsername ? `💬 @${escHtml(data.telegramUsername)}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n"),
   );
 }
 

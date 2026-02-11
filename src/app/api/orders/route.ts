@@ -30,8 +30,11 @@ interface OrderBody {
   shipping: {
     method: string;
     city: string;
+    cityRef?: string;
     warehouse: string;
+    warehouseRef?: string;
     street: string;
+    streetRef?: string;
     house: string;
     country: string;
     address: string;
@@ -170,10 +173,14 @@ export async function POST(req: NextRequest) {
     const m = body.shipping.method;
     if (m === "np_warehouse" || m === "np_parcel" || m === "ukrposhta") {
       shippingAddress.city = body.shipping.city;
+      if (body.shipping.cityRef) shippingAddress.cityRef = body.shipping.cityRef;
       shippingAddress.warehouse = body.shipping.warehouse;
+      if (body.shipping.warehouseRef) shippingAddress.warehouseRef = body.shipping.warehouseRef;
     } else if (m === "np_address") {
       shippingAddress.city = body.shipping.city;
+      if (body.shipping.cityRef) shippingAddress.cityRef = body.shipping.cityRef;
       shippingAddress.street = body.shipping.street;
+      if (body.shipping.streetRef) shippingAddress.streetRef = body.shipping.streetRef;
       shippingAddress.house = body.shipping.house;
     } else if (m === "np_intl" || m === "ukrposhta_intl") {
       shippingAddress.country = body.shipping.country;

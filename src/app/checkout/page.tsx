@@ -18,6 +18,10 @@ import { useCartStore } from "@/lib/store/cart";
 import { OrderSummary } from "@/components/checkout/OrderSummary";
 import { TrackCheckout } from "@/components/analytics/TrackCheckout";
 import { trackPurchase } from "@/lib/analytics/tracker";
+import { NPCitySearch } from "@/components/checkout/NPCitySearch";
+import { NPWarehouseSelect } from "@/components/checkout/NPWarehouseSelect";
+import { NPStreetSearch } from "@/components/checkout/NPStreetSearch";
+import { NPDeliveryCost } from "@/components/checkout/NPDeliveryCost";
 
 interface FormData {
   firstName: string;
@@ -27,8 +31,11 @@ interface FormData {
   noCall: boolean;
   shippingMethod: string;
   city: string;
+  cityRef: string;
   warehouse: string;
+  warehouseRef: string;
   street: string;
+  streetRef: string;
   house: string;
   country: string;
   intlCity: string;
@@ -53,8 +60,11 @@ const INITIAL_FORM: FormData = {
   noCall: false,
   shippingMethod: "np_warehouse",
   city: "",
+  cityRef: "",
   warehouse: "",
+  warehouseRef: "",
   street: "",
+  streetRef: "",
   house: "",
   country: "",
   intlCity: "",
@@ -201,7 +211,7 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (mounted && items.length === 0) {
-      router.replace("/catalog");
+      router.push("/catalog");
     }
   }, [mounted, items.length, router]);
 
@@ -212,6 +222,21 @@ export default function CheckoutPage() {
       setForm((f) => ({ ...f, paymentMethod: "invoice" }));
     }
   }, [isIntl, form.paymentMethod]);
+
+  // Reset delivery fields when switching shipping method
+  const prevMethodRef = useRef(form.shippingMethod);
+  useEffect(() => {
+    if (prevMethodRef.current !== form.shippingMethod) {
+      prevMethodRef.current = form.shippingMethod;
+      setForm((f) => ({
+        ...f,
+        city: "", cityRef: "",
+        warehouse: "", warehouseRef: "",
+        street: "", streetRef: "",
+        house: "",
+      }));
+    }
+  }, [form.shippingMethod]);
 
   function update<K extends keyof FormData>(key: K, value: FormData[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -303,8 +328,11 @@ export default function CheckoutPage() {
           shipping: {
             method: form.shippingMethod,
             city: form.city || form.intlCity,
+            cityRef: form.cityRef,
             warehouse: form.warehouse,
+            warehouseRef: form.warehouseRef,
             street: form.street,
+            streetRef: form.streetRef,
             house: form.house,
             country: form.country,
             address: form.intlAddress,
@@ -440,19 +468,71 @@ export default function CheckoutPage() {
             </div>
 
             <div className="mt-4 flex flex-col gap-3">
-              {(form.shippingMethod === "np_warehouse" || form.shippingMethod === "np_parcel" || form.shippingMethod === "ukrposhta") && (
+              {(form.shippingMethod === "np_warehouse" || form.shippingMethod === "np_parcel") && (
                 <>
-                  <div data-field="city"><Input label="Місто" required value={form.city} onChange={(v) => update("city", v)} error={errors.city} placeholder="Київ" /></div>
-                  <div data-field="warehouse"><Input label={form.shippingMethod === "np_parcel" ? "Поштомат" : "Відділення"} required value={form.warehouse} onChange={(v) => update("warehouse", v)} error={errors.warehouse} placeholder={form.shippingMethod === "np_parcel" ? "Поштомат №1234" : "Відділення №1"} /></div>
+                  <div data-field="city">
+                    <NPCitySearch
+                      value={form.city}
+                      cityRef={form.cityRef}
+                      onSelect={(c) => { update("city", c.name); update("cityRef", c.ref); update("warehouse", ""); update("warehouseRef", ""); }}
+                      onClear={() => { update("city", ""); update("cityRef", ""); update("warehouse", ""); update("warehouseRef", ""); }}
+                      error={errors.city}
+                    />
+                  </div>
+                  <div data-field="warehouse">
+                    <NPWarehouseSelect
+                      cityRef={form.cityRef}
+                      type={form.shippingMethod === "np_parcel" ? "parcel" : "warehouse"}
+                      value={form.warehouse}
+                      warehouseRef={form.warehouseRef}
+                      onSelect={(wh) => { update("warehouse", wh.name); update("warehouseRef", wh.ref); }}
+                      onClear={() => { update("warehouse", ""); update("warehouseRef", ""); }}
+                      error={errors.warehouse}
+                    />
+                  </div>
+                  <NPDeliveryCost
+                    cityRef={form.cityRef}
+                    serviceType="WarehouseWarehouse"
+                    weight={items.reduce((s, i) => s + (i.weight ?? 0) * i.quantity, 0) || 1}
+                    cost={getTotal()}
+                  />
                 </>
               )}
               {form.shippingMethod === "np_address" && (
                 <>
-                  <div data-field="city"><Input label="Місто" required value={form.city} onChange={(v) => update("city", v)} error={errors.city} placeholder="Київ" /></div>
+                  <div data-field="city">
+                    <NPCitySearch
+                      value={form.city}
+                      cityRef={form.cityRef}
+                      onSelect={(c) => { update("city", c.name); update("cityRef", c.ref); update("street", ""); update("streetRef", ""); }}
+                      onClear={() => { update("city", ""); update("cityRef", ""); update("street", ""); update("streetRef", ""); }}
+                      error={errors.city}
+                    />
+                  </div>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <div data-field="street"><Input label="Вулиця" required value={form.street} onChange={(v) => update("street", v)} error={errors.street} placeholder="вул. Хрещатик" /></div>
+                    <div data-field="street">
+                      <NPStreetSearch
+                        cityRef={form.cityRef}
+                        value={form.street}
+                        onSelect={(s) => { update("street", s.name); update("streetRef", s.ref); }}
+                        onClear={() => { update("street", ""); update("streetRef", ""); }}
+                        error={errors.street}
+                      />
+                    </div>
                     <div data-field="house"><Input label="Будинок, квартира" required value={form.house} onChange={(v) => update("house", v)} error={errors.house} placeholder="1, кв. 2" /></div>
                   </div>
+                  <NPDeliveryCost
+                    cityRef={form.cityRef}
+                    serviceType="WarehouseDoors"
+                    weight={items.reduce((s, i) => s + (i.weight ?? 0) * i.quantity, 0) || 1}
+                    cost={getTotal()}
+                  />
+                </>
+              )}
+              {form.shippingMethod === "ukrposhta" && (
+                <>
+                  <div data-field="city"><Input label="Місто" required value={form.city} onChange={(v) => update("city", v)} error={errors.city} placeholder="Київ" /></div>
+                  <div data-field="warehouse"><Input label="Відділення" required value={form.warehouse} onChange={(v) => update("warehouse", v)} error={errors.warehouse} placeholder="Відділення №1" /></div>
                 </>
               )}
               {form.shippingMethod === "pickup" && (

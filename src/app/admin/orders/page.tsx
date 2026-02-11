@@ -3,6 +3,7 @@ import { ShoppingBag, ChevronRight } from "lucide-react";
 import { getOrders } from "@/lib/admin/data";
 import { AdminSearch } from "@/components/admin/AdminSearch";
 import { ExportButton } from "@/components/admin/ExportButton";
+import { NPTrackingBadge } from "@/components/admin/NPTrackingBadge";
 
 const SM: Record<string, { label: string; c: string; bg: string }> = {
   new: { label: "Нове", c: "#60a5fa", bg: "#172554" },
@@ -82,7 +83,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                   <tr key={o.id} className="transition-colors cursor-default hover:bg-[#111118]" style={{ borderBottom: "1px solid #141420" }}>
                     <td className="px-4 py-3">
                       <Link href={`/admin/orders/${o.id}`} className="font-medium hover:underline" style={{ color: "#e4e4e7" }}>#{o.order_number}</Link>
-                      {o.ttn && <p className="text-[10px] mt-0.5 font-mono" style={{ color: "#3f3f46" }}>ТТН: {o.ttn}</p>}
+                      {o.ttn && <NPTrackingBadge ttn={o.ttn} />}
                     </td>
                     <td className="px-4 py-3 text-xs hidden sm:table-cell" style={{ color: "#71717a" }}>{fmtD(o.created_at)}</td>
                     <td className="px-4 py-3">

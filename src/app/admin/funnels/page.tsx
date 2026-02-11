@@ -12,7 +12,20 @@ import {
   ChevronRight,
   ArrowRight,
   Loader2,
+  MessageSquare,
+  Send,
+  Smartphone,
+  Clock,
+  CheckCircle,
+  XCircle,
+  BarChart3,
+  Bot,
+  Brain,
+  Sparkles,
+  Zap,
 } from "lucide-react";
+
+// ────── Types ──────
 
 interface FunnelStage {
   id: string;
@@ -38,9 +51,40 @@ interface Funnel {
   conversionRate: string;
 }
 
+interface MessagingStats {
+  totalMessages: number;
+  telegramMessages: number;
+  smsMessages: number;
+  sentCount: number;
+  failedCount: number;
+  successRate: string;
+  telegramClients: number;
+  totalClients: number;
+  telegramCoverage: string;
+  pendingScheduled: number;
+  totalSmsCost: string;
+  recentMessages: RecentMessage[];
+}
+
+interface RecentMessage {
+  id: string;
+  channel: string;
+  phone: string | null;
+  rendered_text: string;
+  status: string;
+  error: string | null;
+  cost: number;
+  sent_at: string;
+  profiles: { first_name: string; last_name: string; phone: string } | null;
+}
+
+type Tab = "funnels" | "messaging" | "stats" | "ai";
+
 export default function FunnelsPage() {
   const [funnels, setFunnels] = useState<Funnel[]>([]);
+  const [msgStats, setMsgStats] = useState<MessagingStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<Tab>("funnels");
 
   const fetchFunnels = useCallback(async () => {
     try {
@@ -53,13 +97,31 @@ export default function FunnelsPage() {
     setLoading(false);
   }, []);
 
+  const fetchMsgStats = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/messaging/stats");
+      const json = await res.json();
+      if (json.data) setMsgStats(json.data);
+    } catch {
+      // silent
+    }
+  }, []);
+
   useEffect(() => {
     fetchFunnels();
-  }, [fetchFunnels]);
+    fetchMsgStats();
+  }, [fetchFunnels, fetchMsgStats]);
 
   // Total stats
   const totalContacts = funnels.reduce((s, f) => s + f.totalContacts, 0);
   const totalConverted = funnels.reduce((s, f) => s + f.convertedContacts, 0);
+
+  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
+    { id: "funnels", label: "Воронки", icon: <Filter size={14} /> },
+    { id: "messaging", label: "Повідомлення", icon: <MessageSquare size={14} /> },
+    { id: "stats", label: "Статистика", icon: <BarChart3 size={14} /> },
+    { id: "ai", label: "AI Advisor", icon: <Brain size={14} /> },
+  ];
 
   return (
     <div className="space-y-6">
@@ -72,14 +134,17 @@ export default function FunnelsPage() {
           <div>
             <h1 className="text-xl font-bold text-white">SmartЛійки</h1>
             <p className="text-sm text-gray-400">
-              Воронки продажів та конверсій
+              Воронки, повідомлення та аналітика конверсій
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <button
-            onClick={fetchFunnels}
+            onClick={() => {
+              fetchFunnels();
+              fetchMsgStats();
+            }}
             className="flex h-9 items-center gap-1.5 rounded-lg border border-white/10 px-3 text-sm text-gray-400 transition-colors hover:bg-white/5 hover:text-white"
           >
             <RefreshCw size={14} />
@@ -92,8 +157,26 @@ export default function FunnelsPage() {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 rounded-xl border border-white/5 bg-[#13131a] p-1">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              activeTab === tab.id
+                ? "bg-white/10 text-white"
+                : "text-gray-500 hover:text-gray-300"
+            }`}
+          >
+            {tab.icon}
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <StatCard
           icon={<Filter size={18} />}
           label="Активних лійок"
@@ -102,7 +185,7 @@ export default function FunnelsPage() {
         />
         <StatCard
           icon={<Users size={18} />}
-          label="Контактів у лійках"
+          label="Контактів"
           value={totalContacts.toString()}
           color="#3b82f6"
         />
@@ -112,33 +195,55 @@ export default function FunnelsPage() {
           value={totalConverted.toString()}
           color="#10b981"
         />
+        <StatCard
+          icon={<Bot size={18} />}
+          label="Telegram клієнтів"
+          value={msgStats ? `${msgStats.telegramClients}/${msgStats.totalClients}` : "—"}
+          color="#0088cc"
+          sub={msgStats ? `${msgStats.telegramCoverage}%` : undefined}
+        />
       </div>
 
-      {/* Funnels */}
+      {/* Tab content */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 size={24} className="animate-spin text-gray-500" />
         </div>
-      ) : funnels.length === 0 ? (
-        <div className="rounded-2xl border border-white/5 bg-[#13131a] p-12 text-center">
-          <Filter size={40} className="mx-auto mb-3 text-gray-600" />
-          <p className="text-gray-400">
-            Лійки ще не створені. Виконайте SQL-схему для створення шаблонних
-            воронок.
-          </p>
-        </div>
+      ) : activeTab === "funnels" ? (
+        <FunnelsTab funnels={funnels} />
+      ) : activeTab === "messaging" ? (
+        <MessagingTab stats={msgStats} />
+      ) : activeTab === "stats" ? (
+        <StatsTab stats={msgStats} />
       ) : (
-        <div className="space-y-4">
-          {funnels.map((funnel) => (
-            <FunnelCard key={funnel.id} funnel={funnel} />
-          ))}
-        </div>
+        <AITab funnels={funnels} />
       )}
     </div>
   );
 }
 
-// ────── Funnel Card ──────
+// ────── Funnels Tab ──────
+
+function FunnelsTab({ funnels }: { funnels: Funnel[] }) {
+  if (funnels.length === 0) {
+    return (
+      <div className="rounded-2xl border border-white/5 bg-[#13131a] p-12 text-center">
+        <Filter size={40} className="mx-auto mb-3 text-gray-600" />
+        <p className="text-gray-400">
+          Лійки ще не створені. Виконайте SQL-схему для створення шаблонних воронок.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {funnels.map((funnel) => (
+        <FunnelCard key={funnel.id} funnel={funnel} />
+      ))}
+    </div>
+  );
+}
 
 function FunnelCard({ funnel }: { funnel: Funnel }) {
   const maxCount = Math.max(
@@ -185,24 +290,21 @@ function FunnelCard({ funnel }: { funnel: Funnel }) {
       <div className="flex items-center gap-1">
         {funnel.stages.map((stage, i) => {
           const count = funnel.stageCounts[stage.id] || 0;
-          const width = Math.max(
-            ((count / maxCount) * 100),
-            15,
-          );
           const isLast = i === funnel.stages.length - 1;
 
           return (
             <div key={stage.id} className="flex items-center" style={{ flex: 1 }}>
               <div className="w-full">
-                {/* Stage bar */}
-                <div className="relative mb-1 overflow-hidden rounded-md" style={{ height: 32 }}>
+                <div
+                  className="relative mb-1 overflow-hidden rounded-md"
+                  style={{ height: 32 }}
+                >
                   <div
                     className="flex h-full items-center justify-center rounded-md px-2 transition-all"
                     style={{
                       backgroundColor: stage.color
                         ? `${stage.color}25`
                         : "#1e1e2e",
-                      width: `${width}%`,
                       minWidth: "100%",
                       borderLeft: `3px solid ${stage.color || "#6366f1"}`,
                     }}
@@ -212,7 +314,6 @@ function FunnelCard({ funnel }: { funnel: Funnel }) {
                     </span>
                   </div>
                 </div>
-                {/* Count */}
                 <div className="flex items-center justify-between px-1">
                   <span
                     className="text-sm font-bold"
@@ -264,18 +365,509 @@ function FunnelCard({ funnel }: { funnel: Funnel }) {
   );
 }
 
-// ────── Stat Card ──────
+// ────── Messaging Tab ──────
+
+function MessagingTab({ stats }: { stats: MessagingStats | null }) {
+  return (
+    <div className="space-y-4">
+      {/* Channel distribution */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <MiniStat
+          icon={<Send size={16} />}
+          label="Всього відправлено"
+          value={stats?.totalMessages.toString() || "0"}
+          color="#6366f1"
+        />
+        <MiniStat
+          icon={<Bot size={16} />}
+          label="Через Telegram"
+          value={stats?.telegramMessages.toString() || "0"}
+          color="#0088cc"
+        />
+        <MiniStat
+          icon={<Smartphone size={16} />}
+          label="Через SMS"
+          value={stats?.smsMessages.toString() || "0"}
+          color="#f59e0b"
+        />
+        <MiniStat
+          icon={<Clock size={16} />}
+          label="В черзі"
+          value={stats?.pendingScheduled.toString() || "0"}
+          color="#8b5cf6"
+        />
+      </div>
+
+      {/* Recent messages */}
+      <div className="rounded-2xl border border-white/5 bg-[#13131a]">
+        <div className="flex items-center justify-between border-b border-white/5 px-5 py-3">
+          <h3 className="text-sm font-semibold text-white">
+            Останні повідомлення
+          </h3>
+          <span className="text-xs text-gray-500">
+            Витрати SMS: {stats?.totalSmsCost || "0.00"} грн
+          </span>
+        </div>
+
+        {!stats?.recentMessages?.length ? (
+          <div className="p-8 text-center text-sm text-gray-500">
+            Повідомлення ще не відправлялись
+          </div>
+        ) : (
+          <div className="divide-y divide-white/5">
+            {stats.recentMessages.map((msg) => (
+              <MessageRow key={msg.id} message={msg} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MessageRow({ message }: { message: RecentMessage }) {
+  const channelIcon =
+    message.channel === "telegram" ? (
+      <Bot size={14} className="text-sky-400" />
+    ) : (
+      <Smartphone size={14} className="text-amber-400" />
+    );
+
+  const statusIcon =
+    message.status === "sent" ? (
+      <CheckCircle size={14} className="text-green-400" />
+    ) : (
+      <XCircle size={14} className="text-red-400" />
+    );
+
+  const name = message.profiles
+    ? `${message.profiles.first_name || ""} ${message.profiles.last_name || ""}`.trim()
+    : message.phone || "—";
+
+  const time = new Date(message.sent_at).toLocaleString("uk-UA", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  return (
+    <div className="flex items-center gap-3 px-5 py-3">
+      <div className="flex items-center gap-1.5">
+        {channelIcon}
+        {statusIcon}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-white">{name}</span>
+          <span className="text-xs text-gray-600">{time}</span>
+        </div>
+        <p className="truncate text-xs text-gray-500">
+          {message.rendered_text?.slice(0, 80) || "—"}
+        </p>
+      </div>
+      {message.cost > 0 && (
+        <span className="text-xs text-amber-500">
+          {message.cost.toFixed(2)} грн
+        </span>
+      )}
+      {message.error && (
+        <span className="max-w-[120px] truncate text-xs text-red-400">
+          {message.error}
+        </span>
+      )}
+    </div>
+  );
+}
+
+// ────── Stats Tab ──────
+
+function StatsTab({ stats }: { stats: MessagingStats | null }) {
+  if (!stats) {
+    return (
+      <div className="py-12 text-center text-gray-500">
+        <Loader2 size={24} className="mx-auto mb-2 animate-spin" />
+        Завантаження...
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Delivery rates */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+        <BigStat
+          label="Успішність доставки"
+          value={`${stats.successRate}%`}
+          sub={`${stats.sentCount} з ${stats.totalMessages}`}
+          color={Number(stats.successRate) > 90 ? "#10b981" : "#f59e0b"}
+        />
+        <BigStat
+          label="Telegram покриття"
+          value={`${stats.telegramCoverage}%`}
+          sub={`${stats.telegramClients} з ${stats.totalClients} клієнтів`}
+          color="#0088cc"
+        />
+        <BigStat
+          label="Витрати на SMS"
+          value={`${stats.totalSmsCost} ₴`}
+          sub={`${stats.smsMessages} SMS відправлено`}
+          color="#f59e0b"
+        />
+      </div>
+
+      {/* Channel breakdown */}
+      <div className="rounded-2xl border border-white/5 bg-[#13131a] p-5">
+        <h3 className="mb-4 text-sm font-semibold text-white">
+          Розподіл каналів
+        </h3>
+        <div className="space-y-3">
+          <ChannelBar
+            label="Telegram"
+            icon={<Bot size={14} className="text-sky-400" />}
+            count={stats.telegramMessages}
+            total={stats.totalMessages}
+            color="#0088cc"
+          />
+          <ChannelBar
+            label="SMS"
+            icon={<Smartphone size={14} className="text-amber-400" />}
+            count={stats.smsMessages}
+            total={stats.totalMessages}
+            color="#f59e0b"
+          />
+        </div>
+      </div>
+
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <MiniStat
+          icon={<CheckCircle size={16} />}
+          label="Доставлено"
+          value={stats.sentCount.toString()}
+          color="#10b981"
+        />
+        <MiniStat
+          icon={<XCircle size={16} />}
+          label="Помилок"
+          value={stats.failedCount.toString()}
+          color="#ef4444"
+        />
+        <MiniStat
+          icon={<Clock size={16} />}
+          label="Заплановано"
+          value={stats.pendingScheduled.toString()}
+          color="#8b5cf6"
+        />
+        <MiniStat
+          icon={<Smartphone size={16} />}
+          label="Вартість SMS"
+          value={`${stats.totalSmsCost} ₴`}
+          color="#f59e0b"
+        />
+      </div>
+    </div>
+  );
+}
+
+function ChannelBar({
+  label,
+  icon,
+  count,
+  total,
+  color,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  count: number;
+  total: number;
+  color: string;
+}) {
+  const pct = total > 0 ? (count / total) * 100 : 0;
+
+  return (
+    <div>
+      <div className="mb-1 flex items-center justify-between text-xs">
+        <span className="flex items-center gap-1.5 text-gray-400">
+          {icon} {label}
+        </span>
+        <span className="text-gray-500">
+          {count} ({pct.toFixed(0)}%)
+        </span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-white/5">
+        <div
+          className="h-full rounded-full transition-all"
+          style={{ width: `${pct}%`, backgroundColor: color }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ────── AI Tab ──────
+
+interface AIMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+function AITab({ funnels }: { funnels: Funnel[] }) {
+  const [messages, setMessages] = useState<AIMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+
+  const quickActions = [
+    {
+      label: "Аналіз воронок",
+      icon: <BarChart3 size={14} />,
+      prompt: "Проаналізуй всі воронки та дай рекомендації для покращення конверсії",
+    },
+    {
+      label: "Вузькі місця",
+      icon: <Target size={14} />,
+      prompt: "Де найбільше втрачаються контакти? Знайди вузькі місця у воронках",
+    },
+    {
+      label: "Ідеї повідомлень",
+      icon: <MessageSquare size={14} />,
+      prompt: "Запропонуй 5 ідей для повідомлень які збільшать конверсію на етапі реєстрації",
+    },
+    {
+      label: "Стратегія реактивації",
+      icon: <Zap size={14} />,
+      prompt: "Яка найкраща стратегія реактивації неактивних B2B клієнтів у нігтьовій косметиці?",
+    },
+    {
+      label: "Оптимізація Telegram",
+      icon: <Bot size={14} />,
+      prompt: "Як збільшити кількість клієнтів підключених до Telegram бота? Дай конкретний план",
+    },
+    {
+      label: "A/B тест ідеї",
+      icon: <Sparkles size={14} />,
+      prompt: "Запропонуй A/B тести для повідомлень у воронці продажів. Які варіації тестувати?",
+    },
+  ];
+
+  const sendMessage = async (text: string) => {
+    if (!text.trim()) return;
+
+    const userMsg: AIMessage = { role: "user", content: text.trim() };
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
+    setInput("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/admin/funnels/ai?action=chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: text.trim(),
+          previousMessages: messages.slice(-6), // Last 3 turns
+        }),
+      });
+
+      const json = await res.json();
+
+      if (json.data?.reply) {
+        setMessages([
+          ...newMessages,
+          { role: "assistant", content: json.data.reply },
+        ]);
+      } else {
+        setMessages([
+          ...newMessages,
+          {
+            role: "assistant",
+            content: json.error || "Помилка отримання відповіді",
+          },
+        ]);
+      }
+    } catch {
+      setMessages([
+        ...newMessages,
+        { role: "assistant", content: "❌ Помилка з'єднання з AI" },
+      ]);
+    }
+
+    setLoading(false);
+  };
+
+  const runAnalysis = async () => {
+    setAnalysisLoading(true);
+    try {
+      const res = await fetch("/api/admin/funnels/ai?action=analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const json = await res.json();
+
+      if (json.data?.analysis) {
+        setMessages([
+          ...messages,
+          { role: "user", content: "🔍 Повний аналіз воронок" },
+          { role: "assistant", content: json.data.analysis },
+        ]);
+      }
+    } catch {
+      // silent
+    }
+    setAnalysisLoading(false);
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* AI Header */}
+      <div className="rounded-2xl border border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-indigo-500/5 p-5">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/15">
+            <Brain size={20} className="text-purple-400" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-semibold text-white">
+              AI Advisor — Claude
+            </h3>
+            <p className="text-xs text-gray-400">
+              Аналіз воронок, рекомендації, генерація повідомлень, скоринг
+              контактів
+            </p>
+          </div>
+          <button
+            onClick={runAnalysis}
+            disabled={analysisLoading}
+            className="flex h-9 items-center gap-1.5 rounded-lg bg-purple-600/80 px-4 text-sm font-medium text-white transition-colors hover:bg-purple-500 disabled:opacity-50"
+          >
+            {analysisLoading ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Sparkles size={14} />
+            )}
+            Повний аналіз
+          </button>
+        </div>
+
+        {/* Quick stats for AI context */}
+        <div className="mt-3 flex flex-wrap gap-2">
+          <span className="rounded-md bg-white/5 px-2 py-1 text-xs text-gray-400">
+            {funnels.length} воронок
+          </span>
+          <span className="rounded-md bg-white/5 px-2 py-1 text-xs text-gray-400">
+            {funnels.reduce((s, f) => s + f.totalContacts, 0)} контактів
+          </span>
+          <span className="rounded-md bg-white/5 px-2 py-1 text-xs text-gray-400">
+            {funnels.reduce((s, f) => s + f.convertedContacts, 0)} конверсій
+          </span>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+        {quickActions.map((action) => (
+          <button
+            key={action.label}
+            onClick={() => sendMessage(action.prompt)}
+            disabled={loading}
+            className="flex items-center gap-2 rounded-xl border border-white/5 bg-[#13131a] p-3 text-left text-xs text-gray-400 transition-all hover:border-purple-500/30 hover:text-white disabled:opacity-50"
+          >
+            <span className="text-purple-400">{action.icon}</span>
+            {action.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Chat Area */}
+      <div className="rounded-2xl border border-white/5 bg-[#13131a]">
+        {/* Messages */}
+        <div className="max-h-[500px] min-h-[200px] space-y-3 overflow-y-auto p-4">
+          {messages.length === 0 ? (
+            <div className="py-12 text-center">
+              <Brain size={32} className="mx-auto mb-2 text-purple-500/30" />
+              <p className="text-sm text-gray-600">
+                Задайте питання або оберіть швидку дію вище
+              </p>
+            </div>
+          ) : (
+            messages.map((msg, i) => (
+              <div
+                key={i}
+                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
+                    msg.role === "user"
+                      ? "bg-purple-600/20 text-purple-200"
+                      : "bg-white/5 text-gray-300"
+                  }`}
+                >
+                  {msg.role === "assistant" && (
+                    <div className="mb-1 flex items-center gap-1 text-[10px] text-purple-400">
+                      <Brain size={10} /> Claude AI
+                    </div>
+                  )}
+                  <div className="whitespace-pre-wrap">{msg.content}</div>
+                </div>
+              </div>
+            ))
+          )}
+          {loading && (
+            <div className="flex justify-start">
+              <div className="flex items-center gap-2 rounded-2xl bg-white/5 px-4 py-3 text-sm text-gray-500">
+                <Loader2 size={14} className="animate-spin text-purple-400" />
+                AI думає...
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Input */}
+        <div className="border-t border-white/5 p-3">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  sendMessage(input);
+                }
+              }}
+              placeholder="Запитайте AI про воронки, повідомлення, стратегії..."
+              className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-purple-500/50 focus:outline-none"
+              disabled={loading}
+            />
+            <button
+              onClick={() => sendMessage(input)}
+              disabled={loading || !input.trim()}
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-600 text-white transition-colors hover:bg-purple-500 disabled:opacity-30"
+            >
+              <Send size={16} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ────── Shared Components ──────
 
 function StatCard({
   icon,
   label,
   value,
   color,
+  sub,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
   color: string;
+  sub?: string;
 }) {
   return (
     <div className="rounded-xl border border-white/5 bg-[#13131a] p-4">
@@ -289,6 +881,51 @@ function StatCard({
         <span className="text-xs text-gray-500">{label}</span>
       </div>
       <p className="text-2xl font-bold text-white">{value}</p>
+      {sub && <p className="mt-0.5 text-xs text-gray-500">{sub}</p>}
+    </div>
+  );
+}
+
+function MiniStat({
+  icon,
+  label,
+  value,
+  color,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  color: string;
+}) {
+  return (
+    <div className="rounded-xl border border-white/5 bg-[#13131a] p-3">
+      <div className="mb-1.5 flex items-center gap-1.5">
+        <span style={{ color }}>{icon}</span>
+        <span className="text-[11px] text-gray-500">{label}</span>
+      </div>
+      <p className="text-lg font-bold text-white">{value}</p>
+    </div>
+  );
+}
+
+function BigStat({
+  label,
+  value,
+  sub,
+  color,
+}: {
+  label: string;
+  value: string;
+  sub: string;
+  color: string;
+}) {
+  return (
+    <div className="rounded-xl border border-white/5 bg-[#13131a] p-5 text-center">
+      <p className="mb-1 text-xs text-gray-500">{label}</p>
+      <p className="text-3xl font-bold" style={{ color }}>
+        {value}
+      </p>
+      <p className="mt-1 text-xs text-gray-500">{sub}</p>
     </div>
   );
 }

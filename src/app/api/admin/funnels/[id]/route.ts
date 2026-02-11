@@ -58,6 +58,13 @@ export async function GET(
     }),
   );
 
+  // Messages per stage
+  const { data: messages } = await supabase
+    .from("funnel_messages")
+    .select("*")
+    .eq("funnel_id", id)
+    .order("sort_order", { ascending: true });
+
   // Recent events
   const { data: events } = await supabase
     .from("funnel_events")
@@ -88,6 +95,7 @@ export async function GET(
     data: {
       ...funnel,
       stages: stagesWithCounts,
+      messages: messages || [],
       recentEvents: events || [],
       stats: {
         newContactsMonth: newContactsMonth ?? 0,
