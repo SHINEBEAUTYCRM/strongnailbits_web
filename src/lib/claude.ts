@@ -199,13 +199,13 @@ ${rawParsedData ? `Дані з сайту бренду:
     if (parsed.composition) {
       metadata.composition = { value: String(parsed.composition), source: 'ai', edited: false };
     }
-    if (parsed.season_tags?.length) {
+    if (Array.isArray(parsed.season_tags) && parsed.season_tags.length) {
       metadata.season_tags = { value: parsed.season_tags as string[], source: 'ai', edited: false };
     }
-    if (parsed.style_tags?.length) {
+    if (Array.isArray(parsed.style_tags) && parsed.style_tags.length) {
       metadata.style_tags = { value: parsed.style_tags as string[], source: 'ai', edited: false };
     }
-    if (parsed.compatible_with?.length) {
+    if (Array.isArray(parsed.compatible_with) && parsed.compatible_with.length) {
       metadata.compatible_with = { value: parsed.compatible_with as string[], source: 'ai', edited: false };
     }
     if (parsed.skill_level) {
