@@ -33,35 +33,50 @@ export async function* runPipeline(
   const supabase = createAdminClient();
   const startedAt = new Date().toISOString();
 
-  // Get products by filter
-  let query = supabase
-    .from('products')
-    .select('*, brands!brand_id(id, name, slug, logo_url, photo_source_url, photo_source_type, info_source_url, parse_config, brand_knowledge, total_products, products_with_photo, products_enriched, products_approved, last_parsed_at, last_enriched_at), categories!category_id(name_uk)')
-    .order('name_uk');
+  // Get products by filter — paginate to bypass Supabase 1000 row limit
+  const PAGE_SIZE = 1000;
+  const rawProducts: Record<string, unknown>[] = [];
+  let page = 0;
+  let hasMore = true;
 
-  if (config.brand_id) {
-    query = query.eq('brand_id', config.brand_id);
-  }
+  while (hasMore) {
+    let query = supabase
+      .from('products')
+      .select('*, brands!brand_id(id, name, slug, logo_url, photo_source_url, photo_source_type, info_source_url, parse_config, brand_knowledge, total_products, products_with_photo, products_enriched, products_approved, last_parsed_at, last_enriched_at), categories!category_id(name_uk)')
+      .order('name_uk')
+      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
-  switch (config.scope) {
-    case 'missing':
-      query = query.eq('enrichment_status', 'pending');
-      break;
-    case 'outdated':
-      query = query.in('enrichment_status', ['pending', 'enriched']);
-      break;
-    case 'errors':
-      query = query.eq('enrichment_status', 'error');
-      break;
-    case 'all':
-      // No filter
-      break;
-  }
+    if (config.brand_id) {
+      query = query.eq('brand_id', config.brand_id);
+    }
 
-  const { data: rawProducts, error: fetchError } = await query;
+    switch (config.scope) {
+      case 'missing':
+        query = query.eq('enrichment_status', 'pending');
+        break;
+      case 'outdated':
+        query = query.in('enrichment_status', ['pending', 'enriched']);
+        break;
+      case 'errors':
+        query = query.eq('enrichment_status', 'error');
+        break;
+      case 'all':
+        break;
+    }
 
-  if (fetchError) {
-    throw new Error(`Failed to fetch products: ${fetchError.message}`);
+    const { data, error: fetchError } = await query;
+
+    if (fetchError) {
+      throw new Error(`Failed to fetch products: ${fetchError.message}`);
+    }
+
+    if (data && data.length > 0) {
+      rawProducts.push(...data);
+      hasMore = data.length === PAGE_SIZE;
+    } else {
+      hasMore = false;
+    }
+    page++;
   }
 
   if (!rawProducts || rawProducts.length === 0) {

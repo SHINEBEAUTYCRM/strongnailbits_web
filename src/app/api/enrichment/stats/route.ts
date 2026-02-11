@@ -16,22 +16,36 @@ export async function GET(request: NextRequest) {
   const supabase = createAdminClient();
 
   try {
-    // Get all products with enrichment data
-    let query = supabase
-      .from('products')
-      .select('id, brand_id, enrichment_status, photo_sources, ai_metadata');
+    // Fetch ALL products in pages of 1000 (Supabase default limit)
+    const allProducts: { id: string; brand_id: string | null; enrichment_status: string | null; photo_sources: unknown[] | null }[] = [];
+    const PAGE_SIZE = 1000;
+    let page = 0;
+    let hasMore = true;
 
-    if (brandId) {
-      query = query.eq('brand_id', brandId);
+    while (hasMore) {
+      let query = supabase
+        .from('products')
+        .select('id, brand_id, enrichment_status, photo_sources')
+        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+      if (brandId) {
+        query = query.eq('brand_id', brandId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      if (data && data.length > 0) {
+        allProducts.push(...data);
+        hasMore = data.length === PAGE_SIZE;
+      } else {
+        hasMore = false;
+      }
+      page++;
     }
-
-    const { data: products, error } = await query;
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    const allProducts = products || [];
 
     // Calculate stats
     const total = allProducts.length;
