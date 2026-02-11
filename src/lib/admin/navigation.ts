@@ -41,6 +41,7 @@ import {
   Cable,
   Activity,
   Heart,
+  WandSparkles,
 } from "lucide-react";
 
 export interface NavItem {
@@ -155,6 +156,7 @@ export const adminNavigation: NavGroup[] = [
   {
     label: "AI",
     items: [
+      { label: "AI Enrichment", href: "/admin/enrichment", icon: WandSparkles, description: "Автоматичне збагачення товарів" },
       { label: "AI Контент", href: "/admin/ai/content", icon: Brain, soon: true },
       { label: "Shine Scan", href: "/admin/ai/shine-scan", icon: Sparkles, soon: true },
       { label: "Banner Studio", href: "/admin/ai/banner-studio", icon: PenTool, soon: true },
