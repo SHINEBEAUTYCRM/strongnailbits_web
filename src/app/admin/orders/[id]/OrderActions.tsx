@@ -130,14 +130,17 @@ export function OrderActions({
         </div>
 
         {/* Next status shortcut */}
-        {nextStatus && status !== "cancelled" && (
-          <button onClick={() => quickStatus(nextStatus.value)} disabled={saving}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all"
-            style={{ color: nextStatus.color, background: nextStatus.bg, border: `1px solid ${nextStatus.color}30` }}>
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <nextStatus.icon className="w-4 h-4" />}
-            Перевести в "{nextStatus.label}"
-          </button>
-        )}
+        {nextStatus && status !== "cancelled" && (() => {
+          const NextIcon = nextStatus.icon;
+          return (
+            <button onClick={() => quickStatus(nextStatus.value)} disabled={saving}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all"
+              style={{ color: nextStatus.color, background: nextStatus.bg, border: `1px solid ${nextStatus.color}30` }}>
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <NextIcon className="w-4 h-4" />}
+              Перевести в &quot;{nextStatus.label}&quot;
+            </button>
+          );
+        })()}
       </div>
 
       {/* TTN */}

@@ -101,7 +101,7 @@ export function CategoryTable({ categories }: { categories: Cat[] }) {
     else setExpanded(new Set(rootIds));
   };
 
-  const getStatus = (cat: Cat) => statusOverrides[cat.id] ?? cat.status;
+  const getStatus = useCallback((cat: Cat) => statusOverrides[cat.id] ?? cat.status, [statusOverrides]);
 
   const toggleStatus = useCallback(async (id: string) => {
     const cat = categories.find((c) => c.id === id);
@@ -136,7 +136,7 @@ export function CategoryTable({ categories }: { categories: Cat[] }) {
     } finally {
       setLoadingIds((s) => { const n = new Set(s); n.delete(id); return n; });
     }
-  }, [categories, router, statusOverrides]);
+  }, [categories, router, getStatus]);
 
   const bulkAction = async (action: string, extra?: Record<string, unknown>) => {
     if (selected.size === 0) return;

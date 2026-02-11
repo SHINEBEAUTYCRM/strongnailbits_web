@@ -141,7 +141,7 @@ async function getFunnelContext(funnelId: string): Promise<string> {
 
   const { data: stages } = await supabase
     .from("funnel_stages")
-    .select("name, slug, position")
+    .select("id, name, slug, position")
     .eq("funnel_id", funnelId)
     .order("position");
 
@@ -151,7 +151,7 @@ async function getFunnelContext(funnelId: string): Promise<string> {
       const { count } = await supabase
         .from("funnel_contacts")
         .select("id", { count: "exact", head: true })
-        .eq("stage_id", stage.slug) // needs actual stage id
+        .eq("stage_id", stage.id)
         .eq("is_active", true);
       stageCounts[stage.name] = count ?? 0;
     }

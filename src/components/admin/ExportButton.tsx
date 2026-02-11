@@ -19,7 +19,10 @@ export function ExportButton({ entity, label = "Експорт CSV" }: { entity:
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-    } catch {}
+    } catch (err) {
+      console.error("[ExportButton]", err);
+      alert("Помилка експорту. Спробуйте ще раз.");
+    }
     setLoading(false);
   };
 

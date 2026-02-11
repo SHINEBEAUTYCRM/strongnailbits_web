@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { syncAll, syncCities, syncWarehouses, syncWarehouseTypes } from "@/lib/novaposhta/sync";
+import { syncAll, syncCities, syncWarehouses } from "@/lib/novaposhta/sync";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -67,11 +67,6 @@ export async function POST(req: NextRequest) {
       const result = await syncWarehouses();
       return NextResponse.json({ success: true, result });
     }
-    if (entity === "warehouse_types") {
-      const result = await syncWarehouseTypes();
-      return NextResponse.json({ success: true, result });
-    }
-
     // Default: sync all
     const result = await syncAll();
     return NextResponse.json({ success: true, ...result });

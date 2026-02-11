@@ -19,14 +19,16 @@ export default function ConfirmResetPage() {
   // Supabase will set the session from the URL hash automatically
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.onAuthStateChange((event: string) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string) => {
       if (event === "PASSWORD_RECOVERY") {
         setReady(true);
       }
     });
-    // Also check if already in recovery state
-    const timer = setTimeout(() => setReady(true), 2000);
-    return () => clearTimeout(timer);
+    // Check if session already exists (user came from recovery link)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setReady(true);
+    });
+    return () => { subscription.unsubscribe(); };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

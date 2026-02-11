@@ -1,15 +1,17 @@
 /**
- * Nova Poshta — Sync Engine
+ * Nova Poshta — Sync Engine (V2)
  *
- * Downloads ALL cities & warehouses from NP API → upserts into Supabase.
+ * Cities: v2.0 getCities → np_cities
+ * Warehouses: v1.0 /divisions archive (base.json.gz) → np_warehouses
+ *
  * Runs daily via cron (04:00 UTC = 06:00 Kyiv).
- *
- * Order matters: warehouse_types → cities → warehouses (FK dependency).
+ * Order: cities first → warehouses second.
  */
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getAllCities, getAllWarehouses, getWarehouseTypes } from "./client";
-import type { NPCity, NPWarehouse, NPWarehouseType } from "./types";
+import { getAllCities, getDivisionsArchiveUrl, getDivisionsByCity, mapDivisionCategory } from "./client";
+import type { NPCity } from "./types";
+import type { NPDivision } from "./client";
 
 const BATCH_SIZE = 500;
 
@@ -23,79 +25,27 @@ interface SyncResult {
   error?: string;
 }
 
-// ────── Sync Warehouse Types ──────
-
-export async function syncWarehouseTypes(): Promise<SyncResult> {
-  const start = Date.now();
-  const result: SyncResult = {
-    entity: "warehouse_types",
-    status: "completed",
-    totalCount: 0,
-    upserted: 0,
-    deleted: 0,
-    durationMs: 0,
-  };
-
-  try {
-    const supabase = createAdminClient();
-    const types = await getWarehouseTypes();
-    result.totalCount = types.length;
-
-    if (types.length === 0) {
-      result.durationMs = Date.now() - start;
-      return result;
-    }
-
-    const rows = types.map((t: NPWarehouseType) => ({
-      ref: t.Ref,
-      description_ua: t.Description,
-      description_ru: t.DescriptionRu || "",
-    }));
-
-    const { error } = await supabase
-      .from("np_warehouse_types")
-      .upsert(rows, { onConflict: "ref" });
-
-    if (error) throw error;
-    result.upserted = rows.length;
-  } catch (err) {
-    result.status = "failed";
-    result.error = err instanceof Error ? err.message : String(err);
-  }
-
-  result.durationMs = Date.now() - start;
-  await logSync(result);
-  return result;
-}
-
-// ────── Sync Cities ──────
+// ────── Sync Cities (v2.0) ──────
 
 export async function syncCities(): Promise<SyncResult> {
   const start = Date.now();
   const result: SyncResult = {
-    entity: "cities",
-    status: "completed",
-    totalCount: 0,
-    upserted: 0,
-    deleted: 0,
-    durationMs: 0,
+    entity: "cities", status: "completed",
+    totalCount: 0, upserted: 0, deleted: 0, durationMs: 0,
   };
 
   try {
     const supabase = createAdminClient();
-
-    // Log start
     await logSync({ ...result, status: "started" as SyncResult["status"] });
 
     const cities = await getAllCities();
     result.totalCount = cities.length;
 
-    // Filter: only cities with delivery
+    // Only cities with delivery
     const withDelivery = cities.filter(
       (c: NPCity) => c.Delivery1 === "1" || c.Delivery3 === "1" || c.Delivery7 === "1",
     );
 
-    // Transform to DB format
     const rows = withDelivery.map((c: NPCity) => ({
       ref: c.Ref,
       name_ua: c.Description,
@@ -107,22 +57,17 @@ export async function syncCities(): Promise<SyncResult> {
       has_delivery: true,
     }));
 
-    // Upsert in batches
     for (let i = 0; i < rows.length; i += BATCH_SIZE) {
       const batch = rows.slice(i, i + BATCH_SIZE);
-      const { error } = await supabase
-        .from("np_cities")
-        .upsert(batch, { onConflict: "ref" });
-
+      const { error } = await supabase.from("np_cities").upsert(batch, { onConflict: "ref" });
       if (error) {
         console.error(`[NP Sync] Cities batch ${i}:`, error.message);
-        // Continue with next batch
       } else {
         result.upserted += batch.length;
       }
     }
 
-    console.log(`[NP Sync] Cities: ${result.upserted}/${result.totalCount} synced`);
+    console.log(`[NP Sync] Cities: ${result.upserted}/${result.totalCount}`);
   } catch (err) {
     result.status = "failed";
     result.error = err instanceof Error ? err.message : String(err);
@@ -134,89 +79,83 @@ export async function syncCities(): Promise<SyncResult> {
   return result;
 }
 
-// ────── Sync Warehouses ──────
+// ────── Sync Warehouses (v1.0 archive) ──────
 
 /**
- * Determine warehouse category from NP data.
+ * Transform a v1.0 division to our DB row format.
  */
-function categorizeWarehouse(w: NPWarehouse): "branch" | "postomat" | "cargo" {
-  if (w.CategoryOfWarehouse === "Postomat") return "postomat";
-  if (w.PostMachineType && w.PostMachineType !== "None" && w.PostMachineType !== "") {
-    return "postomat";
-  }
-  const desc = (w.Description || "").toLowerCase();
-  if (desc.includes("вантаж") || desc.includes("cargo")) return "cargo";
-  return "branch";
+function divisionToRow(d: NPDivision) {
+  return {
+    np_id: d.id,
+    city_name: d.settlement?.name || "",
+    settlement_id: d.settlement?.id || null,
+    name_ua: d.name,
+    short_name: d.shortName || d.name,
+    number: d.number || "",
+    address: d.address || "",
+    category: mapDivisionCategory(d.divisionCategory),
+    status: d.status || "Working",
+    latitude: d.latitude || null,
+    longitude: d.longitude || null,
+    schedule: d.workSchedule || [],
+    country_code: d.countryCode || "UA",
+    region_name: d.settlement?.region?.name || "",
+    is_active: d.status === "Working",
+  };
 }
 
+/**
+ * Sync warehouses via v1.0 archive (base.json.gz).
+ * Fallback: paginated API calls.
+ */
 export async function syncWarehouses(): Promise<SyncResult> {
   const start = Date.now();
   const result: SyncResult = {
-    entity: "warehouses",
-    status: "completed",
-    totalCount: 0,
-    upserted: 0,
-    deleted: 0,
-    durationMs: 0,
+    entity: "warehouses", status: "completed",
+    totalCount: 0, upserted: 0, deleted: 0, durationMs: 0,
   };
 
   try {
     const supabase = createAdminClient();
-
     await logSync({ ...result, status: "started" as SyncResult["status"] });
 
-    // Get all known city refs to avoid FK violations
-    const { data: knownCities } = await supabase
-      .from("np_cities")
-      .select("ref");
-    const cityRefSet = new Set((knownCities || []).map((c) => c.ref));
+    let allDivisions: NPDivision[] = [];
 
-    const warehouses = await getAllWarehouses();
-    result.totalCount = warehouses.length;
-
-    // Transform and filter
-    const rows: Record<string, unknown>[] = [];
-    let skippedFK = 0;
-
-    for (const w of warehouses) {
-      // Skip if city doesn't exist (FK violation prevention)
-      if (!cityRefSet.has(w.CityRef)) {
-        skippedFK++;
-        continue;
+    // Try archive first
+    try {
+      console.log("[NP Sync] Trying archive download...");
+      const archiveUrl = await getDivisionsArchiveUrl();
+      if (archiveUrl) {
+        allDivisions = await downloadAndParseArchive(archiveUrl);
+        console.log(`[NP Sync] Archive: ${allDivisions.length} total divisions (all countries)`);
       }
-
-      rows.push({
-        ref: w.Ref,
-        city_ref: w.CityRef,
-        name_ua: w.Description,
-        name_ru: w.DescriptionRu || "",
-        short_address_ua: w.ShortAddress || "",
-        short_address_ru: w.ShortAddressRu || "",
-        number: parseInt(w.Number, 10) || 0,
-        type_ref: w.TypeOfWarehouse || "",
-        category: categorizeWarehouse(w),
-        latitude: w.Latitude ? parseFloat(String(w.Latitude)) : null,
-        longitude: w.Longitude ? parseFloat(String(w.Longitude)) : null,
-        phone: w.Phone || "",
-        schedule: w.Schedule || {},
-        max_weight: w.TotalMaxWeightAllowed || w.PlaceMaxWeightAllowed || 30,
-        has_pos: w.POSTerminal === "1",
-        has_postfinance: w.PostFinance === "1",
-        is_active: w.WarehouseStatus === "Working",
-      });
+    } catch (err) {
+      console.warn("[NP Sync] Archive failed, falling back to API:", err instanceof Error ? err.message : err);
     }
 
-    if (skippedFK > 0) {
-      console.log(`[NP Sync] Warehouses: skipped ${skippedFK} due to missing city_ref`);
+    // Fallback: paginated API calls
+    if (allDivisions.length === 0) {
+      console.log("[NP Sync] Using paginated API fallback...");
+      allDivisions = await fetchAllDivisionsPaginated();
     }
+
+    // Filter: only Ukraine
+    const uaDivisions = allDivisions.filter((d) => d.countryCode === "UA");
+    result.totalCount = uaDivisions.length;
+    console.log(`[NP Sync] UA divisions: ${uaDivisions.length}`);
+
+    // Transform to DB rows
+    const rows = uaDivisions.map(divisionToRow);
+
+    // Collect all np_ids from the new data
+    const newNpIds = new Set(rows.map((r) => r.np_id));
 
     // Upsert in batches
     for (let i = 0; i < rows.length; i += BATCH_SIZE) {
       const batch = rows.slice(i, i + BATCH_SIZE);
       const { error } = await supabase
         .from("np_warehouses")
-        .upsert(batch, { onConflict: "ref" });
-
+        .upsert(batch, { onConflict: "np_id" });
       if (error) {
         console.error(`[NP Sync] Warehouses batch ${i}:`, error.message);
       } else {
@@ -224,9 +163,32 @@ export async function syncWarehouses(): Promise<SyncResult> {
       }
     }
 
-    console.log(
-      `[NP Sync] Warehouses: ${result.upserted}/${result.totalCount} synced (${skippedFK} skipped FK)`,
-    );
+    // Deactivate warehouses not in the new data
+    const { data: existing } = await supabase
+      .from("np_warehouses")
+      .select("np_id")
+      .eq("is_active", true)
+      .eq("country_code", "UA");
+
+    if (existing) {
+      const toDeactivate = existing
+        .filter((e) => !newNpIds.has(e.np_id))
+        .map((e) => e.np_id);
+
+      if (toDeactivate.length > 0) {
+        for (let i = 0; i < toDeactivate.length; i += BATCH_SIZE) {
+          const batch = toDeactivate.slice(i, i + BATCH_SIZE);
+          await supabase
+            .from("np_warehouses")
+            .update({ is_active: false })
+            .in("np_id", batch);
+        }
+        result.deleted = toDeactivate.length;
+        console.log(`[NP Sync] Deactivated ${toDeactivate.length} warehouses`);
+      }
+    }
+
+    console.log(`[NP Sync] Warehouses: ${result.upserted} synced, ${result.deleted} deactivated`);
   } catch (err) {
     result.status = "failed";
     result.error = err instanceof Error ? err.message : String(err);
@@ -238,43 +200,74 @@ export async function syncWarehouses(): Promise<SyncResult> {
   return result;
 }
 
+/**
+ * Download and parse the gzip archive of all divisions.
+ */
+async function downloadAndParseArchive(url: string): Promise<NPDivision[]> {
+  const res = await fetch(url, { signal: AbortSignal.timeout(60000) });
+  if (!res.ok) throw new Error(`Archive download HTTP ${res.status}`);
+
+  // The response is gzip compressed — fetch automatically decompresses
+  // If the URL ends with .json.gz, the server sends it with Content-Encoding: gzip
+  const data = await res.json();
+
+  if (Array.isArray(data)) {
+    return data as NPDivision[];
+  }
+
+  throw new Error("Archive format unexpected: not an array");
+}
+
+/**
+ * Fallback: fetch all UA divisions via paginated API calls.
+ */
+async function fetchAllDivisionsPaginated(): Promise<NPDivision[]> {
+  const all: NPDivision[] = [];
+  let page = 1;
+
+  while (true) {
+    try {
+      // Fetch all UA divisions page by page (no city filter)
+      const divisions = await getDivisionsByCity("*", null, 100, page);
+      if (!divisions || divisions.length === 0) break;
+      all.push(...divisions);
+      if (divisions.length < 100) break;
+      page++;
+      if (page > 500) break; // Safety: ~50k/100 = 500 pages max
+    } catch (err) {
+      console.error(`[NP Sync] Paginated fetch page ${page} failed:`, err);
+      break;
+    }
+  }
+
+  return all;
+}
+
 // ────── Sync All ──────
 
 export interface SyncAllResult {
-  warehouseTypes: SyncResult;
   cities: SyncResult;
   warehouses: SyncResult;
   totalDurationMs: number;
 }
 
-/**
- * Full sync: types → cities → warehouses (order matters for FK).
- */
 export async function syncAll(): Promise<SyncAllResult> {
   const start = Date.now();
-
   console.log("[NP Sync] Starting full sync...");
 
-  // 1. Warehouse types first (needed for categorization reference)
-  const warehouseTypes = await syncWarehouseTypes();
-
-  // 2. Cities (needed for warehouse FK)
   const cities = await syncCities();
-
-  // 3. Warehouses (depends on cities)
   const warehouses = await syncWarehouses();
 
   const totalDurationMs = Date.now() - start;
-
   console.log(
-    `[NP Sync] Completed in ${(totalDurationMs / 1000).toFixed(1)}s — ` +
+    `[NP Sync] Done in ${(totalDurationMs / 1000).toFixed(1)}s — ` +
     `${cities.upserted} cities, ${warehouses.upserted} warehouses`,
   );
 
-  return { warehouseTypes, cities, warehouses, totalDurationMs };
+  return { cities, warehouses, totalDurationMs };
 }
 
-// ────── Sync Log ──────
+// ────── Log ──────
 
 async function logSync(result: SyncResult & { status: string }): Promise<void> {
   try {
@@ -288,7 +281,5 @@ async function logSync(result: SyncResult & { status: string }): Promise<void> {
       duration_ms: result.durationMs,
       error: result.error || null,
     });
-  } catch {
-    // Don't fail sync because of logging
-  }
+  } catch { /* silent */ }
 }

@@ -4,7 +4,7 @@
 //  Admin: API Ключі — Управління токенами для 1С та зовнішніх систем
 // ================================================================
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Key,
   Plus,
@@ -335,9 +335,8 @@ export default function ApiKeysPage() {
               </thead>
               <tbody>
                 {tokens.map((t) => (
-                  <>
+                  <React.Fragment key={t.id}>
                     <tr
-                      key={t.id}
                       className="transition-colors cursor-pointer hover:bg-[#111118]"
                       style={{ borderBottom: "1px solid #141420" }}
                       onClick={() => setExpandedToken(expandedToken === t.id ? null : t.id)}
@@ -411,7 +410,7 @@ export default function ApiKeysPage() {
 
                     {/* Expanded details */}
                     {expandedToken === t.id && (
-                      <tr key={`${t.id}-detail`} style={{ borderBottom: "1px solid #141420" }}>
+                      <tr style={{ borderBottom: "1px solid #141420" }}>
                         <td colSpan={8} className="px-4 py-4" style={{ background: "#0a0a10" }}>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -446,7 +445,7 @@ export default function ApiKeysPage() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </React.Fragment>
                 ))}
                 {tokens.length === 0 && (
                   <tr>

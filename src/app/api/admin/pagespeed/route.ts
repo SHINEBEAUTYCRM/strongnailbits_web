@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin/requireAdmin";
 
 // Google PSI API takes 20-120s to respond — need extended timeout
 export const maxDuration = 120; // seconds (Hobby: max 60, Pro: max 300)
@@ -12,6 +13,9 @@ export const dynamic = "force-dynamic";
  * Free tier: 25,000 queries/day with an API key vs 25/day without.
  */
 export async function GET(request: NextRequest) {
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
+
   const { searchParams } = request.nextUrl;
   const url = searchParams.get("url");
   const strategy = searchParams.get("strategy") || "mobile";

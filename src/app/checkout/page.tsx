@@ -483,11 +483,12 @@ export default function CheckoutPage() {
                   </div>
                   <div data-field="warehouse">
                     <NPWarehouseSelect
+                      cityName={form.city}
                       cityRef={form.cityRef}
                       type={form.shippingMethod === "np_parcel" ? "parcel" : "warehouse"}
                       value={form.warehouse}
                       warehouseRef={form.warehouseRef}
-                      onSelect={(wh) => { update("warehouse", wh.name); update("warehouseRef", wh.ref); }}
+                      onSelect={(wh) => { update("warehouse", wh.name); update("warehouseRef", String(wh.id)); }}
                       onClear={() => { update("warehouse", ""); update("warehouseRef", ""); }}
                       error={errors.warehouse}
                     />

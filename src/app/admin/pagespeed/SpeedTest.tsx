@@ -147,7 +147,7 @@ export function SpeedTest() {
       }
     }
     setLoading(false);
-  }, [strategy, selectedPage]);
+  }, [strategy, selectedPage, customPath]);
 
   const lhr = result?.lighthouseResult;
   const cats = lhr?.categories;

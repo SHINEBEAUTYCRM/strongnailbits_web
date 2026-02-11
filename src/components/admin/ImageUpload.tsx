@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import {
   Camera, Upload, Loader2, Wand2, Check, X, ImageIcon,
-  RotateCcw, ZoomIn,
+  RotateCcw,
 } from "lucide-react";
 
 interface Props {

@@ -4,26 +4,27 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Package, Loader2, X, Search, ChevronDown } from "lucide-react";
 
 interface Warehouse {
-  ref: string;
+  id: number;
   number: string;
   name: string;
-  shortAddress: string;
-  maxWeight: number;
+  shortName: string;
+  address: string;
   category: string;
 }
 
 interface Props {
-  cityRef: string;
+  cityName: string;
+  cityRef: string; // kept for backwards compat, not used for warehouse search
   type: "warehouse" | "parcel";
   value: string;
   warehouseRef: string;
-  onSelect: (wh: { ref: string; name: string; number: string }) => void;
+  onSelect: (wh: { id: number; name: string; number: string }) => void;
   onClear: () => void;
   error?: string;
 }
 
 export function NPWarehouseSelect({
-  cityRef,
+  cityName,
   type,
   value,
   warehouseRef,
@@ -42,7 +43,7 @@ export function NPWarehouseSelect({
 
   // Load warehouses when city changes — auto-open dropdown
   useEffect(() => {
-    if (!cityRef) {
+    if (!cityName) {
       setWarehouses([]);
       setTotalCount(0);
       return;
@@ -53,7 +54,7 @@ export function NPWarehouseSelect({
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cityRef, type]);
+  }, [cityName, type]);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -68,10 +69,11 @@ export function NPWarehouseSelect({
 
   const loadWarehouses = useCallback(
     async (search: string) => {
-      if (!cityRef) return;
+      if (!cityName) return;
       setLoading(true);
       try {
-        const params = new URLSearchParams({ cityRef, type, limit: "50" });
+        const npType = type === "parcel" ? "postomat" : "branch";
+        const params = new URLSearchParams({ city: cityName, type: npType, limit: "200" });
         if (search) params.set("q", search);
         const res = await fetch(`/api/nova-poshta/warehouses?${params}`);
         const data = await res.json();
@@ -83,7 +85,7 @@ export function NPWarehouseSelect({
         setLoading(false);
       }
     },
-    [cityRef, type],
+    [cityName, type],
   );
 
   function handleSearch(val: string) {
@@ -95,7 +97,7 @@ export function NPWarehouseSelect({
   }
 
   function handleSelect(wh: Warehouse) {
-    onSelect({ ref: wh.ref, name: wh.name, number: wh.number });
+    onSelect({ id: wh.id, name: wh.name, number: wh.number });
     setQuery("");
     setOpen(false);
   }
@@ -111,7 +113,7 @@ export function NPWarehouseSelect({
     ? "Пошук поштомату (номер або адреса)"
     : "Пошук відділення (номер або адреса)";
 
-  if (!cityRef) {
+  if (!cityName) {
     return (
       <div>
         <label className="mb-1.5 block text-xs font-medium text-[var(--t2)]">
@@ -189,7 +191,7 @@ export function NPWarehouseSelect({
         <div className="absolute z-50 mt-1 max-h-64 w-full overflow-y-auto rounded-xl border border-[var(--border)] bg-white shadow-xl">
           {warehouses.map((wh) => (
             <button
-              key={wh.ref}
+              key={wh.id}
               type="button"
               onClick={() => handleSelect(wh)}
               className="flex w-full items-start gap-2.5 border-b border-[var(--border)] px-3 py-2.5 text-left transition-colors last:border-0 hover:bg-coral/5 active:bg-coral/10"
@@ -197,7 +199,7 @@ export function NPWarehouseSelect({
               <Package size={12} className="mt-0.5 shrink-0 text-coral/50" />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium leading-snug text-dark">{wh.name}</p>
-                <p className="mt-0.5 text-[11px] text-[var(--t3)]">{wh.shortAddress}</p>
+                <p className="mt-0.5 text-[11px] text-[var(--t3)]">{wh.address}</p>
               </div>
             </button>
           ))}

@@ -46,8 +46,8 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
         {tp > 1 && <div className="flex items-center justify-between px-4 py-3" style={{ borderTop: "1px solid #1e1e2a" }}>
           <p className="text-xs" style={{ color: "#3f3f46" }}>Сторінка {page} з {tp}</p>
           <div className="flex gap-1">
-            {page > 1 && <Link href={`/admin/clients?page=${page - 1}&type=${p.type || "all"}`} className="px-3 py-1 rounded-lg text-xs" style={{ color: "#71717a", background: "#111116" }}>←</Link>}
-            {page < tp && <Link href={`/admin/clients?page=${page + 1}&type=${p.type || "all"}`} className="px-3 py-1 rounded-lg text-xs" style={{ color: "#71717a", background: "#111116" }}>→</Link>}
+            {page > 1 && <Link href={`/admin/clients?page=${page - 1}&type=${p.type || "all"}${p.search ? `&search=${encodeURIComponent(p.search)}` : ""}`} className="px-3 py-1 rounded-lg text-xs" style={{ color: "#71717a", background: "#111116" }}>←</Link>}
+            {page < tp && <Link href={`/admin/clients?page=${page + 1}&type=${p.type || "all"}${p.search ? `&search=${encodeURIComponent(p.search)}` : ""}`} className="px-3 py-1 rounded-lg text-xs" style={{ color: "#71717a", background: "#111116" }}>→</Link>}
           </div>
         </div>}
       </div>
