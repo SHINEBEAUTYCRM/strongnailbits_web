@@ -3,7 +3,7 @@ import { Package, Plus, Pencil, ImageOff, FileX, Search, Tag, DollarSign, AlertT
 import { getProducts, getProductQualityCounts } from "@/lib/admin/data";
 import { AdminSearch } from "@/components/admin/AdminSearch";
 import { ExportButton } from "@/components/admin/ExportButton";
-import { ProductBulkBar } from "@/components/admin/ProductBulkBar";
+// import { ProductBulkBar } from "@/components/admin/ProductBulkBar";
 
 function fmt(v: number) { return v.toLocaleString("uk-UA"); }
 
@@ -114,8 +114,8 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         </div>
       )}
 
-      {/* Bulk actions */}
-      <ProductBulkBar productIds={products.map((pr) => pr.id)} />
+      {/* Bulk actions — temporarily disabled */}
+      {/* <ProductBulkBar productIds={products.map((pr) => pr.id)} /> */}
 
       {/* Table */}
       <div className="rounded-2xl overflow-hidden" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)", boxShadow: "var(--a-card-shadow)" }}>
