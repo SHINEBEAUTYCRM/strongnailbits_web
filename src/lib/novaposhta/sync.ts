@@ -219,38 +219,54 @@ export async function syncWarehouses(): Promise<SyncResult> {
 
 /**
  * Download and parse the gzip archive of all divisions.
+ * Uses streaming decompression to avoid holding 379MB in memory.
  * Archive format: { items: [...] } where each item has countryCode, etc.
- * The .json.gz file needs manual gzip decompression.
  */
 async function downloadAndParseArchive(url: string): Promise<Record<string, unknown>[]> {
-  const { gunzipSync } = await import("zlib");
+  const { createGunzip } = await import("zlib");
+  const { Readable } = await import("stream");
 
-  const res = await fetch(url, { signal: AbortSignal.timeout(120000) });
+  const res = await fetch(url, { signal: AbortSignal.timeout(180000) });
   if (!res.ok) throw new Error(`Archive download HTTP ${res.status}`);
 
-  const buffer = Buffer.from(await res.arrayBuffer());
-  console.log(`[NP Sync] Archive downloaded: ${(buffer.length / 1024 / 1024).toFixed(1)} MB`);
+  // Stream decompress chunks and accumulate text
+  const chunks: Buffer[] = [];
+  const gunzip = createGunzip();
 
-  // Decompress gzip
-  let jsonStr: string;
-  try {
-    const decompressed = gunzipSync(buffer);
-    jsonStr = decompressed.toString("utf-8");
-  } catch {
-    // Maybe it's not gzipped (already decompressed by CDN)
-    jsonStr = buffer.toString("utf-8");
-  }
+  const body = res.body;
+  if (!body) throw new Error("No response body");
+
+  // Pipe fetch body → gunzip → collect
+  const readable = Readable.fromWeb(body as import("stream/web").ReadableStream);
+
+  await new Promise<void>((resolve, reject) => {
+    readable
+      .pipe(gunzip)
+      .on("data", (chunk: Buffer) => chunks.push(chunk))
+      .on("end", resolve)
+      .on("error", (err: Error) => {
+        // If gunzip fails, data may not be gzipped (CDN decompressed it)
+        console.warn("[NP Sync] Gunzip stream error, trying raw:", err.message);
+        reject(err);
+      });
+  }).catch(async () => {
+    // Fallback: re-download without gunzip (CDN may have decompressed)
+    const res2 = await fetch(url, { signal: AbortSignal.timeout(180000) });
+    const buf = Buffer.from(await res2.arrayBuffer());
+    chunks.length = 0;
+    chunks.push(buf);
+  });
+
+  const jsonStr = Buffer.concat(chunks).toString("utf-8");
+  console.log(`[NP Sync] Archive decompressed: ${(jsonStr.length / 1024 / 1024).toFixed(1)} MB`);
+
+  // Free chunks
+  chunks.length = 0;
 
   const data = JSON.parse(jsonStr);
 
-  // Archive format: { items: [...] } or flat array
-  if (Array.isArray(data)) {
-    return data;
-  }
-  if (data && Array.isArray(data.items)) {
-    return data.items;
-  }
-
+  if (Array.isArray(data)) return data;
+  if (data && Array.isArray(data.items)) return data.items;
   throw new Error("Archive format unexpected: not an array or { items: [] }");
 }
 

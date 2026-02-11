@@ -4,14 +4,14 @@
  * GET  /api/nova-poshta/sync  ← Vercel Cron (daily 04:00 UTC)
  * POST /api/nova-poshta/sync  ← Manual trigger
  *
- * maxDuration: 120s (sync can take up to 60s for 25k records)
+ * maxDuration: 300s (archive: 34MB gz → 379MB json → 48k upserts)
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { syncAll, syncCities, syncWarehouses } from "@/lib/novaposhta/sync";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 function checkAuth(req: NextRequest): boolean {
   // Vercel Cron sends CRON_SECRET automatically
@@ -36,11 +36,21 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    // Support ?entity=cities|warehouses for split cron
+    const entity = req.nextUrl.searchParams.get("entity");
+
+    if (entity === "cities") {
+      const result = await syncCities();
+      return NextResponse.json({ success: true, result });
+    }
+    if (entity === "warehouses") {
+      const result = await syncWarehouses();
+      return NextResponse.json({ success: true, result });
+    }
+
+    // Default: full sync
     const result = await syncAll();
-    return NextResponse.json({
-      success: true,
-      ...result,
-    });
+    return NextResponse.json({ success: true, ...result });
   } catch (err) {
     console.error("[NP Sync]", err);
     return NextResponse.json(

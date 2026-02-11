@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
   // 1. Получить бренд с parse_config
   const { data: brand, error: brandError } = await supabase
     .from('brands')
-    .select('*')
+    .select('id, name, slug, photo_source_url, info_source_url, parse_config')
     .eq('id', brand_id)
     .single();
 
@@ -38,22 +38,32 @@ export async function POST(request: NextRequest) {
   }
 
   // 2. Получить товар для теста
+  const productFields = 'id, name_uk, sku, price, description_uk, main_image_url, brand_id';
   let product;
   if (product_id) {
     const { data } = await supabase
       .from('products')
-      .select('*')
+      .select(productFields)
       .eq('id', product_id)
       .single();
     product = data;
   } else {
-    // Берём первый товар бренда у которого есть артикул
+    // Берём случайный товар бренда у которого есть артикул
+    const { count } = await supabase
+      .from('products')
+      .select('id', { count: 'exact', head: true })
+      .eq('brand_id', brand_id)
+      .not('sku', 'is', null);
+
+    const total = count || 0;
+    const randomOffset = total > 1 ? Math.floor(Math.random() * total) : 0;
+
     const { data } = await supabase
       .from('products')
-      .select('*')
+      .select(productFields)
       .eq('brand_id', brand_id)
       .not('sku', 'is', null)
-      .limit(1)
+      .range(randomOffset, randomOffset)
       .single();
     product = data;
   }
@@ -83,6 +93,13 @@ export async function POST(request: NextRequest) {
       product_code: product.sku,
       product_url: productUrl,
       parsed,
+      original: {
+        name_uk: product.name_uk,
+        description_uk: product.description_uk || null,
+        main_image_url: product.main_image_url || null,
+        price: product.price,
+        sku: product.sku,
+      },
     });
   } catch (err) {
     return NextResponse.json({
