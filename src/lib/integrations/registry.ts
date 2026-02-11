@@ -285,6 +285,24 @@ const paidMarketing: ServiceDefinition[] = [
     ],
   },
   {
+    slug: 'alphasms',
+    name: 'AlphaSMS',
+    category: 'comms',
+    module: 'Авторизація / Комунікації',
+    icon: 'Smartphone',
+    description: 'SMS OTP для входу клієнтів, Viber-розсилки. Основний SMS-гейтвей.',
+    isRequired: true,
+    docsUrl: 'https://alphasms.net/about/techdocs/',
+    requiredFields: [
+      { key: 'api_key', label: 'API Key', type: 'password', required: true, helpText: 'Ключ з кабінету AlphaSMS → Налаштування → API' },
+      { key: 'sender', label: 'Alpha-name (відправник)', type: 'text', placeholder: 'Shine SHOP', required: true, helpText: 'Зареєстроване ім\'я відправника SMS' },
+    ],
+    envMapping: {
+      api_key: 'ALPHASMS_API_KEY',
+      sender: 'ALPHASMS_SENDER',
+    },
+  },
+  {
     slug: 'turbosms',
     name: 'TurboSMS',
     category: 'comms',

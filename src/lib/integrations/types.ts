@@ -76,6 +76,7 @@ export interface ServiceDefinition {
   requiredFields: FieldDef[];
   isRequired: boolean;       // Рекомендовано для мінімального старту
   docsUrl?: string;
+  envMapping?: Record<string, string>; // Map field key → env variable name
 }
 
 // -----------------------------------------------------------------
