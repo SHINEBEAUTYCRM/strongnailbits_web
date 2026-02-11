@@ -157,8 +157,8 @@ export async function syncWarehouses(): Promise<SyncResult> {
     }
 
     // Filter: only Ukraine (archive has all countries)
-    const uaDivisions = allDivisions.filter((d: Record<string, unknown>) =>
-      (d.countryCode as string) === "UA",
+    const uaDivisions = allDivisions.filter((d) =>
+      d.countryCode === "UA",
     );
     result.totalCount = uaDivisions.length;
     console.log(`[NP Sync] UA divisions: ${uaDivisions.length}`);
