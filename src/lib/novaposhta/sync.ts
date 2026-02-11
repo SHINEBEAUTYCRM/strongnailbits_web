@@ -83,23 +83,40 @@ export async function syncCities(): Promise<SyncResult> {
 
 /**
  * Transform a v1.0 division to our DB row format.
+ *
+ * Archive structure:
+ * - settlement.name can be "село Новоселівка" (with type prefix)
+ * - addressParts.city is cleaner: "Новоселівка" or "Одеса"
+ * - region.name is raion, parent.name is oblast
  */
-function divisionToRow(d: NPDivision) {
+function divisionToRow(d: Record<string, unknown>) {
+  const settlement = d.settlement as Record<string, unknown> | undefined;
+  const region = d.region as Record<string, unknown> | undefined;
+  const parent = d.parent as Record<string, unknown> | undefined;
+  const addressParts = d.addressParts as Record<string, unknown> | undefined;
+
+  // Use addressParts.city for cleaner city name, fallback to settlement.name
+  const cityName = (addressParts?.city as string) || (settlement?.name as string) || "";
+  // Clean up: remove "село ", "смт. ", "місто " prefixes
+  const cleanCity = cityName
+    .replace(/^(село|місто|смт\.?|селище|с-ще)\s+/i, "")
+    .trim();
+
   return {
-    np_id: d.id,
-    city_name: d.settlement?.name || "",
-    settlement_id: d.settlement?.id || null,
-    name_ua: d.name,
-    short_name: d.shortName || d.name,
-    number: d.number || "",
-    address: d.address || "",
-    category: mapDivisionCategory(d.divisionCategory),
-    status: d.status || "Working",
-    latitude: d.latitude || null,
-    longitude: d.longitude || null,
-    schedule: d.workSchedule || [],
-    country_code: d.countryCode || "UA",
-    region_name: d.settlement?.region?.name || "",
+    np_id: d.id as number,
+    city_name: cleanCity || cityName,
+    settlement_id: (settlement?.id as number) || null,
+    name_ua: (d.name as string) || "",
+    short_name: (d.shortName as string) || (d.name as string) || "",
+    number: (d.number as string) || "",
+    address: (d.address as string) || "",
+    category: mapDivisionCategory((d.divisionCategory as string) || ""),
+    status: (d.status as string) || "Working",
+    latitude: (d.latitude as number) || null,
+    longitude: (d.longitude as number) || null,
+    schedule: (d.workSchedule as unknown[]) || [],
+    country_code: (d.countryCode as string) || "UA",
+    region_name: (parent?.name as string) || (region?.name as string) || "",
     is_active: d.status === "Working",
   };
 }
@@ -139,8 +156,10 @@ export async function syncWarehouses(): Promise<SyncResult> {
       allDivisions = await fetchAllDivisionsPaginated();
     }
 
-    // Filter: only Ukraine
-    const uaDivisions = allDivisions.filter((d) => d.countryCode === "UA");
+    // Filter: only Ukraine (archive has all countries)
+    const uaDivisions = allDivisions.filter((d: Record<string, unknown>) =>
+      (d.countryCode as string) === "UA",
+    );
     result.totalCount = uaDivisions.length;
     console.log(`[NP Sync] UA divisions: ${uaDivisions.length}`);
 
@@ -202,20 +221,23 @@ export async function syncWarehouses(): Promise<SyncResult> {
 
 /**
  * Download and parse the gzip archive of all divisions.
+ * Archive format: { items: [...] } where each item has countryCode, etc.
  */
 async function downloadAndParseArchive(url: string): Promise<NPDivision[]> {
-  const res = await fetch(url, { signal: AbortSignal.timeout(60000) });
+  const res = await fetch(url, { signal: AbortSignal.timeout(120000) });
   if (!res.ok) throw new Error(`Archive download HTTP ${res.status}`);
 
-  // The response is gzip compressed — fetch automatically decompresses
-  // If the URL ends with .json.gz, the server sends it with Content-Encoding: gzip
   const data = await res.json();
 
+  // Archive format: { items: [...] } or flat array
   if (Array.isArray(data)) {
     return data as NPDivision[];
   }
+  if (data && Array.isArray(data.items)) {
+    return data.items as NPDivision[];
+  }
 
-  throw new Error("Archive format unexpected: not an array");
+  throw new Error("Archive format unexpected: not an array or { items: [] }");
 }
 
 /**
