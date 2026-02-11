@@ -38,17 +38,19 @@ export async function GET(req: NextRequest) {
       500,
     );
 
-    // Map frontend type names to NP API types
+    // Map frontend type names to NP API types (empty = all warehouses)
     const npType = rawType === "postomat" || rawType === "parcel"
       ? "parcel" as const
       : rawType === "cargo"
         ? "cargo" as const
-        : "warehouse" as const;
+        : rawType === "warehouse" || rawType === "branch"
+          ? "warehouse" as const
+          : "" as const;
 
     // Call NP API with SettlementRef (always reliable)
     const { warehouses, total } = await getWarehouses(settlementRef, {
       search: q || undefined,
-      type: npType,
+      type: npType || undefined,
       limit,
     });
 

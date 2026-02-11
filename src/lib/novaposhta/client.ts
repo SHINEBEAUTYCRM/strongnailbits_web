@@ -292,7 +292,21 @@ export async function getWarehouses(
     properties.TypeOfWarehouseRef = typeMap[opts.type];
   }
 
-  const res = await callNP<NPWarehouse>("Address", "getWarehouses", properties);
+  // Try AddressGeneral first (used by NP widgets), fallback to Address
+  let res = await callNP<NPWarehouse>("AddressGeneral", "getWarehouses", properties);
+
+  if ((!res.data || res.data.length === 0) && res.success) {
+    // Try with CityRef instead of SettlementRef
+    const props2 = { ...properties };
+    delete props2.SettlementRef;
+    props2.CityRef = settlementRef;
+    res = await callNP<NPWarehouse>("AddressGeneral", "getWarehouses", props2);
+  }
+
+  if ((!res.data || res.data.length === 0) && res.success) {
+    // Last fallback: Address model
+    res = await callNP<NPWarehouse>("Address", "getWarehouses", properties);
+  }
 
   return {
     warehouses: res.data || [],
