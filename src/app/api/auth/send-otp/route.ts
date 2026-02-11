@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { normalizePhone, sendOtpSms } from "@/lib/sms/alphasms";
 import { notifySmsError } from "@/lib/telegram/notify";
+import { trackFunnelEvent } from "@/lib/funnels/tracker";
 
 export const dynamic = "force-dynamic";
 
@@ -104,6 +105,9 @@ export async function POST(request: NextRequest) {
         { status: 500 },
       );
     }
+
+    // Track funnel: OTP sent
+    trackFunnelEvent({ event: "otp_sent", phone });
 
     return NextResponse.json({
       success: true,

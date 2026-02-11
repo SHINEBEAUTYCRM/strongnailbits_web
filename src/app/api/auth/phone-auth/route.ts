@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { normalizePhone, phoneVariants } from "@/lib/sms/alphasms";
 import { notifyNewCustomer } from "@/lib/telegram/notify";
+import { trackFunnelEvent } from "@/lib/funnels/tracker";
 
 export const dynamic = "force-dynamic";
 
@@ -115,6 +116,14 @@ export async function POST(request: NextRequest) {
 
       // Try to auto-link with 1C customer by phone
       const linked = await autoLinkWith1C(supabase, authData.user.id, phone);
+
+      // Track funnel: registration
+      trackFunnelEvent({
+        event: "register",
+        phone,
+        profileId: authData.user.id,
+        name: `${firstName} ${lastName || ""}`.trim(),
+      });
 
       // Telegram notification (non-blocking)
       notifyNewCustomer({

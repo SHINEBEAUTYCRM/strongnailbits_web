@@ -261,6 +261,32 @@ export async function notifyDailyReport(data: DailyReportData) {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  🎯 ВОРОНКИ
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+/** Funnel conversion (contact reached last stage) */
+export async function notifyFunnelConversion(data: {
+  funnelName: string;
+  contactName: string;
+  contactPhone?: string;
+  stageName: string;
+}) {
+  if (!(await isTelegramConfigured())) return;
+
+  await sendMessage(
+    [
+      `🎯 <b>Конверсія у воронці!</b>`,
+      ``,
+      `📊 ${escHtml(data.funnelName)}`,
+      `👤 ${escHtml(data.contactName)}${data.contactPhone ? ` (${escHtml(data.contactPhone)})` : ""}`,
+      `✅ Досяг етапу: <b>${escHtml(data.stageName)}</b>`,
+      ``,
+      `<a href="${ADMIN_URL}/funnels">SmartЛійки →</a>`,
+    ].join("\n"),
+  );
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  📦 СКЛАД
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

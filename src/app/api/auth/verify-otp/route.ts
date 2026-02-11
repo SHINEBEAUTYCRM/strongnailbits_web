@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { normalizePhone, phoneVariants } from "@/lib/sms/alphasms";
+import { trackFunnelEvent } from "@/lib/funnels/tracker";
 
 export const dynamic = "force-dynamic";
 
@@ -96,6 +97,14 @@ export async function POST(request: NextRequest) {
       .in("phone", variants)
       .limit(1)
       .single();
+
+    // Track funnel: OTP verified
+    trackFunnelEvent({
+      event: "otp_verified",
+      phone,
+      profileId: existingProfile?.id || undefined,
+      name: existingProfile?.first_name || undefined,
+    });
 
     return NextResponse.json({
       success: true,

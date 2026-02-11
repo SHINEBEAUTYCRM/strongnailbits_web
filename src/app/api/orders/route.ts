@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendFBServerPurchaseEvent } from "@/lib/analytics/fb-capi-server";
 import { notifyNewOrder } from "@/lib/telegram/notify";
+import { trackFunnelEvent } from "@/lib/funnels/tracker";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -219,6 +220,18 @@ export async function POST(req: NextRequest) {
         { status: 500 },
       );
     }
+
+    // Track funnel: order placed
+    trackFunnelEvent({
+      event: "order_placed",
+      phone: body.contact.phone,
+      name: `${body.contact.firstName} ${body.contact.lastName}`,
+      metadata: {
+        order_number: orderNumber,
+        total: subtotal,
+        item_count: verifiedItems.length,
+      },
+    });
 
     // Send Telegram notification (non-blocking)
     notifyNewOrder({

@@ -97,6 +97,7 @@ export const adminNavigation: NavGroup[] = [
     label: "МАРКЕТИНГ",
     items: [
       { label: "Marketing Hub", href: "/admin/marketing", icon: Megaphone },
+      { label: "SmartЛійки", href: "/admin/funnels", icon: Target },
       { label: "Реклама", href: "/admin/marketing/ads", icon: Target, soon: true },
       { label: "Комунікації", href: "/admin/marketing/comms", icon: Mail, soon: true },
       { label: "Конкуренти", href: "/admin/marketing/competitors", icon: Radar, soon: true },
