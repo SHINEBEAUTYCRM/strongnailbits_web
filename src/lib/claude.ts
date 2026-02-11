@@ -174,7 +174,7 @@ ${rawParsedData ? `Дані з сайту бренду:
 
     if (parsed.description_uk) {
       metadata.description_uk = {
-        value: parsed.description_uk,
+        value: String(parsed.description_uk),
         source: 'ai',
         edited: false,
         original_text: rawParsedData?.description,
@@ -182,37 +182,37 @@ ${rawParsedData ? `Дані з сайту бренду:
       };
     }
     if (parsed.color_family) {
-      metadata.color_family = { value: parsed.color_family, source: 'ai', edited: false };
+      metadata.color_family = { value: String(parsed.color_family), source: 'ai', edited: false };
     }
     if (parsed.finish) {
-      metadata.finish = { value: parsed.finish, source: 'ai', edited: false };
+      metadata.finish = { value: String(parsed.finish), source: 'ai', edited: false };
     }
     if (parsed.density) {
-      metadata.density = { value: parsed.density, source: 'ai', edited: false };
+      metadata.density = { value: String(parsed.density), source: 'ai', edited: false };
     }
     if (parsed.volume_ml) {
       metadata.volume_ml = { value: Number(parsed.volume_ml), source: 'ai', edited: false };
     }
     if (parsed.curing) {
-      metadata.curing = { value: parsed.curing, source: 'ai', edited: false };
+      metadata.curing = { value: String(parsed.curing), source: 'ai', edited: false };
     }
     if (parsed.composition) {
-      metadata.composition = { value: parsed.composition, source: 'ai', edited: false };
+      metadata.composition = { value: String(parsed.composition), source: 'ai', edited: false };
     }
     if (parsed.season_tags?.length) {
-      metadata.season_tags = { value: parsed.season_tags, source: 'ai', edited: false };
+      metadata.season_tags = { value: parsed.season_tags as string[], source: 'ai', edited: false };
     }
     if (parsed.style_tags?.length) {
-      metadata.style_tags = { value: parsed.style_tags, source: 'ai', edited: false };
+      metadata.style_tags = { value: parsed.style_tags as string[], source: 'ai', edited: false };
     }
     if (parsed.compatible_with?.length) {
-      metadata.compatible_with = { value: parsed.compatible_with, source: 'ai', edited: false };
+      metadata.compatible_with = { value: parsed.compatible_with as string[], source: 'ai', edited: false };
     }
     if (parsed.skill_level) {
-      metadata.skill_level = { value: parsed.skill_level, source: 'ai', edited: false };
+      metadata.skill_level = { value: String(parsed.skill_level), source: 'ai', edited: false };
     }
     if (parsed.application_tips) {
-      metadata.application_tips = { value: parsed.application_tips, source: 'ai', edited: false };
+      metadata.application_tips = { value: String(parsed.application_tips), source: 'ai', edited: false };
     }
 
     return {
