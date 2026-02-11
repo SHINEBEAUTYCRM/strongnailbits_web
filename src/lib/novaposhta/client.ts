@@ -293,16 +293,34 @@ export async function getDivisionsByCity(
 
 /**
  * Get ALL divisions archive URL (no auth needed).
+ * The endpoint redirects to a CDN JSON file.
  * Returns the URL of the base.json.gz file.
  */
 export async function getDivisionsArchiveUrl(): Promise<string> {
+  // Follow redirect to get the actual versions JSON
   const res = await fetch("https://api.novapost.com/divisions/versions", {
     headers: { "Accept-Language": "uk" },
     signal: AbortSignal.timeout(15000),
+    redirect: "follow",
   });
 
   if (!res.ok) throw new Error(`Divisions archive HTTP ${res.status}`);
-  const data = await res.json();
+
+  const text = await res.text();
+
+  // Check if it's an HTML redirect (meta refresh)
+  if (text.includes("http-equiv=\"refresh\"")) {
+    const match = text.match(/url='([^']+)'/);
+    if (match) {
+      const redirectUrl = match[1];
+      const res2 = await fetch(redirectUrl, { signal: AbortSignal.timeout(15000) });
+      if (!res2.ok) throw new Error(`Versions redirect HTTP ${res2.status}`);
+      const data = await res2.json();
+      return data.base_version?.url;
+    }
+  }
+
+  const data = JSON.parse(text);
   return data.base_version?.url;
 }
 

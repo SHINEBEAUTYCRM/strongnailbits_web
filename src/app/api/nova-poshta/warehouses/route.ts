@@ -5,23 +5,15 @@
  * GET /api/nova-poshta/warehouses?city=Одеса&type=postomat
  * GET /api/nova-poshta/warehouses?city=Одеса&q=5
  *
- * NOTE: Uses city NAME (not cityRef!) because v1.0 API works with names.
- * Strategy: Supabase RPC first → v1.0 /divisions fallback
+ * Uses city NAME (not cityRef!) — v1.0 API works with names.
+ * Data comes from Supabase (synced via archive).
+ * No live API fallback — v1.0 /divisions requires OAuth token we don't have.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getDivisionsByCity, mapDivisionCategory } from "@/lib/novaposhta/client";
 
 export const dynamic = "force-dynamic";
-
-const CATEGORY_API_MAP: Record<string, string> = {
-  branch: "PostBranch",
-  warehouse: "PostBranch",
-  postomat: "Postomat",
-  parcel: "Postomat",
-  cargo: "CargoBranch",
-};
 
 export async function GET(req: NextRequest) {
   try {
@@ -41,76 +33,76 @@ export async function GET(req: NextRequest) {
     const q = req.nextUrl.searchParams.get("q") || "";
     const limit = Math.min(Number(req.nextUrl.searchParams.get("limit")) || 200, 500);
 
-    // 1. Try Supabase RPC (fast, <50ms)
-    try {
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      );
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    );
 
-      const { data, error } = await supabase.rpc("search_np_warehouses", {
-        city,
-        category_filter: categoryFilter,
-        search_query: q || null,
-        max_results: limit,
-      });
+    // Use RPC function for ranked search
+    const { data, error } = await supabase.rpc("search_np_warehouses", {
+      city,
+      category_filter: categoryFilter,
+      search_query: q || null,
+      max_results: limit,
+    });
 
-      if (!error && data && data.length > 0) {
-        return NextResponse.json({
-          warehouses: data.map((w: Record<string, unknown>) => ({
-            id: w.np_id,
-            name: w.name_ua,
-            shortName: w.short_name,
-            number: w.number,
-            address: w.address,
-            category: w.category,
-            latitude: w.latitude,
-            longitude: w.longitude,
-            schedule: w.schedule,
-            status: w.status,
-          })),
-          total: data.length,
-          source: "supabase",
-        });
+    if (error) {
+      console.error("[NP Warehouses] Supabase RPC error:", error.message);
+
+      // Fallback: direct query
+      let query = supabase
+        .from("np_warehouses")
+        .select("np_id, name_ua, short_name, number, address, category, latitude, longitude, schedule, status")
+        .eq("is_active", true)
+        .ilike("city_name", city);
+
+      if (categoryFilter) query = query.eq("category", categoryFilter);
+      if (q) {
+        query = query.or(`number.eq.${q},name_ua.ilike.%${q}%`);
       }
-    } catch {
-      // Supabase not available — fallback
-    }
+      query = query.limit(limit);
 
-    // 2. Fallback: v1.0 /divisions API
-    const apiCategory = rawType ? CATEGORY_API_MAP[rawType] || null : null;
-    const divisions = await getDivisionsByCity(city, apiCategory, limit);
+      const { data: fallbackData, error: fallbackError } = await query;
+      if (fallbackError) throw fallbackError;
 
-    let filtered = divisions;
-    if (q) {
-      const qLower = q.toLowerCase();
-      filtered = divisions.filter((d) =>
-        d.number === q ||
-        d.name.toLowerCase().includes(qLower) ||
-        d.address?.toLowerCase().includes(qLower),
-      );
+      return NextResponse.json({
+        warehouses: (fallbackData || []).map((w: Record<string, unknown>) => ({
+          id: w.np_id,
+          name: w.name_ua,
+          shortName: w.short_name,
+          number: w.number,
+          address: w.address,
+          category: w.category,
+          latitude: w.latitude,
+          longitude: w.longitude,
+          schedule: w.schedule,
+          status: w.status,
+        })),
+        total: fallbackData?.length || 0,
+        source: "supabase_fallback",
+      });
     }
 
     return NextResponse.json({
-      warehouses: filtered.map((d) => ({
-        id: d.id,
-        name: d.name,
-        shortName: d.shortName,
-        number: d.number,
-        address: d.address,
-        category: mapDivisionCategory(d.divisionCategory),
-        latitude: d.latitude,
-        longitude: d.longitude,
-        schedule: d.workSchedule,
-        status: d.status,
+      warehouses: (data || []).map((w: Record<string, unknown>) => ({
+        id: w.np_id,
+        name: w.name_ua,
+        shortName: w.short_name,
+        number: w.number,
+        address: w.address,
+        category: w.category,
+        latitude: w.latitude,
+        longitude: w.longitude,
+        schedule: w.schedule,
+        status: w.status,
       })),
-      total: filtered.length,
-      source: "np_api_v1",
+      total: data?.length || 0,
+      source: "supabase",
     });
   } catch (err) {
     console.error("[NP Warehouses]", err);
     return NextResponse.json(
-      { error: "Помилка завантаження відділень" },
+      { error: "Помилка завантаження відділень. Синхронізуйте дані: POST /api/nova-poshta/sync" },
       { status: 500 },
     );
   }
