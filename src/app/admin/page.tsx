@@ -3,11 +3,11 @@ import { DollarSign, ShoppingCart, Package, Users, AlertTriangle, ArrowUpRight }
 import { getDashboardStats, getRecentOrders, getLowStockProducts } from "@/lib/admin/data";
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
-  new: { label: "Нове", color: "#60a5fa", bg: "#172554" },
-  processing: { label: "В обробці", color: "#fbbf24", bg: "#422006" },
-  shipped: { label: "Відправлено", color: "#a78bfa", bg: "#2e1065" },
-  delivered: { label: "Доставлено", color: "#4ade80", bg: "#052e16" },
-  cancelled: { label: "Скасовано", color: "#f87171", bg: "#450a0a" },
+  new: { label: "Нове", color: "var(--a-st-new-c)", bg: "var(--a-st-new-bg)" },
+  processing: { label: "В обробці", color: "var(--a-st-processing-c)", bg: "var(--a-st-processing-bg)" },
+  shipped: { label: "Відправлено", color: "var(--a-st-shipped-c)", bg: "var(--a-st-shipped-bg)" },
+  delivered: { label: "Доставлено", color: "var(--a-st-delivered-c)", bg: "var(--a-st-delivered-bg)" },
+  cancelled: { label: "Скасовано", color: "var(--a-st-cancelled-c)", bg: "var(--a-st-cancelled-bg)" },
 };
 
 function fmt(v: number) { return v.toLocaleString("uk-UA"); }
@@ -30,7 +30,7 @@ export default async function DashboardPage() {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {cards.map((c) => (
-          <Link key={c.label} href={c.href} className="group rounded-2xl p-5 transition-colors" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+          <Link key={c.label} href={c.href} className="group rounded-2xl p-5 transition-colors" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)", boxShadow: "var(--a-card-shadow)" }}>
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "var(--a-bg-hover)" }}><c.icon className="w-5 h-5" style={{ color: "var(--a-text-3)" }} /></div>
               <ArrowUpRight className="w-4 h-4" style={{ color: "var(--a-text-6)" }} />
@@ -41,7 +41,7 @@ export default async function DashboardPage() {
         ))}
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="rounded-2xl p-6" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+        <div className="rounded-2xl p-6" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)", boxShadow: "var(--a-card-shadow)" }}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium" style={{ color: "var(--a-text-3)" }}>Останні замовлення</h3>
             <Link href="/admin/orders" className="text-xs" style={{ color: "var(--a-accent)" }}>Всі →</Link>
@@ -58,7 +58,7 @@ export default async function DashboardPage() {
             })}</div>
           )}
         </div>
-        <div className="rounded-2xl p-6" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+        <div className="rounded-2xl p-6" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)", boxShadow: "var(--a-card-shadow)" }}>
           <div className="flex items-center gap-2 mb-4"><AlertTriangle className="w-4 h-4" style={{ color: "#fbbf24" }} /><h3 className="text-sm font-medium" style={{ color: "var(--a-text-3)" }}>Закінчується на складі</h3></div>
           {lowStock.length === 0 ? <p className="text-sm text-center py-8" style={{ color: "var(--a-text-5)" }}>Все в порядку</p> : (
             <div className="space-y-2">{lowStock.map((p) => (

@@ -77,7 +77,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
 
       {/* Quality / SEO filters */}
       {totalIssues > 0 && (
-        <div className="rounded-xl p-4 mb-6" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+        <div className="rounded-xl p-4 mb-6" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)", boxShadow: "var(--a-card-shadow)" }}>
           <div className="flex items-center gap-2 mb-3">
             <AlertTriangle className="w-4 h-4" style={{ color: "#f59e0b" }} />
             <h3 className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--a-text-3)" }}>
@@ -118,7 +118,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
       <ProductBulkBar productIds={products.map((pr) => pr.id)} />
 
       {/* Table */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+      <div className="rounded-2xl overflow-hidden" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)", boxShadow: "var(--a-card-shadow)" }}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>

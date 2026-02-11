@@ -260,63 +260,174 @@ body {
   --a-accent-bg:   #1e1030;
   --a-accent-btn:  #7c3aed;
   --a-shadow:      rgba(0,0,0,0.3);
+  --a-card-shadow: none;
+  /* Status badges — dark */
+  --a-st-new-c:        #60a5fa; --a-st-new-bg:        #172554;
+  --a-st-processing-c: #fbbf24; --a-st-processing-bg: #422006;
+  --a-st-shipped-c:    #a78bfa; --a-st-shipped-bg:    #2e1065;
+  --a-st-delivered-c:  #4ade80; --a-st-delivered-bg:  #052e16;
+  --a-st-cancelled-c:  #f87171; --a-st-cancelled-bg:  #450a0a;
 }
 
 /* Light theme — WCAG AA contrast on white (#fff) checked */
 [data-admin-theme="light"] {
-  --a-bg:          #f4f4f6;
+  --a-bg:          #f5f6f8;
   --a-bg-sidebar:  #ffffff;
   --a-bg-header:   #ffffff;
   --a-bg-card:     #ffffff;
-  --a-bg-input:    #f1f5f9;     /* slate-100 — visible input bg */
-  --a-bg-hover:    #f1f5f9;     /* slate-50 — clear hover */
-  --a-bg-active:   #ede9fe;     /* violet-100 */
+  --a-bg-input:    #f1f5f9;
+  --a-bg-hover:    #f8fafc;
+  --a-bg-active:   #ede9fe;
   --a-bg-muted:    #f1f5f9;
-  --a-border:      #e2e8f0;     /* slate-200 — visible borders */
-  --a-border-sub:  #e2e8f0;
-  --a-text:        #09090b;     /* 18.4:1 ✓ headings */
-  --a-text-name:   #18181b;     /* 16.8:1 ✓ names */
-  --a-text-body:   #1e293b;     /* 14.5:1 ✓ body text */
-  --a-text-2:      #374151;     /*  8.4:1 ✓ secondary */
-  --a-text-3:      #4b5563;     /*  5.9:1 ✓ muted labels */
-  --a-text-4:      #6b7280;     /*  4.6:1 ✓ hints, meta */
-  --a-text-5:      #6b7280;     /*  4.6:1 ✓ table headers, nav groups */
-  --a-text-6:      #9ca3af;     /*  2.9:1 — decorative only */
+  --a-border:      #e2e8f0;
+  --a-border-sub:  #f1f5f9;
+  --a-text:        #0f172a;
+  --a-text-name:   #1e293b;
+  --a-text-body:   #334155;
+  --a-text-2:      #475569;
+  --a-text-3:      #64748b;
+  --a-text-4:      #64748b;
+  --a-text-5:      #94a3b8;
+  --a-text-6:      #cbd5e1;
   --a-accent:      #7c3aed;
-  --a-accent-bg:   #ede9fe;
+  --a-accent-bg:   #f5f3ff;
   --a-accent-btn:  #7c3aed;
-  --a-shadow:      rgba(0,0,0,0.08);
+  --a-shadow:      rgba(0,0,0,0.04);
+  --a-card-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  /* Status badges — light pastel */
+  --a-st-new-c:        #2563eb; --a-st-new-bg:        #dbeafe;
+  --a-st-processing-c: #b45309; --a-st-processing-bg: #fef3c7;
+  --a-st-shipped-c:    #7c3aed; --a-st-shipped-bg:    #ede9fe;
+  --a-st-delivered-c:  #16a34a; --a-st-delivered-bg:  #dcfce7;
+  --a-st-cancelled-c:  #dc2626; --a-st-cancelled-bg:  #fef2f2;
 }
 
-/* ── Admin light-mode overrides for inline-styled content ── */
-[data-admin-theme="light"] .admin-content [style] {
-  /* Allow CSS variables to cascade even in inline-styled children */
+/* ── Light-theme global overrides for pages with inline dark styles ── */
+
+/* Sidebar & header get subtle bottom shadow */
+[data-admin-theme="light"] aside {
+  box-shadow: 1px 0 0 var(--a-border);
+}
+[data-admin-theme="light"] header {
+  box-shadow: 0 1px 0 var(--a-border);
 }
 
-/* Cards, tables, panels — common admin dark backgrounds */
-[data-admin-theme="light"] .admin-card {
+/* All admin cards/panels that still use dark inline styles */
+[data-admin-theme="light"] .admin-content div[style*="0e0e14"],
+[data-admin-theme="light"] .admin-content div[style*="0c0c12"],
+[data-admin-theme="light"] .admin-content div[style*="111116"],
+[data-admin-theme="light"] .admin-content div[style*="111118"] {
   background: var(--a-bg-card) !important;
   border-color: var(--a-border) !important;
-  color: var(--a-text-body) !important;
+  box-shadow: var(--a-card-shadow);
 }
 
-[data-admin-theme="light"] .admin-card th,
-[data-admin-theme="light"] .admin-card td {
+/* Borders inside tables/cards */
+[data-admin-theme="light"] .admin-content tr[style*="141420"],
+[data-admin-theme="light"] .admin-content tr[style*="0e0e14"] {
   border-color: var(--a-border-sub) !important;
 }
+[data-admin-theme="light"] .admin-content div[style*="border"] {
+  border-color: var(--a-border) !important;
+}
 
-[data-admin-theme="light"] .admin-card th {
+/* Table headers */
+[data-admin-theme="light"] .admin-content th[style*="3f3f46"],
+[data-admin-theme="light"] .admin-content th[style*="27272a"] {
   color: var(--a-text-4) !important;
 }
 
-[data-admin-theme="light"] .admin-card td {
-  color: var(--a-text-body) !important;
+/* Primary text (headings, bold values) */
+[data-admin-theme="light"] .admin-content [style*="color: #f4f4f5"],
+[data-admin-theme="light"] .admin-content [style*="color:#f4f4f5"],
+[data-admin-theme="light"] .admin-content [style*="color: #e4e4e7"],
+[data-admin-theme="light"] .admin-content [style*="color:#e4e4e7"],
+[data-admin-theme="light"] .admin-content [style*="color: #d4d4d8"],
+[data-admin-theme="light"] .admin-content [style*="color:#d4d4d8"] {
+  color: var(--a-text) !important;
 }
 
-[data-admin-theme="light"] .admin-card tr:hover {
+/* Secondary text */
+[data-admin-theme="light"] .admin-content [style*="color: #a1a1aa"],
+[data-admin-theme="light"] .admin-content [style*="color:#a1a1aa"] {
+  color: var(--a-text-2) !important;
+}
+
+/* Muted text */
+[data-admin-theme="light"] .admin-content [style*="color: #71717a"],
+[data-admin-theme="light"] .admin-content [style*="color:#71717a"] {
+  color: var(--a-text-3) !important;
+}
+
+/* Very muted text */
+[data-admin-theme="light"] .admin-content [style*="color: #52525b"],
+[data-admin-theme="light"] .admin-content [style*="color:#52525b"] {
+  color: var(--a-text-4) !important;
+}
+
+/* Near-invisible text → make visible */
+[data-admin-theme="light"] .admin-content [style*="color: #3f3f46"],
+[data-admin-theme="light"] .admin-content [style*="color:#3f3f46"] {
+  color: var(--a-text-5) !important;
+}
+
+/* Filter pills & buttons with dark bg */
+[data-admin-theme="light"] .admin-content a[style*="111116"],
+[data-admin-theme="light"] .admin-content a[style*="1e1e2a"] {
+  background: var(--a-bg-input) !important;
+  border-color: var(--a-border) !important;
+  color: var(--a-text-3) !important;
+}
+
+/* Active filter pill — purple */
+[data-admin-theme="light"] .admin-content a[style*="1e1030"] {
+  background: var(--a-accent-bg) !important;
+  border-color: var(--a-accent) !important;
+  color: var(--a-accent) !important;
+}
+
+/* Status badges — override dark bg with theme-aware pastels */
+[data-admin-theme="light"] .admin-content span[style*="172554"] {
+  background: var(--a-st-new-bg) !important;
+  color: var(--a-st-new-c) !important;
+}
+[data-admin-theme="light"] .admin-content span[style*="422006"] {
+  background: var(--a-st-processing-bg) !important;
+  color: var(--a-st-processing-c) !important;
+}
+[data-admin-theme="light"] .admin-content span[style*="2e1065"] {
+  background: var(--a-st-shipped-bg) !important;
+  color: var(--a-st-shipped-c) !important;
+}
+[data-admin-theme="light"] .admin-content span[style*="052e16"] {
+  background: var(--a-st-delivered-bg) !important;
+  color: var(--a-st-delivered-c) !important;
+}
+[data-admin-theme="light"] .admin-content span[style*="450a0a"] {
+  background: var(--a-st-cancelled-bg) !important;
+  color: var(--a-st-cancelled-c) !important;
+}
+
+/* Row hover — inline bg override */
+[data-admin-theme="light"] .admin-content tr:hover {
   background: var(--a-bg-hover) !important;
 }
 
-[data-admin-theme="light"] .admin-card a {
-  color: var(--a-text-body) !important;
+/* Pagination & input buttons with dark bg */
+[data-admin-theme="light"] .admin-content [style*="background: #111116"],
+[data-admin-theme="light"] .admin-content [style*="background:#111116"] {
+  background: var(--a-bg-input) !important;
+  color: var(--a-text-3) !important;
+}
+
+/* Link chevrons */
+[data-admin-theme="light"] .admin-content a[style*="3f3f46"],
+[data-admin-theme="light"] .admin-content [style*="color: #27272a"],
+[data-admin-theme="light"] .admin-content [style*="color:#27272a"] {
+  color: var(--a-text-5) !important;
+}
+
+/* Image placeholders */
+[data-admin-theme="light"] .admin-content [style*="1a1a24"] {
+  background: var(--a-bg-input) !important;
 }
