@@ -321,9 +321,11 @@ function ProductCard({ product, onApprove }: { product: ProductRow; onApprove: (
         <button onClick={handleRegenerate} disabled={regenerating} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 text-white/50 text-xs hover:bg-white/10 transition-colors">
           {regenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />} Перегенерувати
         </button>
-        <a href={`/product/${product.slug || product.id}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 text-white/50 text-xs hover:bg-white/10 transition-colors">
-          <ExternalLink className="w-3.5 h-3.5" /> На сайті
-        </a>
+        {product.slug && (
+          <a href={`/product/${product.slug}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 text-white/50 text-xs hover:bg-white/10 transition-colors">
+            <ExternalLink className="w-3.5 h-3.5" /> На сайті
+          </a>
+        )}
       </div>
     </div>
   );
