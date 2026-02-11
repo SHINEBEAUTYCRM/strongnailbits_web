@@ -68,10 +68,11 @@ export async function GET(request: NextRequest) {
     // Per-brand stats
     const { data: brands } = await supabase
       .from('brands')
-      .select('id, name, slug')
+      .select('id, name, slug, photo_source_url, info_source_url, parse_config')
       .order('name');
 
-    const brandStats = (brands || []).map((brand: { id: string; name: string; slug: string }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const brandStats = (brands || []).map((brand: any) => {
       const brandProducts = allProducts.filter(p => p.brand_id === brand.id);
       return {
         brand_id: brand.id,
@@ -87,6 +88,8 @@ export async function GET(request: NextRequest) {
         errors: brandProducts.filter(p =>
           p.enrichment_status === 'error',
         ).length,
+        photo_source_url: brand.photo_source_url || null,
+        parse_config: brand.parse_config || null,
       };
     }).filter(b => b.total > 0);
 

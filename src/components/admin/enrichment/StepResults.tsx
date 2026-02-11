@@ -53,8 +53,8 @@ export function StepResults({ onBack, onRefreshStats }: Props) {
       const res = await fetch(`/api/admin/products?${params}`);
       if (res.ok) {
         const data = await res.json();
-        setProducts(Array.isArray(data) ? data : data.products || []);
-        setTotal(data.total || data.length || 0);
+        setProducts(data.products || []);
+        setTotal(data.total || 0);
       }
     } catch {
       // silent

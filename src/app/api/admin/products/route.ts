@@ -4,6 +4,60 @@ import { requireAdmin } from "@/lib/admin/requireAdmin";
 
 export const dynamic = "force-dynamic";
 
+/* GET — List products with enrichment data */
+export async function GET(request: NextRequest) {
+  try {
+    const auth = await requireAdmin(); if (auth.error) return auth.error;
+    const supabase = createAdminClient();
+    const sp = request.nextUrl.searchParams;
+
+    const offset = parseInt(sp.get('offset') || '0');
+    const limit = Math.min(parseInt(sp.get('limit') || '50'), 100);
+    const status = sp.get('enrichment_status');
+    const fields = sp.get('fields') || 'id,name_uk,sku,brand_id,enrichment_status,ai_metadata,photo_sources,main_image_url,description_uk';
+
+    // Build query
+    let query = supabase
+      .from('products')
+      .select(fields, { count: 'exact' });
+
+    if (status === 'enriched') {
+      query = query.in('enrichment_status', ['enriched', 'approved']);
+    } else if (status === 'error') {
+      query = query.eq('enrichment_status', 'error');
+    } else if (status === 'approved') {
+      query = query.eq('enrichment_status', 'approved');
+    }
+
+    query = query.order('updated_at', { ascending: false }).range(offset, offset + limit - 1);
+
+    const { data, error, count } = await query;
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // Join brand names
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rows = (data || []) as any[];
+    const brandIds = [...new Set(rows.map((p) => p.brand_id).filter(Boolean))] as string[];
+    let brandMap: Record<string, string> = {};
+    if (brandIds.length > 0) {
+      const { data: brands } = await supabase
+        .from('brands')
+        .select('id, name')
+        .in('id', brandIds);
+      brandMap = Object.fromEntries((brands || []).map((b: { id: string; name: string }) => [b.id, b.name]));
+    }
+
+    const products = rows.map((p) => ({
+      ...p,
+      brand_name: brandMap[p.brand_id as string] || null,
+    }));
+
+    return NextResponse.json({ products, total: count || 0 });
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Unknown error" }, { status: 500 });
+  }
+}
+
 function generateSlug(name: string): string {
   const map: Record<string, string> = {
     а: "a", б: "b", в: "v", г: "h", ґ: "g", д: "d", е: "e", є: "ye", ж: "zh",
