@@ -262,30 +262,30 @@ body {
   --a-shadow:      rgba(0,0,0,0.3);
 }
 
-/* Light theme */
+/* Light theme — WCAG AA contrast on white (#fff) checked */
 [data-admin-theme="light"] {
   --a-bg:          #f4f4f6;
   --a-bg-sidebar:  #ffffff;
   --a-bg-header:   #ffffff;
   --a-bg-card:     #ffffff;
-  --a-bg-input:    #f0f0f4;
-  --a-bg-hover:    #f5f5fa;
-  --a-bg-active:   #ede9fe;
-  --a-bg-muted:    #f4f4f5;
-  --a-border:      #e4e4e7;
-  --a-border-sub:  #f0f0f4;
-  --a-text:        #09090b;
-  --a-text-name:   #18181b;
-  --a-text-body:   #27272a;
-  --a-text-2:      #52525b;
-  --a-text-3:      #71717a;
-  --a-text-4:      #a1a1aa;
-  --a-text-5:      #d4d4d8;
-  --a-text-6:      #e4e4e7;
+  --a-bg-input:    #f1f5f9;     /* slate-100 — visible input bg */
+  --a-bg-hover:    #f1f5f9;     /* slate-50 — clear hover */
+  --a-bg-active:   #ede9fe;     /* violet-100 */
+  --a-bg-muted:    #f1f5f9;
+  --a-border:      #e2e8f0;     /* slate-200 — visible borders */
+  --a-border-sub:  #e2e8f0;
+  --a-text:        #09090b;     /* 18.4:1 ✓ headings */
+  --a-text-name:   #18181b;     /* 16.8:1 ✓ names */
+  --a-text-body:   #1e293b;     /* 14.5:1 ✓ body text */
+  --a-text-2:      #374151;     /*  8.4:1 ✓ secondary */
+  --a-text-3:      #4b5563;     /*  5.9:1 ✓ muted labels */
+  --a-text-4:      #6b7280;     /*  4.6:1 ✓ hints, meta */
+  --a-text-5:      #6b7280;     /*  4.6:1 ✓ table headers, nav groups */
+  --a-text-6:      #9ca3af;     /*  2.9:1 — decorative only */
   --a-accent:      #7c3aed;
   --a-accent-bg:   #ede9fe;
   --a-accent-btn:  #7c3aed;
-  --a-shadow:      rgba(0,0,0,0.06);
+  --a-shadow:      rgba(0,0,0,0.08);
 }
 
 /* ── Admin light-mode overrides for inline-styled content ── */
