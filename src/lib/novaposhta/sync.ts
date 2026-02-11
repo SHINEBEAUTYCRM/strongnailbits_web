@@ -89,7 +89,8 @@ export async function syncCities(): Promise<SyncResult> {
  * - addressParts.city is cleaner: "Новоселівка" or "Одеса"
  * - region.name is raion, parent.name is oblast
  */
-function divisionToRow(d: Record<string, unknown>) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function divisionToRow(d: any) {
   const settlement = d.settlement as Record<string, unknown> | undefined;
   const region = d.region as Record<string, unknown> | undefined;
   const parent = d.parent as Record<string, unknown> | undefined;
