@@ -83,9 +83,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                 const pr = o.profiles as { first_name?: string; last_name?: string; phone?: string } | null;
                 const name = [pr?.first_name, pr?.last_name].filter(Boolean).join(" ") || "—";
                 return (
-                  <tr key={o.id} className="transition-colors cursor-default" style={{ borderBottom: "1px solid var(--a-border-sub)" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--a-bg-hover)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                  <tr key={o.id} className="admin-row transition-colors cursor-default" style={{ borderBottom: "1px solid var(--a-border-sub)" }}>
                     <td className="px-4 py-3">
                       <Link href={`/admin/orders/${o.id}`} className="font-medium hover:underline" style={{ color: "var(--a-text-body)" }}>#{o.order_number}</Link>
                       {o.ttn && <NPTrackingBadge ttn={o.ttn} />}

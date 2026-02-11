@@ -408,9 +408,9 @@ body {
   color: var(--a-st-cancelled-c) !important;
 }
 
-/* Row hover — inline bg override */
-[data-admin-theme="light"] .admin-content tr:hover {
-  background: var(--a-bg-hover) !important;
+/* Admin table row hover — works in both themes */
+.admin-row:hover {
+  background: var(--a-bg-hover);
 }
 
 /* Pagination & input buttons with dark bg */

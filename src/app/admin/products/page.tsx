@@ -146,9 +146,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                 if (!pr.meta_title || !pr.meta_description) issues.push({ label: "S", tip: "SEO не заповнено", color: "#ef4444" });
 
                 return (
-                  <tr key={pr.id} className="transition-colors" style={{ borderBottom: "1px solid var(--a-border-sub)" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--a-bg-hover)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                  <tr key={pr.id} className="admin-row transition-colors" style={{ borderBottom: "1px solid var(--a-border-sub)" }}>
                     <td className="px-4 py-3">
                       <Link href={`/admin/products/${pr.id}`} className="flex items-center gap-3">
                         {pr.main_image_url
