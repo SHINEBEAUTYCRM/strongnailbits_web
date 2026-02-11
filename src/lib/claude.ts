@@ -361,8 +361,8 @@ export async function autoDetectSelectors(
 
     // Filter out null selectors
     const selectors: Record<string, string> = {};
-    if (parsed.selectors) {
-      for (const [key, val] of Object.entries(parsed.selectors)) {
+    if (parsed.selectors && typeof parsed.selectors === 'object') {
+      for (const [key, val] of Object.entries(parsed.selectors as Record<string, unknown>)) {
         if (val && typeof val === 'string' && val !== 'null') {
           selectors[key] = val;
         }
@@ -374,13 +374,13 @@ export async function autoDetectSelectors(
       throw new Error(
         `Claude не знайшов жодного CSS-селектора на сторінці ${pageUrl}. ` +
         `Можливо, це не сторінка товару, або сайт використовує JavaScript-рендеринг (SPA). ` +
-        (parsed.notes ? `Примітка Claude: ${parsed.notes}` : ''),
+        (parsed.notes ? `Примітка Claude: ${String(parsed.notes)}` : ''),
       );
     }
 
     return {
       selectors,
-      confidence: parsed.confidence || 0,
+      confidence: Number(parsed.confidence) || 0,
       tokens: { input: result.inputTokens, output: result.outputTokens },
     };
   } catch (err) {
