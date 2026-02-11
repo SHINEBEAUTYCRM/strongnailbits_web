@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
@@ -32,7 +32,7 @@ const STATUS_FILTERS: { label: string; value: string }[] = [
 
 const PAGE_SIZE = 50;
 
-export default function EnrichmentProductsPage() {
+function EnrichmentProductsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -275,5 +275,13 @@ export default function EnrichmentProductsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function EnrichmentProductsPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-[var(--t3)]">Завантаження...</div>}>
+      <EnrichmentProductsContent />
+    </Suspense>
   );
 }
