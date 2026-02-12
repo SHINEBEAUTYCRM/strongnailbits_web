@@ -18,8 +18,9 @@ const MAX_HISTORY = 30;
 
 const ADMIN_KEYBOARD = {
   keyboard: [
-    [{ text: "📊 Дашборд" }, { text: "📋 Замовлення" }, { text: "📦 Залишки" }],
-    [{ text: "👥 Клієнти" }, { text: "💰 Фінанси" }, { text: "⚙️ Налаштування" }],
+    [{ text: "📊 Дашборд" }, { text: "📋 Замовлення" }],
+    [{ text: "📦 Залишки" }, { text: "👥 Клієнти" }],
+    [{ text: "💰 Фінанси" }, { text: "⚙️ Налаштування" }],
   ],
   resize_keyboard: true,
   is_persistent: true,

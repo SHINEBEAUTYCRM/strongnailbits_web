@@ -28,8 +28,9 @@ const MAX_HISTORY = 20;
 
 const CLIENT_KEYBOARD = {
   keyboard: [
-    [{ text: "🔍 Пошук" }, { text: "🛒 Кошик" }, { text: "📦 Замовлення" }],
-    [{ text: "🆕 Новинки" }, { text: "🏷️ Бренди" }, { text: "📞 Контакти" }],
+    [{ text: "🔍 Пошук" }, { text: "🛒 Кошик" }],
+    [{ text: "📦 Замовлення" }, { text: "🆕 Новинки" }],
+    [{ text: "🏷️ Бренди" }, { text: "📞 Контакти" }],
   ],
   resize_keyboard: true,
   is_persistent: true,
