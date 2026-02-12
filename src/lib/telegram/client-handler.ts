@@ -20,9 +20,30 @@ import {
 } from "./formatters";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com";
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com").trim();
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
 const MAX_HISTORY = 20;
+
+// ────── Persistent Reply Keyboard ──────
+
+const CLIENT_KEYBOARD = {
+  keyboard: [
+    [{ text: "🔍 Пошук" }, { text: "🛒 Кошик" }, { text: "📦 Замовлення" }],
+    [{ text: "🆕 Новинки" }, { text: "🏷️ Бренди" }, { text: "📞 Контакти" }],
+  ],
+  resize_keyboard: true,
+  is_persistent: true,
+};
+
+/** Map persistent button text → AI query */
+const BUTTON_MESSAGES: Record<string, string> = {
+  "🔍 Пошук": "Хочу знайти товар",
+  "🛒 Кошик": "Що в моєму кошику?",
+  "📦 Замовлення": "Покажи мої замовлення",
+  "🆕 Новинки": "Що нового за цей тиждень?",
+  "🏷️ Бренди": "Які бренди у вас є?",
+  "📞 Контакти": "Як з вами зв'язатись?",
+};
 
 // ────── Types ──────
 
@@ -71,6 +92,13 @@ export async function handleClientMessage(
   // Handle callback buttons
   if (ctx.callbackData) {
     await handleCallback(bot, ctx);
+    return;
+  }
+
+  // Handle persistent keyboard buttons
+  if (BUTTON_MESSAGES[ctx.text]) {
+    ctx.text = BUTTON_MESSAGES[ctx.text];
+    await handleAIMessage(bot, ctx);
     return;
   }
 
@@ -202,10 +230,16 @@ async function handleAIMessage(
     // Send formatted response
     await sendFormattedResponse(bot, ctx.chatId, textContent, ctx);
   } catch (err) {
-    console.error("[TgClient] AI error:", err);
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("[TgClient] AI error:", errMsg);
+    // Show brief error hint in dev (remove in production if needed)
+    const hint = errMsg.includes("Claude API error")
+      ? `\n\n<i>${escHtml(errMsg.slice(0, 200))}</i>`
+      : "";
     await bot.sendMessage(
       ctx.chatId,
-      "Вибачте, виникла помилка. Спробуйте ще раз або зверніться до менеджера.",
+      `Вибачте, виникла помилка. Спробуйте ще раз або зверніться до менеджера.${hint}`,
+      { parse_mode: "HTML" },
     );
   }
 }
@@ -353,34 +387,32 @@ async function sendWelcome(
   bot: TelegramBot,
   ctx: ClientContext,
 ): Promise<void> {
-  const text = ctx.userName
-    ? `👋 Привіт, ${escHtml(ctx.userName)}!\n\nЯ Shine — AI-асистент магазину Shine Shop.\nВаш акаунт прив'язаний — бачу ваші замовлення та кошик.\n\nПросто напишіть що шукаєте!`
-    : `👋 Привіт! Я Shine — AI-асистент магазину Shine Shop.\n\n12 000+ товарів для nail-індустрії. Просто напишіть що шукаєте!\n\nЩоб бачити замовлення та кошик — прив'яжіть акаунт:`;
+  const greeting = ctx.userName
+    ? `👋 Привіт, <b>${escHtml(ctx.userName)}</b>!`
+    : `👋 Привіт!`;
 
-  const keyboard: Record<string, unknown>[][] = [];
+  const lines = [
+    greeting,
+    ``,
+    `Я <b>Shine</b> — AI-асистент магазину Shine Shop 💅`,
+    ``,
+    `🔍 12 000+ товарів для nail-індустрії`,
+    `🤖 Запитуйте — я знайду та порекомендую`,
+    `📦 Статус замовлень у реальному часі`,
+  ];
 
-  if (!ctx.profileId) {
-    keyboard.push([
-      {
-        text: "🔗 Прив'язати акаунт",
-        url: `${SITE_URL}/link-telegram`,
-      },
-    ]);
+  if (ctx.profileId) {
+    lines.push(``, `✅ Ваш акаунт прив'язаний — бачу замовлення та кошик.`);
+  } else {
+    lines.push(``, `🔗 <a href="${SITE_URL}/link-telegram">Прив'язати акаунт</a> — для кошика та замовлень`);
   }
 
-  keyboard.push(
-    [
-      { text: "🔍 Знайти товар", callback_data: "quick:search" },
-      { text: "🆕 Новинки", callback_data: "quick:new" },
-    ],
-    [
-      { text: "📦 Де замовлення?", callback_data: "quick:orders" },
-      { text: "📞 Контакти", callback_data: "quick:contacts" },
-    ],
-  );
+  lines.push(``, `Просто напишіть що шукаєте або натисніть кнопку 👇`);
 
-  await bot.sendMessage(ctx.chatId, text, {
-    reply_markup: { inline_keyboard: keyboard },
+  // Send with persistent reply keyboard
+  await bot.sendMessage(ctx.chatId, lines.join("\n"), {
+    parse_mode: "HTML",
+    reply_markup: CLIENT_KEYBOARD,
   });
 }
 

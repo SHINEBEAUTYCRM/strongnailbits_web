@@ -14,6 +14,27 @@ import { createAdminClient } from "@/lib/supabase/admin";
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
 const MAX_HISTORY = 30;
 
+// ────── Persistent Reply Keyboard (Admin) ──────
+
+const ADMIN_KEYBOARD = {
+  keyboard: [
+    [{ text: "📊 Дашборд" }, { text: "📋 Замовлення" }, { text: "📦 Залишки" }],
+    [{ text: "👥 Клієнти" }, { text: "💰 Фінанси" }, { text: "⚙️ Налаштування" }],
+  ],
+  resize_keyboard: true,
+  is_persistent: true,
+};
+
+/** Map persistent button text → AI query */
+const ADMIN_BUTTON_MESSAGES: Record<string, string> = {
+  "📊 Дашборд": "/start",
+  "📋 Замовлення": "Покажи нові замовлення",
+  "📦 Залишки": "Що закінчується? Критичні залишки",
+  "👥 Клієнти": "Хто найбільше купує?",
+  "💰 Фінанси": "Фінансовий звіт за сьогодні",
+  "⚙️ Налаштування": "Покажи налаштування сповіщень",
+};
+
 // ────── Types ──────
 
 export interface AdminContext {
@@ -64,6 +85,19 @@ export async function handleAdminMessage(
   // Handle callback buttons
   if (ctx.callbackData) {
     await handleAdminCallback(bot, ctx);
+    return;
+  }
+
+  // Handle persistent keyboard buttons
+  if (ADMIN_BUTTON_MESSAGES[ctx.text]) {
+    const mapped = ADMIN_BUTTON_MESSAGES[ctx.text];
+    if (mapped === "/start") {
+      await clearSession(ctx.telegramId);
+      await sendAdminDashboard(bot, ctx);
+      return;
+    }
+    ctx.text = mapped;
+    await handleAdminAI(bot, ctx);
     return;
   }
 
@@ -173,11 +207,22 @@ async function handleAdminAI(
     history.push({ role: "assistant", content: textContent });
     await saveSessionHistory(ctx.telegramId, history, allToolsUsed, totalInput, totalOutput);
 
-    // Send response
-    await bot.sendMessage(ctx.chatId, textContent, { parse_mode: "HTML" });
+    // Send response (keep persistent keyboard visible)
+    await bot.sendMessage(ctx.chatId, textContent || "Готово.", {
+      parse_mode: "HTML",
+      reply_markup: ADMIN_KEYBOARD,
+    });
   } catch (err) {
-    console.error("[TgAdmin] AI error:", err);
-    await bot.sendMessage(ctx.chatId, "❌ Помилка AI. Спробуйте ще раз.");
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("[TgAdmin] AI error:", errMsg);
+    const hint = errMsg.includes("Claude API error")
+      ? `\n\n<i>${escHtml(errMsg.slice(0, 200))}</i>`
+      : "";
+    await bot.sendMessage(
+      ctx.chatId,
+      `❌ Помилка AI. Спробуйте ще раз.${hint}`,
+      { parse_mode: "HTML" },
+    );
   }
 }
 
@@ -253,20 +298,10 @@ async function sendAdminDashboard(
     lines.push(...attentionItems);
   }
 
+  // Send dashboard with persistent reply keyboard
   await bot.sendMessage(ctx.chatId, lines.join("\n"), {
     parse_mode: "HTML",
-    reply_markup: {
-      inline_keyboard: [
-        [
-          { text: "📋 Замовлення", callback_data: "admin:orders" },
-          { text: "📊 Аналітика", callback_data: "admin:stats" },
-        ],
-        [
-          { text: "📦 Залишки", callback_data: "admin:stock" },
-          { text: "👥 Клієнти", callback_data: "admin:clients" },
-        ],
-      ],
-    },
+    reply_markup: ADMIN_KEYBOARD,
   });
 }
 
