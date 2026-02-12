@@ -143,6 +143,48 @@ body {
 }
 
 /* ================================================================ */
+/*  Valentine's Day hearts explosion                                  */
+/* ================================================================ */
+
+@keyframes heart-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(0) rotate(0deg) scale(0.3);
+  }
+  10% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-50vh) rotate(var(--rotate, 20deg)) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-110vh) rotate(calc(var(--rotate, 20deg) * 2)) scale(0.6);
+  }
+}
+
+@keyframes valentine-msg {
+  0% { opacity: 0; transform: scale(0.5); }
+  15% { opacity: 1; transform: scale(1.05); }
+  25% { transform: scale(1); }
+  75% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.8); }
+}
+
+.valentine-heart {
+  animation: heart-rise ease-out forwards;
+  will-change: transform, opacity;
+  filter: drop-shadow(0 2px 6px rgba(225, 29, 98, 0.3));
+}
+
+.valentine-message {
+  animation: valentine-msg 4s ease-in-out forwards;
+  animation-delay: 0.5s;
+  opacity: 0;
+}
+
+/* ================================================================ */
 /*  Sale pulse dot                                                    */
 /* ================================================================ */
 
