@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
   // ─── Webhook ───
   if (action === "all" || action === "webhook") {
     const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com";
+      (process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com").trim();
     const webhookUrl = `${siteUrl}/api/telegram/webhook`;
     const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
 
