@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { CheckCircle2, RefreshCw, Pencil, Loader2 } from 'lucide-react';
+import { SourceBadge } from './SourceBadge';
 
 const EXCLUDE_SPEC_KEYS = ['brand', 'brend', 'article', 'artikul', 'category', 'kategoriya', 'price', 'ціна', 'product_code', 'objem', 'бренд', 'артикул', 'категорія'];
 
