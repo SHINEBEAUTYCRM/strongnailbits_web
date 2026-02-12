@@ -85,12 +85,13 @@ function buildFormData(options: EditOptions): FormData {
     fd.append('margin', options.margin.toString());
   }
 
-  // Розмір
-  if (options.outputWidth) {
-    fd.append('outputSize.width', options.outputWidth.toString());
-  }
-  if (options.outputHeight) {
-    fd.append('outputSize.height', options.outputHeight.toString());
+  // Розмір (PhotoRoom v2 очікує єдиний рядок "WxH")
+  if (options.outputWidth && options.outputHeight) {
+    fd.append('outputSize', `${options.outputWidth}x${options.outputHeight}`);
+  } else if (options.outputWidth) {
+    fd.append('outputSize', `${options.outputWidth}x${options.outputWidth}`);
+  } else if (options.outputHeight) {
+    fd.append('outputSize', `${options.outputHeight}x${options.outputHeight}`);
   }
 
   return fd;
@@ -142,8 +143,13 @@ export async function batchEditImages(
     if (item.textRemovalMode) serialized['text.removal.mode'] = item.textRemovalMode;
     if (item.padding !== undefined) serialized.padding = item.padding.toString();
     if (item.margin !== undefined) serialized.margin = item.margin.toString();
-    if (item.outputWidth) serialized['outputSize.width'] = item.outputWidth.toString();
-    if (item.outputHeight) serialized['outputSize.height'] = item.outputHeight.toString();
+    if (item.outputWidth && item.outputHeight) {
+      serialized['outputSize'] = `${item.outputWidth}x${item.outputHeight}`;
+    } else if (item.outputWidth) {
+      serialized['outputSize'] = `${item.outputWidth}x${item.outputWidth}`;
+    } else if (item.outputHeight) {
+      serialized['outputSize'] = `${item.outputHeight}x${item.outputHeight}`;
+    }
 
     return serialized;
   });

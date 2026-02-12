@@ -89,8 +89,7 @@ export async function POST(request: NextRequest) {
       'text.removal.mode',
       'padding',
       'margin',
-      'outputSize.width',
-      'outputSize.height',
+      'outputSize',
     ];
 
     for (const key of passthrough) {
