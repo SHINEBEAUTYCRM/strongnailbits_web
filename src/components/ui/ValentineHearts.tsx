@@ -7,7 +7,7 @@ function isValentinePeriod(): boolean {
   const now = new Date();
   const m = now.getMonth(); // 0-based → Jan=0, Feb=1
   const d = now.getDate();
-  return m === 1 && d >= 13 && d <= 15;
+  return m === 1 && d >= 11 && d <= 15;
 }
 
 const HEARTS = ["❤️", "💖", "💕", "💗", "💓", "💘", "💝", "🩷", "♥️", "🤍"];
