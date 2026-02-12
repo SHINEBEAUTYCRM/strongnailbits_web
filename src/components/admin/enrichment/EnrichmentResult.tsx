@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { CheckCircle2, RefreshCw, Pencil, Loader2 } from 'lucide-react';
-import { SourceBadge } from './SourceBadge';
+
+const EXCLUDE_SPEC_KEYS = ['brand', 'brend', 'article', 'artikul', 'category', 'kategoriya', 'price', 'ціна', 'product_code', 'objem', 'бренд', 'артикул', 'категорія'];
 
 interface GenerateResult {
   description_uk: string;
@@ -60,7 +61,10 @@ export function EnrichmentResult({ result, feedback, onFeedbackChange, onApprove
             className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-xs text-white placeholder:text-white/20 focus:outline-none focus:border-[#a855f7]/50"
           />
         ) : (
-          <p className="text-xs text-white/70 leading-relaxed">{result.description_uk}</p>
+          <div
+            className="text-sm text-white/80 leading-relaxed prose prose-invert prose-sm prose-a:text-purple-400 prose-a:no-underline hover:prose-a:underline max-w-none"
+            dangerouslySetInnerHTML={{ __html: result.description_uk }}
+          />
         )}
         <div className="flex items-center gap-2 mt-1">
           <button
@@ -83,13 +87,21 @@ export function EnrichmentResult({ result, feedback, onFeedbackChange, onApprove
         <div>
           <p className="text-[10px] text-white/30 mb-1">ХАРАКТЕРИСТИКИ</p>
           <div className="space-y-0.5">
-            {Object.entries(result.specs).map(([key, val]) => (
-              <div key={key} className="flex items-center text-xs gap-2">
-                <span className="text-white/30 w-32 shrink-0 truncate">{key}</span>
-                <span className="text-white/60">{val.value}</span>
-                <span className="text-[9px] text-white/15 ml-auto">{val.source}</span>
-              </div>
-            ))}
+            {Object.entries(result.specs)
+              .filter(([key]) => !EXCLUDE_SPEC_KEYS.includes(key.toLowerCase()))
+              .map(([key, val]) => (
+                <div key={key} className="flex justify-between py-1.5 border-b border-white/5">
+                  <span className="text-white/50 text-sm">{key}</span>
+                  <span className="text-white/90 text-sm flex items-center gap-2">
+                    {typeof val === 'object' && val !== null ? (val as { value: string }).value : String(val)}
+                    {typeof val === 'object' && val !== null && (val as { source?: string }).source && (
+                      <span className="text-[10px] text-white/30">
+                        {(val as { source: string }).source === 'vision' ? '👁' : `🌐 ${(val as { source: string }).source}`}
+                      </span>
+                    )}
+                  </span>
+                </div>
+              ))}
           </div>
         </div>
       )}

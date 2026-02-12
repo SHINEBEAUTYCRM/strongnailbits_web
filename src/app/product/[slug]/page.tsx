@@ -132,7 +132,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
   }
 
   const productName = localizedName(product, lang);
-  const productDescription = localizedDescription(product, lang);
+  // AI description takes priority, fallback to CS-Cart
+  const aiDescription = (product.ai_metadata as Record<string, unknown> | null)?.description_uk as string | undefined;
+  const productDescription = aiDescription || localizedDescription(product, lang);
   const categoryName = category ? localizedName(category, lang) : null;
 
   const breadcrumbs = await buildBreadcrumbs(
