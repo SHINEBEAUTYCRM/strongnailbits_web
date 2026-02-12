@@ -760,7 +760,9 @@ async function adminFinance(
   // By client type
   const byType = new Map<string, number>();
   orders?.forEach((o) => {
-    const type = (o.profiles as Record<string, unknown> | null)?.type || "retail";
+    const profileRaw = o.profiles;
+    const profileObj = (Array.isArray(profileRaw) ? profileRaw[0] : profileRaw) as Record<string, unknown> | null;
+    const type = profileObj?.type || "retail";
     byType.set(String(type), (byType.get(String(type)) || 0) + Number(o.total || 0));
   });
 

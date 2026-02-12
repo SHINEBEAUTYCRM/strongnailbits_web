@@ -109,7 +109,9 @@ async function handleUpdate(update: TgUpdate): Promise<void> {
       .maybeSingle();
 
     if (admin) {
-      const profile = admin.profiles as Record<string, unknown> | null;
+      const profileRaw = admin.profiles;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const profile = (Array.isArray(profileRaw) ? profileRaw[0] : profileRaw) as any as Record<string, unknown> | null;
       const adminCtx: AdminContext = {
         chatId,
         telegramId,

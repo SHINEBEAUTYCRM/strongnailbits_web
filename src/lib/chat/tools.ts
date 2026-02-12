@@ -255,8 +255,8 @@ async function getCart(supabase: SupabaseClient, profileId?: string) {
     .filter(Boolean);
 
   const total = items.reduce(
-    (sum: number, item: Record<string, unknown>) =>
-      sum + (Number(item.subtotal) || 0),
+    (sum: number, item: unknown) =>
+      sum + (Number((item as Record<string, unknown>)?.subtotal) || 0),
     0,
   );
 

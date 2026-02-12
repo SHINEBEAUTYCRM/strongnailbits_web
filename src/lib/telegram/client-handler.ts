@@ -41,6 +41,20 @@ interface ClaudeMessage {
   content: unknown;
 }
 
+interface ClaudeContentBlock {
+  type: string;
+  text?: string;
+  name?: string;
+  id?: string;
+  input?: Record<string, unknown>;
+}
+
+interface ClaudeResponse {
+  content: ClaudeContentBlock[];
+  stop_reason: string;
+  usage?: { input_tokens: number; output_tokens: number };
+}
+
 // ────── Main Entry ──────
 
 export async function handleClientMessage(
@@ -124,19 +138,19 @@ async function handleAIMessage(
       await bot.sendChatAction(ctx.chatId, "typing");
 
       const toolUseBlocks = (response.content || []).filter(
-        (b: Record<string, unknown>) => b.type === "tool_use",
+        (b) => b.type === "tool_use",
       );
 
       const toolResults = await Promise.all(
         toolUseBlocks.map(
-          async (toolUse: Record<string, unknown>) => {
+          async (toolUse) => {
             const toolName = String(toolUse.name);
             allToolsUsed.push(toolName);
 
             try {
               const result = await executeToolCall(
                 toolName,
-                toolUse.input as Record<string, unknown>,
+                (toolUse.input || {}) as Record<string, unknown>,
                 ctx.profileId,
               );
               return {
@@ -177,8 +191,8 @@ async function handleAIMessage(
 
     // Extract text response
     const textContent = (response.content || [])
-      .filter((b: Record<string, unknown>) => b.type === "text")
-      .map((b: Record<string, unknown>) => String(b.text))
+      .filter((b) => b.type === "text")
+      .map((b) => String(b.text || ""))
       .join("");
 
     // Save to session
@@ -714,7 +728,7 @@ async function callClaude(
     tools: unknown[];
     messages: unknown[];
   },
-): Promise<Record<string, unknown>> {
+): Promise<ClaudeResponse> {
   const res = await fetch(ANTHROPIC_API, {
     method: "POST",
     headers: {

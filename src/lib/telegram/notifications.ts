@@ -194,7 +194,8 @@ async function sendToAdmins(
   for (const admin of admins) {
     // Check quiet hours for non-critical
     if (priority !== "critical") {
-      const settings = admin.admin_notification_settings as Record<string, unknown> | null;
+      const settingsRaw = admin.admin_notification_settings;
+      const settings = (Array.isArray(settingsRaw) ? settingsRaw[0] : settingsRaw) as Record<string, unknown> | null;
       if (settings && isQuietHours(settings)) continue;
     }
 
