@@ -10,7 +10,6 @@ import {
   MessageSquare,
   ChevronLeft,
   AlertCircle,
-  MapPin,
   Building2,
   Globe,
 } from "lucide-react";
@@ -80,8 +79,7 @@ const INITIAL_FORM: FormData = {
 };
 
 const SHIPPING_METHODS = [
-  { id: "np_warehouse", label: "Нова Пошта — відділення", icon: Truck },
-  { id: "np_parcel", label: "Нова Пошта — поштомат", icon: MapPin },
+  { id: "np_warehouse", label: "Нова Пошта — відділення / поштомат", icon: Truck },
   { id: "np_address", label: "Нова Пошта — адресна доставка", icon: Truck },
   { id: "ukrposhta", label: "УкрПошта", icon: Truck },
   { id: "pickup", label: "Самовивіз (Одеса)", icon: Building2 },
@@ -264,9 +262,9 @@ export default function CheckoutPage() {
     }
 
     const m = form.shippingMethod;
-    if (m === "np_warehouse" || m === "np_parcel") {
+    if (m === "np_warehouse") {
       if (!form.city.trim()) errs.city = "Введіть місто";
-      if (!form.warehouse.trim()) errs.warehouse = "Введіть відділення";
+      if (!form.warehouse.trim()) errs.warehouse = "Оберіть відділення або поштомат";
     } else if (m === "np_address") {
       if (!form.city.trim()) errs.city = "Введіть місто";
       if (!form.street.trim()) errs.street = "Введіть вулицю";
@@ -470,7 +468,7 @@ export default function CheckoutPage() {
             </div>
 
             <div className="mt-4 flex flex-col gap-3">
-              {(form.shippingMethod === "np_warehouse" || form.shippingMethod === "np_parcel") && (
+              {form.shippingMethod === "np_warehouse" && (
                 <>
                   <div data-field="city">
                     <NPCitySearch
@@ -485,7 +483,6 @@ export default function CheckoutPage() {
                     <NPWarehouseSelect
                       cityName={form.city}
                       cityRef={form.cityRef}
-                      type={form.shippingMethod === "np_parcel" ? "parcel" : "warehouse"}
                       value={form.warehouse}
                       warehouseRef={form.warehouseRef}
                       onSelect={(wh) => { update("warehouse", wh.name); update("warehouseRef", String(wh.id)); }}
