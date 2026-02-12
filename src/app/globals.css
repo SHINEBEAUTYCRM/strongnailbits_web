@@ -327,7 +327,13 @@ body {
 [data-admin-theme="light"] .admin-content tr[style*="0e0e14"] {
   border-color: var(--a-border-sub) !important;
 }
-[data-admin-theme="light"] .admin-content div[style*="border"] {
+/* Generic border override — only target 1px solid dark borders */
+[data-admin-theme="light"] .admin-content [style*="border: 1px solid #1e1e2a"],
+[data-admin-theme="light"] .admin-content [style*="border:1px solid #1e1e2a"],
+[data-admin-theme="light"] .admin-content [style*="borderBottom: \"1px solid"],
+[data-admin-theme="light"] .admin-content [style*="border-bottom: 1px solid #1e1e2a"],
+[data-admin-theme="light"] .admin-content [style*="border: 1px solid #141420"],
+[data-admin-theme="light"] .admin-content [style*="border:1px solid #141420"] {
   border-color: var(--a-border) !important;
 }
 
@@ -430,4 +436,177 @@ body {
 /* Image placeholders */
 [data-admin-theme="light"] .admin-content [style*="1a1a24"] {
   background: var(--a-bg-input) !important;
+}
+
+/* ================================================================ */
+/*  Tailwind-class overrides for admin light theme                   */
+/*  Targets pages using Tailwind arbitrary dark colors (bg-[#xxx])   */
+/* ================================================================ */
+
+/* ── Dark backgrounds → white cards ── */
+[data-admin-theme="light"] .admin-content .bg-\[\#13131a\],
+[data-admin-theme="light"] .admin-content .bg-\[\#0e0e14\],
+[data-admin-theme="light"] .admin-content .bg-\[\#111116\],
+[data-admin-theme="light"] .admin-content .bg-\[\#111118\],
+[data-admin-theme="light"] .admin-content .bg-\[\#0c0c12\],
+[data-admin-theme="light"] .admin-content .bg-\[\#0a0a10\],
+[data-admin-theme="light"] .admin-content .bg-\[\#0a0a0f\],
+[data-admin-theme="light"] .admin-content .bg-\[\#141420\],
+[data-admin-theme="light"] .admin-content .bg-\[\#1a1a24\],
+[data-admin-theme="light"] .admin-content .bg-\[\#1e1e2a\],
+[data-admin-theme="light"] .admin-content .bg-\[\#08080c\] {
+  background-color: var(--a-bg-card) !important;
+  box-shadow: var(--a-card-shadow);
+}
+
+/* Sticky header with opacity (api-docs) */
+[data-admin-theme="light"] .admin-content .bg-\[\#0c0c12\]\/95 {
+  background-color: rgba(255,255,255,0.95) !important;
+  backdrop-filter: blur(8px);
+}
+
+/* ── White/transparent borders → visible gray ── */
+[data-admin-theme="light"] .admin-content .border-white\/5,
+[data-admin-theme="light"] .admin-content .border-white\/10,
+[data-admin-theme="light"] .admin-content .border-white\/15,
+[data-admin-theme="light"] .admin-content .border-white\/20,
+[data-admin-theme="light"] .admin-content .border-white\/30 {
+  border-color: var(--a-border) !important;
+}
+
+/* ── Dark hex borders → gray ── */
+[data-admin-theme="light"] .admin-content .border-\[\#1e1e2a\],
+[data-admin-theme="light"] .admin-content .border-\[\#27272a\],
+[data-admin-theme="light"] .admin-content .border-\[\#141420\] {
+  border-color: var(--a-border) !important;
+}
+
+/* ── Semi-transparent white backgrounds → subtle fills ── */
+[data-admin-theme="light"] .admin-content .bg-white\/5,
+[data-admin-theme="light"] .admin-content .bg-white\/\[0\.02\],
+[data-admin-theme="light"] .admin-content .bg-white\/\[0\.03\] {
+  background-color: var(--a-bg-hover) !important;
+}
+[data-admin-theme="light"] .admin-content .bg-white\/10 {
+  background-color: var(--a-bg-input) !important;
+}
+[data-admin-theme="light"] .admin-content .bg-white\/20 {
+  background-color: var(--a-bg-muted) !important;
+}
+
+/* ── Text colors ── */
+[data-admin-theme="light"] .admin-content .text-white {
+  color: var(--a-text) !important;
+}
+[data-admin-theme="light"] .admin-content .text-white\/80 {
+  color: var(--a-text-body) !important;
+}
+[data-admin-theme="light"] .admin-content .text-gray-200 {
+  color: var(--a-text) !important;
+}
+[data-admin-theme="light"] .admin-content .text-gray-300 {
+  color: var(--a-text-body) !important;
+}
+[data-admin-theme="light"] .admin-content .text-gray-400 {
+  color: var(--a-text-2) !important;
+}
+[data-admin-theme="light"] .admin-content .text-gray-500 {
+  color: var(--a-text-3) !important;
+}
+[data-admin-theme="light"] .admin-content .text-gray-600 {
+  color: var(--a-text-4) !important;
+}
+/* zinc palette used in some admin pages */
+[data-admin-theme="light"] .admin-content .text-zinc-300 {
+  color: var(--a-text-body) !important;
+}
+[data-admin-theme="light"] .admin-content .text-zinc-400 {
+  color: var(--a-text-2) !important;
+}
+[data-admin-theme="light"] .admin-content .text-zinc-500 {
+  color: var(--a-text-3) !important;
+}
+[data-admin-theme="light"] .admin-content .text-zinc-600 {
+  color: var(--a-text-4) !important;
+}
+[data-admin-theme="light"] .admin-content .text-zinc-700 {
+  color: var(--a-text-5) !important;
+}
+/* zinc hover */
+[data-admin-theme="light"] .admin-content .hover\:text-zinc-300:hover {
+  color: var(--a-text) !important;
+}
+/* placeholder in inputs */
+[data-admin-theme="light"] .admin-content .placeholder\:text-zinc-600::placeholder {
+  color: var(--a-text-4) !important;
+}
+/* bg-zinc */
+[data-admin-theme="light"] .admin-content .bg-zinc-800 {
+  background-color: var(--a-bg-card) !important;
+  border: 1px solid var(--a-border);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+[data-admin-theme="light"] .admin-content .bg-zinc-500\/20 {
+  background-color: #e5e7eb !important;
+}
+
+/* ── Hover states → adapt ── */
+[data-admin-theme="light"] .admin-content .hover\:text-white:hover {
+  color: var(--a-text) !important;
+}
+[data-admin-theme="light"] .admin-content .hover\:text-gray-300:hover {
+  color: var(--a-text-body) !important;
+}
+[data-admin-theme="light"] .admin-content .hover\:border-white\/10:hover,
+[data-admin-theme="light"] .admin-content .hover\:border-white\/20:hover {
+  border-color: var(--a-accent) !important;
+}
+[data-admin-theme="light"] .admin-content .hover\:border-purple-500\/30:hover {
+  border-color: var(--a-accent) !important;
+}
+[data-admin-theme="light"] .admin-content .hover\:border-\[\#27272a\]:hover {
+  border-color: var(--a-accent) !important;
+}
+[data-admin-theme="light"] .admin-content .hover\:bg-white\/5:hover,
+[data-admin-theme="light"] .admin-content .hover\:bg-white\/10:hover {
+  background-color: var(--a-bg-hover) !important;
+}
+[data-admin-theme="light"] .admin-content .hover\:bg-\[\#1a1a24\]:hover,
+[data-admin-theme="light"] .admin-content .hover\:bg-\[\#1e1e2a\]:hover,
+[data-admin-theme="light"] .admin-content .hover\:bg-\[\#111118\]:hover {
+  background-color: var(--a-bg-hover) !important;
+}
+
+/* ── Divide (table, list dividers) ── */
+[data-admin-theme="light"] .admin-content .divide-white\/5 > * + *,
+[data-admin-theme="light"] .admin-content .divide-\[\#1e1e2a\] > * + * {
+  border-color: var(--a-border) !important;
+}
+
+/* ── Funnel stage pills — keep their colors but ensure readability ── */
+[data-admin-theme="light"] .admin-content [style*="1e1e2e"],
+[data-admin-theme="light"] .admin-content [style*="1e1e2a"] {
+  background: var(--a-bg-input) !important;
+  border-color: var(--a-border) !important;
+}
+
+/* ── Extra inline dark bg patterns (for pages not yet on CSS vars) ── */
+[data-admin-theme="light"] .admin-content [style*="18181b"],
+[data-admin-theme="light"] .admin-content [style*="141420"],
+[data-admin-theme="light"] .admin-content [style*="0a0a10"] {
+  background: var(--a-bg-card) !important;
+  border-color: var(--a-border) !important;
+  box-shadow: var(--a-card-shadow);
+}
+
+/* ── Scrollbar — subtle for light theme ── */
+[data-admin-theme="light"] .admin-content::-webkit-scrollbar-track {
+  background: var(--a-bg);
+}
+[data-admin-theme="light"] .admin-content::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+[data-admin-theme="light"] .admin-content::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }
