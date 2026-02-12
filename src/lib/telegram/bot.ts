@@ -129,6 +129,17 @@ export class TelegramBot {
     });
   }
 
+  /** Delete a message */
+  async deleteMessage(
+    chatId: number,
+    messageId: number,
+  ): Promise<TgApiResult> {
+    return this.request("deleteMessage", {
+      chat_id: chatId,
+      message_id: messageId,
+    });
+  }
+
   /** Edit an existing message text */
   async editMessageText(
     chatId: number,

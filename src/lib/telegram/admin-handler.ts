@@ -118,11 +118,19 @@ async function handleAdminAI(
   bot: TelegramBot,
   ctx: AdminContext,
 ): Promise<void> {
+  // Show "processing" message and hide keyboard while working
+  const waitMsg = await bot.sendMessage(ctx.chatId, "⏳ Шукаю інформацію...", {
+    reply_markup: { remove_keyboard: true },
+  });
+  const waitMsgId = waitMsg.result
+    ? ((waitMsg.result as Record<string, unknown>)?.message_id as number | undefined)
+    : undefined;
   await bot.sendChatAction(ctx.chatId, "typing");
 
   const apiKey = (process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || "").trim();
   if (!apiKey) {
-    await bot.sendMessage(ctx.chatId, "❌ Claude API не налаштовано.");
+    if (waitMsgId) await bot.deleteMessage(ctx.chatId, waitMsgId);
+    await bot.sendMessage(ctx.chatId, "❌ Claude API не налаштовано.", { reply_markup: ADMIN_KEYBOARD });
     return;
   }
 
@@ -208,7 +216,8 @@ async function handleAdminAI(
     history.push({ role: "assistant", content: textContent });
     await saveSessionHistory(ctx.telegramId, history, allToolsUsed, totalInput, totalOutput);
 
-    // Send response (keep persistent keyboard visible)
+    // Delete "waiting" message and send response with keyboard
+    if (waitMsgId) await bot.deleteMessage(ctx.chatId, waitMsgId);
     await bot.sendMessage(ctx.chatId, textContent || "Готово.", {
       parse_mode: "HTML",
       reply_markup: ADMIN_KEYBOARD,
@@ -216,13 +225,14 @@ async function handleAdminAI(
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     console.error("[TgAdmin] AI error:", errMsg);
+    if (waitMsgId) await bot.deleteMessage(ctx.chatId, waitMsgId);
     const hint = errMsg.includes("Claude API error")
       ? `\n\n<i>${escHtml(errMsg.slice(0, 200))}</i>`
       : "";
     await bot.sendMessage(
       ctx.chatId,
       `❌ Помилка AI. Спробуйте ще раз.${hint}`,
-      { parse_mode: "HTML" },
+      { parse_mode: "HTML", reply_markup: ADMIN_KEYBOARD },
     );
   }
 }

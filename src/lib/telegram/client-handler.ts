@@ -119,14 +119,21 @@ async function handleAIMessage(
   bot: TelegramBot,
   ctx: ClientContext,
 ): Promise<void> {
-  // Show typing indicator
+  // Show "processing" message and hide keyboard while working
+  const waitMsg = await bot.sendMessage(ctx.chatId, "⏳ Шукаю інформацію...", {
+    reply_markup: { remove_keyboard: true },
+  });
+  const waitResult = (waitMsg as unknown as Record<string, unknown>)?.result as Record<string, unknown> | undefined;
+  const waitMsgId = waitResult?.message_id as number | undefined;
   await bot.sendChatAction(ctx.chatId, "typing");
 
   const apiKey = (process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || "").trim();
   if (!apiKey) {
+    if (waitMsgId) await bot.deleteMessage(ctx.chatId, waitMsgId);
     await bot.sendMessage(
       ctx.chatId,
       "Вибачте, AI-консультант тимчасово недоступний. Зверніться до менеджера.",
+      { reply_markup: CLIENT_KEYBOARD },
     );
     return;
   }
@@ -228,19 +235,20 @@ async function handleAIMessage(
     history.push({ role: "assistant", content: textContent });
     await saveSessionHistory(ctx.telegramId, history, allToolsUsed, totalInput, totalOutput);
 
-    // Send formatted response
+    // Delete "waiting" message and send formatted response
+    if (waitMsgId) await bot.deleteMessage(ctx.chatId, waitMsgId);
     await sendFormattedResponse(bot, ctx.chatId, textContent, ctx);
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     console.error("[TgClient] AI error:", errMsg);
-    // Show brief error hint in dev (remove in production if needed)
+    if (waitMsgId) await bot.deleteMessage(ctx.chatId, waitMsgId);
     const hint = errMsg.includes("Claude API error")
       ? `\n\n<i>${escHtml(errMsg.slice(0, 200))}</i>`
       : "";
     await bot.sendMessage(
       ctx.chatId,
       `Вибачте, виникла помилка. Спробуйте ще раз або зверніться до менеджера.${hint}`,
-      { parse_mode: "HTML" },
+      { parse_mode: "HTML", reply_markup: CLIENT_KEYBOARD },
     );
   }
 }
@@ -259,23 +267,34 @@ async function sendFormattedResponse(
   const actionsMatch = text.match(/<actions>([\s\S]*?)<\/actions>/);
 
   // Clean text from structured data
-  let cleanText = text
+  const cleanText = text
     .replace(/<products>[\s\S]*?<\/products>/g, "")
     .replace(/<order>[\s\S]*?<\/order>/g, "")
     .replace(/<actions>[\s\S]*?<\/actions>/g, "")
     .trim();
 
+  // Track if we've restored the keyboard yet
+  let keyboardRestored = false;
+
   // Send main text message
   if (cleanText) {
-    // Quick action buttons if relevant
     const buttons = actionsMatch
       ? parseActions(actionsMatch[1])
       : undefined;
 
-    await bot.sendMessage(chatId, cleanText, {
-      parse_mode: "HTML",
-      reply_markup: buttons,
-    });
+    // If no inline buttons, use this message to restore the persistent keyboard
+    if (!buttons && !productMatch && !orderMatch) {
+      await bot.sendMessage(chatId, cleanText, {
+        parse_mode: "HTML",
+        reply_markup: CLIENT_KEYBOARD,
+      });
+      keyboardRestored = true;
+    } else {
+      await bot.sendMessage(chatId, cleanText, {
+        parse_mode: "HTML",
+        reply_markup: buttons,
+      });
+    }
   }
 
   // Send product cards as photos
@@ -284,15 +303,12 @@ async function sendFormattedResponse(
       const products = JSON.parse(productMatch[1]);
       if (Array.isArray(products)) {
         if (products.length === 1) {
-          // Single product → photo with buttons
           await sendProductPhoto(bot, chatId, products[0]);
         } else if (products.length <= 5) {
-          // Few products → individual photos
           for (const product of products.slice(0, 5)) {
             await sendProductPhoto(bot, chatId, product);
           }
         } else {
-          // Many products → text list with number buttons
           const listText = formatProductListText(products.slice(0, 10));
           await bot.sendMessage(chatId, listText, {
             parse_mode: "HTML",
@@ -320,6 +336,13 @@ async function sendFormattedResponse(
     } catch {
       /* ignore */
     }
+  }
+
+  // Ensure keyboard is always restored after the response
+  if (!keyboardRestored) {
+    await bot.sendMessage(chatId, "👇 Оберіть дію:", {
+      reply_markup: CLIENT_KEYBOARD,
+    });
   }
 }
 
