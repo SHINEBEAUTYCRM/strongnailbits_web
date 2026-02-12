@@ -149,38 +149,65 @@ body {
 @keyframes heart-rise {
   0% {
     opacity: 0;
-    transform: translateY(0) rotate(0deg) scale(0.3);
+    transform: translateY(0) translateX(0) rotate(0deg) scale(0.2);
   }
-  10% {
+  8% {
     opacity: 1;
+    transform: translateY(-8vh) translateX(calc(var(--sway, 30px) * -0.3)) rotate(calc(var(--rotate, 20deg) * 0.3)) scale(0.8);
   }
-  50% {
+  30% {
     opacity: 1;
-    transform: translateY(-50vh) rotate(var(--rotate, 20deg)) scale(1);
+    transform: translateY(-30vh) translateX(var(--sway, 30px)) rotate(var(--rotate, 20deg)) scale(1);
+  }
+  60% {
+    opacity: 0.8;
+    transform: translateY(-60vh) translateX(calc(var(--sway, 30px) * -0.5)) rotate(calc(var(--rotate, 20deg) * 1.5)) scale(0.9);
   }
   100% {
     opacity: 0;
-    transform: translateY(-110vh) rotate(calc(var(--rotate, 20deg) * 2)) scale(0.6);
+    transform: translateY(-115vh) translateX(calc(var(--sway, 30px) * 0.7)) rotate(calc(var(--rotate, 20deg) * 2.5)) scale(0.4);
+  }
+}
+
+@keyframes sparkle-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(-15vh) scale(1);
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-110vh) scale(0);
   }
 }
 
 @keyframes valentine-msg {
-  0% { opacity: 0; transform: scale(0.5); }
-  15% { opacity: 1; transform: scale(1.05); }
-  25% { transform: scale(1); }
-  75% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(0.8); }
+  0% { opacity: 0; transform: scale(0.5) translateY(20px); }
+  12% { opacity: 1; transform: scale(1.06) translateY(0); }
+  20% { transform: scale(1) translateY(0); }
+  70% { opacity: 1; transform: scale(1) translateY(0); }
+  100% { opacity: 0; transform: scale(0.9) translateY(-10px); }
 }
 
 .valentine-heart {
   animation: heart-rise ease-out forwards;
   will-change: transform, opacity;
-  filter: drop-shadow(0 2px 6px rgba(225, 29, 98, 0.3));
+}
+
+.valentine-sparkle {
+  animation: sparkle-rise ease-out forwards;
+  will-change: transform, opacity;
 }
 
 .valentine-message {
-  animation: valentine-msg 4s ease-in-out forwards;
-  animation-delay: 0.5s;
+  animation: valentine-msg 4.5s ease-in-out forwards;
+  animation-delay: 0.6s;
   opacity: 0;
 }
 
