@@ -8,10 +8,55 @@
 import { type SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ToolDefinition } from "@/lib/chat/tool-definitions";
+import { executeToolCall } from "@/lib/chat/tools";
 
 // ────── Tool Definitions ──────
 
 export const adminToolDefinitions: ToolDefinition[] = [
+  {
+    name: "search_products",
+    description:
+      "Пошук товарів по назві, бренду, категорії, артикулу. Використовуй ЗАВЖДИ коли адмін шукає конкретний товар.",
+    input_schema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "Текст пошуку (назва, бренд, артикул)",
+        },
+        brand: {
+          type: "string",
+          description: "Фільтр по бренду (DARK, Siller, SUNUV, etc)",
+        },
+        category_slug: {
+          type: "string",
+          description: "Slug категорії (gel-laky, bazy, topy, obladnannya, etc)",
+        },
+        in_stock_only: {
+          type: "boolean",
+          description: "Тільки в наявності (default: true)",
+        },
+        limit: {
+          type: "number",
+          description: "Кількість результатів (default: 6, max: 20)",
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "get_product_by_id",
+    description:
+      "Повна інформація про конкретний товар — ціни, опис, наявність, фото.",
+    input_schema: {
+      type: "object",
+      properties: {
+        product_id: { type: "string", description: "UUID товару" },
+        slug: { type: "string", description: "Slug товару" },
+      },
+      required: [],
+    },
+  },
   {
     name: "dashboard_stats",
     description:
@@ -294,6 +339,9 @@ export async function executeAdminToolCall(
   const supabase = createAdminClient();
 
   switch (toolName) {
+    case "search_products":
+    case "get_product_by_id":
+      return executeToolCall(toolName, params);
     case "dashboard_stats":
       return dashboardStats(supabase, params);
     case "admin_orders":

@@ -1,6 +1,10 @@
 "use client";
 
-import { Loader2, Save } from 'lucide-react';
+import {
+  Loader2, Save, Scissors, Paintbrush, Eclipse,
+  Sun, ZoomIn, TypeOutline,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useImageStudioStore } from '@/store/image-studio-store';
 import { BackgroundPicker } from './BackgroundPicker';
 import { ImageHistory } from './ImageHistory';
@@ -11,13 +15,13 @@ interface AIToolbarProps {
   isSaving: boolean;
 }
 
-const AI_TOOLS: { action: PhotoRoomAction; emoji: string; label: string }[] = [
-  { action: 'remove-bg', emoji: '✂️', label: 'Видалити фон' },
-  { action: 'ai-background', emoji: '🎨', label: 'AI фон' },
-  { action: 'shadow', emoji: '🌑', label: 'Тіні' },
-  { action: 'relight', emoji: '💡', label: 'Освітлення' },
-  { action: 'upscale', emoji: '🔍', label: 'Збільшити' },
-  { action: 'text-remove', emoji: '🚫', label: 'Прибрати текст' },
+const AI_TOOLS: { action: PhotoRoomAction; icon: LucideIcon; label: string; color: string }[] = [
+  { action: 'remove-bg', icon: Scissors, label: 'Видалити фон', color: '#f87171' },
+  { action: 'ai-background', icon: Paintbrush, label: 'AI фон', color: '#a855f7' },
+  { action: 'shadow', icon: Eclipse, label: 'Тіні', color: '#6b7280' },
+  { action: 'relight', icon: Sun, label: 'Освітлення', color: '#facc15' },
+  { action: 'upscale', icon: ZoomIn, label: 'Збільшити', color: '#06b6d4' },
+  { action: 'text-remove', icon: TypeOutline, label: 'Прибрати текст', color: '#f97316' },
 ];
 
 export function AIToolbar({ onSave, isSaving }: AIToolbarProps) {
@@ -84,13 +88,14 @@ export function AIToolbar({ onSave, isSaving }: AIToolbarProps) {
           {AI_TOOLS.map((tool) => {
             const isActive = activeAction === tool.action && isProcessing;
             const disabled = !hasImage || isProcessing;
+            const Icon = tool.icon;
 
             return (
               <button
                 key={tool.action}
                 onClick={() => handleToolClick(tool.action)}
                 disabled={disabled}
-                className="flex flex-col items-center gap-1 px-2 py-2.5 rounded-lg transition-all"
+                className="flex items-center gap-2 px-2.5 py-2.5 rounded-lg transition-all text-left"
                 style={{
                   background: isActive
                     ? 'rgba(168, 85, 247, 0.15)'
@@ -102,17 +107,18 @@ export function AIToolbar({ onSave, isSaving }: AIToolbarProps) {
                       ? 'rgba(168, 85, 247, 0.3)'
                       : 'rgba(255, 255, 255, 0.04)'
                   }`,
-                  color: disabled ? '#374151' : '#e5e7eb',
                   cursor: disabled ? 'not-allowed' : 'pointer',
                   opacity: disabled ? 0.5 : 1,
                 }}
               >
                 {isActive ? (
-                  <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#a855f7' }} />
+                  <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" style={{ color: '#a855f7' }} />
                 ) : (
-                  <span className="text-base">{tool.emoji}</span>
+                  <Icon className="w-4 h-4 flex-shrink-0" style={{ color: disabled ? '#374151' : tool.color }} />
                 )}
-                <span className="text-[10px]">{tool.label}</span>
+                <span className="text-[10px]" style={{ color: disabled ? '#374151' : '#e5e7eb' }}>
+                  {tool.label}
+                </span>
               </button>
             );
           })}

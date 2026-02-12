@@ -45,15 +45,17 @@ export function BackgroundPicker({ selected, onSelect, onApply }: BackgroundPick
               }}
             >
               <span
-                className="w-7 h-7 rounded-md flex items-center justify-center text-sm flex-shrink-0"
+                className="w-6 h-6 rounded-full flex-shrink-0"
                 style={{
-                  background: preset.color
-                    ? `${preset.color}22`
-                    : 'rgba(255,255,255,0.05)',
+                  background: preset.color || '#333',
+                  border: isActive
+                    ? '2px solid rgba(168, 85, 247, 0.6)'
+                    : '2px solid rgba(255,255,255,0.1)',
+                  boxShadow: isActive
+                    ? `0 0 8px ${preset.color || '#a855f7'}44`
+                    : 'none',
                 }}
-              >
-                {preset.thumbnail}
-              </span>
+              />
               <span
                 className="text-[11px] truncate"
                 style={{ color: isActive ? '#e5e7eb' : '#9ca3af' }}
