@@ -157,3 +157,20 @@ export async function getSyncLogs(limit = 20) {
   const { data } = await supabase.from("sync_log").select("*").order("started_at", { ascending: false }).limit(limit);
   return data ?? [];
 }
+
+/* ─── Banners ─── */
+export async function getBanners(params?: { type?: string; status?: string }) {
+  const supabase = createAdminClient();
+  let query = supabase.from("banners").select("*").order("sort_order", { ascending: true }).order("priority", { ascending: false });
+  if (params?.type && params.type !== "all") query = query.eq("type", params.type);
+  if (params?.status === "active") query = query.eq("is_active", true);
+  if (params?.status === "inactive") query = query.eq("is_active", false);
+  const { data } = await query;
+  return data ?? [];
+}
+
+export async function getBannerById(id: string) {
+  const supabase = createAdminClient();
+  const { data } = await supabase.from("banners").select("*").eq("id", id).single();
+  return data;
+}
