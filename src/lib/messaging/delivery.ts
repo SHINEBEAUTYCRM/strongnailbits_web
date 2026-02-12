@@ -49,6 +49,10 @@ interface SendOptions {
   template: string;
   variables: TemplateVariables;
   channel?: "auto" | "telegram" | "sms" | "both";
+  /** JSON inline keyboard buttons for Telegram (rendered with {{variables}}) */
+  buttonsJson?: string | null;
+  /** Photo URL for Telegram (rendered with {{variables}}) */
+  photoUrl?: string | null;
   /** For logging */
   funnelContactId?: string;
   funnelMessageId?: string;
@@ -115,6 +119,22 @@ export async function deliverMessage(
   // Resolve effective channel
   const effectiveChannel = resolveChannel(channel, target);
 
+  // Render buttons if provided
+  let renderedButtons: InlineButton[][] | undefined;
+  if (options.buttonsJson) {
+    try {
+      const raw = renderTemplate(options.buttonsJson, variables);
+      renderedButtons = JSON.parse(raw) as InlineButton[][];
+    } catch {
+      // Invalid buttons JSON — skip
+    }
+  }
+
+  // Render photo URL if provided
+  const renderedPhoto = options.photoUrl
+    ? renderTemplate(options.photoUrl, variables)
+    : undefined;
+
   // Send via Telegram
   if (
     effectiveChannel === "telegram" ||
@@ -122,7 +142,10 @@ export async function deliverMessage(
   ) {
     const chatId = target.telegramChatId;
     if (chatId) {
-      const result = await sendTelegram(chatId, renderedText);
+      const result = await sendTelegram(chatId, renderedText, {
+        buttons: renderedButtons,
+        photoUrl: renderedPhoto,
+      });
       results.push(result);
       await logDelivery({
         ...options,
@@ -179,11 +202,25 @@ function resolveChannel(
   return hasTelegram ? "telegram" : "auto-sms";
 }
 
+// ────── Types for Rich Telegram ──────
+
+interface InlineButton {
+  text: string;
+  url?: string;
+  callback_data?: string;
+}
+
+interface TelegramSendOptions {
+  buttons?: InlineButton[][];
+  photoUrl?: string;
+}
+
 // ────── Telegram ──────
 
 async function sendTelegram(
   chatId: number,
   text: string,
+  options?: TelegramSendOptions,
 ): Promise<DeliveryResult> {
   try {
     const botToken = await getBotToken();
@@ -191,23 +228,84 @@ async function sendTelegram(
       return { channel: "telegram", success: false, error: "Bot not configured" };
     }
 
-    const res = await fetch(
-      `https://api.telegram.org/bot${botToken}/sendMessage`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text,
-          // Don't use HTML parse_mode for client messages — they contain plain text
-        }),
-        signal: AbortSignal.timeout(10000),
-      },
-    );
+    const baseUrl = `https://api.telegram.org/bot${botToken}`;
+
+    // Build reply_markup with inline keyboard buttons
+    const replyMarkup = options?.buttons?.length
+      ? { inline_keyboard: options.buttons }
+      : undefined;
+
+    // If photo URL is provided, send as photo with caption
+    if (options?.photoUrl && !options.photoUrl.includes("placeholder")) {
+      try {
+        const photoRes = await fetch(`${baseUrl}/sendPhoto`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            photo: options.photoUrl,
+            caption: text.slice(0, 1024), // Telegram caption limit
+            parse_mode: "HTML",
+            ...(replyMarkup ? { reply_markup: replyMarkup } : {}),
+          }),
+          signal: AbortSignal.timeout(15000),
+        });
+
+        const photoData = await photoRes.json();
+
+        if (photoData.ok) {
+          return {
+            channel: "telegram",
+            success: true,
+            externalId: String(photoData.result?.message_id),
+          };
+        }
+        // Photo failed, fall through to text message
+      } catch {
+        // Photo failed, fall through to text message
+      }
+    }
+
+    // Send text message with HTML formatting
+    const res = await fetch(`${baseUrl}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+        parse_mode: "HTML",
+        disable_web_page_preview: true,
+        ...(replyMarkup ? { reply_markup: replyMarkup } : {}),
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
 
     const data = await res.json();
 
     if (!data.ok) {
+      // If HTML parse fails, retry without parse_mode
+      if (data.description?.includes("can't parse")) {
+        const retryRes = await fetch(`${baseUrl}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text,
+            disable_web_page_preview: true,
+            ...(replyMarkup ? { reply_markup: replyMarkup } : {}),
+          }),
+          signal: AbortSignal.timeout(10000),
+        });
+        const retryData = await retryRes.json();
+        if (retryData.ok) {
+          return {
+            channel: "telegram",
+            success: true,
+            externalId: String(retryData.result?.message_id),
+          };
+        }
+      }
+
       // If user blocked the bot, don't retry
       if (data.description?.includes("bot was blocked")) {
         return {

@@ -23,6 +23,9 @@ export type FunnelEventType =
   | "order_delivered"
   | "loyalty_tier_change"
   | "cron_inactive_check"
+  | "cart_abandoned"
+  | "cart_abandoned_24h"
+  | "telegram_start"
   | "manual";
 
 interface TrackEventData {

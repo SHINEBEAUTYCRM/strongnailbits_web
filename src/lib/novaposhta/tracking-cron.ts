@@ -8,6 +8,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { trackShipments, getStatusLabel, isNPConfigured } from "./client";
 import { notifyOrderStatusChanged } from "@/lib/telegram/notify";
+import { trackFunnelEvent } from "@/lib/funnels/tracker";
 
 // NP status stage → our order status mapping
 const STAGE_TO_ORDER_STATUS: Record<string, string> = {
@@ -114,6 +115,32 @@ export async function updateShipmentStatuses(): Promise<TrackingResult> {
       }
 
       result.updated++;
+
+      // Track funnel event when order is delivered (fire-and-forget)
+      if (newOrderStatus === "delivered") {
+        // Get profile_id from the order to link to funnel
+        const { data: orderProfile } = await supabase
+          .from("orders")
+          .select("profile_id")
+          .eq("id", order.id)
+          .single();
+
+        if (orderProfile?.profile_id) {
+          const shippingAddr2 = order.shipping_address as Record<string, string> | null;
+          trackFunnelEvent({
+            event: "order_delivered",
+            profileId: orderProfile.profile_id,
+            name: shippingAddr2?.recipient || undefined,
+            metadata: {
+              order_number: order.order_number,
+              ttn,
+              source: "np_tracking",
+            },
+          }).catch((err) =>
+            console.error("[NP Tracking] Funnel event error:", err),
+          );
+        }
+      }
 
       // Notify about status change (fire-and-forget)
       const shippingAddr = order.shipping_address as Record<string, string> | null;

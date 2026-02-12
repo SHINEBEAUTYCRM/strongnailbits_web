@@ -19,6 +19,7 @@ import {
   formatQuickOrderForTelegram,
 } from "./formatters";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { trackFunnelEvent } from "@/lib/funnels/tracker";
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com").trim();
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
@@ -110,6 +111,20 @@ export async function handleClientMessage(
   if (ctx.text === "/start") {
     await clearSession(ctx.telegramId);
     await sendWelcome(bot, ctx);
+
+    // Fire funnel event for welcome series (fire-and-forget)
+    trackFunnelEvent({
+      event: "telegram_start",
+      profileId: ctx.profileId || undefined,
+      name: ctx.userName || undefined,
+      metadata: {
+        source: "telegram",
+        telegram_chat_id: ctx.chatId,
+      },
+    }).catch((err) =>
+      console.error("[ClientHandler] Funnel event error:", err),
+    );
+
     return;
   }
 
@@ -608,6 +623,20 @@ async function handleCallback(
       ctx.text = "Покажи мої витратні матеріали";
       ctx.callbackData = undefined;
       await handleAIMessage(bot, ctx);
+      break;
+    }
+
+    case "review": {
+      // Feedback from post-delivery review buttons
+      const reviewMap: Record<string, string> = {
+        positive: "Дякуємо за чудовий відгук! 🌟 Будемо раді бачити вас знову!",
+        neutral: "Дякуємо за відгук! Якщо є зауваження — напишіть, ми врахуємо. 🙏",
+        negative: "Дуже прикро це чути 😔 Напишіть будь ласка що саме не так — ми вирішимо питання!",
+      };
+      const reviewText = reviewMap[param] || reviewMap.neutral;
+      await bot.sendMessage(ctx.chatId, reviewText, {
+        reply_markup: CLIENT_KEYBOARD,
+      });
       break;
     }
   }

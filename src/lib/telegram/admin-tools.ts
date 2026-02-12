@@ -328,6 +328,22 @@ export const adminToolDefinitions: ToolDefinition[] = [
       required: ["message", "delay_minutes"],
     },
   },
+  {
+    name: "admin_funnel_stats",
+    description:
+      "Аналітика воронок продажів (SmartЛійки): кількість контактів на кожному етапі, конверсія, відправлені повідомлення. Використовуй коли адмін питає про воронки, retention, утримання клієнтів.",
+    input_schema: {
+      type: "object",
+      properties: {
+        funnel_slug: {
+          type: "string",
+          description:
+            "Slug конкретної воронки (registration, sales, b2b-loyalty, reactivation, abandoned-cart, telegram-welcome). Якщо не вказано — показати всі.",
+        },
+      },
+      required: [],
+    },
+  },
 ];
 
 // ────── Tool Router ──────
@@ -370,6 +386,8 @@ export async function executeAdminToolCall(
       return adminConsumablesAnalytics(supabase);
     case "create_reminder":
       return adminCreateReminder(supabase, params);
+    case "admin_funnel_stats":
+      return adminFunnelStats(supabase, params);
     default:
       return { error: `Unknown admin tool: ${toolName}` };
   }
@@ -1184,5 +1202,136 @@ async function adminCreateReminder(
     remind_at: remindAt.toISOString(),
     time_str: timeStr.trim(),
     message: String(params.message),
+  };
+}
+
+// ────── 14. Admin Funnel Stats ──────
+
+async function adminFunnelStats(
+  supabase: SupabaseClient,
+  params: Record<string, unknown>,
+) {
+  const funnelSlug = params.funnel_slug
+    ? String(params.funnel_slug)
+    : undefined;
+
+  // Get funnels
+  let funnelQuery = supabase
+    .from("funnels")
+    .select("id, name, slug, is_active")
+    .eq("is_active", true);
+
+  if (funnelSlug) {
+    funnelQuery = funnelQuery.eq("slug", funnelSlug);
+  }
+
+  const { data: funnels } = await funnelQuery;
+
+  if (!funnels || funnels.length === 0) {
+    return { message: "Активних воронок не знайдено." };
+  }
+
+  const result: {
+    name: string;
+    slug: string;
+    stages: { name: string; contacts_count: number; position: number }[];
+    total_contacts: number;
+    converted: number;
+    conversion_rate: string;
+  }[] = [];
+
+  for (const funnel of funnels) {
+    // Get stages
+    const { data: stages } = await supabase
+      .from("funnel_stages")
+      .select("id, name, slug, position")
+      .eq("funnel_id", funnel.id)
+      .order("position", { ascending: true });
+
+    if (!stages) continue;
+
+    // Count contacts per stage
+    const stageStats: {
+      name: string;
+      contacts_count: number;
+      position: number;
+    }[] = [];
+    let totalContacts = 0;
+    let converted = 0;
+
+    for (const stage of stages) {
+      const { count } = await supabase
+        .from("funnel_contacts")
+        .select("id", { count: "exact", head: true })
+        .eq("funnel_id", funnel.id)
+        .eq("stage_id", stage.id)
+        .eq("is_active", true);
+
+      const stageCount = count || 0;
+      totalContacts += stageCount;
+
+      stageStats.push({
+        name: stage.name,
+        contacts_count: stageCount,
+        position: stage.position,
+      });
+
+      // Last stage = conversion
+      if (stage.position === stages[stages.length - 1].position) {
+        converted = stageCount;
+      }
+    }
+
+    // Count total converted (all time)
+    const { count: totalConverted } = await supabase
+      .from("funnel_contacts")
+      .select("id", { count: "exact", head: true })
+      .eq("funnel_id", funnel.id)
+      .not("converted_at", "is", null);
+
+    const convRate =
+      totalContacts > 0
+        ? `${(((totalConverted || 0) / totalContacts) * 100).toFixed(1)}%`
+        : "0%";
+
+    result.push({
+      name: funnel.name,
+      slug: funnel.slug,
+      stages: stageStats,
+      total_contacts: totalContacts,
+      converted: totalConverted || 0,
+      conversion_rate: convRate,
+    });
+  }
+
+  // Get messaging stats (last 7 days)
+  const weekAgo = new Date(
+    Date.now() - 7 * 24 * 60 * 60 * 1000,
+  ).toISOString();
+
+  const { count: totalSent } = await supabase
+    .from("message_log")
+    .select("id", { count: "exact", head: true })
+    .gte("created_at", weekAgo)
+    .eq("status", "sent");
+
+  const { count: totalFailed } = await supabase
+    .from("message_log")
+    .select("id", { count: "exact", head: true })
+    .gte("created_at", weekAgo)
+    .eq("status", "failed");
+
+  const { count: totalPending } = await supabase
+    .from("scheduled_messages")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pending");
+
+  return {
+    funnels: result,
+    messaging_stats_7d: {
+      sent: totalSent || 0,
+      failed: totalFailed || 0,
+      pending_scheduled: totalPending || 0,
+    },
   };
 }

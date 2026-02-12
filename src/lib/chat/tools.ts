@@ -10,6 +10,7 @@
 
 import { type SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { trackFunnelEvent } from "@/lib/funnels/tracker";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com";
 const FREE_DELIVERY_FROM = 1500;
@@ -343,6 +344,20 @@ async function addToCart(
   await supabase.from("carts").upsert(
     { profile_id: profileId, items: updatedItems },
     { onConflict: "profile_id" },
+  );
+
+  // Track funnel event: add_to_cart (fire-and-forget)
+  trackFunnelEvent({
+    event: "add_to_cart",
+    profileId,
+    metadata: {
+      product_id: String(params.product_id),
+      product_name: product.name_uk,
+      quantity,
+      price: product.price,
+    },
+  }).catch((err) =>
+    console.error("[Tools] Funnel event add_to_cart error:", err),
   );
 
   return {

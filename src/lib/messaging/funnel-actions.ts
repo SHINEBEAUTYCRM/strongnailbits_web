@@ -80,6 +80,8 @@ export async function executeStageActions(
           template: msg.template,
           variables,
           channel: msg.channel || "auto",
+          buttonsJson: msg.buttons_json || null,
+          photoUrl: msg.photo_url || null,
           funnelContactId: transition.contactId,
           funnelMessageId: msg.id,
         });
@@ -142,7 +144,9 @@ export async function processScheduledMessages(): Promise<{
         funnel_messages (
           template,
           channel,
-          is_active
+          is_active,
+          buttons_json,
+          photo_url
         )
       `)
       .eq("status", "pending")
@@ -159,6 +163,8 @@ export async function processScheduledMessages(): Promise<{
         template: string;
         channel: string;
         is_active: boolean;
+        buttons_json: string | null;
+        photo_url: string | null;
       } | null;
 
       if (!msgTemplate?.is_active) {
@@ -197,6 +203,8 @@ export async function processScheduledMessages(): Promise<{
           template: msgTemplate.template,
           variables,
           channel: (msgTemplate.channel as "auto" | "telegram" | "sms" | "both") || "auto",
+          buttonsJson: msgTemplate.buttons_json || null,
+          photoUrl: msgTemplate.photo_url || null,
           funnelContactId: item.funnel_contact_id,
           funnelMessageId: item.funnel_message_id,
         });
