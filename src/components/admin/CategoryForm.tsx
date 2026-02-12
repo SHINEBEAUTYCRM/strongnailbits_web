@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Save, Loader2, Trash2, ArrowLeft, ImageIcon } from "lucide-react";
+import { Save, Loader2, Trash2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { ImageUploadWithStudio } from "./image-studio/ImageUploadWithStudio";
 
 interface ParentOption { cs_cart_id: number; name_uk: string; depth: number; }
 
@@ -125,21 +126,14 @@ export function CategoryForm({
 
           {/* Image */}
           <Section title="Зображення">
-            <Field label="URL зображення" value={form.image_url} onChange={(v) => set("image_url", v)} placeholder="https://..." />
-            {form.image_url && (
-              <div className="mt-3 flex items-center gap-4">
-                <img src={form.image_url} alt="" className="w-24 h-24 rounded-xl object-cover" style={{ background: "#141420" }} />
-                <button onClick={() => set("image_url", "")} className="text-xs px-3 py-1.5 rounded-lg" style={{ color: "#f87171", background: "#1c1017", border: "1px solid #7f1d1d" }}>Видалити</button>
-              </div>
-            )}
-            {!form.image_url && (
-              <div className="mt-3 flex items-center justify-center h-24 rounded-xl" style={{ background: "#111116", border: "1px dashed #1e1e2a" }}>
-                <div className="text-center">
-                  <ImageIcon className="w-6 h-6 mx-auto mb-1" style={{ color: "#3f3f46" }} />
-                  <p className="text-[11px]" style={{ color: "#3f3f46" }}>Немає зображення</p>
-                </div>
-              </div>
-            )}
+            <ImageUploadWithStudio
+              value={form.image_url}
+              onChange={(url) => set("image_url", url)}
+              context="category"
+              entityId={initial?.id || "new"}
+              suggestedSize={{ width: 1200, height: 400 }}
+              label="Зображення категорії"
+            />
           </Section>
         </div>
 

@@ -249,14 +249,12 @@ async function handleAdminAI(
     const errMsg = err instanceof Error ? err.message : String(err);
     console.error("[TgAdmin] AI error:", errMsg);
     if (waitMsgId) await bot.deleteMessage(ctx.chatId, waitMsgId);
-    const hint = errMsg.includes("Claude API error")
-      ? `\n\n<i>${escHtml(errMsg.slice(0, 200))}</i>`
-      : "";
-    await bot.sendMessage(
-      ctx.chatId,
-      `❌ Помилка AI. Спробуйте ще раз.${hint}`,
-      { parse_mode: "HTML", reply_markup: ADMIN_KEYBOARD },
-    );
+    const userMsg = errMsg.includes("429") || errMsg.includes("rate_limit")
+      ? "Зачекайте хвилинку — забагато запитів. Спробуйте через 30 секунд."
+      : "❌ Помилка AI. Спробуйте ще раз.";
+    await bot.sendMessage(ctx.chatId, userMsg, {
+      reply_markup: ADMIN_KEYBOARD,
+    });
   }
 }
 

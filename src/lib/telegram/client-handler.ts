@@ -272,14 +272,13 @@ async function handleAIMessage(
     const errMsg = err instanceof Error ? err.message : String(err);
     console.error("[TgClient] AI error:", errMsg);
     if (waitMsgId) await bot.deleteMessage(ctx.chatId, waitMsgId);
-    const hint = errMsg.includes("Claude API error")
-      ? `\n\n<i>${escHtml(errMsg.slice(0, 200))}</i>`
-      : "";
-    await bot.sendMessage(
-      ctx.chatId,
-      `Вибачте, виникла помилка. Спробуйте ще раз або зверніться до менеджера.${hint}`,
-      { parse_mode: "HTML", reply_markup: CLIENT_KEYBOARD },
-    );
+    // User-friendly message — never show API details
+    const userMsg = errMsg.includes("429") || errMsg.includes("rate_limit")
+      ? "Зачекайте хвилинку — забагато запитів. Спробуйте ще раз через 30 секунд."
+      : "Вибачте, виникла помилка. Спробуйте ще раз або зверніться до менеджера.";
+    await bot.sendMessage(ctx.chatId, userMsg, {
+      reply_markup: CLIENT_KEYBOARD,
+    });
   }
 }
 

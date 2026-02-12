@@ -63,6 +63,7 @@ interface ImageStudioState {
   setCustomPrompt: (prompt: string) => void;
   setActiveAction: (action: PhotoRoomAction | null) => void;
   setError: (error: string | null) => void;
+  loadExternalImage: (url: string) => Promise<void>;
   processImage: (action: PhotoRoomAction, options?: EditOptions) => Promise<void>;
   undo: () => void;
   saveResult: () => Promise<string>;
