@@ -13,6 +13,8 @@ import type { StudioContext } from '@/lib/photoroom/types';
 export interface ImageUploadWithStudioProps {
   value?: string;
   onChange: (url: string) => void;
+  /** Callback для масового збереження (додаткові зображення) */
+  onBatchSave?: (urls: string[]) => void;
   context: StudioContext;
   entityId: string;
   suggestedSize?: { width: number; height: number };
@@ -22,6 +24,7 @@ export interface ImageUploadWithStudioProps {
 export function ImageUploadWithStudio({
   value,
   onChange,
+  onBatchSave,
   context,
   entityId,
   suggestedSize,
@@ -71,6 +74,25 @@ export function ImageUploadWithStudio({
 
   const handleStudioSave = async (imageUrl: string) => {
     onChange(imageUrl);
+  };
+
+  const handleStudioBatchSave = async (imageUrls: string[]) => {
+    if (imageUrls.length === 0) return;
+
+    // Якщо головне зображення порожнє — перше йде туди
+    if (!value && imageUrls.length > 0) {
+      onChange(imageUrls[0]);
+      const rest = imageUrls.slice(1);
+      if (rest.length > 0 && onBatchSave) {
+        onBatchSave(rest);
+      }
+    } else if (onBatchSave) {
+      // Якщо головне є — всі йдуть в додаткові
+      onBatchSave(imageUrls);
+    } else {
+      // Fallback: тільки перше як головне
+      onChange(imageUrls[0]);
+    }
   };
 
   const handleRemove = () => {
@@ -193,6 +215,7 @@ export function ImageUploadWithStudio({
           currentImage={value}
           suggestedSize={suggestedSize}
           onSave={handleStudioSave}
+          onBatchSave={handleStudioBatchSave}
           trigger={
             <div
               className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all"

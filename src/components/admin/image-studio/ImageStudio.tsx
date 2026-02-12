@@ -3,6 +3,7 @@
 // ================================================================
 //  ShineShop OS — AI Image Studio
 //  Головний компонент — fullscreen модалка з трьома панелями
+//  Підтримує збереження одного або кількох зображень
 // ================================================================
 
 import { useState, useEffect, useCallback } from 'react';
@@ -19,7 +20,10 @@ export interface ImageStudioProps {
   entityId: string;
   currentImage?: string;
   suggestedSize?: { width: number; height: number };
+  /** Зберегти одне зображення (головне) */
   onSave: (imageUrl: string) => Promise<void>;
+  /** Зберегти кілька зображень (масова обробка) */
+  onBatchSave?: (imageUrls: string[]) => Promise<void>;
   trigger?: React.ReactNode;
 }
 
@@ -29,9 +33,11 @@ export function ImageStudio({
   currentImage,
   suggestedSize,
   onSave,
+  onBatchSave,
   trigger,
 }: ImageStudioProps) {
-  const { isOpen, open, close, saveResult, setCanvasImage } = useImageStudioStore();
+  const { isOpen, open, close, saveResult, setCanvasImage, getAllResultUrls } =
+    useImageStudioStore();
   const [isSaving, setIsSaving] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -58,6 +64,7 @@ export function ImageStudio({
     close();
   }, [close]);
 
+  /** Зберегти одне оброблене зображення (кнопка "Зберегти") */
   const handleSave = useCallback(async () => {
     setIsSaving(true);
     try {
@@ -70,6 +77,31 @@ export function ImageStudio({
       setIsSaving(false);
     }
   }, [saveResult, onSave, close]);
+
+  /** Зберегти всі оброблені зображення (кнопка "Зберегти всі") */
+  const handleBatchSave = useCallback(async () => {
+    setIsSaving(true);
+    try {
+      const urls = getAllResultUrls();
+      if (urls.length === 0) {
+        console.warn('[ImageStudio] No batch results to save');
+        return;
+      }
+
+      if (onBatchSave) {
+        // Якщо є спеціальний callback — використовуємо його
+        await onBatchSave(urls);
+      } else {
+        // Fallback: зберігаємо тільки перше зображення через onSave
+        await onSave(urls[0]);
+      }
+      close();
+    } catch (err) {
+      console.error('[ImageStudio] Batch save error:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [getAllResultUrls, onBatchSave, onSave, close]);
 
   // Escape key
   useEffect(() => {
@@ -96,27 +128,6 @@ export function ImageStudio({
       document.body.style.overflow = '';
     };
   }, [isOpen]);
-
-  // Trigger button
-  const triggerButton = trigger || (
-    <button
-      onClick={handleOpen}
-      className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all"
-      style={{
-        background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(236, 72, 153, 0.15))',
-        border: '1px solid rgba(168, 85, 247, 0.2)',
-        color: '#c084fc',
-      }}
-    >
-      <Sparkles className="w-4 h-4" />
-      Створити з AI
-    </button>
-  );
-
-  // Trigger без порталу
-  if (!trigger) {
-    // Використовуємо обгортку
-  }
 
   const modal = isOpen && mounted
     ? createPortal(
@@ -182,7 +193,11 @@ export function ImageStudio({
             <ImageCanvas />
 
             {/* Right: AI Toolbar */}
-            <AIToolbar onSave={handleSave} isSaving={isSaving} />
+            <AIToolbar
+              onSave={handleSave}
+              onBatchSave={handleBatchSave}
+              isSaving={isSaving}
+            />
           </div>
         </div>,
         document.body

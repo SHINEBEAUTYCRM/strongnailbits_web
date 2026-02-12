@@ -106,7 +106,10 @@ export async function POST(request: NextRequest) {
           let msg = `PhotoRoom ${photoRoomRes.status}`;
           if (contentType.includes('application/json')) {
             const errBody = await photoRoomRes.json().catch(() => null);
-            if (errBody) msg = errBody.message || errBody.error || msg;
+            if (errBody) {
+              const raw = errBody.message || errBody.error;
+              msg = typeof raw === 'string' ? raw : (raw ? JSON.stringify(raw) : msg);
+            }
           }
           throw new Error(msg);
         }

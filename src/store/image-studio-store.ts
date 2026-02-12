@@ -16,6 +16,7 @@ import type {
   TemplateSize,
   HistoryEntry,
   StudioContext,
+  BatchQueueItem,
 } from '@/lib/photoroom/types';
 
 interface ImageStudioState {
@@ -49,6 +50,11 @@ interface ImageStudioState {
   // Error state
   error: string | null;
 
+  // Batch processing
+  batchResults: BatchQueueItem[];
+  isBatchProcessing: boolean;
+  batchProgress: { done: number; total: number };
+
   // Actions
   open: (context: StudioContext, entityId: string, suggestedSize?: { width: number; height: number }) => void;
   close: () => void;
@@ -65,8 +71,12 @@ interface ImageStudioState {
   setError: (error: string | null) => void;
   loadExternalImage: (url: string) => Promise<void>;
   processImage: (action: PhotoRoomAction, options?: EditOptions) => Promise<void>;
+  processBatch: (action: PhotoRoomAction, options?: EditOptions) => Promise<void>;
+  clearBatchResults: () => void;
+  removeBatchResult: (id: string) => void;
   undo: () => void;
   saveResult: () => Promise<string>;
+  getAllResultUrls: () => string[];
 }
 
 export const useImageStudioStore = create<ImageStudioState>()((set, get) => ({
@@ -93,6 +103,10 @@ export const useImageStudioStore = create<ImageStudioState>()((set, get) => ({
   history: [],
 
   error: null,
+
+  batchResults: [],
+  isBatchProcessing: false,
+  batchProgress: { done: 0, total: 0 },
 
   open: (context, entityId, suggestedSize) => {
     let template = getSuggestedTemplate(context);
@@ -125,6 +139,9 @@ export const useImageStudioStore = create<ImageStudioState>()((set, get) => ({
       selectedBackground: null,
       history: [],
       error: null,
+      batchResults: [],
+      isBatchProcessing: false,
+      batchProgress: { done: 0, total: 0 },
     });
   },
 
@@ -315,6 +332,135 @@ export const useImageStudioStore = create<ImageStudioState>()((set, get) => ({
     });
   },
 
+  processBatch: async (action, options) => {
+    const state = get();
+    const images = state.selectedImages;
+
+    if (images.length === 0) {
+      set({ error: 'Спочатку оберіть зображення' });
+      return;
+    }
+
+    const actionLabels: Record<PhotoRoomAction, string> = {
+      'remove-bg': 'Видалення фону',
+      'ai-background': 'Генерація AI фону',
+      'shadow': 'Додавання тіней',
+      'relight': 'AI переосвітлення',
+      'upscale': 'Збільшення якості',
+      'text-remove': 'Видалення тексту',
+    };
+
+    // Ініціалізуємо чергу
+    const queue: BatchQueueItem[] = images.map((img) => ({
+      id: img.id,
+      sourceImage: img,
+      status: 'pending' as const,
+    }));
+
+    set({
+      isBatchProcessing: true,
+      batchResults: queue,
+      batchProgress: { done: 0, total: images.length },
+      error: null,
+      processingLabel: `${actionLabels[action]} (0/${images.length})`,
+      isProcessing: true,
+    });
+
+    let done = 0;
+
+    // Обробляємо послідовно для прогрес-бару
+    for (let i = 0; i < images.length; i++) {
+      const img = images[i];
+
+      // Позначаємо поточний як processing
+      set((s) => ({
+        batchResults: s.batchResults.map((item) =>
+          item.id === img.id ? { ...item, status: 'processing' as const } : item
+        ),
+        processingLabel: `${actionLabels[action]} (${done}/${images.length})`,
+      }));
+
+      try {
+        const editOptions: EditOptions = {
+          imageUrl: img.url,
+          outputWidth: state.selectedTemplate.width,
+          outputHeight: state.selectedTemplate.height,
+          ...options,
+        };
+
+        // Налаштування залежно від дії
+        switch (action) {
+          case 'remove-bg':
+            editOptions.removeBackground = true;
+            break;
+          case 'ai-background':
+            editOptions.removeBackground = true;
+            if (state.customPrompt) {
+              editOptions.backgroundPrompt = state.customPrompt;
+              editOptions.backgroundPromptExpansion = 'ai.auto';
+            }
+            if (options?.backgroundPrompt) {
+              editOptions.backgroundPrompt = options.backgroundPrompt;
+              editOptions.backgroundPromptExpansion = 'ai.auto';
+            }
+            break;
+          case 'shadow':
+            editOptions.shadowMode = options?.shadowMode || 'ai.soft';
+            break;
+          case 'relight':
+            editOptions.lightingMode = options?.lightingMode || 'ai.auto';
+            break;
+          case 'upscale':
+            editOptions.upscale = options?.upscale || 'ai.fast';
+            break;
+          case 'text-remove':
+            editOptions.textRemovalMode = 'ai.artificial';
+            break;
+        }
+
+        const result = await editImage(editOptions);
+        done++;
+
+        set((s) => ({
+          batchResults: s.batchResults.map((item) =>
+            item.id === img.id
+              ? { ...item, status: 'done' as const, resultUrl: result.url }
+              : item
+          ),
+          batchProgress: { done, total: images.length },
+        }));
+      } catch (err) {
+        done++;
+        let errorMsg = 'Помилка обробки';
+        if (err instanceof Error) errorMsg = err.message;
+        else if (typeof err === 'string') errorMsg = err;
+
+        set((s) => ({
+          batchResults: s.batchResults.map((item) =>
+            item.id === img.id
+              ? { ...item, status: 'error' as const, error: errorMsg }
+              : item
+          ),
+          batchProgress: { done, total: images.length },
+        }));
+      }
+    }
+
+    set({
+      isBatchProcessing: false,
+      isProcessing: false,
+      processingLabel: '',
+    });
+  },
+
+  clearBatchResults: () => set({ batchResults: [], batchProgress: { done: 0, total: 0 } }),
+
+  removeBatchResult: (id) => {
+    set((s) => ({
+      batchResults: s.batchResults.filter((item) => item.id !== id),
+    }));
+  },
+
   saveResult: async () => {
     const { processedImage, canvasImage } = get();
     const finalUrl = processedImage || canvasImage?.url;
@@ -324,5 +470,24 @@ export const useImageStudioStore = create<ImageStudioState>()((set, get) => ({
     }
 
     return finalUrl;
+  },
+
+  getAllResultUrls: () => {
+    const { processedImage, batchResults } = get();
+    const urls: string[] = [];
+
+    // Результати пакетної обробки
+    const batchUrls = batchResults
+      .filter((r) => r.status === 'done' && r.resultUrl)
+      .map((r) => r.resultUrl!);
+
+    if (batchUrls.length > 0) {
+      urls.push(...batchUrls);
+    } else if (processedImage) {
+      // Якщо немає пакетних — повертаємо єдиний оброблений
+      urls.push(processedImage);
+    }
+
+    return urls;
   },
 }));

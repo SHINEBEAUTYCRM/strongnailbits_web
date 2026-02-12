@@ -7,10 +7,13 @@ alwaysApply: true
 
 ## Архитектура деплоя
 
+- Продакшен: **https://shineshopb2b.com**
 - Хостинг: **Vercel** (проект `shineshop.b2b.com.ua`, ID: `prj_5zrPSIEVBeS4kOLnLiXK2ELbbh9u`)
+- Домен: `shineshopb2b.com` (Vercel DNS, ns1/ns2.vercel-dns.com)
 - Репо: `github.com/Aleksdandali/shineshop-b2b` → ветка `main`
 - Автодеплой: push в `main` → GitHub webhook → Vercel build → production
 - CI/CD: нет GitHub Actions, всё через Vercel Git Integration
+- Vercel CLI: `vercel ls` — список деплоев, `vercel inspect <url>` — детали
 
 ## Цепочка автодеплоя
 
@@ -55,11 +58,39 @@ git fetch --dry-run                    # Проверка связи с GitHub
 git push origin main                   # Пуш
 ```
 
-### 3. Vercel не подхватывает push
+### 3. Vercel отклоняет деплой (ошибка "Git author must have access")
 
-- Проверить https://vercel.com/dashboard → проект → Deployments
-- Убедиться что Vercel Git Integration подключена к репо
+**Причина:** Git-автор (`gloss.odessa@gmail.com`) не авторизован в Vercel CLI.
+
+**Починка — верификация через браузер:**
+```bash
+# 1. Запустить логин (покажет код из ~8 символов)
+vercel login
+
+# 2. Он выдаст ссылку вида:
+#    https://vercel.com/oauth/device?user_code=XXXX-XXXX
+# 3. Открыть эту ссылку в браузере:
+open "https://vercel.com/oauth/device?user_code=XXXX-XXXX"
+# 4. Пользователь подтверждает в браузере
+# 5. После подтверждения — деплоить:
+vercel --prod
+```
+
+**ВАЖНО:** Это нужно делать когда Vercel пишет ошибку про "Git author ... must have access".
+Пользователь знает эту процедуру как "подтверждение 6 букв через браузер".
+
+### 4. Vercel не подхватывает push или билд падает
+
+```bash
+vercel ls                          # Список деплоев — смотреть статус (Ready/Error)
+vercel inspect <deployment-url>    # Детали конкретного деплоя
+curl -s -o /dev/null -w "HTTP %{http_code}" https://shineshopb2b.com/  # Сайт живой?
+```
+
+- Если последний деплой `Error` — смотреть логи билда в Vercel Dashboard
+- Если `Ready` но сайт не работает — проблема рантайм (env vars, Supabase, API)
 - Проверить что пуш реально дошёл: `git log origin/main --oneline -3`
+- Ручной деплой если автодеплой не работает: `vercel --prod`
 
 ### 4. macOS дубликаты файлов
 

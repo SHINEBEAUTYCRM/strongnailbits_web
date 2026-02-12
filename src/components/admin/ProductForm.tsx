@@ -160,6 +160,7 @@ export function ProductForm({
               <ImageUploadWithStudio
                 value={form.main_image_url}
                 onChange={(url) => set("main_image_url", url)}
+                onBatchSave={(urls) => set("images", [...form.images, ...urls])}
                 context="product"
                 entityId={initial?.id || "new"}
                 suggestedSize={{ width: 1000, height: 1000 }}

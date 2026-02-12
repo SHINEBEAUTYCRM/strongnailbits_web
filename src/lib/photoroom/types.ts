@@ -89,6 +89,15 @@ export interface HistoryEntry {
   timestamp: number;
 }
 
+/** Елемент черги пакетної обробки */
+export interface BatchQueueItem {
+  id: string;
+  sourceImage: SelectedImage;
+  resultUrl?: string;
+  status: 'pending' | 'processing' | 'done' | 'error';
+  error?: string;
+}
+
 /** Контекст використання Image Studio */
 export type StudioContext = 'category' | 'product' | 'banner' | 'landing';
 
