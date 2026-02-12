@@ -86,13 +86,14 @@ export const adminToolDefinitions: ToolDefinition[] = [
   {
     name: "admin_inventory",
     description:
-      "Залишки товарів. Критичні залишки, прогноз закінчення, темп продажів.",
+      "Залишки товарів. Використовуй filter='stats' для загальної статистики (кількість товарів, в наявності, загальний залишок). Використовуй 'critical'/'low'/'out_of_stock' для списку конкретних товарів.",
     input_schema: {
       type: "object",
       properties: {
         filter: {
           type: "string",
-          enum: ["critical", "low", "out_of_stock", "all", "overstocked"],
+          enum: ["stats", "critical", "low", "out_of_stock", "all", "overstocked"],
+          description: "stats = загальна статистика і категорії, critical = товари з залишком < 10, low = < 30, out_of_stock = 0, all = загальна статистика",
         },
         brand: { type: "string" },
         category_slug: { type: "string" },
@@ -256,6 +257,32 @@ export const adminToolDefinitions: ToolDefinition[] = [
       required: ["period"],
     },
   },
+  {
+    name: "admin_consumables_analytics",
+    description:
+      "Аналітика витратних матеріалів клієнтів: топ товарів, середній цикл, кількість клієнтів.",
+    input_schema: {
+      type: "object",
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "create_reminder",
+    description:
+      "Створити нагадування. Використовуй коли адмін просить нагадати щось через певний час.",
+    input_schema: {
+      type: "object",
+      properties: {
+        message: { type: "string", description: "Текст нагадування" },
+        delay_minutes: {
+          type: "number",
+          description: "Через скільки хвилин нагадати",
+        },
+      },
+      required: ["message", "delay_minutes"],
+    },
+  },
 ];
 
 // ────── Tool Router ──────
@@ -291,6 +318,10 @@ export async function executeAdminToolCall(
       return adminBroadcast(supabase, params);
     case "admin_chatbot_analytics":
       return adminChatbotAnalytics(supabase, params);
+    case "admin_consumables_analytics":
+      return adminConsumablesAnalytics(supabase);
+    case "create_reminder":
+      return adminCreateReminder(supabase, params);
     default:
       return { error: `Unknown admin tool: ${toolName}` };
   }
@@ -520,12 +551,77 @@ async function adminInventory(
   supabase: SupabaseClient,
   params: Record<string, unknown>,
 ) {
+  const filter = String(params.filter || "critical");
+
+  // ── "stats" or "all" → aggregated overview (NO limit, NO individual rows) ──
+  if (filter === "stats" || filter === "all") {
+    const { count: totalProducts } = await supabase
+      .from("products")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "active");
+
+    const { count: inStockProducts } = await supabase
+      .from("products")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "active")
+      .gt("quantity", 0);
+
+    const { count: outOfStockProducts } = await supabase
+      .from("products")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "active")
+      .lte("quantity", 0);
+
+    const { count: criticalProducts } = await supabase
+      .from("products")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "active")
+      .gt("quantity", 0)
+      .lt("quantity", 10);
+
+    // Try RPC for sum, fallback to 0
+    let totalQuantity = 0;
+    try {
+      const { data: sumData } = await supabase.rpc("sum_active_product_quantity");
+      totalQuantity = Number(sumData) || 0;
+    } catch {
+      // RPC not available — skip sum
+    }
+
+    // Category breakdown (top 10 by in-stock count)
+    const { data: catProducts } = await supabase
+      .from("products")
+      .select("category_id, categories(name_uk)")
+      .eq("status", "active")
+      .gt("quantity", 0);
+
+    const categoryCount: Record<string, number> = {};
+    catProducts?.forEach((p: Record<string, unknown>) => {
+      const cat = (p.categories as Record<string, unknown> | null)?.name_uk as string || "Інше";
+      categoryCount[cat] = (categoryCount[cat] || 0) + 1;
+    });
+
+    const topCategories = Object.entries(categoryCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([name, count]) => ({ name, count }));
+
+    return {
+      filter,
+      total_products: totalProducts || 0,
+      in_stock: inStockProducts || 0,
+      out_of_stock: outOfStockProducts || 0,
+      critical_stock: criticalProducts || 0,
+      total_quantity: totalQuantity,
+      by_category: topCategories,
+    };
+  }
+
+  // ── Filtered product lists (critical, low, out_of_stock, overstocked) ──
   let query = supabase
     .from("products")
     .select("id, name_uk, sku, quantity, price, brands(name)")
     .eq("status", "active");
-
-  const filter = String(params.filter || "critical");
 
   switch (filter) {
     case "critical":
@@ -540,7 +636,6 @@ async function adminInventory(
     case "overstocked":
       query = query.gt("quantity", 200);
       break;
-    // "all" — no filter
   }
 
   if (params.brand) {
@@ -552,8 +647,31 @@ async function adminInventory(
     if (brand) query = query.eq("brand_id", brand.id);
   }
 
-  query = query.order("quantity", { ascending: true }).limit(20);
+  // Count total matching BEFORE limit
+  const countQuery = supabase
+    .from("products")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "active");
 
+  // Apply same filters for count
+  let countQ = countQuery;
+  switch (filter) {
+    case "critical":
+      countQ = countQ.lt("quantity", 10).gt("quantity", 0);
+      break;
+    case "low":
+      countQ = countQ.lt("quantity", 30).gt("quantity", 0);
+      break;
+    case "out_of_stock":
+      countQ = countQ.lte("quantity", 0);
+      break;
+    case "overstocked":
+      countQ = countQ.gt("quantity", 200);
+      break;
+  }
+  const { count: totalMatching } = await countQ;
+
+  query = query.order("quantity", { ascending: true }).limit(20);
   const { data } = await query;
 
   return {
@@ -566,7 +684,8 @@ async function adminInventory(
         brand: (p.brands as Record<string, unknown> | null)?.name || null,
       })) || [],
     filter,
-    total: data?.length || 0,
+    shown: data?.length || 0,
+    total_matching: totalMatching || 0,
   };
 }
 
@@ -928,5 +1047,94 @@ async function adminChatbotAnalytics(
     tools_distribution: Object.fromEntries(
       [...toolCounts.entries()].sort((a, b) => b[1] - a[1]),
     ),
+  };
+}
+
+// ────── 12. Admin Consumables Analytics ──────
+
+async function adminConsumablesAnalytics(supabase: SupabaseClient) {
+  const { data } = await supabase
+    .from("consumables")
+    .select("product_name, product_sku, cycle_days, telegram_id")
+    .eq("is_active", true);
+
+  if (!data || data.length === 0) {
+    return { total_active: 0, items: [], message: "Жоден клієнт ще не налаштував витратні матеріали." };
+  }
+
+  // Group by product
+  const byProduct = new Map<string, { name: string; sku: string | null; clients: Set<number>; totalCycle: number; count: number }>();
+  data.forEach((c: Record<string, unknown>) => {
+    const key = String(c.product_sku || c.product_name);
+    const existing = byProduct.get(key);
+    if (existing) {
+      existing.clients.add(c.telegram_id as number);
+      existing.totalCycle += Number(c.cycle_days);
+      existing.count++;
+    } else {
+      byProduct.set(key, {
+        name: String(c.product_name),
+        sku: c.product_sku as string | null,
+        clients: new Set([c.telegram_id as number]),
+        totalCycle: Number(c.cycle_days),
+        count: 1,
+      });
+    }
+  });
+
+  const items = [...byProduct.values()]
+    .map((v) => ({
+      product_name: v.name,
+      product_sku: v.sku,
+      clients_count: v.clients.size,
+      avg_cycle_days: Math.round(v.totalCycle / v.count),
+    }))
+    .sort((a, b) => b.clients_count - a.clients_count)
+    .slice(0, 20);
+
+  const uniqueClients = new Set(data.map((c: Record<string, unknown>) => c.telegram_id));
+
+  return {
+    total_active: data.length,
+    unique_clients: uniqueClients.size,
+    top_products: items,
+  };
+}
+
+// ────── 13. Admin Create Reminder ──────
+
+async function adminCreateReminder(
+  supabase: SupabaseClient,
+  params: Record<string, unknown>,
+) {
+  const telegramId = params._telegram_id as number | undefined;
+
+  if (!telegramId) {
+    return { error: "Нагадування доступні тільки в Telegram." };
+  }
+
+  const delayMinutes = Number(params.delay_minutes) || 60;
+  const remindAt = new Date(Date.now() + delayMinutes * 60 * 1000);
+
+  const { error } = await supabase.from("reminders").insert({
+    telegram_id: telegramId,
+    message: String(params.message),
+    remind_at: remindAt.toISOString(),
+  });
+
+  if (error) return { error: "Не вдалось створити нагадування" };
+
+  const hours = Math.floor(delayMinutes / 60);
+  const mins = delayMinutes % 60;
+  let timeStr = "";
+  if (hours > 0) timeStr += `${hours} год `;
+  if (mins > 0) timeStr += `${mins} хв`;
+  if (!timeStr) timeStr = "менше хвилини";
+
+  return {
+    success: true,
+    remind_at: remindAt.toISOString(),
+    time_str: timeStr.trim(),
+    message: String(params.message),
   };
 }

@@ -24,13 +24,36 @@ const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com"
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
 const MAX_HISTORY = 20;
 
+// ────── Clean Bot Response (filter out internal details) ──────
+
+function cleanBotResponse(text: string): string {
+  return text
+    // Remove function calls like search_products(...)
+    .replace(/`?[a-z_]+\([^)]*\)`?/gi, "")
+    // Remove "Я обращаюсь к функции..."
+    .replace(/я обращаюсь к функции[^.]*\./gi, "")
+    .replace(/вызываю (функцию|tool)[^.]*\./gi, "")
+    .replace(/выполняю запрос[^.]*\./gi, "")
+    .replace(/використовую (функцію|tool)[^.]*\./gi, "")
+    .replace(/зараз шукаю[^.]*\./gi, "")
+    // Remove code blocks
+    .replace(/```[\s\S]*?```/g, "")
+    // Remove JSON blocks
+    .replace(/\{[^{}]*"type"[^{}]*\}/g, "")
+    // Remove "Возможные проблемы"
+    .replace(/возможные проблемы:[\s\S]*?(?=\n\n|\n[А-ЯA-Z]|$)/gi, "")
+    // Clean triple+ newlines
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 // ────── Persistent Reply Keyboard ──────
 
 const CLIENT_KEYBOARD = {
   keyboard: [
     [{ text: "🔍 Пошук" }, { text: "🛒 Кошик" }],
     [{ text: "📦 Замовлення" }, { text: "🆕 Новинки" }],
-    [{ text: "🏷️ Бренди" }, { text: "📞 Контакти" }],
+    [{ text: "🔄 Мої витратні" }, { text: "📞 Контакти" }],
   ],
   resize_keyboard: true,
   is_persistent: true,
@@ -42,7 +65,7 @@ const BUTTON_MESSAGES: Record<string, string> = {
   "🛒 Кошик": "Що в моєму кошику?",
   "📦 Замовлення": "Покажи мої замовлення",
   "🆕 Новинки": "Що нового за цей тиждень?",
-  "🏷️ Бренди": "Які бренди у вас є?",
+  "🔄 Мої витратні": "Покажи мої витратні матеріали. Якщо список порожній — запропонуй додати перший товар.",
   "📞 Контакти": "Як з вами зв'язатись?",
 };
 
@@ -186,7 +209,11 @@ async function handleAIMessage(
             try {
               const result = await executeToolCall(
                 toolName,
-                (toolUse.input || {}) as Record<string, unknown>,
+                {
+                  ...((toolUse.input || {}) as Record<string, unknown>),
+                  _telegram_id: ctx.telegramId,
+                  _profile_id: ctx.profileId,
+                },
                 ctx.profileId,
               );
               return {
@@ -226,10 +253,13 @@ async function handleAIMessage(
     }
 
     // Extract text response
-    const textContent = (response.content || [])
+    const rawTextContent = (response.content || [])
       .filter((b) => b.type === "text")
       .map((b) => String(b.text || ""))
       .join("");
+
+    // Clean internal details from response
+    const textContent = cleanBotResponse(rawTextContent);
 
     // Save to session
     history.push({ role: "assistant", content: textContent });
@@ -544,6 +574,43 @@ async function handleCallback(
       );
       break;
     }
+
+    case "search_reminder": {
+      // Search from reminder callback — param is the search query
+      ctx.text = param;
+      ctx.callbackData = undefined;
+      await handleAIMessage(bot, ctx);
+      break;
+    }
+
+    case "dismiss_reminder": {
+      await bot.sendMessage(ctx.chatId, "✅ Нагадування закрито");
+      break;
+    }
+
+    case "consumable_action": {
+      // param format: "action:consumable_id" e.g. "skip_once:uuid-here"
+      const [consAction, consumableId] = param.split(":");
+      if (consAction && consumableId) {
+        const result = (await executeToolCall(
+          "update_consumable",
+          { consumable_id: consumableId, action: consAction },
+          ctx.profileId,
+        )) as Record<string, unknown>;
+        await bot.sendMessage(
+          ctx.chatId,
+          result.success ? `✅ ${result.message}` : `❌ ${result.error}`,
+        );
+      }
+      break;
+    }
+
+    case "my_consumables": {
+      ctx.text = "Покажи мої витратні матеріали";
+      ctx.callbackData = undefined;
+      await handleAIMessage(bot, ctx);
+      break;
+    }
   }
 }
 
@@ -738,10 +805,113 @@ ${ctx.isWholesale ? "Показуй оптові ціни. Пропонуй шв
 ## Тон
 Спілкуйся дружньо, з ентузіазмом, але без зайвої води. Можеш використовувати емодзі помірно. Короткі відповіді — це Telegram, люди читають на телефоні.
 
+## АБСОЛЮТНА ЗАБОРОНА — Внутрішня кухня
+НІКОЛИ не показуй:
+- Назви функцій/tools: search_products, admin_inventory, get_cart і т.д.
+- Технічні деталі: API, endpoint, JSON, параметри, input_schema
+- Свій процес: "Я зараз шукаю...", "Обращаюсь к функции...", "Выполняю запрос..."
+- Помилки API: якщо tool впав — скажи людською мовою "Не вдалось завантажити дані, спробуйте ще раз"
+- Прохання допомоги: "Подскажи какие данные должен возвращать запрос?"
+- Дебаг інформацію
+
+Ти маєш tools які працюють автоматично. Ти їх ВИКЛИКАЄШ, а не описуєш.
+Користувач бачить ТІЛЬКИ результат — товари, ціни, статуси.
+
 ## Головне правило
 ЗАВЖДИ використовуй tools щоб отримати реальні дані. НІКОЛИ не вигадуй ціни, наявність, артикули.
 Якщо tool повернув порожній результат — скажи клієнту що нічого не знайшов і запропонуй альтернативу.
 Якщо не знаєш відповідь — запропонуй зв'язатись з менеджером.
+
+## Розумний пошук товарів
+
+Коли клієнт шукає товар — СПОЧАТКУ розбери запит на компоненти. НЕ пхай весь текст в query одним рядком.
+
+### Словник брендів (кирилиця → латиниця):
+дарк/dark → brand: "DARK"
+силер/siller → brand: "Siller"
+луна/luna → brand: "LUNA"
+гама/gama → brand: "GA&MA"
+фокс/fox → brand: "F.O.X"
+днка/dnka → brand: "DNKa"
+стілекс/сталекс/staleks → brand: "Staleks"
+едлен/edlen → brand: "EDLEN"
+коді/kodi → brand: "Kodi"
+оксі/oksi → brand: "Oxxi"
+нуб/nub → brand: "NUB"
+вікс/weex → brand: "WEEX"
+сага/saga → brand: "Saga"
+мі нейл/my nail → brand: "My Nail"
+кутюр/couture → brand: "Couture Colour"
+дезік/dezik → brand: "DEZIK"
+
+### Словник категорій:
+база/base → category_slug: "bazy"
+топ/top → category_slug: "topy"
+гель-лак/гл/гелак → category_slug: "gel-laky"
+гель для нарощування → category_slug: "geli-dlya-naroshchuvannya"
+фреза/фрезер → category_slug: "frezy"
+лампа → category_slug: "obladnannya"
+пензлик/кисть → category_slug: "instrumenty"
+знежирювач → category_slug: "materialy"
+пилка → category_slug: "pylky"
+вії/ресниці → category_slug: "vii"
+слайдер → category_slug: "dekor"
+
+### Словник серій:
+скотч/scotch → "Scotch" в query
+камуфляж/cover → "Cover" в query
+каучук/rubber → "Rubber" в query
+shimmer/шимер → "Shimmer" в query
+
+### Об'єм/колір/номер:
+15 мл → "15" в query
+#08, №15, номер 22 → в query
+
+### Приклади розбору:
+"база скотч дарк 15 мл" → search_products(brand: "DARK", category_slug: "bazy", query: "Scotch 15")
+"гл силер 08" → search_products(brand: "Siller", category_slug: "gel-laky", query: "08")
+"каучукова база фокс 30" → search_products(brand: "F.O.X", category_slug: "bazy", query: "Rubber 30")
+"топ дарк 30 мл" → search_products(brand: "DARK", category_slug: "topy", query: "30")
+"днка база камуфляж" → search_products(brand: "DNKa", category_slug: "bazy", query: "Cover")
+
+### Якщо 0 результатів:
+1. Спробуй ширший пошук — тільки brand або тільки query без категорії
+2. Скажи клієнту: "Точного збігу не знайшов. Ось що є схожого:" і покажи ширші результати
+3. Запитай уточнення
+
+## Нагадування
+Коли клієнт просить нагадати — визнач час і створи нагадування через create_reminder.
+Парсинг часу:
+- "через хвилину" → delay_minutes: 1
+- "через 5 хвилин" → delay_minutes: 5
+- "через пів години" → delay_minutes: 30
+- "через годину" → delay_minutes: 60
+- "через 2 години" → delay_minutes: 120
+- "завтра" → розрахуй до завтра 10:00
+- "через тиждень" → delay_minutes: 10080
+
+Якщо нагадування про покупку товару — додай search_query.
+Відповідь після створення: "⏰ Готово! Нагадаю через [час] — [текст]."
+
+## Мої витратні (🔄 Автозакупки)
+Клієнт може налаштувати регулярні нагадування про товари які часто закінчуються.
+
+Коли клієнт натискає "🔄 Мої витратні":
+- Якщо список порожній → запропонуй додати перший товар: "Що у вас найчастіше закінчується?"
+- Якщо є товари → покажи список з датами наступних нагадувань + місячні витрати
+
+Коли клієнт хоче додати товар:
+1. Спитай який товар → search_products щоб знайти → підтвердити
+2. Спитай як часто закінчується → запропонуй: Щотижня / Раз на 2 тижні / Раз на 3 тижні / Раз на місяць
+3. Створи через add_consumable
+4. Запропонуй додати ще
+
+Типовий цикл для nail-матеріалів:
+- Бази, топи: 2-4 тижні
+- Гель-лаки: 1-3 місяці
+- Знежирювач, праймер: 2-3 тижні
+- Серветки, форми: 1-2 тижні
+- Фрези: 1-2 місяці
 
 ## Бізнес-правила
 - Безкоштовна доставка від 1500₴
@@ -755,13 +925,13 @@ ${ctx.isWholesale ? "Показуй оптові ціни. Пропонуй шв
 - Не давати медичних порад
 - Не порівнювати з конкурентами негативно
 - Не обіцяти знижки яких немає в системі
-- Складні випадки (конфлікти, пошкоджений товар) → "Зв'язую з менеджером"
+- Складні випадки → "Зв'язую з менеджером"
 ${userContext}
 
 ## Telegram-специфічне
 Ти відповідаєш в Telegram. Форматування:
 - Використовуй HTML: <b>жирний</b>, <i>курсив</i>, <code>код</code>
-- Emoji для візуалізації
+- Emoji помірно (max 3 на повідомлення)
 - Короткі повідомлення (1-4 речення, макс 6 для складних питань)
 - Коли показуєш товари — обгортай JSON:
   <products>[...масив товарів...]</products>

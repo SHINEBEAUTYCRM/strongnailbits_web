@@ -293,4 +293,95 @@ export const chatTools: ToolDefinition[] = [
       required: [],
     },
   },
+  {
+    name: "create_reminder",
+    description:
+      "Створити нагадування. Використовуй коли клієнт або адмін просить нагадати щось через певний час. Бот відправить повідомлення коли час настане.",
+    input_schema: {
+      type: "object",
+      properties: {
+        message: {
+          type: "string",
+          description: "Текст нагадування для користувача",
+        },
+        delay_minutes: {
+          type: "number",
+          description:
+            "Через скільки хвилин нагадати. 1=хвилина, 30=пів години, 60=година, 120=2 години, 1440=завтра",
+        },
+        search_query: {
+          type: "string",
+          description:
+            "Пошуковий запит для кнопки 'Знайти в каталозі' (якщо нагадування про покупку товару)",
+        },
+      },
+      required: ["message", "delay_minutes"],
+    },
+  },
+  {
+    name: "add_consumable",
+    description:
+      "Додати товар в список витратних матеріалів клієнта. Бот буде автоматично нагадувати коли час замовити.",
+    input_schema: {
+      type: "object",
+      properties: {
+        product_id: {
+          type: "string",
+          description: "UUID товару з каталогу",
+        },
+        cycle_days: {
+          type: "number",
+          description:
+            "Як часто закінчується товар (в днях). 7=щотижня, 14=раз на 2 тижні, 21=раз на 3 тижні, 30=раз на місяць",
+        },
+        remind_days_before: {
+          type: "number",
+          description: "За скільки днів до закінчення нагадати (default: 3)",
+        },
+      },
+      required: ["product_id", "cycle_days"],
+    },
+  },
+  {
+    name: "get_consumables",
+    description:
+      "Показати список витратних матеріалів клієнта з датами наступних нагадувань та місячними витратами.",
+    input_schema: {
+      type: "object",
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "update_consumable",
+    description:
+      "Змінити цикл, призупинити, відновити або видалити товар зі списку витратних.",
+    input_schema: {
+      type: "object",
+      properties: {
+        consumable_id: {
+          type: "string",
+          description: "UUID запису в consumables",
+        },
+        action: {
+          type: "string",
+          enum: [
+            "update_cycle",
+            "pause",
+            "resume",
+            "delete",
+            "skip_once",
+            "remind_tomorrow",
+          ],
+          description:
+            "Дія: update_cycle — змінити цикл, pause — призупинити, resume — відновити, delete — видалити, skip_once — пропустити цей раз, remind_tomorrow — нагадати завтра",
+        },
+        new_cycle_days: {
+          type: "number",
+          description: "Новий цикл в днях (тільки для update_cycle)",
+        },
+      },
+      required: ["consumable_id", "action"],
+    },
+  },
 ];

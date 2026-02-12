@@ -54,6 +54,14 @@ export async function executeToolCall(
       return getBusinessInfo(params);
     case "get_new_arrivals":
       return getNewArrivals(supabase, params);
+    case "create_reminder":
+      return createReminder(supabase, params);
+    case "add_consumable":
+      return addConsumable(supabase, params);
+    case "get_consumables":
+      return getConsumables(supabase, params);
+    case "update_consumable":
+      return updateConsumable(supabase, params);
     default:
       return { error: `Unknown tool: ${toolName}` };
   }
@@ -72,12 +80,22 @@ async function searchProducts(
     )
     .eq("status", "active");
 
-  // Text search
+  // Text search — split into words so "Scotch 15" finds products with both "Scotch" AND "15"
   if (params.query) {
     const q = String(params.query).trim();
-    query = query.or(
-      `name_uk.ilike.%${q}%,sku.ilike.%${q}%,name_ru.ilike.%${q}%`,
-    );
+    const words = q.split(/\s+/).filter((w) => w.length >= 2);
+
+    if (words.length === 1) {
+      // Single word: search in name and sku
+      query = query.or(
+        `name_uk.ilike.%${words[0]}%,sku.ilike.%${words[0]}%,name_ru.ilike.%${words[0]}%`,
+      );
+    } else if (words.length > 1) {
+      // Multiple words: each word must appear in name OR sku
+      for (const word of words) {
+        query = query.or(`name_uk.ilike.%${word}%,sku.ilike.%${word}%,name_ru.ilike.%${word}%`);
+      }
+    }
   }
 
   // Brand filter — join check
@@ -879,4 +897,275 @@ async function getNewArrivals(
       })) || [],
     period_days: days,
   };
+}
+
+// ────── 16. Create Reminder ──────
+
+async function createReminder(
+  supabase: SupabaseClient,
+  params: Record<string, unknown>,
+) {
+  const telegramId = params._telegram_id as number | undefined;
+  const profileId = params._profile_id as string | undefined;
+
+  if (!telegramId) {
+    return { error: "Нагадування доступні тільки в Telegram." };
+  }
+
+  const delayMinutes = Number(params.delay_minutes) || 60;
+  const remindAt = new Date(Date.now() + delayMinutes * 60 * 1000);
+
+  const { error } = await supabase.from("reminders").insert({
+    telegram_id: telegramId,
+    user_id: profileId || null,
+    message: String(params.message),
+    search_query: params.search_query ? String(params.search_query) : null,
+    remind_at: remindAt.toISOString(),
+  });
+
+  if (error) return { error: "Не вдалось створити нагадування" };
+
+  const hours = Math.floor(delayMinutes / 60);
+  const mins = delayMinutes % 60;
+  let timeStr = "";
+  if (hours > 0) timeStr += `${hours} год `;
+  if (mins > 0) timeStr += `${mins} хв`;
+  if (!timeStr) timeStr = "менше хвилини";
+
+  return {
+    success: true,
+    remind_at: remindAt.toISOString(),
+    time_str: timeStr.trim(),
+    message: String(params.message),
+  };
+}
+
+// ────── 17. Add Consumable ──────
+
+async function addConsumable(
+  supabase: SupabaseClient,
+  params: Record<string, unknown>,
+) {
+  const telegramId = params._telegram_id as number | undefined;
+  const profileId = params._profile_id as string | undefined;
+
+  if (!telegramId) {
+    return { error: "Витратні матеріали доступні тільки в Telegram." };
+  }
+
+  // Get product data
+  const { data: product } = await supabase
+    .from("products")
+    .select("id, name_uk, sku, price")
+    .eq("id", String(params.product_id))
+    .single();
+
+  if (!product) return { error: "Товар не знайдено" };
+
+  const cycleDays = Number(params.cycle_days) || 30;
+  const remindDaysBefore = Number(params.remind_days_before) || 3;
+  const firstRemindDays = Math.max(cycleDays - remindDaysBefore, 1);
+  const nextRemindAt = new Date(
+    Date.now() + firstRemindDays * 24 * 60 * 60 * 1000,
+  );
+
+  // Check if already exists
+  const { data: existing } = await supabase
+    .from("consumables")
+    .select("id")
+    .eq("telegram_id", telegramId)
+    .eq("product_id", String(params.product_id))
+    .maybeSingle();
+
+  if (existing) {
+    await supabase
+      .from("consumables")
+      .update({
+        cycle_days: cycleDays,
+        remind_days_before: remindDaysBefore,
+        next_remind_at: nextRemindAt.toISOString(),
+        is_active: true,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", existing.id);
+
+    return {
+      success: true,
+      updated: true,
+      product_name: product.name_uk,
+      cycle_days: cycleDays,
+      next_remind_at: nextRemindAt.toISOString(),
+    };
+  }
+
+  const { error } = await supabase.from("consumables").insert({
+    telegram_id: telegramId,
+    user_id: profileId || null,
+    product_id: product.id,
+    product_name: product.name_uk,
+    product_sku: product.sku,
+    product_price: product.price,
+    cycle_days: cycleDays,
+    remind_days_before: remindDaysBefore,
+    next_remind_at: nextRemindAt.toISOString(),
+  });
+
+  if (error) return { error: "Не вдалось додати" };
+
+  return {
+    success: true,
+    product_name: product.name_uk,
+    product_price: product.price,
+    cycle_days: cycleDays,
+    remind_days_before: remindDaysBefore,
+    next_remind_at: nextRemindAt.toISOString(),
+  };
+}
+
+// ────── 18. Get Consumables ──────
+
+async function getConsumables(
+  supabase: SupabaseClient,
+  params: Record<string, unknown>,
+) {
+  const telegramId = params._telegram_id as number | undefined;
+
+  if (!telegramId) {
+    return { error: "Витратні матеріали доступні тільки в Telegram." };
+  }
+
+  const { data, error } = await supabase
+    .from("consumables")
+    .select("*")
+    .eq("telegram_id", telegramId)
+    .eq("is_active", true)
+    .order("next_remind_at", { ascending: true });
+
+  if (error) return { error: error.message };
+
+  const items =
+    data?.map((c: Record<string, unknown>) => ({
+      id: c.id,
+      product_name: c.product_name,
+      product_sku: c.product_sku,
+      product_id: c.product_id,
+      price: c.product_price,
+      cycle_days: c.cycle_days,
+      remind_days_before: c.remind_days_before,
+      next_remind_at: c.next_remind_at,
+      times_ordered: c.times_ordered,
+    })) || [];
+
+  const monthlyCost = items.reduce((sum: number, item: Record<string, unknown>) => {
+    const timesPerMonth = 30 / (Number(item.cycle_days) || 30);
+    return sum + (Number(item.price) || 0) * timesPerMonth;
+  }, 0);
+
+  return {
+    items,
+    total_items: items.length,
+    monthly_cost: Math.round(monthlyCost),
+  };
+}
+
+// ────── 19. Update Consumable ──────
+
+async function updateConsumable(
+  supabase: SupabaseClient,
+  params: Record<string, unknown>,
+) {
+  const consumableId = String(params.consumable_id);
+  const action = String(params.action);
+
+  switch (action) {
+    case "delete":
+      await supabase.from("consumables").delete().eq("id", consumableId);
+      return { success: true, message: "Видалено зі списку" };
+
+    case "pause":
+      await supabase
+        .from("consumables")
+        .update({ is_active: false })
+        .eq("id", consumableId);
+      return { success: true, message: "Нагадування призупинено" };
+
+    case "resume": {
+      const { data: item } = await supabase
+        .from("consumables")
+        .select("cycle_days, remind_days_before")
+        .eq("id", consumableId)
+        .single();
+      if (!item) return { error: "Запис не знайдено" };
+      const nextRemind = new Date(
+        Date.now() +
+          ((item.cycle_days as number) - (item.remind_days_before as number)) * 24 * 60 * 60 * 1000,
+      );
+      await supabase
+        .from("consumables")
+        .update({
+          is_active: true,
+          next_remind_at: nextRemind.toISOString(),
+        })
+        .eq("id", consumableId);
+      return { success: true, message: "Нагадування відновлено" };
+    }
+
+    case "skip_once": {
+      const { data: skipItem } = await supabase
+        .from("consumables")
+        .select("cycle_days")
+        .eq("id", consumableId)
+        .single();
+      if (!skipItem) return { error: "Запис не знайдено" };
+      const skipNext = new Date(
+        Date.now() + (skipItem.cycle_days as number) * 24 * 60 * 60 * 1000,
+      );
+      await supabase
+        .from("consumables")
+        .update({ next_remind_at: skipNext.toISOString() })
+        .eq("id", consumableId);
+      return {
+        success: true,
+        message: "Пропущено. Наступне нагадування через цикл.",
+      };
+    }
+
+    case "remind_tomorrow": {
+      const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await supabase
+        .from("consumables")
+        .update({ next_remind_at: tomorrow.toISOString() })
+        .eq("id", consumableId);
+      return { success: true, message: "Нагадаю завтра" };
+    }
+
+    case "update_cycle": {
+      if (!params.new_cycle_days) return { error: "Вкажіть новий цикл в днях" };
+      const { data: updItem } = await supabase
+        .from("consumables")
+        .select("remind_days_before")
+        .eq("id", consumableId)
+        .single();
+      if (!updItem) return { error: "Запис не знайдено" };
+      const newNext = new Date(
+        Date.now() +
+          (Number(params.new_cycle_days) - (updItem.remind_days_before as number)) *
+            24 * 60 * 60 * 1000,
+      );
+      await supabase
+        .from("consumables")
+        .update({
+          cycle_days: Number(params.new_cycle_days),
+          next_remind_at: newNext.toISOString(),
+        })
+        .eq("id", consumableId);
+      return {
+        success: true,
+        message: `Цикл змінено на ${params.new_cycle_days} днів`,
+      };
+    }
+
+    default:
+      return { error: "Невідома дія" };
+  }
 }
