@@ -1,5 +1,5 @@
-import { EnrichmentWizard } from '@/components/admin/enrichment/EnrichmentWizard';
+import { EnrichmentPage } from '@/components/admin/enrichment/EnrichmentPage';
 
-export default function EnrichmentPage() {
-  return <EnrichmentWizard />;
+export default function AdminEnrichmentPage() {
+  return <EnrichmentPage />;
 }

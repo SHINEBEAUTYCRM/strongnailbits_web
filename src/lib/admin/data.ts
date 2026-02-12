@@ -96,7 +96,7 @@ export async function getProductQualityCounts() {
 
 export async function getProductById(id: string) {
   const supabase = createAdminClient();
-  const { data } = await supabase.from("products").select("*").eq("id", id).single();
+  const { data } = await supabase.from("products").select("id, name_uk, name_ru, slug, sku, description_uk, description_ru, price, old_price, wholesale_price, cost_price, quantity, status, main_image_url, images, weight, properties, meta_title, meta_description, is_featured, is_new, position, category_id, brand_id, cs_cart_id, external_id, enrichment_status, ai_metadata, photo_sources, created_at, updated_at").eq("id", id).single();
   return data;
 }
 

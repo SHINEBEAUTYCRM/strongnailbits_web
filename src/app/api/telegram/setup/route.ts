@@ -1,93 +1,106 @@
 /**
- * One-time Telegram Bot setup:
- * - Sets bot commands (hamburger menu)
- * - Sets bot description
- * 
- * Call: GET /api/telegram/setup?secret=YOUR_WEBHOOK_SECRET
+ * Telegram Bot Setup Route
+ *
+ * One-time setup:
+ * - Register webhook URL with Telegram
+ * - Set bot commands (hamburger menu)
+ * - Set bot description
+ *
+ * Usage:
+ *   GET /api/telegram/setup?secret=YOUR_SECRET
+ *   GET /api/telegram/setup?secret=YOUR_SECRET&action=webhook
+ *   GET /api/telegram/setup?secret=YOUR_SECRET&action=info
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { TelegramBot } from "@/lib/telegram/bot";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
-  // Simple auth
+  // Auth
   const secret = request.nextUrl.searchParams.get("secret");
-  const expected = process.env.TELEGRAM_WEBHOOK_SECRET;
+  const expected =
+    process.env.TELEGRAM_WEBHOOK_SECRET || process.env.TELEGRAM_SETUP_SECRET;
   if (expected && secret !== expected) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) {
-    return NextResponse.json({ error: "TELEGRAM_BOT_TOKEN not set" }, { status: 500 });
+    return NextResponse.json(
+      { error: "TELEGRAM_BOT_TOKEN not set" },
+      { status: 500 },
+    );
   }
 
-  const api = `https://api.telegram.org/bot${token}`;
+  const bot = new TelegramBot(token);
+  const action = request.nextUrl.searchParams.get("action") || "all";
   const results: Record<string, unknown> = {};
 
-  // 1. Set bot commands (hamburger menu)
-  try {
-    const res = await fetch(`${api}/setMyCommands`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        commands: [
-          { command: "start", description: "🚀 Підключити акаунт" },
-          { command: "orders", description: "📦 Мої замовлення" },
-          { command: "account", description: "👤 Мій кабінет" },
-          { command: "catalog", description: "🛒 Каталог" },
-          { command: "manager", description: "💬 Зв'язок з менеджером" },
-        ],
-      }),
-    });
-    results.commands = await res.json();
-  } catch (err) {
-    results.commands = { error: String(err) };
+  // ─── Webhook ───
+  if (action === "all" || action === "webhook") {
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com";
+    const webhookUrl = `${siteUrl}/api/telegram/webhook`;
+    const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
+
+    results.webhook = await bot.setWebhook(webhookUrl, webhookSecret);
+    results.webhook_url = webhookUrl;
   }
 
-  // 2. Set bot short description (shown in profile)
-  try {
-    const res = await fetch(`${api}/setMyShortDescription`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        short_description: "ShineShop B2B — замовлення, знижки, AI-консультант 🤖",
-      }),
-    });
-    results.shortDescription = await res.json();
-  } catch (err) {
-    results.shortDescription = { error: String(err) };
+  // ─── Webhook info ───
+  if (action === "info") {
+    results.webhookInfo = await bot.getWebhookInfo();
+    return NextResponse.json(results);
   }
 
-  // 3. Set bot description (shown before /start)
-  try {
-    const res = await fetch(`${api}/setMyDescription`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        description: "Бот ShineShop B2B — оптова косметика для нігтів.\n\n📦 Статус замовлень\n🏷️ Персональні знижки\n🤖 AI-консультант 24/7\n\nНатисніть Start щоб підключити акаунт.",
-      }),
-    });
-    results.description = await res.json();
-  } catch (err) {
-    results.description = { error: String(err) };
+  // ─── Bot Commands (client) ───
+  if (action === "all" || action === "commands") {
+    // Default commands (for all users)
+    results.commands = await bot.setMyCommands([
+      { command: "start", description: "🚀 Почати / Прив'язати акаунт" },
+      { command: "search", description: "🔍 Знайти товар" },
+      { command: "cart", description: "🛒 Мій кошик" },
+      { command: "orders", description: "📦 Мої замовлення" },
+      { command: "new", description: "🆕 Новинки тижня" },
+      { command: "brands", description: "🏷️ Бренди" },
+      { command: "delivery", description: "🚚 Умови доставки" },
+      { command: "contacts", description: "📞 Контакти" },
+      { command: "link", description: "🔗 Прив'язати акаунт" },
+      { command: "help", description: "❓ Що я вмію" },
+    ]);
+
+    // Admin commands (only for admins — set per-chat later when admin registers)
+    // These are also accessible via text, Claude handles them
   }
 
-  // 4. Set chat menu button to commands
-  try {
-    const res = await fetch(`${api}/setChatMenuButton`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        menu_button: {
-          type: "commands",
-        },
-      }),
+  // ─── Bot Description ───
+  if (action === "all" || action === "description") {
+    results.shortDescription = await bot.setMyShortDescription(
+      "ShineShop B2B — AI-асистент nail-магазину 💅",
+    );
+
+    results.description = await bot.setMyDescription(
+      [
+        "Бот ShineShop B2B — оптова косметика для нігтів.",
+        "",
+        "🔍 Пошук серед 12 000+ товарів",
+        "📦 Статус замовлень онлайн",
+        "🛒 Кошик та швидке замовлення",
+        "🏷️ Оптові ціни для B2B клієнтів",
+        "🤖 AI-консультант 24/7",
+        "",
+        "Натисніть Start щоб почати!",
+      ].join("\n"),
+    );
+  }
+
+  // ─── Chat Menu Button ───
+  if (action === "all" || action === "menu") {
+    results.menuButton = await bot.setChatMenuButton({
+      type: "commands",
     });
-    results.menuButton = await res.json();
-  } catch (err) {
-    results.menuButton = { error: String(err) };
   }
 
   return NextResponse.json({ ok: true, results });

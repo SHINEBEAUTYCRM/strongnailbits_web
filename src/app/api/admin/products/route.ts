@@ -21,12 +21,30 @@ export async function GET(request: NextRequest) {
       .from('products')
       .select(fields, { count: 'exact' });
 
+    // Filters
+    const brandId = sp.get('brand_id');
+    const categoryId = sp.get('category_id');
+    const search = sp.get('search');
+    const productId = sp.get('id');
+    const noDesc = sp.get('no_description');
+    const noPhoto = sp.get('no_photo');
+
+    if (productId) query = query.eq('id', productId);
+    if (brandId) query = query.eq('brand_id', brandId);
+    if (categoryId) query = query.eq('category_id', categoryId);
+    if (noDesc === '1') query = query.is('description_uk', null);
+    if (noPhoto === '1') query = query.is('main_image_url', null);
+
     if (status === 'enriched') {
       query = query.in('enrichment_status', ['enriched', 'approved']);
     } else if (status === 'error') {
       query = query.eq('enrichment_status', 'error');
     } else if (status === 'approved') {
       query = query.eq('enrichment_status', 'approved');
+    }
+
+    if (search) {
+      query = query.or(`name_uk.ilike.%${search}%,sku.ilike.%${search}%`);
     }
 
     query = query.order('updated_at', { ascending: false }).range(offset, offset + limit - 1);

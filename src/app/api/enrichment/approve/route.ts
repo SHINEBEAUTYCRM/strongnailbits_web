@@ -1,51 +1,64 @@
 // POST /api/enrichment/approve
-// Body: { product_ids: string[] }
-// Changes status → 'approved'
-
+// Body: { product_id, description_uk, specs, tags, compatible_products, selected_photos }
+// OR: { product_ids } for bulk approve (just status change)
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminUser } from '@/lib/admin/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 export async function POST(request: NextRequest) {
   const admin = await getAdminUser();
-  if (!admin) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await request.json();
-  const { product_ids } = body;
-
-  if (!Array.isArray(product_ids) || product_ids.length === 0) {
-    return NextResponse.json({ error: 'product_ids array is required' }, { status: 400 });
-  }
-
   const supabase = createAdminClient();
 
-  const { error } = await supabase
-    .from('products')
-    .update({
-      enrichment_status: 'approved',
-      enrichment_date: new Date().toISOString(),
-      enriched_by: admin.email,
-    })
-    .in('id', product_ids);
+  // Bulk approve (just status)
+  if (Array.isArray(body.product_ids) && body.product_ids.length > 0) {
+    const { error } = await supabase
+      .from('products')
+      .update({
+        enrichment_status: 'approved',
+        enriched_by: admin.email,
+      })
+      .in('id', body.product_ids);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, approved: body.product_ids.length });
   }
 
-  // Log (bulk insert)
-  await supabase.from('enrichment_log').insert(
-    product_ids.map((id: string) => ({
-      product_id: id,
-      action: 'approve',
-      status: 'success',
-      details: { approved_by: admin.email },
-    })),
-  );
+  // Single product approve with full data
+  const { product_id, description_uk, specs, tags, compatible_products, selected_photos } = body;
+  if (!product_id) return NextResponse.json({ error: 'product_id required' }, { status: 400 });
 
-  return NextResponse.json({
-    success: true,
-    approved: product_ids.length,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updateData: Record<string, any> = {
+    enrichment_status: 'approved',
+    enriched_by: admin.email,
+  };
+
+  if (description_uk) updateData.description_uk = description_uk;
+
+  const aiMetadata: Record<string, unknown> = {};
+  if (specs) aiMetadata.specs = specs;
+  if (tags) {
+    aiMetadata.season_tags = tags.season || [];
+    aiMetadata.style_tags = tags.style || [];
+  }
+  if (compatible_products) aiMetadata.compatible_products = compatible_products;
+  if (Object.keys(aiMetadata).length > 0) updateData.ai_metadata = aiMetadata;
+
+  if (selected_photos) updateData.photo_sources = selected_photos;
+
+  const { error } = await supabase.from('products').update(updateData).eq('id', product_id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Log
+  await supabase.from('enrichment_log').insert({
+    product_id,
+    action: 'approve',
+    status: 'success',
+    details: { approved_by: admin.email },
   });
+
+  return NextResponse.json({ success: true });
 }

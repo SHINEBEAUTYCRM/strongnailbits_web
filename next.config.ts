@@ -19,6 +19,11 @@ const nextConfig: NextConfig = {
         hostname: "shineshopb2b.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "img.shineshopb2b.com",
+        pathname: "/**",
+      },
     ],
     // Optimized device sizes for common viewports
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
