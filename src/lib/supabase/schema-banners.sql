@@ -3,8 +3,11 @@
 --  Система керування банерами
 -- ================================================================
 
+-- Видаляємо стару таблицю (якщо існує від часткової міграції)
+DROP TABLE IF EXISTS banners CASCADE;
+
 -- Таблиця банерів
-CREATE TABLE IF NOT EXISTS banners (
+CREATE TABLE banners (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
 
   -- Контент
@@ -50,10 +53,10 @@ CREATE TABLE IF NOT EXISTS banners (
 );
 
 -- Індекси
-CREATE INDEX IF NOT EXISTS idx_banners_active ON banners (is_active, type) WHERE is_active = true;
-CREATE INDEX IF NOT EXISTS idx_banners_dates ON banners (starts_at, ends_at) WHERE is_active = true;
-CREATE INDEX IF NOT EXISTS idx_banners_placement ON banners USING GIN (placement);
-CREATE INDEX IF NOT EXISTS idx_banners_sort ON banners (type, sort_order);
+CREATE INDEX idx_banners_active ON banners (is_active, type) WHERE is_active = true;
+CREATE INDEX idx_banners_dates ON banners (starts_at, ends_at) WHERE is_active = true;
+CREATE INDEX idx_banners_placement ON banners USING GIN (placement);
+CREATE INDEX idx_banners_sort ON banners (type, sort_order);
 
 -- RLS
 ALTER TABLE banners ENABLE ROW LEVEL SECURITY;
@@ -66,7 +69,14 @@ CREATE POLICY "Public can view active banners" ON banners
     AND (ends_at IS NULL OR ends_at >= now())
   );
 
+-- Повний доступ для сервісної ролі (admin API routes використовують service_role key)
+CREATE POLICY "Service role full access" ON banners
+  FOR ALL
+  USING (true)
+  WITH CHECK (true);
+
 -- Trigger для updated_at
+DROP TRIGGER IF EXISTS update_banners_updated_at ON banners;
 CREATE OR REPLACE FUNCTION update_banners_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
