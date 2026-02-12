@@ -645,21 +645,33 @@ async function callClaude(
     messages: unknown[];
   },
 ): Promise<ClaudeResponse> {
-  const res = await fetch(ANTHROPIC_API, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify(params),
-    signal: AbortSignal.timeout(60_000),
-  });
+  const MAX_RETRIES = 2;
 
-  if (!res.ok) {
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const res = await fetch(ANTHROPIC_API, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify(params),
+      signal: AbortSignal.timeout(60_000),
+    });
+
+    if (res.ok) return res.json();
+
+    if ((res.status === 429 || res.status === 529) && attempt < MAX_RETRIES) {
+      const retryAfter = Number(res.headers.get("retry-after")) || 15;
+      const waitMs = Math.min(retryAfter * 1000, 30_000);
+      console.log(`[Claude] Rate limited, retrying in ${waitMs}ms (attempt ${attempt + 1})`);
+      await new Promise((r) => setTimeout(r, waitMs));
+      continue;
+    }
+
     const error = await res.text();
     throw new Error(`Claude API error ${res.status}: ${error}`);
   }
 
-  return res.json();
+  throw new Error("Claude API: max retries exceeded");
 }

@@ -1,11 +1,28 @@
 "use client";
 
 import { useState, useCallback } from 'react';
-import { ImageIcon, Loader2 } from 'lucide-react';
+import { ImageIcon, Loader2, Globe, Link as LinkIcon } from 'lucide-react';
 import { useImageStudioStore } from '@/store/image-studio-store';
 import { TemplateSelector } from './TemplateSelector';
 import { PromptInput } from './PromptInput';
 import type { SelectedImage } from '@/lib/photoroom/types';
+
+/** Витягти URL зображення з HTML (коли перетягуєш <img> з браузера) */
+function extractImageUrlFromHtml(html: string): string | null {
+  const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+  return match?.[1] || null;
+}
+
+/** Перевірити чи URL схожий на зображення */
+function looksLikeImageUrl(url: string): boolean {
+  if (!url.startsWith('http')) return false;
+  const imageExts = /\.(jpe?g|png|webp|gif|bmp|svg|avif)(\?|#|$)/i;
+  if (imageExts.test(url)) return true;
+  // Часті CDN патерни для зображень
+  if (url.includes('/images/') || url.includes('/img/') || url.includes('/photo/')) return true;
+  if (url.includes('cdn') && !url.includes('.html') && !url.includes('.js')) return true;
+  return false;
+}
 
 export function ImageCanvas() {
   const {
@@ -16,6 +33,7 @@ export function ImageCanvas() {
     selectedTemplate,
     setSelectedTemplate,
     setCanvasImage,
+    loadExternalImage,
     customPrompt,
     setCustomPrompt,
     processImage,
@@ -23,6 +41,7 @@ export function ImageCanvas() {
   } = useImageStudioStore();
 
   const [isDragOver, setIsDragOver] = useState(false);
+  const [pasteUrl, setPasteUrl] = useState('');
 
   // Aspect ratio
   const aspectRatio = selectedTemplate.width / selectedTemplate.height;
@@ -43,7 +62,7 @@ export function ImageCanvas() {
       e.preventDefault();
       setIsDragOver(false);
 
-      // Спробувати отримати структуровані дані
+      // 1. Внутрішні структуровані дані (з панелі пошуку)
       const jsonData = e.dataTransfer.getData('application/x-studio-image');
       if (jsonData) {
         try {
@@ -51,13 +70,43 @@ export function ImageCanvas() {
           setCanvasImage(img);
           return;
         } catch {
-          // Fallback до URL
+          // Fallback
         }
       }
 
-      // Fallback — URL
-      const url = e.dataTransfer.getData('text/plain');
-      if (url && (url.startsWith('http') || url.startsWith('/'))) {
+      // 2. HTML — коли перетягуєш картинку з іншого сайту в браузері
+      const html = e.dataTransfer.getData('text/html');
+      if (html) {
+        const imgUrl = extractImageUrlFromHtml(html);
+        if (imgUrl && imgUrl.startsWith('http')) {
+          // Зовнішнє зображення — проксуємо через сервер
+          loadExternalImage(imgUrl);
+          return;
+        }
+      }
+
+      // 3. URL (text/uri-list або text/plain)
+      const uriList = e.dataTransfer.getData('text/uri-list');
+      const plainUrl = e.dataTransfer.getData('text/plain');
+      const url = uriList || plainUrl;
+
+      if (url && url.startsWith('http')) {
+        if (looksLikeImageUrl(url)) {
+          // Зовнішній URL зображення — проксуємо
+          loadExternalImage(url);
+        } else {
+          // Внутрішній URL (наш домен) — використовуємо напряму
+          setCanvasImage({
+            id: `drop-${Date.now()}`,
+            url,
+            source: 'product',
+          });
+        }
+        return;
+      }
+
+      // Внутрішній шлях
+      if (url && url.startsWith('/')) {
         setCanvasImage({
           id: `drop-${Date.now()}`,
           url,
@@ -66,7 +115,7 @@ export function ImageCanvas() {
         return;
       }
 
-      // Fallback — файл
+      // 4. Файл (перетягнутий з файлової системи)
       const file = e.dataTransfer.files?.[0];
       if (file && file.type.startsWith('image/')) {
         const objectUrl = URL.createObjectURL(file);
@@ -77,8 +126,18 @@ export function ImageCanvas() {
         });
       }
     },
-    [setCanvasImage]
+    [setCanvasImage, loadExternalImage]
   );
+
+  /** Вставити зображення за URL вручну */
+  const handlePasteUrl = useCallback(() => {
+    const url = pasteUrl.trim();
+    if (!url) return;
+    if (url.startsWith('http')) {
+      loadExternalImage(url);
+      setPasteUrl('');
+    }
+  }, [pasteUrl, loadExternalImage]);
 
   const handlePromptSubmit = () => {
     if (customPrompt.trim()) {
@@ -125,18 +184,58 @@ export function ImageCanvas() {
         >
           {/* Порожній стан */}
           {!displayImage && !isProcessing && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-8">
               <ImageIcon className="w-12 h-12" style={{ color: '#1e1e2a' }} />
               <div className="text-center">
                 <p className="text-sm font-medium" style={{ color: '#4b5563' }}>
                   Перетягніть зображення сюди
                 </p>
                 <p className="text-xs mt-1" style={{ color: '#374151' }}>
-                  або оберіть товар зліва
+                  з іншого сайту, з панелі зліва або з комп&apos;ютера
                 </p>
               </div>
+
+              {/* Вставити URL вручну */}
               <div
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full mt-2"
+                className="flex items-center gap-2 w-full max-w-sm"
+              >
+                <div
+                  className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                  }}
+                >
+                  <LinkIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#4b5563' }} />
+                  <input
+                    type="text"
+                    value={pasteUrl}
+                    onChange={(e) => setPasteUrl(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handlePasteUrl()}
+                    placeholder="Вставте URL зображення..."
+                    className="flex-1 bg-transparent text-xs outline-none placeholder:text-[#374151]"
+                    style={{ color: '#e5e7eb' }}
+                  />
+                </div>
+                <button
+                  onClick={handlePasteUrl}
+                  disabled={!pasteUrl.trim()}
+                  className="px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5"
+                  style={{
+                    background: pasteUrl.trim()
+                      ? 'rgba(168, 85, 247, 0.15)'
+                      : 'rgba(255, 255, 255, 0.03)',
+                    border: `1px solid ${pasteUrl.trim() ? 'rgba(168, 85, 247, 0.3)' : 'rgba(255, 255, 255, 0.06)'}`,
+                    color: pasteUrl.trim() ? '#c084fc' : '#4b5563',
+                  }}
+                >
+                  <Globe className="w-3.5 h-3.5" />
+                  Завантажити
+                </button>
+              </div>
+
+              <div
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
                 style={{
                   background: 'rgba(168, 85, 247, 0.08)',
                   border: '1px solid rgba(168, 85, 247, 0.15)',
@@ -202,14 +301,18 @@ export function ImageCanvas() {
           {/* Drag overlay */}
           {isDragOver && (
             <div
-              className="absolute inset-0 flex items-center justify-center z-20"
+              className="absolute inset-0 flex flex-col items-center justify-center gap-2 z-20"
               style={{
                 background: 'rgba(168, 85, 247, 0.1)',
                 backdropFilter: 'blur(4px)',
               }}
             >
+              <Globe className="w-8 h-8" style={{ color: '#c084fc' }} />
               <p className="text-lg font-semibold" style={{ color: '#c084fc' }}>
-                Відпустіть для розміщення
+                Відпустіть для завантаження
+              </p>
+              <p className="text-xs" style={{ color: '#9ca3af' }}>
+                Зображення буде збережено автоматично
               </p>
             </div>
           )}

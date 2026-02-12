@@ -158,6 +158,52 @@ export const useImageStudioStore = create<ImageStudioState>()((set, get) => ({
   setActiveAction: (action) => set({ activeAction: action }),
   setError: (error) => set({ error }),
 
+  loadExternalImage: async (url) => {
+    set({
+      isProcessing: true,
+      processingLabel: 'Завантаження зображення...',
+      error: null,
+    });
+
+    try {
+      const res = await fetch('/api/admin/upload-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || 'Не вдалося завантажити зображення');
+      }
+
+      const img: SelectedImage = {
+        id: `external-${Date.now()}`,
+        url: data.url,
+        productName: 'Зовнішнє зображення',
+        source: 'upload',
+      };
+
+      set({
+        canvasImage: img,
+        processedImage: null,
+        isProcessing: false,
+        processingLabel: '',
+      });
+
+      // Також додати до обраних
+      const { selectedImages } = get();
+      set({ selectedImages: [...selectedImages, img] });
+    } catch (err) {
+      set({
+        isProcessing: false,
+        processingLabel: '',
+        error: err instanceof Error ? err.message : 'Помилка завантаження',
+      });
+    }
+  },
+
   processImage: async (action, options) => {
     const state = get();
     const imageSource = state.processedImage || state.canvasImage?.url;
