@@ -8,6 +8,20 @@ import type { EditOptions, EditResult, BatchResult } from './types';
 const EDIT_ENDPOINT = '/api/photoroom/edit';
 const BATCH_ENDPOINT = '/api/photoroom/batch';
 
+/** Безпечно витягує рядок помилки з JSON-відповіді proxy */
+function extractErrorMsg(err: unknown, fallback: string): string {
+  if (typeof err === 'string') return err;
+  if (typeof err === 'object' && err !== null) {
+    const obj = err as Record<string, unknown>;
+    if (typeof obj.error === 'string') return obj.error;
+    if (typeof obj.error === 'object' && obj.error !== null) {
+      return ((obj.error as Record<string, unknown>).message as string) || JSON.stringify(obj.error);
+    }
+    if (typeof obj.message === 'string') return obj.message;
+  }
+  return fallback;
+}
+
 /**
  * Формує FormData з EditOptions для відправки на серверний proxy.
  */
@@ -96,11 +110,7 @@ export async function editImage(options: EditOptions): Promise<EditResult> {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Невідома помилка PhotoRoom' }));
-    // Гарантуємо що повідомлення помилки — string (не об'єкт)
-    const msg = typeof err.error === 'string'
-      ? err.error
-      : (err.error ? JSON.stringify(err.error) : `PhotoRoom API помилка: ${res.status}`);
-    throw new Error(msg);
+    throw new Error(extractErrorMsg(err, `PhotoRoom API помилка: ${res.status}`));
   }
 
   return res.json();
@@ -146,7 +156,7 @@ export async function batchEditImages(
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Помилка пакетної обробки' }));
-    throw new Error(err.error || `Batch API помилка: ${res.status}`);
+    throw new Error(extractErrorMsg(err, `Batch API помилка: ${res.status}`));
   }
 
   return res.json();

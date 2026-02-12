@@ -12,6 +12,20 @@ import { checkRateLimit } from '@/lib/api/rate-limiter';
 export const dynamic = 'force-dynamic';
 
 const PHOTOROOM_API = 'https://image-api.photoroom.com/v2/edit';
+
+/** Безпечно витягує рядок помилки з будь-якого формату відповіді PhotoRoom */
+function extractError(errBody: unknown): string {
+  if (typeof errBody === 'string') return errBody;
+  if (typeof errBody === 'object' && errBody !== null) {
+    const obj = errBody as Record<string, unknown>;
+    if (typeof obj.error === 'object' && obj.error !== null) {
+      return ((obj.error as Record<string, unknown>).message as string) || 'Помилка PhotoRoom';
+    }
+    if (typeof obj.error === 'string') return obj.error;
+    if (typeof obj.message === 'string') return obj.message;
+  }
+  return 'Невідома помилка PhotoRoom';
+}
 const BUCKET = 'images';
 const STORAGE_FOLDER = 'studio';
 const RATE_LIMIT = 30;
@@ -107,8 +121,7 @@ export async function POST(request: NextRequest) {
           if (contentType.includes('application/json')) {
             const errBody = await photoRoomRes.json().catch(() => null);
             if (errBody) {
-              const raw = errBody.message || errBody.error;
-              msg = typeof raw === 'string' ? raw : (raw ? JSON.stringify(raw) : msg);
+              msg = extractError(errBody);
             }
           }
           throw new Error(msg);
