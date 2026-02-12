@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Save, Loader2, Trash2, ArrowLeft, Plus, X, ImageIcon, Camera } from "lucide-react";
 import Link from "next/link";
 import { ImageUpload } from "./ImageUpload";
+import { ImageUploadWithStudio } from "./image-studio/ImageUploadWithStudio";
 
 interface Category { id: string; name_uk: string; }
 interface Brand { id: string; name: string; }
@@ -156,25 +157,14 @@ export function ProductForm({
           <Section title="Зображення">
             <div>
               <p className="text-xs font-medium mb-3" style={{ color: "#71717a" }}>Головне зображення</p>
-              {form.main_image_url ? (
-                <div className="flex items-start gap-4 mb-3">
-                  <div className="relative">
-                    <img src={form.main_image_url} alt="" className="w-32 h-32 rounded-lg object-cover" style={{ background: "#141420" }} />
-                    <button onClick={() => set("main_image_url", "")} className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "#450a0a", color: "#f87171", border: "1px solid #7f1d1d" }}>
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-[10px] mb-1" style={{ color: "#3f3f46" }}>Замінити:</p>
-                    <ImageUpload onUpload={(url) => set("main_image_url", url)} currentUrl={form.main_image_url} compact />
-                  </div>
-                </div>
-              ) : (
-                <ImageUpload
-                  onUpload={(url) => set("main_image_url", url)}
-                  label=""
-                />
-              )}
+              <ImageUploadWithStudio
+                value={form.main_image_url}
+                onChange={(url) => set("main_image_url", url)}
+                context="product"
+                entityId={initial?.id || "new"}
+                suggestedSize={{ width: 1000, height: 1000 }}
+                label=""
+              />
             </div>
 
             <div className="mt-4 pt-4" style={{ borderTop: "1px solid #1e1e2a" }}>
