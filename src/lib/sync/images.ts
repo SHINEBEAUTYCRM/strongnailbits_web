@@ -228,12 +228,11 @@ export async function migrateProductImages(
   while (hasMore && totalFetched < limit) {
     const batchLimit = Math.min(BATCH_SIZE, limit - totalFetched);
 
+    // Fetch all products in order — filter old URLs in JS
+    // (PostgREST can't do ILIKE on JSONB array elements)
     const { data: products, error: fetchError } = await supabase
       .from("products")
       .select("id, main_image_url, images")
-      .or(
-        `main_image_url.ilike.%${OLD_HOST}%,images.cs.{${OLD_HOST}}`,
-      )
       .range(batchOffset, batchOffset + batchLimit - 1)
       .order("created_at", { ascending: true });
 
