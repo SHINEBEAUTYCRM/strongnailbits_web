@@ -119,7 +119,7 @@ async function handleAdminAI(
 ): Promise<void> {
   await bot.sendChatAction(ctx.chatId, "typing");
 
-  const apiKey = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY;
+  const apiKey = (process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || "").trim();
   if (!apiKey) {
     await bot.sendMessage(ctx.chatId, "❌ Claude API не налаштовано.");
     return;
@@ -131,7 +131,7 @@ async function handleAdminAI(
     while (history.length > MAX_HISTORY) history.shift();
 
     const systemPrompt = buildAdminSystemPrompt(ctx);
-    const model = process.env.CLAUDE_MODEL || "claude-sonnet-4-20250514";
+    const model = (process.env.CLAUDE_MODEL || "claude-sonnet-4-20250514").trim();
 
     let response = await callClaude(apiKey, {
       model,

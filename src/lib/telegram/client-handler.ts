@@ -121,7 +121,7 @@ async function handleAIMessage(
   // Show typing indicator
   await bot.sendChatAction(ctx.chatId, "typing");
 
-  const apiKey = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY;
+  const apiKey = (process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || "").trim();
   if (!apiKey) {
     await bot.sendMessage(
       ctx.chatId,
@@ -142,7 +142,7 @@ async function handleAIMessage(
     const systemPrompt = buildClientSystemPrompt(ctx);
 
     // Get model from config
-    const model = process.env.CLAUDE_MODEL || "claude-sonnet-4-20250514";
+    const model = (process.env.CLAUDE_MODEL || "claude-sonnet-4-20250514").trim();
 
     // First Claude call
     let response = await callClaude(apiKey, {
