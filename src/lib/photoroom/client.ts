@@ -96,7 +96,11 @@ export async function editImage(options: EditOptions): Promise<EditResult> {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Невідома помилка PhotoRoom' }));
-    throw new Error(err.error || `PhotoRoom API помилка: ${res.status}`);
+    // Гарантуємо що повідомлення помилки — string (не об'єкт)
+    const msg = typeof err.error === 'string'
+      ? err.error
+      : (err.error ? JSON.stringify(err.error) : `PhotoRoom API помилка: ${res.status}`);
+    throw new Error(msg);
   }
 
   return res.json();

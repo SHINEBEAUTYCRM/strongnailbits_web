@@ -282,10 +282,19 @@ export const useImageStudioStore = create<ImageStudioState>()((set, get) => ({
         history: [historyEntry, ...s.history],
       }));
     } catch (err) {
+      // Гарантуємо що error — завжди string для відображення в UI
+      let errorMsg = 'Помилка обробки зображення';
+      if (err instanceof Error) {
+        errorMsg = err.message;
+      } else if (typeof err === 'string') {
+        errorMsg = err;
+      } else if (err && typeof err === 'object') {
+        errorMsg = JSON.stringify(err);
+      }
       set({
         isProcessing: false,
         processingLabel: '',
-        error: err instanceof Error ? err.message : 'Помилка обробки зображення',
+        error: errorMsg,
       });
     }
   },

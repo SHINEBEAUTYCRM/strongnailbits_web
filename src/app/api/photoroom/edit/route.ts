@@ -106,7 +106,9 @@ export async function POST(request: NextRequest) {
       if (contentType.includes('application/json')) {
         const errBody = await photoRoomRes.json().catch(() => null);
         if (errBody) {
-          errorMessage = errBody.message || errBody.error || errorMessage;
+          // Гарантуємо що errorMessage завжди string (PhotoRoom може повернути вкладений об'єкт)
+          const raw = errBody.message || errBody.error;
+          errorMessage = typeof raw === 'string' ? raw : (raw ? JSON.stringify(raw) : errorMessage);
           console.error('[PhotoRoom] API Error:', JSON.stringify(errBody));
         }
       } else {
