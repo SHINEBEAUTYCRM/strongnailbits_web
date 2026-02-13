@@ -197,13 +197,13 @@ export function CategoryTable({ categories }: { categories: Cat[] }) {
         <div className="flex items-center gap-3 mb-4 px-4 py-2.5 rounded-xl" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
           <span className="text-xs font-medium" style={{ color: "var(--a-text-2)" }}>Обрано: {selected.size}</span>
           <div className="w-px h-4" style={{ background: "var(--a-border)" }} />
-          <button onClick={() => bulkAction("bulk-status", { status: "active" })} disabled={bulkLoading} className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs" style={{ color: "#4ade80", background: "#052e16" }}>
+          <button onClick={() => bulkAction("bulk-status", { status: "active" })} disabled={bulkLoading} className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs" style={{ color: "var(--a-st-delivered-c)", background: "var(--a-st-delivered-bg)" }}>
             <Eye className="w-3.5 h-3.5" /> Увімкнути
           </button>
-          <button onClick={() => bulkAction("bulk-status", { status: "disabled" })} disabled={bulkLoading} className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs" style={{ color: "#71717a", background: "#18181b" }}>
+          <button onClick={() => bulkAction("bulk-status", { status: "disabled" })} disabled={bulkLoading} className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs" style={{ color: "var(--a-text-3)", background: "var(--a-bg-input)" }}>
             <EyeOff className="w-3.5 h-3.5" /> Вимкнути
           </button>
-          <button onClick={() => { if (confirm(`Видалити ${selected.size} категорій?`)) bulkAction("bulk-delete"); }} disabled={bulkLoading} className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs" style={{ color: "#f87171", background: "#1c1017" }}>
+          <button onClick={() => { if (confirm(`Видалити ${selected.size} категорій?`)) bulkAction("bulk-delete"); }} disabled={bulkLoading} className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs" style={{ color: "var(--a-st-cancelled-c)", background: "var(--a-st-cancelled-bg)" }}>
             <Trash2 className="w-3.5 h-3.5" /> Видалити
           </button>
           <button onClick={() => setSelected(new Set())} className="ml-auto text-xs" style={{ color: "var(--a-text-4)" }}>Скасувати</button>
@@ -211,7 +211,7 @@ export function CategoryTable({ categories }: { categories: Cat[] }) {
         </div>
       )}
 
-      {error && <div className="mb-4 px-4 py-2.5 rounded-lg text-sm" style={{ color: "#f87171", background: "#450a0a", border: "1px solid #7f1d1d" }}>{error}</div>}
+      {error && <div className="mb-4 px-4 py-2.5 rounded-lg text-sm" style={{ color: "var(--a-st-cancelled-c)", background: "var(--a-st-cancelled-bg)", border: "1px solid var(--a-st-cancelled-c)" }}>{error}</div>}
 
       {/* Category cards */}
       <div className="space-y-3">
@@ -277,7 +277,7 @@ export function CategoryTable({ categories }: { categories: Cat[] }) {
                 <button onClick={() => toggleStatus(root.id)} disabled={loadingIds.has(root.id)}
                   className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
                   title={rootStatus === "active" ? "Вимкнути категорію" : "Увімкнути категорію"}
-                  style={rootStatus === "active" ? { color: "#4ade80", background: "#052e16", border: "1px solid #14532d" } : { color: "#71717a", background: "#18181b", border: "1px solid #27272a" }}>
+                  style={rootStatus === "active" ? { color: "var(--a-st-delivered-c)", background: "var(--a-st-delivered-bg)", border: "1px solid var(--a-st-delivered-c)" } : { color: "var(--a-text-3)", background: "var(--a-bg-input)", border: "1px solid var(--a-border)" }}>
                   {loadingIds.has(root.id) ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : rootStatus === "active" ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                   {rootStatus === "active" ? "Активна" : "Вимкнена"}
                 </button>
@@ -334,7 +334,7 @@ export function CategoryTable({ categories }: { categories: Cat[] }) {
                               <button onClick={() => toggleStatus(sub.id)} disabled={loadingIds.has(sub.id)}
                                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition-all"
                                 title={subStatus === "active" ? "Вимкнути" : "Увімкнути"}
-                                style={subStatus === "active" ? { color: "#4ade80", background: "#052e16" } : { color: "#52525b", background: "#18181b" }}>
+                                style={subStatus === "active" ? { color: "var(--a-st-delivered-c)", background: "var(--a-st-delivered-bg)" } : { color: "var(--a-text-4)", background: "var(--a-bg-input)" }}>
                                 {loadingIds.has(sub.id) ? <Loader2 className="w-3 h-3 animate-spin" /> : subStatus === "active" ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
                                 {subStatus === "active" ? "Актив" : "Вимк"}
                               </button>

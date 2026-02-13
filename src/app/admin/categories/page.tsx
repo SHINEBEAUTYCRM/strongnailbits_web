@@ -11,10 +11,10 @@ export default async function CategoriesPage() {
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-semibold mb-1 flex items-center gap-3" style={{ color: "#f4f4f5" }}>
-            <FolderTree className="w-6 h-6" style={{ color: "#a855f7" }} />Категорії
+          <h1 className="text-2xl font-semibold mb-1 flex items-center gap-3" style={{ color: "var(--a-text)" }}>
+            <FolderTree className="w-6 h-6" style={{ color: "var(--a-accent)" }} />Категорії
           </h1>
-          <p className="text-sm" style={{ color: "#52525b" }}>
+          <p className="text-sm" style={{ color: "var(--a-text-4)" }}>
             {categories.length} категорій · {categories.filter((c) => c.status === "active").length} активних
           </p>
         </div>
