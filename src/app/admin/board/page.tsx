@@ -1,16 +1,23 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import dynamic from "next/dynamic";
 import BoardHeader from "./components/BoardHeader";
 import "./board.css";
 import { Loader2 } from "lucide-react";
 
 // tldraw must be loaded client-side only (uses browser APIs)
-const ShineBoard = dynamic(
-  () => import("./components/ShineBoard"),
-  { ssr: false },
-);
+const ShineBoard = dynamic(() => import("./components/ShineBoard"), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="flex items-center justify-center"
+      style={{ height: "100%", background: "#08080c" }}
+    >
+      <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#a855f7" }} />
+    </div>
+  ),
+});
 
 interface Board {
   id: string;
@@ -25,9 +32,11 @@ export default function BoardPage() {
   const [currentBoard, setCurrentBoard] = useState<Board | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [boardKey, setBoardKey] = useState(0); // force remount on board switch
+  // Only increment boardKey when deliberately switching boards
+  const [boardKey, setBoardKey] = useState(0);
+  const currentBoardIdRef = useRef<string | null>(null);
 
-  // Load board list
+  // Load board list (without snapshots)
   const loadBoards = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/boards");
@@ -48,8 +57,9 @@ export default function BoardPage() {
       const res = await fetch(`/api/admin/boards/${boardId}`);
       if (res.ok) {
         const data = await res.json();
+        currentBoardIdRef.current = data.id;
         setCurrentBoard(data);
-        setBoardKey((k) => k + 1); // force remount
+        setBoardKey((k) => k + 1);
       }
     } catch (err) {
       console.error("[BoardPage] Load board error:", err);
@@ -105,7 +115,7 @@ export default function BoardPage() {
     [loadBoards, loadBoard],
   );
 
-  // Rename board
+  // Rename board — does NOT reload/remount canvas
   const handleRename = useCallback(
     async (boardId: string, name: string) => {
       try {
@@ -114,25 +124,33 @@ export default function BoardPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name }),
         });
-        await loadBoards();
-        if (currentBoard?.id === boardId) {
-          setCurrentBoard((b) => (b ? { ...b, name } : b));
-        }
+        // Update local state without remounting
+        setBoards((prev) =>
+          prev.map((b) => (b.id === boardId ? { ...b, name } : b)),
+        );
+        setCurrentBoard((b) =>
+          b && b.id === boardId ? { ...b, name } : b,
+        );
       } catch (err) {
         console.error("[BoardPage] Rename error:", err);
       }
     },
-    [loadBoards, currentBoard],
+    [],
   );
 
   // Switch board
   const handleBoardSelect = useCallback(
     async (boardId: string) => {
-      if (boardId === currentBoard?.id) return;
+      if (boardId === currentBoardIdRef.current) return;
       await loadBoard(boardId);
     },
-    [currentBoard, loadBoard],
+    [loadBoard],
   );
+
+  // Save status — uses useCallback so reference is stable
+  const handleSaveStatusChange = useCallback((isSaving: boolean) => {
+    setSaving(isSaving);
+  }, []);
 
   if (loading) {
     return (
@@ -140,7 +158,10 @@ export default function BoardPage() {
         className="flex items-center justify-center"
         style={{ height: "calc(100vh - 64px)", background: "#08080c" }}
       >
-        <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#a855f7" }} />
+        <Loader2
+          className="w-8 h-8 animate-spin"
+          style={{ color: "#a855f7" }}
+        />
       </div>
     );
   }
@@ -158,7 +179,9 @@ export default function BoardPage() {
           <button
             onClick={handleCreate}
             className="px-4 py-2 rounded-lg text-sm font-medium text-white"
-            style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}
+            style={{
+              background: "linear-gradient(135deg, #7c3aed, #a855f7)",
+            }}
           >
             Створити дошку
           </button>
@@ -181,12 +204,18 @@ export default function BoardPage() {
         onBoardDelete={handleDelete}
         onBoardRename={handleRename}
       />
-      <div className="flex-1 min-h-0">
+      <div
+        style={{
+          position: "relative",
+          flex: 1,
+          minHeight: 0,
+        }}
+      >
         <ShineBoard
           key={boardKey}
           boardId={currentBoard.id}
           initialSnapshot={currentBoard.snapshot ?? null}
-          onSaveStatusChange={setSaving}
+          onSaveStatusChange={handleSaveStatusChange}
         />
       </div>
     </div>

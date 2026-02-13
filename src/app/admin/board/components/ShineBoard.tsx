@@ -2,7 +2,7 @@
 
 import { Tldraw, Editor } from "tldraw";
 import "tldraw/tldraw.css";
-import { useCallback, useRef, useEffect } from "react";
+import { useCallback, useRef, useEffect, memo } from "react";
 
 interface ShineBoardProps {
   boardId: string;
@@ -10,7 +10,7 @@ interface ShineBoardProps {
   onSaveStatusChange?: (saving: boolean) => void;
 }
 
-export default function ShineBoard({
+function ShineBoardInner({
   boardId,
   initialSnapshot,
   onSaveStatusChange,
@@ -18,11 +18,16 @@ export default function ShineBoard({
   const editorRef = useRef<Editor | null>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const boardIdRef = useRef(boardId);
+  const onSaveRef = useRef(onSaveStatusChange);
 
-  // Keep boardId ref in sync
+  // Keep refs in sync without causing re-renders
   useEffect(() => {
     boardIdRef.current = boardId;
   }, [boardId]);
+
+  useEffect(() => {
+    onSaveRef.current = onSaveStatusChange;
+  }, [onSaveStatusChange]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -31,10 +36,11 @@ export default function ShineBoard({
     };
   }, []);
 
+  // Stable save function — no deps that change
   const saveToServer = useCallback(async () => {
     if (!editorRef.current) return;
 
-    onSaveStatusChange?.(true);
+    onSaveRef.current?.(true);
 
     try {
       const snapshot = editorRef.current.store.getStoreSnapshot();
@@ -47,15 +53,16 @@ export default function ShineBoard({
     } catch (err) {
       console.error("[ShineBoard] Save error:", err);
     } finally {
-      onSaveStatusChange?.(false);
+      onSaveRef.current?.(false);
     }
-  }, [onSaveStatusChange]);
+  }, []);
 
   const handleChange = useCallback(() => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(() => saveToServer(), 3000);
   }, [saveToServer]);
 
+  // Stable onMount — empty deps, snapshot is read from ref-like closure at mount time only
   const handleMount = useCallback(
     (editor: Editor) => {
       editorRef.current = editor;
@@ -73,15 +80,25 @@ export default function ShineBoard({
         }
       }
 
-      // Subscribe to document changes
+      // Subscribe to document changes for autosave
       editor.store.listen(() => handleChange(), { scope: "document" });
     },
+    // initialSnapshot and handleChange are stable across the component lifetime
+    // because this component gets remounted (via key) when switching boards
     [initialSnapshot, handleChange],
   );
 
   return (
-    <div className="shine-board-wrapper" style={{ width: "100%", height: "100%" }}>
+    <div
+      className="shine-board-wrapper"
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+    >
       <Tldraw onMount={handleMount} />
     </div>
   );
 }
+
+// Prevent re-renders from parent state changes (e.g. saving indicator)
+const ShineBoard = memo(ShineBoardInner);
+export default ShineBoard;
