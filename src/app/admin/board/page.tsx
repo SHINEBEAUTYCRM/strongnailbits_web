@@ -1,25 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import dynamic from "next/dynamic";
-
-// CRITICAL: tldraw only runs client-side, never SSR
-const BoardClient = dynamic(() => import("./components/BoardClient"), {
-  ssr: false,
-  loading: () => (
-    <div
-      style={{
-        height: "calc(100vh - 64px)",
-        background: "var(--a-bg-card)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "var(--a-text-4)",
-        fontSize: 14,
-      }}
-    >
-      Завантаження дошки...
-    </div>
-  ),
-});
+import BoardWrapper from "./components/BoardWrapper";
 
 export default async function BoardPage() {
   const supabase = await createClient();
@@ -44,7 +24,7 @@ export default async function BoardPage() {
   }
 
   return (
-    <BoardClient
+    <BoardWrapper
       boardId={defaultBoard?.id || null}
       boardName={defaultBoard?.name || "Нова дошка"}
       initialSnapshot={snapshot}
