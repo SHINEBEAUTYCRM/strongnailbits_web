@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       .from('products')
       .update({
         enrichment_status: 'approved',
-        enriched_by: admin.email,
+        enriched_by: admin.name,
       })
       .in('id', body.product_ids);
 
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updateData: Record<string, any> = {
     enrichment_status: 'approved',
-    enriched_by: admin.email,
+    enriched_by: admin.name,
   };
 
   if (description_uk) updateData.description_uk = description_uk;
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     product_id,
     action: 'approve',
     status: 'success',
-    details: { approved_by: admin.email },
+    details: { approved_by: admin.name },
   });
 
   return NextResponse.json({ success: true });
