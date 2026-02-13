@@ -73,8 +73,14 @@ export default function RootLayout({
   const analytics = getAnalyticsConfig();
 
   return (
-    <html lang="uk">
+    <html lang="uk" suppressHydrationWarning>
       <head>
+        {/* Admin theme flash prevention — sets data-admin-theme before React hydrates */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('admin-theme')||'dark';var r=t;if(t==='auto'){r=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'}document.documentElement.setAttribute('data-admin-theme',r)}catch(e){}})();`,
+          }}
+        />
         {/* Preconnect to critical origins (saves DNS+TCP+TLS per origin) */}
         <link rel="preconnect" href="https://kqgtxmdruxwtocmvsvwh.supabase.co" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://shine-shop.com.ua" crossOrigin="anonymous" />

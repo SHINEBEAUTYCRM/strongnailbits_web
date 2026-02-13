@@ -104,17 +104,15 @@ export function AdminTopNav({
       className="shrink-0 flex items-center sticky top-0 z-50"
       style={{
         height: 56,
-        background: "rgba(8, 8, 12, 0.95)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        background: "var(--a-bg-header)",
+        borderBottom: "1px solid var(--a-border)",
       }}
     >
       {/* Mobile: hamburger */}
       <button
         onClick={onMobileOpen}
         className="lg:hidden flex items-center justify-center w-12 h-14 shrink-0"
-        style={{ color: "#888" }}
+        style={{ color: "var(--a-text-3)" }}
       >
         <Menu className="w-5 h-5" />
       </button>
@@ -126,13 +124,13 @@ export function AdminTopNav({
       >
         <span
           className="text-lg font-bold tracking-wider"
-          style={{ color: "#a855f7", fontFamily: "var(--font-outfit, 'Outfit'), sans-serif" }}
+          style={{ color: "var(--a-accent)", fontFamily: "var(--font-outfit, 'Outfit'), sans-serif" }}
         >
           ShineShop
         </span>
         <span
           className="text-[11px] font-medium uppercase tracking-wider hidden sm:inline"
-          style={{ color: "#555" }}
+          style={{ color: "var(--a-text-4)" }}
         >
           OS
         </span>
@@ -153,7 +151,7 @@ export function AdminTopNav({
                 className="relative flex items-center gap-1 h-full shrink-0"
                 style={{
                   padding: "0 10px",
-                  color: "#444",
+                  color: "var(--a-text-5)",
                   fontSize: 13,
                   fontFamily: "var(--font-outfit, 'Outfit'), sans-serif",
                   cursor: "default",
@@ -164,8 +162,8 @@ export function AdminTopNav({
                 <span
                   style={{
                     fontSize: 9,
-                    color: "#555",
-                    background: "rgba(255,255,255,0.04)",
+                    color: "var(--a-text-4)",
+                    background: "var(--a-bg-hover)",
                     padding: "1px 5px",
                     borderRadius: 4,
                     marginLeft: 2,
@@ -188,7 +186,7 @@ export function AdminTopNav({
                 className="flex items-center gap-1 h-full transition-colors duration-150"
                 style={{
                   padding: "0 10px",
-                  color: active ? "#a855f7" : isOpen ? "#fff" : "#888",
+                  color: active ? "var(--a-accent)" : isOpen ? "var(--a-text)" : "var(--a-text-3)",
                   fontSize: 13,
                   fontFamily: "var(--font-outfit, 'Outfit'), sans-serif",
                   cursor: "pointer",
@@ -196,13 +194,13 @@ export function AdminTopNav({
                   borderTop: "none",
                   borderLeft: "none",
                   borderRight: "none",
-                  borderBottom: `2px solid ${active ? "#a855f7" : "transparent"}`,
+                  borderBottom: `2px solid ${active ? "var(--a-accent)" : "transparent"}`,
                 }}
                 onMouseEnter={(e) => {
-                  if (!active) e.currentTarget.style.color = "#fff";
+                  if (!active) e.currentTarget.style.color = "var(--a-text)";
                 }}
                 onMouseLeave={(e) => {
-                  if (!active && !isOpen) e.currentTarget.style.color = "#888";
+                  if (!active && !isOpen) e.currentTarget.style.color = "var(--a-text-3)";
                 }}
               >
                 <Icon className="w-4 h-4" />
@@ -235,23 +233,23 @@ export function AdminTopNav({
           onClick={onSearchOpen}
           className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm transition-colors"
           style={{
-            background: "rgba(255,255,255,0.03)",
-            border: "1px solid rgba(255,255,255,0.06)",
-            color: "#888",
+            background: "var(--a-bg-input)",
+            border: "1px solid var(--a-border)",
+            color: "var(--a-text-3)",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
-            e.currentTarget.style.color = "#ccc";
+            e.currentTarget.style.borderColor = "var(--a-border-sub)";
+            e.currentTarget.style.color = "var(--a-text-2)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
-            e.currentTarget.style.color = "#888";
+            e.currentTarget.style.borderColor = "var(--a-border)";
+            e.currentTarget.style.color = "var(--a-text-3)";
           }}
         >
           <Search className="w-4 h-4" />
           <kbd
             className="hidden sm:inline px-1.5 py-0.5 rounded text-[10px] font-mono"
-            style={{ background: "rgba(255,255,255,0.04)", color: "#555" }}
+            style={{ background: "var(--a-bg-hover)", color: "var(--a-text-4)" }}
           >
             ⌘K
           </kbd>
@@ -263,9 +261,9 @@ export function AdminTopNav({
         {/* Notifications */}
         <button
           className="relative flex items-center justify-center w-8 h-8 rounded-lg transition-colors"
-          style={{ color: "#888" }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = "#ccc"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = "#888"; }}
+          style={{ color: "var(--a-text-3)" }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = "var(--a-text-2)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = "var(--a-text-3)"; }}
         >
           <Bell className="w-[18px] h-[18px]" />
         </button>

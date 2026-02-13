@@ -35,7 +35,6 @@ export function AdminProfileDropdown({
         onClose();
       }
     };
-    // Delay to avoid immediate close from the trigger click
     const timer = setTimeout(() => {
       document.addEventListener("mousedown", handler);
     }, 0);
@@ -62,17 +61,15 @@ export function AdminProfileDropdown({
       className="absolute right-0 top-full mt-2 z-[60]"
       style={{
         width: 260,
-        background: "rgba(10, 10, 15, 0.98)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        border: "1px solid rgba(255,255,255,0.06)",
+        background: "var(--a-bg-card)",
+        border: "1px solid var(--a-border)",
         borderRadius: 12,
-        boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+        boxShadow: "0 20px 60px var(--a-shadow)",
         animation: "dropdownIn 150ms ease",
       }}
     >
       {/* User info */}
-      <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+      <div className="px-4 py-3" style={{ borderBottom: "1px solid var(--a-border)" }}>
         <div className="flex items-center gap-3">
           <div
             className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
@@ -81,15 +78,15 @@ export function AdminProfileDropdown({
             {displayInitial}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium truncate flex items-center gap-1.5" style={{ color: "#e4e4e7" }}>
+            <p className="text-sm font-medium truncate flex items-center gap-1.5" style={{ color: "var(--a-text)" }}>
               {displayName}
               {isAdmin ? (
-                <Crown className="w-3 h-3 shrink-0" style={{ color: "#a855f7" }} />
+                <Crown className="w-3 h-3 shrink-0" style={{ color: "var(--a-accent)" }} />
               ) : (
                 <UserCog className="w-3 h-3 shrink-0" style={{ color: "#60a5fa" }} />
               )}
             </p>
-            <p className="text-[11px] truncate" style={{ color: "#555" }}>
+            <p className="text-[11px] truncate" style={{ color: "var(--a-text-4)" }}>
               {displayEmail}
             </p>
           </div>
@@ -98,8 +95,8 @@ export function AdminProfileDropdown({
           <span
             className="inline-block text-[9px] px-1.5 py-0.5 rounded-full font-medium"
             style={{
-              color: isAdmin ? "#a855f7" : "#60a5fa",
-              background: isAdmin ? "rgba(168,85,247,0.1)" : "rgba(96,165,250,0.1)",
+              color: isAdmin ? "var(--a-accent)" : "#60a5fa",
+              background: isAdmin ? "var(--a-accent-bg)" : "rgba(96,165,250,0.1)",
             }}
           >
             {isAdmin ? "admin" : "manager"}
@@ -113,14 +110,14 @@ export function AdminProfileDropdown({
           href="/admin/users"
           onClick={onClose}
           className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors"
-          style={{ color: "#ccc" }}
+          style={{ color: "var(--a-text-name)" }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-            e.currentTarget.style.color = "#fff";
+            e.currentTarget.style.background = "var(--a-bg-hover)";
+            e.currentTarget.style.color = "var(--a-text)";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = "transparent";
-            e.currentTarget.style.color = "#ccc";
+            e.currentTarget.style.color = "var(--a-text-name)";
           }}
         >
           <User className="w-4 h-4" /> Користувачі
@@ -130,14 +127,14 @@ export function AdminProfileDropdown({
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors"
-          style={{ color: "#ccc" }}
+          style={{ color: "var(--a-text-name)" }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-            e.currentTarget.style.color = "#fff";
+            e.currentTarget.style.background = "var(--a-bg-hover)";
+            e.currentTarget.style.color = "var(--a-text)";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = "transparent";
-            e.currentTarget.style.color = "#ccc";
+            e.currentTarget.style.color = "var(--a-text-name)";
           }}
         >
           <Store className="w-4 h-4" /> Магазин
@@ -162,7 +159,7 @@ export function AdminProfileDropdown({
       {/* Powered by */}
       <div
         className="flex justify-center py-2.5"
-        style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+        style={{ borderTop: "1px solid var(--a-border)" }}
       >
         <DangrowBadge compact />
       </div>

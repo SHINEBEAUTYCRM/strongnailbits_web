@@ -40,14 +40,12 @@ export function AdminNavDropdown({ children, onNavigate }: AdminNavDropdownProps
         left: 0,
         zIndex: 55,
         marginTop: 0,
-        background: "rgba(10, 10, 15, 0.98)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        border: "1px solid rgba(255,255,255,0.06)",
+        background: "var(--a-bg-card)",
+        border: "1px solid var(--a-border)",
         borderRadius: 12,
         padding: 8,
         minWidth: 220,
-        boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+        boxShadow: "0 20px 60px var(--a-shadow)",
         animation: "dropdownIn 150ms ease",
       }}
     >
@@ -63,19 +61,19 @@ export function AdminNavDropdown({ children, onNavigate }: AdminNavDropdownProps
               className="flex items-center gap-2.5 rounded-lg"
               style={{
                 padding: "10px 12px",
-                color: "#444",
+                color: "var(--a-text-5)",
                 cursor: "default",
                 fontSize: 14,
               }}
             >
-              <Icon className="w-4 h-4 shrink-0" style={{ color: "#444" }} />
+              <Icon className="w-4 h-4 shrink-0" style={{ color: "var(--a-text-5)" }} />
               <span className="flex-1 truncate">{child.label}</span>
               <span
                 className="shrink-0"
                 style={{
                   fontSize: 10,
-                  color: "#555",
-                  background: "rgba(255,255,255,0.04)",
+                  color: "var(--a-text-4)",
+                  background: "var(--a-bg-hover)",
                   padding: "2px 6px",
                   borderRadius: 4,
                   pointerEvents: "none",
@@ -95,24 +93,24 @@ export function AdminNavDropdown({ children, onNavigate }: AdminNavDropdownProps
             className="flex items-center gap-2.5 rounded-lg transition-colors duration-100"
             style={{
               padding: "10px 12px",
-              color: active ? "#a855f7" : "#ccc",
+              color: active ? "var(--a-accent)" : "var(--a-text-name)",
               fontSize: 14,
-              background: active ? "rgba(168,85,247,0.06)" : "transparent",
+              background: active ? "var(--a-accent-bg)" : "transparent",
             }}
             onMouseEnter={(e) => {
               if (!active) {
-                e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-                e.currentTarget.style.color = "#fff";
+                e.currentTarget.style.background = "var(--a-bg-hover)";
+                e.currentTarget.style.color = "var(--a-text)";
               }
             }}
             onMouseLeave={(e) => {
               if (!active) {
                 e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.color = "#ccc";
+                e.currentTarget.style.color = "var(--a-text-name)";
               }
             }}
           >
-            <Icon className="w-4 h-4 shrink-0" style={{ color: active ? "#a855f7" : "currentColor" }} />
+            <Icon className="w-4 h-4 shrink-0" style={{ color: active ? "var(--a-accent)" : "currentColor" }} />
             <span className="truncate">{child.label}</span>
           </Link>
         );

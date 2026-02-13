@@ -25,10 +25,9 @@ export default function BoardClient({
     "idle",
   );
 
-  // Keep boardId ref in sync
   boardIdRef.current = boardId;
 
-  // Save snapshot to server — only uses refs, no deps that change
+  // Save snapshot to server
   const saveToServer = useCallback(async () => {
     const editor = editorRef.current;
     const id = boardIdRef.current;
@@ -38,9 +37,7 @@ export default function BoardClient({
     setSaveStatus("saving");
 
     try {
-      // tldraw v4 API: getSnapshot returns { document, session }
       const snapshot = getSnapshot(editor.store);
-
       await fetch(`/api/admin/boards/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -60,8 +57,22 @@ export default function BoardClient({
     (editor: Editor) => {
       editorRef.current = editor;
 
-      // Force dark mode (tldraw v4 API)
-      editor.user.updateUserPreferences({ colorScheme: "dark" });
+      // Sync tldraw theme with admin global theme
+      const syncTheme = () => {
+        const isDark =
+          document.documentElement.getAttribute("data-admin-theme") !== "light";
+        editor.user.updateUserPreferences({
+          colorScheme: isDark ? "dark" : "light",
+        });
+      };
+      syncTheme();
+
+      // Watch for theme changes via MutationObserver
+      const observer = new MutationObserver(syncTheme);
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["data-admin-theme"],
+      });
 
       // Load saved snapshot with validation
       if (
@@ -73,7 +84,6 @@ export default function BoardClient({
           loadSnapshot(editor.store, initialSnapshot);
         } catch (e) {
           console.warn("[Board] Corrupt snapshot, starting fresh:", e);
-          // Canvas stays clean — this is OK
         }
       }
 
@@ -86,10 +96,10 @@ export default function BoardClient({
         { scope: "document" },
       );
     },
-    [], // Empty deps — created once, initialSnapshot captured in closure
+    [], // Empty deps — created once
   );
 
-  // Cleanup timers on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -104,7 +114,7 @@ export default function BoardClient({
         height: "calc(100vh - 64px)",
       }}
     >
-      {/* Minimal header */}
+      {/* Header — uses theme CSS variables */}
       <div
         style={{
           height: 48,
@@ -112,12 +122,18 @@ export default function BoardClient({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          background: "#0e0e14",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          background: "var(--a-bg-card)",
+          borderBottom: "1px solid var(--a-border)",
           flexShrink: 0,
         }}
       >
-        <span style={{ color: "#e4e4e7", fontSize: 14, fontWeight: 500 }}>
+        <span
+          style={{
+            color: "var(--a-text)",
+            fontSize: 14,
+            fontWeight: 500,
+          }}
+        >
           {boardName}
         </span>
         <span
@@ -127,7 +143,7 @@ export default function BoardClient({
                 ? "#f59e0b"
                 : saveStatus === "saved"
                   ? "#22c55e"
-                  : "#52525b",
+                  : "var(--a-text-4)",
             fontSize: 12,
           }}
         >
@@ -149,7 +165,6 @@ export default function BoardClient({
         }}
       >
         <div
-          className="tl-theme__dark"
           style={{
             position: "absolute",
             inset: 0,
