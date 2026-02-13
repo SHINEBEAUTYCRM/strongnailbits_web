@@ -19,8 +19,8 @@ interface AIToolbarProps {
 
 const AI_TOOLS: { action: PhotoRoomAction; icon: LucideIcon; label: string; color: string }[] = [
   { action: 'remove-bg', icon: Scissors, label: 'Видалити фон', color: '#f87171' },
-  { action: 'ai-background', icon: Paintbrush, label: 'AI фон', color: '#a855f7' },
-  { action: 'shadow', icon: Eclipse, label: 'Тіні', color: '#6b7280' },
+  { action: 'ai-background', icon: Paintbrush, label: 'AI фон', color: 'var(--a-accent)' },
+  { action: 'shadow', icon: Eclipse, label: 'Тіні', color: 'var(--a-text-3)' },
   { action: 'relight', icon: Sun, label: 'Освітлення', color: '#facc15' },
   { action: 'upscale', icon: ZoomIn, label: 'Збільшити', color: '#06b6d4' },
   { action: 'text-remove', icon: TypeOutline, label: 'Прибрати текст', color: '#f97316' },
@@ -91,16 +91,16 @@ export function AIToolbar({ onSave, onBatchSave, isSaving }: AIToolbarProps) {
     <div
       className="w-[280px] flex flex-col h-full"
       style={{
-        background: 'rgba(8, 8, 12, 0.95)',
-        borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
+        background: 'var(--a-bg)',
+        borderLeft: '1px solid var(--a-border)',
       }}
     >
       {/* AI Tools */}
-      <div className="p-3 border-b" style={{ borderColor: 'rgba(255, 255, 255, 0.06)' }}>
+      <div className="p-3 border-b" style={{ borderColor: 'var(--a-border)' }}>
         <p
           className="text-[10px] font-semibold uppercase mb-2.5"
           style={{
-            color: '#6b7280',
+            color: 'var(--a-text-3)',
             letterSpacing: '1.5px',
             fontFamily: 'JetBrains Mono, monospace',
           }}
@@ -124,23 +124,23 @@ export function AIToolbar({ onSave, onBatchSave, isSaving }: AIToolbarProps) {
                   background: isActive
                     ? 'rgba(168, 85, 247, 0.15)'
                     : disabled
-                      ? 'rgba(255, 255, 255, 0.02)'
-                      : 'rgba(255, 255, 255, 0.03)',
+                      ? 'var(--a-bg-hover)'
+                      : 'var(--a-bg-hover)',
                   border: `1px solid ${
                     isActive
                       ? 'rgba(168, 85, 247, 0.3)'
-                      : 'rgba(255, 255, 255, 0.04)'
+                      : 'var(--a-border)'
                   }`,
                   cursor: disabled ? 'not-allowed' : 'pointer',
                   opacity: disabled ? 0.5 : 1,
                 }}
               >
                 {isActive ? (
-                  <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" style={{ color: '#a855f7' }} />
+                  <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" style={{ color: 'var(--a-accent)' }} />
                 ) : (
-                  <Icon className="w-4 h-4 flex-shrink-0" style={{ color: disabled ? '#374151' : tool.color }} />
+                  <Icon className="w-4 h-4 flex-shrink-0" style={{ color: disabled ? 'var(--a-text-5)' : tool.color }} />
                 )}
-                <span className="text-[10px]" style={{ color: disabled ? '#374151' : '#e5e7eb' }}>
+                <span className="text-[10px]" style={{ color: disabled ? 'var(--a-text-5)' : 'var(--a-text-body)' }}>
                   {tool.label}
                 </span>
               </button>
@@ -153,12 +153,12 @@ export function AIToolbar({ onSave, onBatchSave, isSaving }: AIToolbarProps) {
           <div className="mt-2.5 space-y-1.5">
             <div
               className="w-full h-px"
-              style={{ background: 'rgba(255, 255, 255, 0.04)' }}
+              style={{ background: 'var(--a-bg-hover)' }}
             />
             <p
               className="text-[10px] font-semibold uppercase mt-2"
               style={{
-                color: '#6b7280',
+                color: 'var(--a-text-3)',
                 letterSpacing: '1.5px',
                 fontFamily: 'JetBrains Mono, monospace',
               }}
@@ -185,7 +185,7 @@ export function AIToolbar({ onSave, onBatchSave, isSaving }: AIToolbarProps) {
                     }}
                   >
                     <Layers className="w-3 h-3 flex-shrink-0" style={{ color: tool.color }} />
-                    <span className="text-[9px]" style={{ color: '#c084fc' }}>
+                    <span className="text-[9px]" style={{ color: 'var(--a-accent)' }}>
                       {tool.label}
                     </span>
                   </button>
@@ -199,20 +199,20 @@ export function AIToolbar({ onSave, onBatchSave, isSaving }: AIToolbarProps) {
         {isBatchProcessing && (
           <div className="mt-2.5">
             <div className="flex items-center gap-2 mb-1.5">
-              <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: '#a855f7' }} />
-              <span className="text-[10px]" style={{ color: '#a855f7' }}>
+              <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: 'var(--a-accent)' }} />
+              <span className="text-[10px]" style={{ color: 'var(--a-accent)' }}>
                 Обробка {batchProgress.done}/{batchProgress.total}
               </span>
             </div>
             <div
               className="w-full h-1.5 rounded-full overflow-hidden"
-              style={{ background: 'rgba(255, 255, 255, 0.05)' }}
+              style={{ background: 'var(--a-bg-hover)' }}
             >
               <div
                 className="h-full rounded-full transition-all duration-300"
                 style={{
                   width: `${batchProgress.total > 0 ? (batchProgress.done / batchProgress.total) * 100 : 0}%`,
-                  background: 'linear-gradient(135deg, #a855f7, #ec4899)',
+                  background: 'linear-gradient(135deg, var(--a-accent), #ec4899)',
                 }}
               />
             </div>
@@ -224,13 +224,13 @@ export function AIToolbar({ onSave, onBatchSave, isSaving }: AIToolbarProps) {
       {batchResults.length > 0 && (
         <div
           className="p-3 border-b"
-          style={{ borderColor: 'rgba(255, 255, 255, 0.06)' }}
+          style={{ borderColor: 'var(--a-border)' }}
         >
           <div className="flex items-center justify-between mb-2">
             <p
               className="text-[10px] font-semibold uppercase"
               style={{
-                color: '#6b7280',
+                color: 'var(--a-text-3)',
                 letterSpacing: '1.5px',
                 fontFamily: 'JetBrains Mono, monospace',
               }}
@@ -241,7 +241,7 @@ export function AIToolbar({ onSave, onBatchSave, isSaving }: AIToolbarProps) {
               <button
                 onClick={clearBatchResults}
                 className="text-[9px] px-1.5 py-0.5 rounded transition-colors"
-                style={{ color: '#6b7280', background: 'rgba(255,255,255,0.03)' }}
+                style={{ color: 'var(--a-text-3)', background: 'var(--a-bg-hover)' }}
               >
                 Очистити
               </button>
@@ -256,19 +256,19 @@ export function AIToolbar({ onSave, onBatchSave, isSaving }: AIToolbarProps) {
                     src={item.resultUrl}
                     alt=""
                     className="w-full aspect-square rounded-lg object-cover"
-                    style={{ background: '#111116', border: '1px solid rgba(34, 197, 94, 0.2)' }}
+                    style={{ background: 'var(--a-bg-card)', border: '1px solid rgba(34, 197, 94, 0.2)' }}
                   />
                 ) : item.status === 'processing' ? (
                   <div
                     className="w-full aspect-square rounded-lg flex items-center justify-center"
-                    style={{ background: '#111116', border: '1px solid rgba(168, 85, 247, 0.2)' }}
+                    style={{ background: 'var(--a-bg-card)', border: '1px solid rgba(168, 85, 247, 0.2)' }}
                   >
-                    <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#a855f7' }} />
+                    <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--a-accent)' }} />
                   </div>
                 ) : item.status === 'error' ? (
                   <div
                     className="w-full aspect-square rounded-lg flex flex-col items-center justify-center gap-1"
-                    style={{ background: '#111116', border: '1px solid rgba(239, 68, 68, 0.2)' }}
+                    style={{ background: 'var(--a-bg-card)', border: '1px solid rgba(239, 68, 68, 0.2)' }}
                     title={item.error}
                   >
                     <AlertCircle className="w-4 h-4" style={{ color: '#f87171' }} />
@@ -279,7 +279,7 @@ export function AIToolbar({ onSave, onBatchSave, isSaving }: AIToolbarProps) {
                 ) : (
                   <div
                     className="w-full aspect-square rounded-lg"
-                    style={{ background: '#111116', border: '1px solid rgba(255, 255, 255, 0.04)' }}
+                    style={{ background: 'var(--a-bg-card)', border: '1px solid var(--a-border)' }}
                   >
                     <img
                       src={item.sourceImage.url}
@@ -315,7 +315,7 @@ export function AIToolbar({ onSave, onBatchSave, isSaving }: AIToolbarProps) {
       {/* Background presets */}
       <div
         className="p-3 border-b flex-shrink-0"
-        style={{ borderColor: 'rgba(255, 255, 255, 0.06)' }}
+        style={{ borderColor: 'var(--a-border)' }}
       >
         <BackgroundPicker
           selected={selectedBackground}
@@ -336,7 +336,7 @@ export function AIToolbar({ onSave, onBatchSave, isSaving }: AIToolbarProps) {
       {/* Save buttons (sticky bottom) */}
       <div
         className="p-3 border-t space-y-2"
-        style={{ borderColor: 'rgba(255, 255, 255, 0.06)' }}
+        style={{ borderColor: 'var(--a-border)' }}
       >
         {/* Batch save */}
         {hasBatchResults && (
@@ -347,11 +347,11 @@ export function AIToolbar({ onSave, onBatchSave, isSaving }: AIToolbarProps) {
             style={{
               background:
                 isProcessing || isBatchProcessing || isSaving
-                  ? 'rgba(255, 255, 255, 0.05)'
+                  ? 'var(--a-bg-hover)'
                   : 'linear-gradient(135deg, #22c55e, #06b6d4)',
               color:
                 isProcessing || isBatchProcessing || isSaving
-                  ? '#6b7280'
+                  ? 'var(--a-text-3)'
                   : '#ffffff',
               cursor:
                 isProcessing || isBatchProcessing || isSaving
@@ -376,11 +376,11 @@ export function AIToolbar({ onSave, onBatchSave, isSaving }: AIToolbarProps) {
           style={{
             background:
               !hasResult || isProcessing || isBatchProcessing || isSaving
-                ? 'rgba(255, 255, 255, 0.05)'
-                : 'linear-gradient(135deg, #a855f7, #ec4899)',
+                ? 'var(--a-bg-hover)'
+                : 'linear-gradient(135deg, var(--a-accent), #ec4899)',
             color:
               !hasResult || isProcessing || isBatchProcessing || isSaving
-                ? '#6b7280'
+                ? 'var(--a-text-3)'
                 : '#ffffff',
             cursor:
               !hasResult || isProcessing || isBatchProcessing || isSaving

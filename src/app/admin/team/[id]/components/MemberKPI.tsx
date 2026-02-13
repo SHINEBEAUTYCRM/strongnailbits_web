@@ -74,7 +74,7 @@ export function MemberKPI({ memberId, memberRole, isCeo }: MemberKPIProps) {
   if (loading) {
     return (
       <div className="flex justify-center py-8">
-        <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#52525b" }} />
+        <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--a-text-4)" }} />
       </div>
     );
   }
@@ -83,14 +83,14 @@ export function MemberKPI({ memberId, memberRole, isCeo }: MemberKPIProps) {
     <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <span className="text-xs font-medium" style={{ color: "#71717a" }}>
-          Період: <span style={{ color: "#d4d4d8", fontFamily: "var(--font-jetbrains-mono, monospace)" }}>{currentPeriod}</span>
+        <span className="text-xs font-medium" style={{ color: "var(--a-text-3)" }}>
+          Період: <span style={{ color: "var(--a-text-name)", fontFamily: "var(--font-jetbrains-mono, monospace)" }}>{currentPeriod}</span>
         </span>
         {isCeo && (
           <button
             onClick={() => setShowAdd(!showAdd)}
             className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-lg transition-colors"
-            style={{ color: "#a855f7", background: "rgba(168,85,247,0.08)" }}
+            style={{ color: "var(--a-accent)", background: "rgba(168,85,247,0.08)" }}
           >
             {showAdd ? <X className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
             {showAdd ? "Скасувати" : "Додати KPI"}
@@ -113,8 +113,8 @@ export function MemberKPI({ memberId, memberRole, isCeo }: MemberKPIProps) {
                   onClick={() => setNewMetric(p)}
                   className="text-[10px] px-2 py-0.5 rounded transition-colors"
                   style={{
-                    background: newMetric === p ? "rgba(168,85,247,0.15)" : "rgba(255,255,255,0.03)",
-                    color: newMetric === p ? "#a855f7" : "#71717a",
+                    background: newMetric === p ? "rgba(168,85,247,0.15)" : "var(--a-bg-hover)",
+                    color: newMetric === p ? "var(--a-accent)" : "var(--a-text-3)",
                     border: `1px solid ${newMetric === p ? "rgba(168,85,247,0.3)" : "transparent"}`,
                   }}
                 >
@@ -129,7 +129,7 @@ export function MemberKPI({ memberId, memberRole, isCeo }: MemberKPIProps) {
               onChange={(e) => setNewMetric(e.target.value)}
               placeholder="Назва метрики"
               className="flex-1 px-2 py-1.5 rounded text-xs outline-none"
-              style={{ background: "#111116", border: "1px solid rgba(255,255,255,0.06)", color: "#d4d4d8" }}
+              style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)", color: "var(--a-text-name)" }}
             />
             <input
               value={newTarget}
@@ -137,7 +137,7 @@ export function MemberKPI({ memberId, memberRole, isCeo }: MemberKPIProps) {
               placeholder="План"
               type="number"
               className="w-20 px-2 py-1.5 rounded text-xs outline-none"
-              style={{ background: "#111116", border: "1px solid rgba(255,255,255,0.06)", color: "#d4d4d8" }}
+              style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)", color: "var(--a-text-name)" }}
             />
             <button
               onClick={handleAdd}
@@ -153,7 +153,7 @@ export function MemberKPI({ memberId, memberRole, isCeo }: MemberKPIProps) {
 
       {/* KPI table */}
       {kpis.length === 0 ? (
-        <p className="text-xs text-center py-8" style={{ color: "#52525b" }}>
+        <p className="text-xs text-center py-8" style={{ color: "var(--a-text-4)" }}>
           KPI ще не додано
         </p>
       ) : (
@@ -166,19 +166,19 @@ export function MemberKPI({ memberId, memberRole, isCeo }: MemberKPIProps) {
               <div
                 key={kpi.id}
                 className="rounded-lg px-3 py-2.5"
-                style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}
+                style={{ background: "var(--a-bg-hover)", border: "1px solid var(--a-border)" }}
               >
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-medium" style={{ color: "#d4d4d8" }}>
+                  <span className="text-xs font-medium" style={{ color: "var(--a-text-name)" }}>
                     {kpi.metric}
                   </span>
-                  <span className="text-[10px] font-mono" style={{ color: "#52525b", fontFamily: "var(--font-jetbrains-mono, monospace)" }}>
+                  <span className="text-[10px] font-mono" style={{ color: "var(--a-text-4)", fontFamily: "var(--font-jetbrains-mono, monospace)" }}>
                     {kpi.period}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.04)" }}>
+                  <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--a-border)" }}>
                     <div
                       className="h-full rounded-full transition-all"
                       style={{
@@ -196,18 +196,18 @@ export function MemberKPI({ memberId, memberRole, isCeo }: MemberKPIProps) {
                         defaultValue={kpi.actual ?? ""}
                         onBlur={(e) => handleUpdateActual(kpi, Number(e.target.value) || 0)}
                         className="w-12 text-right bg-transparent border-none outline-none"
-                        style={{ color: completed ? "#22c55e" : "#d4d4d8" }}
+                        style={{ color: completed ? "#22c55e" : "var(--a-text-name)" }}
                       />
                     ) : (
-                      <span style={{ color: completed ? "#22c55e" : "#d4d4d8" }}>
+                      <span style={{ color: completed ? "#22c55e" : "var(--a-text-name)" }}>
                         {kpi.actual ?? 0}
                       </span>
                     )}
-                    <span style={{ color: "#52525b" }}>/</span>
-                    <span style={{ color: "#71717a" }}>{kpi.target ?? "—"}</span>
+                    <span style={{ color: "var(--a-text-4)" }}>/</span>
+                    <span style={{ color: "var(--a-text-3)" }}>{kpi.target ?? "—"}</span>
                     <span
                       className="ml-1 text-[10px]"
-                      style={{ color: completed ? "#22c55e" : pct > 70 ? "#f59e0b" : "#71717a" }}
+                      style={{ color: completed ? "#22c55e" : pct > 70 ? "#f59e0b" : "var(--a-text-3)" }}
                     >
                       {Math.round(pct)}%
                     </span>

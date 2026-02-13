@@ -48,7 +48,7 @@ export function TaskCalendar({ tasks, onTaskClick }: TaskCalendarProps) {
           <div
             key={d}
             className="text-center text-[10px] font-semibold py-1.5"
-            style={{ color: "#52525b" }}
+            style={{ color: "var(--a-text-4)" }}
           >
             {d}
           </div>
@@ -68,8 +68,8 @@ export function TaskCalendar({ tasks, onTaskClick }: TaskCalendarProps) {
                 className="rounded-lg p-1.5"
                 style={{
                   minHeight: 80,
-                  background: isToday ? "rgba(168,85,247,0.06)" : "rgba(255,255,255,0.015)",
-                  border: `1px solid ${isToday ? "rgba(168,85,247,0.2)" : "rgba(255,255,255,0.03)"}`,
+                  background: isToday ? "rgba(168,85,247,0.06)" : "var(--a-bg-hover)",
+                  border: `1px solid ${isToday ? "rgba(168,85,247,0.2)" : "var(--a-border)"}`,
                   opacity: isPast ? 0.5 : 1,
                 }}
               >
@@ -77,7 +77,7 @@ export function TaskCalendar({ tasks, onTaskClick }: TaskCalendarProps) {
                 <div
                   className="text-xs font-medium mb-1"
                   style={{
-                    color: isToday ? "#a855f7" : "#71717a",
+                    color: isToday ? "#a855f7" : "var(--a-text-3)",
                     fontFamily: "var(--font-jetbrains-mono, monospace)",
                   }}
                 >
@@ -105,7 +105,7 @@ export function TaskCalendar({ tasks, onTaskClick }: TaskCalendarProps) {
                     );
                   })}
                   {day.tasks.length > 3 && (
-                    <span className="text-[10px] px-1" style={{ color: "#52525b" }}>
+                    <span className="text-[10px] px-1" style={{ color: "var(--a-text-4)" }}>
                       +{day.tasks.length - 3}
                     </span>
                   )}

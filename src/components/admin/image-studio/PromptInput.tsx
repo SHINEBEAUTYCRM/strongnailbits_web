@@ -28,7 +28,7 @@ export function PromptInput({ value, onChange, onSubmit, isProcessing, disabled 
       className="rounded-xl overflow-hidden transition-all"
       style={{
         background: 'rgba(8, 8, 12, 0.6)',
-        border: `1px solid ${isFocused ? 'rgba(168, 85, 247, 0.3)' : 'rgba(255, 255, 255, 0.06)'}`,
+        border: `1px solid ${isFocused ? 'rgba(168, 85, 247, 0.3)' : 'var(--a-border)'}`,
       }}
     >
       <textarea
@@ -40,15 +40,15 @@ export function PromptInput({ value, onChange, onSubmit, isProcessing, disabled 
         placeholder="Опишіть бажаний фон... (наприклад: мармуровий стіл з м'якими тінями)"
         rows={2}
         disabled={disabled}
-        className="w-full resize-none bg-transparent px-3.5 py-2.5 text-sm outline-none placeholder:text-[#4b5563]"
-        style={{ color: '#e5e7eb' }}
+        className="w-full resize-none bg-transparent px-3.5 py-2.5 text-sm outline-none placeholder:text-[var(--a-text-4)]"
+        style={{ color: 'var(--a-text-body)' }}
       />
 
       <div className="flex items-center justify-between px-3 pb-2.5">
         <span
           className="text-[10px]"
           style={{
-            color: '#4b5563',
+            color: 'var(--a-text-4)',
             fontFamily: 'JetBrains Mono, monospace',
           }}
         >
@@ -62,11 +62,11 @@ export function PromptInput({ value, onChange, onSubmit, isProcessing, disabled 
           style={{
             background:
               !value.trim() || isProcessing || disabled
-                ? 'rgba(255, 255, 255, 0.05)'
-                : 'linear-gradient(135deg, #a855f7, #ec4899)',
+                ? 'var(--a-bg-hover)'
+                : 'linear-gradient(135deg, var(--a-accent), #ec4899)',
             color:
               !value.trim() || isProcessing || disabled
-                ? '#6b7280'
+                ? 'var(--a-text-3)'
                 : '#ffffff',
             cursor:
               !value.trim() || isProcessing || disabled

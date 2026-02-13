@@ -258,12 +258,12 @@ export default function ApiKeysPage() {
         <div>
           <h1
             className="text-2xl font-semibold mb-1 flex items-center gap-3"
-            style={{ color: "#f4f4f5" }}
+            style={{ color: "var(--a-text)" }}
           >
-            <Key className="w-6 h-6" style={{ color: "#a855f7" }} />
+            <Key className="w-6 h-6" style={{ color: "var(--a-accent)" }} />
             API Ключі
           </h1>
-          <p className="text-sm" style={{ color: "#52525b" }}>
+          <p className="text-sm" style={{ color: "var(--a-text-4)" }}>
             Створюйте токени для зовнішніх систем. Кожен токен має свої права, ліміт запитів та опціональний IP whitelist.
           </p>
         </div>
@@ -271,14 +271,14 @@ export default function ApiKeysPage() {
           <button
             onClick={() => { fetchTokens(); fetchLogs(); }}
             className="p-2 rounded-lg transition-colors"
-            style={{ background: "#111116", border: "1px solid #1e1e2a", color: "#71717a" }}
+            style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)", color: "var(--a-text-3)" }}
           >
             <RefreshCw className="w-4 h-4" />
           </button>
           <button
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            style={{ background: "#7c3aed", color: "#fff" }}
+            style={{ background: "var(--a-accent-btn)", color: "#fff" }}
           >
             <Plus className="w-4 h-4" /> Створити токен
           </button>
@@ -300,8 +300,8 @@ export default function ApiKeysPage() {
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
             style={
               activeTab === tab.key
-                ? { background: "#1e1030", color: "#c084fc", border: "1px solid #581c87" }
-                : { background: "#111116", color: "#71717a", border: "1px solid #1e1e2a" }
+                ? { background: "var(--a-accent-bg)", color: "var(--a-accent)", border: "1px solid var(--a-accent)" }
+                : { background: "var(--a-bg-card)", color: "var(--a-text-3)", border: "1px solid var(--a-border)" }
             }
           >
             <tab.icon className="w-4 h-4" /> {tab.label}
@@ -312,54 +312,54 @@ export default function ApiKeysPage() {
       {/* Loading */}
       {loading && (
         <div className="flex items-center justify-center py-16">
-          <RefreshCw className="w-6 h-6 animate-spin" style={{ color: "#71717a" }} />
+          <RefreshCw className="w-6 h-6 animate-spin" style={{ color: "var(--a-text-3)" }} />
         </div>
       )}
 
       {/* ─────────────── Tab: Tokens ─────────────── */}
       {!loading && activeTab === "tokens" && (
-        <div className="rounded-2xl overflow-hidden" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
+        <div className="rounded-2xl overflow-hidden" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr style={{ borderBottom: "1px solid #1e1e2a" }}>
-                  <th className="text-left px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Назва</th>
-                  <th className="text-left px-4 py-3 text-[11px] font-medium uppercase tracking-wider hidden sm:table-cell" style={{ color: "#3f3f46" }}>Токен</th>
-                  <th className="text-center px-4 py-3 text-[11px] font-medium uppercase tracking-wider hidden md:table-cell" style={{ color: "#3f3f46" }}>Права</th>
-                  <th className="text-center px-4 py-3 text-[11px] font-medium uppercase tracking-wider hidden lg:table-cell" style={{ color: "#3f3f46" }}>Rate limit</th>
-                  <th className="text-center px-4 py-3 text-[11px] font-medium uppercase tracking-wider hidden lg:table-cell" style={{ color: "#3f3f46" }}>Запити / 24г</th>
-                  <th className="text-left px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Остання дія</th>
-                  <th className="text-center px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Статус</th>
-                  <th className="w-24 px-2 py-3 text-[11px] font-medium uppercase tracking-wider text-right" style={{ color: "#3f3f46" }}>Дії</th>
+                <tr style={{ borderBottom: "1px solid var(--a-border)" }}>
+                  <th className="text-left px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "var(--a-text-5)" }}>Назва</th>
+                  <th className="text-left px-4 py-3 text-[11px] font-medium uppercase tracking-wider hidden sm:table-cell" style={{ color: "var(--a-text-5)" }}>Токен</th>
+                  <th className="text-center px-4 py-3 text-[11px] font-medium uppercase tracking-wider hidden md:table-cell" style={{ color: "var(--a-text-5)" }}>Права</th>
+                  <th className="text-center px-4 py-3 text-[11px] font-medium uppercase tracking-wider hidden lg:table-cell" style={{ color: "var(--a-text-5)" }}>Rate limit</th>
+                  <th className="text-center px-4 py-3 text-[11px] font-medium uppercase tracking-wider hidden lg:table-cell" style={{ color: "var(--a-text-5)" }}>Запити / 24г</th>
+                  <th className="text-left px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "var(--a-text-5)" }}>Остання дія</th>
+                  <th className="text-center px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "var(--a-text-5)" }}>Статус</th>
+                  <th className="w-24 px-2 py-3 text-[11px] font-medium uppercase tracking-wider text-right" style={{ color: "var(--a-text-5)" }}>Дії</th>
                 </tr>
               </thead>
               <tbody>
                 {tokens.map((t) => (
                   <React.Fragment key={t.id}>
                     <tr
-                      className="transition-colors cursor-pointer hover:bg-[#111118]"
-                      style={{ borderBottom: "1px solid #141420" }}
+                      className="transition-colors cursor-pointer"
+                      style={{ borderBottom: "1px solid var(--a-border)" }}
                       onClick={() => setExpandedToken(expandedToken === t.id ? null : t.id)}
                     >
                       <td className="px-4 py-3">
-                        <span className="font-medium" style={{ color: "#e4e4e7" }}>{t.name}</span>
-                        <p className="text-[10px] mt-0.5" style={{ color: "#3f3f46" }}>{fmtDate(t.created_at)}</p>
+                        <span className="font-medium" style={{ color: "var(--a-text)" }}>{t.name}</span>
+                        <p className="text-[10px] mt-0.5" style={{ color: "var(--a-text-5)" }}>{fmtDate(t.created_at)}</p>
                       </td>
                       <td className="px-4 py-3 hidden sm:table-cell">
-                        <code className="text-xs font-mono px-2 py-1 rounded" style={{ background: "#141420", color: "#71717a" }}>
+                        <code className="text-xs font-mono px-2 py-1 rounded" style={{ background: "var(--a-bg-input)", color: "var(--a-text-3)" }}>
                           {t.token_prefix}••••••
                         </code>
                       </td>
                       <td className="px-4 py-3 text-center hidden md:table-cell">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-medium" style={{ background: "#1e1030", color: "#c084fc" }}>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-medium" style={{ background: "var(--a-accent-bg)", color: "var(--a-accent)" }}>
                           {t.permissions.length} прав
                         </span>
                       </td>
                       <td className="px-4 py-3 text-center hidden lg:table-cell">
-                        <span className="text-xs" style={{ color: "#71717a" }}>{t.rate_limit}/хв</span>
+                        <span className="text-xs" style={{ color: "var(--a-text-3)" }}>{t.rate_limit}/хв</span>
                       </td>
                       <td className="px-4 py-3 text-center hidden lg:table-cell">
-                        <span className="text-xs font-mono" style={{ color: "#a1a1aa" }}>{t.stats.requests_24h}</span>
+                        <span className="text-xs font-mono" style={{ color: "var(--a-text-2)" }}>{t.stats.requests_24h}</span>
                         {t.stats.errors_24h > 0 && (
                           <span className="ml-1 text-xs font-mono" style={{ color: "#f87171" }}>
                             ({t.stats.errors_24h} err)
@@ -367,7 +367,7 @@ export default function ApiKeysPage() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-xs" style={{ color: "#71717a" }}>{relativeTime(t.last_used_at)}</span>
+                        <span className="text-xs" style={{ color: "var(--a-text-3)" }}>{relativeTime(t.last_used_at)}</span>
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span
@@ -385,24 +385,24 @@ export default function ApiKeysPage() {
                         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={() => toggleActive(t)}
-                            className="p-1.5 rounded-lg transition-colors hover:bg-[#1e1e2a]"
+                            className="p-1.5 rounded-lg transition-colors"
                             title={t.is_active ? "Вимкнути" : "Увімкнути"}
-                            style={{ color: t.is_active ? "#4ade80" : "#71717a" }}
+                            style={{ color: t.is_active ? "#4ade80" : "var(--a-text-3)" }}
                           >
                             {t.is_active ? <Power className="w-3.5 h-3.5" /> : <PowerOff className="w-3.5 h-3.5" />}
                           </button>
                           <button
                             onClick={() => deleteToken(t.id)}
-                            className="p-1.5 rounded-lg transition-colors hover:bg-[#450a0a]"
+                            className="p-1.5 rounded-lg transition-colors"
                             title="Видалити"
-                            style={{ color: "#71717a" }}
+                            style={{ color: "var(--a-text-3)" }}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                           {expandedToken === t.id ? (
-                            <ChevronUp className="w-3.5 h-3.5" style={{ color: "#3f3f46" }} />
+                            <ChevronUp className="w-3.5 h-3.5" style={{ color: "var(--a-text-5)" }} />
                           ) : (
-                            <ChevronDown className="w-3.5 h-3.5" style={{ color: "#3f3f46" }} />
+                            <ChevronDown className="w-3.5 h-3.5" style={{ color: "var(--a-text-5)" }} />
                           )}
                         </div>
                       </td>
@@ -410,11 +410,11 @@ export default function ApiKeysPage() {
 
                     {/* Expanded details */}
                     {expandedToken === t.id && (
-                      <tr style={{ borderBottom: "1px solid #141420" }}>
-                        <td colSpan={8} className="px-4 py-4" style={{ background: "#0a0a10" }}>
+                      <tr style={{ borderBottom: "1px solid var(--a-border)" }}>
+                        <td colSpan={8} className="px-4 py-4" style={{ background: "var(--a-bg)" }}>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                              <h4 className="text-[11px] font-medium uppercase tracking-wider mb-2" style={{ color: "#3f3f46" }}>
+                              <h4 className="text-[11px] font-medium uppercase tracking-wider mb-2" style={{ color: "var(--a-text-5)" }}>
                                 Права доступу
                               </h4>
                               <div className="flex flex-wrap gap-1.5">
@@ -422,7 +422,7 @@ export default function ApiKeysPage() {
                                   <span
                                     key={p}
                                     className="px-2 py-0.5 rounded text-[10px] font-mono"
-                                    style={{ background: "#141420", color: "#a1a1aa" }}
+                                    style={{ background: "var(--a-bg-input)", color: "var(--a-text-2)" }}
                                   >
                                     {p}
                                   </span>
@@ -430,15 +430,15 @@ export default function ApiKeysPage() {
                               </div>
                             </div>
                             <div>
-                              <h4 className="text-[11px] font-medium uppercase tracking-wider mb-2" style={{ color: "#3f3f46" }}>
+                              <h4 className="text-[11px] font-medium uppercase tracking-wider mb-2" style={{ color: "var(--a-text-5)" }}>
                                 Деталі
                               </h4>
-                              <div className="space-y-1 text-xs" style={{ color: "#71717a" }}>
-                                <p>Rate limit: <span style={{ color: "#a1a1aa" }}>{t.rate_limit} запитів/хв</span></p>
-                                <p>Термін дії: <span style={{ color: "#a1a1aa" }}>{t.expires_at ? fmtDate(t.expires_at) : "безстроковий"}</span></p>
-                                <p>Створено: <span style={{ color: "#a1a1aa" }}>{fmtDate(t.created_at)}</span></p>
-                                <p>Запитів за 24г: <span style={{ color: "#a1a1aa" }}>{t.stats.requests_24h}</span></p>
-                                <p>Помилок за 24г: <span style={{ color: t.stats.errors_24h > 0 ? "#f87171" : "#a1a1aa" }}>{t.stats.errors_24h}</span></p>
+                              <div className="space-y-1 text-xs" style={{ color: "var(--a-text-3)" }}>
+                                <p>Rate limit: <span style={{ color: "var(--a-text-2)" }}>{t.rate_limit} запитів/хв</span></p>
+                                <p>Термін дії: <span style={{ color: "var(--a-text-2)" }}>{t.expires_at ? fmtDate(t.expires_at) : "безстроковий"}</span></p>
+                                <p>Створено: <span style={{ color: "var(--a-text-2)" }}>{fmtDate(t.created_at)}</span></p>
+                                <p>Запитів за 24г: <span style={{ color: "var(--a-text-2)" }}>{t.stats.requests_24h}</span></p>
+                                <p>Помилок за 24г: <span style={{ color: t.stats.errors_24h > 0 ? "#f87171" : "var(--a-text-2)" }}>{t.stats.errors_24h}</span></p>
                               </div>
                             </div>
                           </div>
@@ -449,7 +449,7 @@ export default function ApiKeysPage() {
                 ))}
                 {tokens.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="px-4 py-12 text-center" style={{ color: "#3f3f46" }}>
+                    <td colSpan={8} className="px-4 py-12 text-center" style={{ color: "var(--a-text-5)" }}>
                       <Key className="w-8 h-8 mx-auto mb-3 opacity-30" />
                       <p>Ще немає API-токенів</p>
                       <p className="text-xs mt-1">Створіть перший токен для інтеграції з 1С</p>
@@ -471,7 +471,7 @@ export default function ApiKeysPage() {
               value={logTokenFilter}
               onChange={(e) => setLogTokenFilter(e.target.value)}
               className="px-3 py-1.5 rounded-lg text-xs"
-              style={{ background: "#111116", color: "#a1a1aa", border: "1px solid #1e1e2a" }}
+              style={{ background: "var(--a-bg-card)", color: "var(--a-text-2)", border: "1px solid var(--a-border)" }}
             >
               <option value="">Всі токени</option>
               {tokens.map((t) => (
@@ -482,7 +482,7 @@ export default function ApiKeysPage() {
               value={logStatusFilter}
               onChange={(e) => setLogStatusFilter(e.target.value)}
               className="px-3 py-1.5 rounded-lg text-xs"
-              style={{ background: "#111116", color: "#a1a1aa", border: "1px solid #1e1e2a" }}
+              style={{ background: "var(--a-bg-card)", color: "var(--a-text-2)", border: "1px solid var(--a-border)" }}
             >
               <option value="">Всі статуси</option>
               <option value="200">200 OK</option>
@@ -495,24 +495,24 @@ export default function ApiKeysPage() {
             <button
               onClick={() => fetchLogs()}
               className="px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5"
-              style={{ background: "#111116", color: "#71717a", border: "1px solid #1e1e2a" }}
+              style={{ background: "var(--a-bg-card)", color: "var(--a-text-3)", border: "1px solid var(--a-border)" }}
             >
               <RefreshCw className="w-3 h-3" /> Оновити
             </button>
           </div>
 
-          <div className="rounded-2xl overflow-hidden" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
+          <div className="rounded-2xl overflow-hidden" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr style={{ borderBottom: "1px solid #1e1e2a" }}>
-                    <th className="text-left px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Час</th>
-                    <th className="text-left px-4 py-3 text-[11px] font-medium uppercase tracking-wider hidden sm:table-cell" style={{ color: "#3f3f46" }}>Токен</th>
-                    <th className="text-left px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Метод</th>
-                    <th className="text-left px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Endpoint</th>
-                    <th className="text-center px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Статус</th>
-                    <th className="text-right px-4 py-3 text-[11px] font-medium uppercase tracking-wider hidden md:table-cell" style={{ color: "#3f3f46" }}>Час (ms)</th>
-                    <th className="text-left px-4 py-3 text-[11px] font-medium uppercase tracking-wider hidden lg:table-cell" style={{ color: "#3f3f46" }}>IP</th>
+                  <tr style={{ borderBottom: "1px solid var(--a-border)" }}>
+                    <th className="text-left px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "var(--a-text-5)" }}>Час</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-medium uppercase tracking-wider hidden sm:table-cell" style={{ color: "var(--a-text-5)" }}>Токен</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "var(--a-text-5)" }}>Метод</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "var(--a-text-5)" }}>Endpoint</th>
+                    <th className="text-center px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "var(--a-text-5)" }}>Статус</th>
+                    <th className="text-right px-4 py-3 text-[11px] font-medium uppercase tracking-wider hidden md:table-cell" style={{ color: "var(--a-text-5)" }}>Час (ms)</th>
+                    <th className="text-left px-4 py-3 text-[11px] font-medium uppercase tracking-wider hidden lg:table-cell" style={{ color: "var(--a-text-5)" }}>IP</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -521,12 +521,12 @@ export default function ApiKeysPage() {
                     return (
                       <tr
                         key={log.id}
-                        className="transition-colors hover:bg-[#111118]"
-                        style={{ borderBottom: "1px solid #141420" }}
+                        className="transition-colors"
+                        style={{ borderBottom: "1px solid var(--a-border)" }}
                       >
-                        <td className="px-4 py-2.5 text-xs" style={{ color: "#71717a" }}>{fmtDate(log.created_at)}</td>
+                        <td className="px-4 py-2.5 text-xs" style={{ color: "var(--a-text-3)" }}>{fmtDate(log.created_at)}</td>
                         <td className="px-4 py-2.5 hidden sm:table-cell">
-                          <span className="text-xs" style={{ color: "#a1a1aa" }}>
+                          <span className="text-xs" style={{ color: "var(--a-text-2)" }}>
                             {log.api_tokens?.name || "—"}
                           </span>
                         </td>
@@ -534,7 +534,7 @@ export default function ApiKeysPage() {
                           <span
                             className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium"
                             style={{
-                              background: "#141420",
+                              background: "var(--a-bg-input)",
                               color:
                                 log.method === "GET"
                                   ? "#4ade80"
@@ -549,7 +549,7 @@ export default function ApiKeysPage() {
                           </span>
                         </td>
                         <td className="px-4 py-2.5">
-                          <code className="text-xs font-mono" style={{ color: "#a1a1aa" }}>{log.endpoint}</code>
+                          <code className="text-xs font-mono" style={{ color: "var(--a-text-2)" }}>{log.endpoint}</code>
                           {log.error_message && log.status_code >= 400 && (
                             <p className="text-[10px] mt-0.5" style={{ color: "#f87171" }}>{log.error_message}</p>
                           )}
@@ -562,10 +562,10 @@ export default function ApiKeysPage() {
                             {log.status_code}
                           </span>
                         </td>
-                        <td className="px-4 py-2.5 text-right text-xs font-mono hidden md:table-cell" style={{ color: "#71717a" }}>
+                        <td className="px-4 py-2.5 text-right text-xs font-mono hidden md:table-cell" style={{ color: "var(--a-text-3)" }}>
                           {log.response_time_ms}ms
                         </td>
-                        <td className="px-4 py-2.5 text-xs font-mono hidden lg:table-cell" style={{ color: "#3f3f46" }}>
+                        <td className="px-4 py-2.5 text-xs font-mono hidden lg:table-cell" style={{ color: "var(--a-text-5)" }}>
                           {log.ip_address}
                         </td>
                       </tr>
@@ -573,7 +573,7 @@ export default function ApiKeysPage() {
                   })}
                   {logs.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="px-4 py-12 text-center" style={{ color: "#3f3f46" }}>
+                      <td colSpan={7} className="px-4 py-12 text-center" style={{ color: "var(--a-text-5)" }}>
                         <Activity className="w-8 h-8 mx-auto mb-3 opacity-30" />
                         <p>Ще немає записів у лозі</p>
                       </td>
@@ -585,8 +585,8 @@ export default function ApiKeysPage() {
 
             {/* Pagination */}
             {logsMeta.total_pages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3" style={{ borderTop: "1px solid #1e1e2a" }}>
-                <p className="text-xs" style={{ color: "#3f3f46" }}>
+              <div className="flex items-center justify-between px-4 py-3" style={{ borderTop: "1px solid var(--a-border)" }}>
+                <p className="text-xs" style={{ color: "var(--a-text-5)" }}>
                   Сторінка {logsMeta.page} з {logsMeta.total_pages} ({logsMeta.total} записів)
                 </p>
                 <div className="flex gap-1">
@@ -594,7 +594,7 @@ export default function ApiKeysPage() {
                     <button
                       onClick={() => fetchLogs(logsMeta.page - 1)}
                       className="px-2.5 py-1 rounded-lg text-xs"
-                      style={{ color: "#71717a", background: "#111116" }}
+                      style={{ color: "var(--a-text-3)", background: "var(--a-bg-card)" }}
                     >
                       ←
                     </button>
@@ -603,7 +603,7 @@ export default function ApiKeysPage() {
                     <button
                       onClick={() => fetchLogs(logsMeta.page + 1)}
                       className="px-2.5 py-1 rounded-lg text-xs"
-                      style={{ color: "#71717a", background: "#111116" }}
+                      style={{ color: "var(--a-text-3)", background: "var(--a-bg-card)" }}
                     >
                       →
                     </button>
@@ -620,14 +620,14 @@ export default function ApiKeysPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
           <div
             className="w-full max-w-lg rounded-2xl overflow-hidden"
-            style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}
+            style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}
           >
             {/* Modal header */}
-            <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: "1px solid #1e1e2a" }}>
-              <h2 className="text-lg font-semibold" style={{ color: "#f4f4f5" }}>
+            <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: "1px solid var(--a-border)" }}>
+              <h2 className="text-lg font-semibold" style={{ color: "var(--a-text)" }}>
                 {createdToken ? "Токен створено" : "Створити API-токен"}
               </h2>
-              <button onClick={closeCreateModal} style={{ color: "#71717a" }}>
+              <button onClick={closeCreateModal} style={{ color: "var(--a-text-3)" }}>
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -648,25 +648,25 @@ export default function ApiKeysPage() {
                     readOnly
                     value={createdToken}
                     className="w-full px-3 py-2.5 pr-10 rounded-lg text-xs font-mono"
-                    style={{ background: "#141420", color: "#e4e4e7", border: "1px solid #1e1e2a" }}
+                    style={{ background: "var(--a-bg-input)", color: "var(--a-text)", border: "1px solid var(--a-border)" }}
                   />
                   <button
                     onClick={copyToken}
                     className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded"
-                    style={{ color: copied ? "#4ade80" : "#71717a" }}
+                    style={{ color: copied ? "#4ade80" : "var(--a-text-3)" }}
                   >
                     {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
 
-                <p className="text-xs mt-3" style={{ color: "#3f3f46" }}>
+                <p className="text-xs mt-3" style={{ color: "var(--a-text-5)" }}>
                   Передайте цей токен програмісту 1С. Він використовуватиметься як Bearer-токен в заголовку Authorization.
                 </p>
 
                 <button
                   onClick={closeCreateModal}
                   className="mt-4 w-full py-2 rounded-lg text-sm font-medium"
-                  style={{ background: "#7c3aed", color: "#fff" }}
+                  style={{ background: "var(--a-accent-btn)", color: "#fff" }}
                 >
                   Готово
                 </button>
@@ -675,52 +675,52 @@ export default function ApiKeysPage() {
               <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
                 {/* Name */}
                 <div>
-                  <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>Назва</label>
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--a-text-3)" }}>Назва</label>
                   <input
                     type="text"
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
                     placeholder="1С Обмін"
                     className="w-full px-3 py-2 rounded-lg text-sm"
-                    style={{ background: "#141420", color: "#e4e4e7", border: "1px solid #1e1e2a" }}
+                    style={{ background: "var(--a-bg-input)", color: "var(--a-text)", border: "1px solid var(--a-border)" }}
                   />
                 </div>
 
                 {/* Description */}
                 <div>
-                  <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>Опис (необов&apos;язково)</label>
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--a-text-3)" }}>Опис (необов&apos;язково)</label>
                   <input
                     type="text"
                     value={newDescription}
                     onChange={(e) => setNewDescription(e.target.value)}
                     placeholder="Токен для обміну даними з 1С бухгалтера Ірини"
                     className="w-full px-3 py-2 rounded-lg text-sm"
-                    style={{ background: "#141420", color: "#e4e4e7", border: "1px solid #1e1e2a" }}
+                    style={{ background: "var(--a-bg-input)", color: "var(--a-text)", border: "1px solid var(--a-border)" }}
                   />
                 </div>
 
                 {/* IP Whitelist */}
                 <div>
-                  <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>IP Whitelist (необов&apos;язково)</label>
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--a-text-3)" }}>IP Whitelist (необов&apos;язково)</label>
                   <input
                     type="text"
                     value={newAllowedIps}
                     onChange={(e) => setNewAllowedIps(e.target.value)}
                     placeholder="194.44.12.1, 10.0.0.5"
                     className="w-full px-3 py-2 rounded-lg text-sm"
-                    style={{ background: "#141420", color: "#e4e4e7", border: "1px solid #1e1e2a" }}
+                    style={{ background: "var(--a-bg-input)", color: "var(--a-text)", border: "1px solid var(--a-border)" }}
                   />
-                  <p className="mt-1 text-[10px]" style={{ color: "#52525b" }}>Якщо вказано — запити з інших IP будуть відхилені (403). Через кому.</p>
+                  <p className="mt-1 text-[10px]" style={{ color: "var(--a-text-4)" }}>Якщо вказано — запити з інших IP будуть відхилені (403). Через кому.</p>
                 </div>
 
                 {/* Permissions */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-medium" style={{ color: "#71717a" }}>Права доступу</label>
+                    <label className="text-xs font-medium" style={{ color: "var(--a-text-3)" }}>Права доступу</label>
                     <button
                       onClick={toggleAllPerms}
                       className="text-[11px] font-medium"
-                      style={{ color: "#a855f7" }}
+                      style={{ color: "var(--a-accent)" }}
                     >
                       {newPerms.length === ALL_PERMISSIONS.length ? "Зняти всі" : "Обрати всі"}
                     </button>
@@ -731,8 +731,8 @@ export default function ApiKeysPage() {
                         key={p.key}
                         className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors"
                         style={{
-                          background: newPerms.includes(p.key) ? "#1e1030" : "#141420",
-                          border: `1px solid ${newPerms.includes(p.key) ? "#581c87" : "#1e1e2a"}`,
+                          background: newPerms.includes(p.key) ? "var(--a-accent-bg)" : "var(--a-bg-input)",
+                          border: `1px solid ${newPerms.includes(p.key) ? "var(--a-accent)" : "var(--a-border)"}`,
                         }}
                       >
                         <input
@@ -750,13 +750,13 @@ export default function ApiKeysPage() {
                         <div
                           className="w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0"
                           style={{
-                            borderColor: newPerms.includes(p.key) ? "#a855f7" : "#3f3f46",
-                            background: newPerms.includes(p.key) ? "#7c3aed" : "transparent",
+                            borderColor: newPerms.includes(p.key) ? "var(--a-accent)" : "var(--a-text-5)",
+                            background: newPerms.includes(p.key) ? "var(--a-accent-btn)" : "transparent",
                           }}
                         >
                           {newPerms.includes(p.key) && <Check className="w-2.5 h-2.5" style={{ color: "#fff" }} />}
                         </div>
-                        <span className="text-[11px]" style={{ color: newPerms.includes(p.key) ? "#c084fc" : "#71717a" }}>
+                        <span className="text-[11px]" style={{ color: newPerms.includes(p.key) ? "var(--a-accent)" : "var(--a-text-3)" }}>
                           {p.label}
                         </span>
                       </label>
@@ -766,7 +766,7 @@ export default function ApiKeysPage() {
 
                 {/* Rate limit */}
                 <div>
-                  <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>Rate limit</label>
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--a-text-3)" }}>Rate limit</label>
                   <div className="flex gap-2">
                     {RATE_LIMITS.map((r) => (
                       <button
@@ -775,8 +775,8 @@ export default function ApiKeysPage() {
                         className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                         style={
                           newRate === r
-                            ? { background: "#1e1030", color: "#c084fc", border: "1px solid #581c87" }
-                            : { background: "#141420", color: "#71717a", border: "1px solid #1e1e2a" }
+                            ? { background: "var(--a-accent-bg)", color: "var(--a-accent)", border: "1px solid var(--a-accent)" }
+                            : { background: "var(--a-bg-input)", color: "var(--a-text-3)", border: "1px solid var(--a-border)" }
                         }
                       >
                         {r}/хв
@@ -787,7 +787,7 @@ export default function ApiKeysPage() {
 
                 {/* Expiry */}
                 <div>
-                  <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>Термін дії</label>
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--a-text-3)" }}>Термін дії</label>
                   <div className="flex gap-2">
                     {EXPIRE_OPTIONS.map((o) => (
                       <button
@@ -796,8 +796,8 @@ export default function ApiKeysPage() {
                         className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                         style={
                           newExpire === o.value
-                            ? { background: "#1e1030", color: "#c084fc", border: "1px solid #581c87" }
-                            : { background: "#141420", color: "#71717a", border: "1px solid #1e1e2a" }
+                            ? { background: "var(--a-accent-bg)", color: "var(--a-accent)", border: "1px solid var(--a-accent)" }
+                            : { background: "var(--a-bg-input)", color: "var(--a-text-3)", border: "1px solid var(--a-border)" }
                         }
                       >
                         {o.label}
@@ -811,7 +811,7 @@ export default function ApiKeysPage() {
                   onClick={handleCreate}
                   disabled={creating || !newName.trim() || newPerms.length === 0}
                   className="w-full py-2.5 rounded-lg text-sm font-medium transition-opacity disabled:opacity-40"
-                  style={{ background: "#7c3aed", color: "#fff" }}
+                  style={{ background: "var(--a-accent-btn)", color: "#fff" }}
                 >
                   {creating ? "Створення..." : "Створити токен"}
                 </button>

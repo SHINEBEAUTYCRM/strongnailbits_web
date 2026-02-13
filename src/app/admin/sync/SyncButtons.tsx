@@ -54,7 +54,7 @@ export function SyncButtons() {
             onClick={() => run(e.key)}
             disabled={loading[e.key]}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50"
-            style={{ background: "#111116", color: "#a1a1aa", border: "1px solid #1e1e2a" }}
+            style={{ background: "var(--a-bg-card)", color: "var(--a-text-2)", border: "1px solid var(--a-border)" }}
           >
             {loading[e.key] ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
             {e.label}
@@ -64,7 +64,7 @@ export function SyncButtons() {
           onClick={runAll}
           disabled={anyLoading}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50"
-          style={{ background: "#7c3aed" }}
+          style={{ background: "var(--a-accent-btn)" }}
         >
           {anyLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
           Синхронізувати все
@@ -85,7 +85,7 @@ export function SyncButtons() {
                 {r.ok ? <CheckCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: "#4ade80" }} /> : <XCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: "#f87171" }} />}
                 <div>
                   <span className="font-medium" style={{ color: r.ok ? "#4ade80" : "#f87171" }}>{e.label}:</span>{" "}
-                  <span style={{ color: "#71717a" }}>{r.message}</span>
+                  <span style={{ color: "var(--a-text-3)" }}>{r.message}</span>
                 </div>
               </div>
             );

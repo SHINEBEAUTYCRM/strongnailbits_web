@@ -64,9 +64,9 @@ export function ProductBulkBar({ productIds }: ProductBulkBarProps) {
           onClick={toggleAll}
           className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
           style={{
-            background: selected.size > 0 ? "#1e1030" : "#111116",
-            color: selected.size > 0 ? "#c084fc" : "#71717a",
-            border: selected.size > 0 ? "1px solid #581c87" : "1px solid #1e1e2a",
+            background: selected.size > 0 ? "var(--a-accent-bg)" : "var(--a-bg-card)",
+            color: selected.size > 0 ? "var(--a-accent)" : "var(--a-text-3)",
+            border: selected.size > 0 ? "1px solid var(--a-accent)" : "1px solid var(--a-border)",
           }}
         >
           {selected.size === productIds.length && productIds.length > 0 ? (
@@ -94,7 +94,7 @@ export function ProductBulkBar({ productIds }: ProductBulkBarProps) {
               onClick={() => runBulk("disable")}
               disabled={loading}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-              style={{ background: "#18181b", color: "#71717a", border: "1px solid #27272a" }}
+              style={{ background: "var(--a-bg-hover)", color: "var(--a-text-3)", border: "1px solid var(--a-border)" }}
             >
               {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <EyeOff className="w-3 h-3" />}
               Вимкнути
@@ -111,7 +111,7 @@ export function ProductBulkBar({ productIds }: ProductBulkBarProps) {
             <button
               onClick={() => setSelected(new Set())}
               className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs"
-              style={{ color: "#52525b" }}
+              style={{ color: "var(--a-text-4)" }}
             >
               <X className="w-3 h-3" />
             </button>
@@ -154,8 +154,8 @@ export function ProductCheckbox({
       className="flex h-5 w-5 items-center justify-center rounded transition-colors"
       style={
         checked
-          ? { background: "#7c3aed", border: "1px solid #7c3aed" }
-          : { background: "#111116", border: "1px solid #27272a" }
+          ? { background: "var(--a-accent-btn)", border: "1px solid var(--a-accent-btn)" }
+          : { background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }
       }
     >
       {checked && (

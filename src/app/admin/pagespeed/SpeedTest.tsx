@@ -156,48 +156,48 @@ export function SpeedTest() {
   return (
     <div className="space-y-6">
       {/* Controls */}
-      <div className="rounded-xl p-5" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
+      <div className="rounded-xl p-5" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
           {/* Page selector */}
           <div className="flex-1 min-w-0">
-            <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>Сторінка</label>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--a-text-3)" }}>Сторінка</label>
             <div className="flex flex-wrap gap-1.5">
               {PAGES.map((p, i) => (
                 <button key={p.path} onClick={() => { setSelectedPage(i); setCustomPath(""); }}
                   className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all"
-                  style={selectedPage === i ? { background: "#1e1030", color: "#c084fc", border: "1px solid #581c87" } : { background: "#111116", color: "#52525b", border: "1px solid #1e1e2a" }}>
+                  style={selectedPage === i ? { background: "var(--a-accent-bg)", color: "var(--a-accent)", border: "1px solid var(--a-accent)" } : { background: "var(--a-bg-card)", color: "var(--a-text-4)", border: "1px solid var(--a-border)" }}>
                   {p.label}
                 </button>
               ))}
               <button onClick={() => setSelectedPage(-1)}
                 className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all"
-                style={selectedPage === -1 ? { background: "#1e1030", color: "#c084fc", border: "1px solid #581c87" } : { background: "#111116", color: "#52525b", border: "1px solid #1e1e2a" }}>
+                style={selectedPage === -1 ? { background: "var(--a-accent-bg)", color: "var(--a-accent)", border: "1px solid var(--a-accent)" } : { background: "var(--a-bg-card)", color: "var(--a-text-4)", border: "1px solid var(--a-border)" }}>
                 Свій URL
               </button>
             </div>
             {selectedPage === -1 && (
               <div className="mt-2 flex items-center gap-2">
-                <span className="text-xs shrink-0" style={{ color: "#52525b" }}>{SITE_URL}</span>
+                <span className="text-xs shrink-0" style={{ color: "var(--a-text-4)" }}>{SITE_URL}</span>
                 <input type="text" value={customPath} onChange={(e) => setCustomPath(e.target.value)}
                   placeholder="/catalog/your-category"
                   className="flex-1 px-2.5 py-1.5 rounded-md text-xs font-mono"
-                  style={{ background: "#111116", color: "#e4e4e7", border: "1px solid #1e1e2a", outline: "none" }} />
+                  style={{ background: "var(--a-bg-input)", color: "var(--a-text)", border: "1px solid var(--a-border)", outline: "none" }} />
               </div>
             )}
           </div>
 
           {/* Strategy */}
           <div>
-            <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>Пристрій</label>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--a-text-3)" }}>Пристрій</label>
             <div className="flex gap-2">
               <button onClick={() => setStrategy("mobile")}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
-                style={strategy === "mobile" ? { background: "#1e1030", color: "#c084fc", border: "1px solid #581c87" } : { background: "#111116", color: "#71717a", border: "1px solid #1e1e2a" }}>
+                style={strategy === "mobile" ? { background: "var(--a-accent-bg)", color: "var(--a-accent)", border: "1px solid var(--a-accent)" } : { background: "var(--a-bg-card)", color: "var(--a-text-3)", border: "1px solid var(--a-border)" }}>
                 <Smartphone className="w-3.5 h-3.5" /> Mobile
               </button>
               <button onClick={() => setStrategy("desktop")}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
-                style={strategy === "desktop" ? { background: "#1e1030", color: "#c084fc", border: "1px solid #581c87" } : { background: "#111116", color: "#71717a", border: "1px solid #1e1e2a" }}>
+                style={strategy === "desktop" ? { background: "var(--a-accent-bg)", color: "var(--a-accent)", border: "1px solid var(--a-accent)" } : { background: "var(--a-bg-card)", color: "var(--a-text-3)", border: "1px solid var(--a-border)" }}>
                 <Monitor className="w-3.5 h-3.5" /> Desktop
               </button>
             </div>
@@ -206,13 +206,13 @@ export function SpeedTest() {
           {/* Run button */}
           <button onClick={runTest} disabled={loading}
             className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-50 shrink-0"
-            style={{ background: "#7c3aed" }}>
+            style={{ background: "var(--a-accent-btn)" }}>
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
             {loading ? "Тестування..." : "Запустити тест"}
           </button>
         </div>
 
-        <p className="text-[10px] mt-3" style={{ color: "#3f3f46" }}>
+        <p className="text-[10px] mt-3" style={{ color: "var(--a-text-5)" }}>
           URL: {SITE_URL}{selectedPage === -1 ? (customPath.startsWith("/") ? customPath : `/${customPath}`) : PAGES[selectedPage]?.path} · Google PageSpeed Insights API · ~20-60с
         </p>
       </div>
@@ -225,14 +225,14 @@ export function SpeedTest() {
 
       {/* Loading animation */}
       {loading && (
-        <div className="rounded-xl p-12 flex flex-col items-center gap-4" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
+        <div className="rounded-xl p-12 flex flex-col items-center gap-4" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
           <div className="relative">
-            <div className="w-20 h-20 rounded-full border-4 border-t-transparent animate-spin" style={{ borderColor: "#1e1e2a", borderTopColor: "#a855f7" }} />
-            <Gauge className="w-8 h-8 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" style={{ color: "#a855f7" }} />
+            <div className="w-20 h-20 rounded-full border-4 border-t-transparent animate-spin" style={{ borderColor: "var(--a-border)", borderTopColor: "var(--a-accent)" }} />
+            <Gauge className="w-8 h-8 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" style={{ color: "var(--a-accent)" }} />
           </div>
           <div className="text-center">
-            <p className="text-sm font-medium" style={{ color: "#a1a1aa" }}>Аналіз швидкості...</p>
-            <p className="text-xs mt-1" style={{ color: "#3f3f46" }}>Google Lighthouse сканує сторінку</p>
+            <p className="text-sm font-medium" style={{ color: "var(--a-text-2)" }}>Аналіз швидкості...</p>
+            <p className="text-xs mt-1" style={{ color: "var(--a-text-5)" }}>Google Lighthouse сканує сторінку</p>
           </div>
         </div>
       )}
@@ -250,11 +250,11 @@ export function SpeedTest() {
               const color = scoreColor(s);
               const labels: Record<string, string> = { performance: "Продуктивність", accessibility: "Доступність", "best-practices": "Практики", seo: "SEO" };
               return (
-                <div key={key} className="rounded-xl p-5 flex flex-col items-center" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
+                <div key={key} className="rounded-xl p-5 flex flex-col items-center" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
                   {/* Circular gauge */}
                   <div className="relative w-20 h-20 mb-3">
                     <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
-                      <circle cx="60" cy="60" r="54" fill="none" stroke="#1e1e2a" strokeWidth="8" />
+                      <circle cx="60" cy="60" r="54" fill="none" stroke="var(--a-border)" strokeWidth="8" />
                       <circle cx="60" cy="60" r="54" fill="none" stroke={color} strokeWidth="8"
                         strokeDasharray={`${pct * 3.39} 339.292`}
                         strokeLinecap="round" />
@@ -263,16 +263,16 @@ export function SpeedTest() {
                       {scoreLabel(s)}
                     </span>
                   </div>
-                  <p className="text-xs font-medium" style={{ color: "#a1a1aa" }}>{labels[key] || cat.title}</p>
+                  <p className="text-xs font-medium" style={{ color: "var(--a-text-2)" }}>{labels[key] || cat.title}</p>
                 </div>
               );
             })}
           </div>
 
           {/* Core Web Vitals */}
-          <div className="rounded-xl p-5" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
-            <h3 className="text-sm font-medium mb-4 flex items-center gap-2" style={{ color: "#a1a1aa" }}>
-              <Zap className="w-4 h-4" style={{ color: "#a855f7" }} /> Core Web Vitals & Метрики
+          <div className="rounded-xl p-5" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+            <h3 className="text-sm font-medium mb-4 flex items-center gap-2" style={{ color: "var(--a-text-2)" }}>
+              <Zap className="w-4 h-4" style={{ color: "var(--a-accent)" }} /> Core Web Vitals & Метрики
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {KEY_METRICS.map((id) => {
@@ -288,7 +288,7 @@ export function SpeedTest() {
                       <Icon className="w-5 h-5" style={{ color }} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-medium truncate" style={{ color: "#a1a1aa" }}>{audit.title}</p>
+                      <p className="text-xs font-medium truncate" style={{ color: "var(--a-text-2)" }}>{audit.title}</p>
                       <p className="text-lg font-bold font-mono" style={{ color }}>{audit.displayValue || scoreLabel(s)}</p>
                     </div>
                   </div>
@@ -298,8 +298,8 @@ export function SpeedTest() {
           </div>
 
           {/* Opportunities & Diagnostics */}
-          <div className="rounded-xl p-5" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
-            <h3 className="text-sm font-medium mb-4 flex items-center gap-2" style={{ color: "#a1a1aa" }}>
+          <div className="rounded-xl p-5" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+            <h3 className="text-sm font-medium mb-4 flex items-center gap-2" style={{ color: "var(--a-text-2)" }}>
               <AlertTriangle className="w-4 h-4" style={{ color: "#fbbf24" }} /> Рекомендації
             </h3>
             <div className="space-y-2">
@@ -312,9 +312,9 @@ export function SpeedTest() {
                   if (!audit) return null;
                   const color = scoreColor(audit.score);
                   return (
-                    <div key={ref.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={{ background: "#111116" }}>
+                    <div key={ref.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={{ background: "var(--a-bg-input)" }}>
                       <div className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
-                      <p className="text-xs flex-1" style={{ color: "#a1a1aa" }}>{audit.title}</p>
+                      <p className="text-xs flex-1" style={{ color: "var(--a-text-2)" }}>{audit.title}</p>
                       {audit.displayValue && <span className="text-xs font-mono shrink-0" style={{ color }}>{audit.displayValue}</span>}
                     </div>
                   );
@@ -329,10 +329,10 @@ export function SpeedTest() {
           </div>
 
           {/* Footer info */}
-          <div className="flex items-center justify-between text-[10px] px-1" style={{ color: "#3f3f46" }}>
+          <div className="flex items-center justify-between text-[10px] px-1" style={{ color: "var(--a-text-5)" }}>
             <span>Тест зайняв {elapsed}с · {new Date(lhr.fetchTime).toLocaleString("uk-UA")}</span>
             <a href={`https://pagespeed.web.dev/analysis?url=${encodeURIComponent(SITE_URL + (selectedPage === -1 ? (customPath.startsWith("/") ? customPath : `/${customPath}`) : PAGES[selectedPage]?.path || "/"))}&form_factor=${strategy}`}
-              target="_blank" rel="noopener" className="flex items-center gap-1" style={{ color: "#71717a" }}>
+              target="_blank" rel="noopener" className="flex items-center gap-1" style={{ color: "var(--a-text-3)" }}>
               Повний звіт <ExternalLink className="w-3 h-3" />
             </a>
           </div>

@@ -35,8 +35,8 @@ export function MemberProfile({ member, isCeo, isSelf, onUpdate }: MemberProfile
     <div
       className="rounded-xl p-5"
       style={{
-        background: "#0e0e14",
-        border: "1px solid rgba(255,255,255,0.06)",
+        background: "var(--a-bg-card)",
+        border: "1px solid var(--a-border)",
       }}
     >
       {/* Avatar + Name */}
@@ -59,7 +59,7 @@ export function MemberProfile({ member, isCeo, isSelf, onUpdate }: MemberProfile
           )}
         </div>
 
-        <h2 className="text-lg font-bold" style={{ color: "#e4e4e7" }}>
+        <h2 className="text-lg font-bold" style={{ color: "var(--a-text-body)" }}>
           {member.name}
         </h2>
 
@@ -71,14 +71,14 @@ export function MemberProfile({ member, isCeo, isSelf, onUpdate }: MemberProfile
             {roleConfig?.label || member.role}
           </span>
           {member.department && (
-            <span className="text-xs" style={{ color: "#52525b" }}>
+            <span className="text-xs" style={{ color: "var(--a-text-4)" }}>
               · {DEPARTMENTS[member.department as DepartmentKey]?.label || member.department}
             </span>
           )}
         </div>
 
         {member.position_title && (
-          <p className="text-xs mt-1" style={{ color: "#71717a" }}>{member.position_title}</p>
+          <p className="text-xs mt-1" style={{ color: "var(--a-text-3)" }}>{member.position_title}</p>
         )}
 
         <span
@@ -97,7 +97,7 @@ export function MemberProfile({ member, isCeo, isSelf, onUpdate }: MemberProfile
       <div className="flex flex-col gap-3">
         {/* Phone */}
         <InfoRow icon={<Phone className="w-3.5 h-3.5" />} label="Телефон">
-          <a href={`tel:${member.phone}`} className="font-mono text-xs" style={{ color: "#d4d4d8", fontFamily: "var(--font-jetbrains-mono, monospace)" }}>
+          <a href={`tel:${member.phone}`} className="font-mono text-xs" style={{ color: "var(--a-text-name)", fontFamily: "var(--font-jetbrains-mono, monospace)" }}>
             {member.phone}
           </a>
         </InfoRow>
@@ -147,10 +147,10 @@ export function MemberProfile({ member, isCeo, isSelf, onUpdate }: MemberProfile
                 defaultValue={member.hire_date || ""}
                 onBlur={(e) => handleSave("hire_date", e.target.value || null)}
                 className="bg-transparent border-none outline-none text-xs"
-                style={{ color: "#d4d4d8", colorScheme: "dark" }}
+                style={{ color: "var(--a-text-name)", colorScheme: "dark" }}
               />
             ) : (
-              <span className="text-xs font-mono" style={{ color: "#d4d4d8", fontFamily: "var(--font-jetbrains-mono, monospace)" }}>
+              <span className="text-xs font-mono" style={{ color: "var(--a-text-name)", fontFamily: "var(--font-jetbrains-mono, monospace)" }}>
                 {member.hire_date ? formatDate(member.hire_date) : "—"}
               </span>
             )}
@@ -159,7 +159,7 @@ export function MemberProfile({ member, isCeo, isSelf, onUpdate }: MemberProfile
 
         {/* Schedule */}
         <InfoRow icon={<Clock className="w-3.5 h-3.5" />} label="Графік">
-          <span className="text-xs" style={{ color: "#d4d4d8" }}>
+          <span className="text-xs" style={{ color: "var(--a-text-name)" }}>
             {member.schedule || "5/2"} {member.work_hours || "09:00-18:00"}
           </span>
         </InfoRow>
@@ -169,13 +169,13 @@ export function MemberProfile({ member, isCeo, isSelf, onUpdate }: MemberProfile
           <InfoRow icon={<DollarSign className="w-3.5 h-3.5" />} label="Зарплата">
             <div className="flex items-center gap-2">
               {showSalary ? (
-                <span className="text-xs font-mono" style={{ color: "#d4d4d8", fontFamily: "var(--font-jetbrains-mono, monospace)" }}>
+                <span className="text-xs font-mono" style={{ color: "var(--a-text-name)", fontFamily: "var(--font-jetbrains-mono, monospace)" }}>
                   {Number(member.salary).toLocaleString("uk-UA")} ₴
                 </span>
               ) : (
-                <span className="text-xs" style={{ color: "#52525b" }}>••••••</span>
+                <span className="text-xs" style={{ color: "var(--a-text-4)" }}>••••••</span>
               )}
-              <button onClick={() => setShowSalary(!showSalary)} style={{ color: "#52525b" }}>
+              <button onClick={() => setShowSalary(!showSalary)} style={{ color: "var(--a-text-4)" }}>
                 {showSalary ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
               </button>
             </div>
@@ -187,8 +187,8 @@ export function MemberProfile({ member, isCeo, isSelf, onUpdate }: MemberProfile
         {/* Bio */}
         <div>
           <div className="flex items-center gap-1.5 mb-1.5">
-            <FileText className="w-3.5 h-3.5" style={{ color: "#52525b" }} />
-            <span className="text-xs font-medium" style={{ color: "#71717a" }}>Про себе</span>
+            <FileText className="w-3.5 h-3.5" style={{ color: "var(--a-text-4)" }} />
+            <span className="text-xs font-medium" style={{ color: "var(--a-text-3)" }}>Про себе</span>
           </div>
           {canEdit ? (
             <textarea
@@ -198,13 +198,13 @@ export function MemberProfile({ member, isCeo, isSelf, onUpdate }: MemberProfile
               rows={2}
               className="w-full px-3 py-2 rounded-lg text-xs outline-none resize-none"
               style={{
-                background: "#111116",
-                border: "1px solid rgba(255,255,255,0.06)",
-                color: "#d4d4d8",
+                background: "var(--a-bg-card)",
+                border: "1px solid var(--a-border)",
+                color: "var(--a-text-name)",
               }}
             />
           ) : (
-            <p className="text-xs" style={{ color: "#a1a1aa" }}>
+            <p className="text-xs" style={{ color: "var(--a-text-2)" }}>
               {member.personal_bio || "—"}
             </p>
           )}
@@ -213,8 +213,8 @@ export function MemberProfile({ member, isCeo, isSelf, onUpdate }: MemberProfile
         {/* Skills */}
         <div>
           <div className="flex items-center gap-1.5 mb-1.5">
-            <Tag className="w-3.5 h-3.5" style={{ color: "#52525b" }} />
-            <span className="text-xs font-medium" style={{ color: "#71717a" }}>Навички</span>
+            <Tag className="w-3.5 h-3.5" style={{ color: "var(--a-text-4)" }} />
+            <span className="text-xs font-medium" style={{ color: "var(--a-text-3)" }}>Навички</span>
           </div>
           <div className="flex flex-wrap gap-1">
             {(member.skills || []).map((skill) => (
@@ -227,7 +227,7 @@ export function MemberProfile({ member, isCeo, isSelf, onUpdate }: MemberProfile
               </span>
             ))}
             {(member.skills || []).length === 0 && (
-              <span className="text-xs" style={{ color: "#52525b" }}>—</span>
+              <span className="text-xs" style={{ color: "var(--a-text-4)" }}>—</span>
             )}
           </div>
         </div>
@@ -238,8 +238,8 @@ export function MemberProfile({ member, isCeo, isSelf, onUpdate }: MemberProfile
             <Divider />
             <div>
               <div className="flex items-center gap-1.5 mb-1.5">
-                <FileText className="w-3.5 h-3.5" style={{ color: "#52525b" }} />
-                <span className="text-xs font-medium" style={{ color: "#71717a" }}>Нотатки CEO</span>
+                <FileText className="w-3.5 h-3.5" style={{ color: "var(--a-text-4)" }} />
+                <span className="text-xs font-medium" style={{ color: "var(--a-text-3)" }}>Нотатки CEO</span>
               </div>
               <textarea
                 defaultValue={member.notes || ""}
@@ -248,9 +248,9 @@ export function MemberProfile({ member, isCeo, isSelf, onUpdate }: MemberProfile
                 rows={2}
                 className="w-full px-3 py-2 rounded-lg text-xs outline-none resize-none"
                 style={{
-                  background: "#111116",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  color: "#d4d4d8",
+                  background: "var(--a-bg-card)",
+                  border: "1px solid var(--a-border)",
+                  color: "var(--a-text-name)",
                 }}
               />
             </div>
@@ -267,8 +267,8 @@ function InfoRow({ icon, label, children }: { icon: React.ReactNode; label: stri
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-1.5">
-        <span style={{ color: "#52525b" }}>{icon}</span>
-        <span className="text-xs" style={{ color: "#71717a" }}>{label}</span>
+        <span style={{ color: "var(--a-text-4)" }}>{icon}</span>
+        <span className="text-xs" style={{ color: "var(--a-text-3)" }}>{label}</span>
       </div>
       {children}
     </div>
@@ -286,11 +286,11 @@ function EditableRow({
     return (
       <InfoRow icon={icon} label={label}>
         {link && value ? (
-          <a href={link} target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: "#a855f7" }}>
+          <a href={link} target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: "var(--a-accent)" }}>
             {value}
           </a>
         ) : (
-          <span className="text-xs" style={{ color: "#d4d4d8" }}>{value || "—"}</span>
+          <span className="text-xs" style={{ color: "var(--a-text-name)" }}>{value || "—"}</span>
         )}
       </InfoRow>
     );
@@ -305,16 +305,16 @@ function EditableRow({
           onBlur={(e) => onSave(e.target.value)}
           placeholder={placeholder}
           className="text-right bg-transparent border-none outline-none text-xs max-w-[160px]"
-          style={{ color: "#d4d4d8", colorScheme: "dark" }}
+          style={{ color: "var(--a-text-name)", colorScheme: "dark" }}
         />
-        {saving && <Loader2 className="w-3 h-3 animate-spin" style={{ color: "#a855f7" }} />}
+        {saving && <Loader2 className="w-3 h-3 animate-spin" style={{ color: "var(--a-accent)" }} />}
       </div>
     </InfoRow>
   );
 }
 
 function Divider() {
-  return <div className="my-1" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }} />;
+  return <div className="my-1" style={{ borderTop: "1px solid var(--a-border)" }} />;
 }
 
 function formatDate(d: string): string {

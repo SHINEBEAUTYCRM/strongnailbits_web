@@ -106,10 +106,10 @@ export function BannerCard({
       : null;
 
   return (
-    <div className="group relative rounded-2xl border border-white/[0.06] bg-[rgba(14,14,20,0.8)] backdrop-blur-sm overflow-hidden transition-all duration-300 hover:border-purple-500/20 hover:shadow-[0_0_40px_rgba(168,85,247,0.06)]">
+    <div className="group relative rounded-2xl border border-[var(--a-border)] bg-[var(--a-bg-card)] backdrop-blur-sm overflow-hidden transition-all duration-300 hover:border-purple-500/20 hover:shadow-[0_0_40px_rgba(168,85,247,0.06)]">
       {/* ── Image preview ─────────────────────────────── */}
       <div
-        className="relative w-full overflow-hidden bg-[#0a0a10]"
+        className="relative w-full overflow-hidden bg-[var(--a-bg)]"
         style={{ aspectRatio }}
       >
         {banner.image_desktop ? (
@@ -123,7 +123,7 @@ export function BannerCard({
             className="w-full h-full flex items-center justify-center"
             style={{ background: banner.bg_color || '#16131e' }}
           >
-            {(() => { const Icon = TYPE_ICONS[banner.type]; return <Icon size={40} className="opacity-30 text-zinc-400" />; })()}
+            {(() => { const Icon = TYPE_ICONS[banner.type]; return <Icon size={40} className="opacity-30 text-[var(--a-text-2)]" />; })()}
           </div>
         )}
 
@@ -140,7 +140,7 @@ export function BannerCard({
         <div className="flex items-center gap-2 flex-wrap">
           <BannerStatusBadge banner={banner} />
           <span
-            className="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-zinc-500"
+            className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--a-bg-hover)] text-[var(--a-text-3)]"
             style={{ fontFamily: 'JetBrains Mono, monospace' }}
           >
             {banner.type}
@@ -148,13 +148,13 @@ export function BannerCard({
         </div>
 
         {/* Title */}
-        <h3 className="text-sm font-medium text-white leading-snug line-clamp-2">
+        <h3 className="text-sm font-medium text-[var(--a-text)] leading-snug line-clamp-2">
           {displayTitle}
         </h3>
 
         {/* Date range */}
         {(banner.starts_at || banner.ends_at) && (
-          <div className="flex items-center gap-1.5 text-[11px] text-zinc-500">
+          <div className="flex items-center gap-1.5 text-[11px] text-[var(--a-text-3)]">
             <Calendar className="w-3 h-3 flex-shrink-0" />
             <span>
               {formatDate(banner.starts_at)} — {formatDate(banner.ends_at)}
@@ -165,17 +165,17 @@ export function BannerCard({
         {/* Placement badges */}
         {banner.placement.length > 0 && (
           <div className="flex items-center gap-1.5 flex-wrap">
-            <MapPin className="w-3 h-3 text-zinc-500 flex-shrink-0" />
+            <MapPin className="w-3 h-3 text-[var(--a-text-3)] flex-shrink-0" />
             {banner.placement.slice(0, 3).map((p) => (
               <span
                 key={p}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-zinc-400"
+                className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--a-bg-hover)] text-[var(--a-text-2)]"
               >
                 {p}
               </span>
             ))}
             {banner.placement.length > 3 && (
-              <span className="text-[10px] text-zinc-500">
+              <span className="text-[10px] text-[var(--a-text-3)]">
                 +{banner.placement.length - 3}
               </span>
             )}
@@ -183,7 +183,7 @@ export function BannerCard({
         )}
 
         {/* Analytics row */}
-        <div className="flex items-center gap-3 text-[11px] text-zinc-500">
+        <div className="flex items-center gap-3 text-[11px] text-[var(--a-text-3)]">
           <span className="inline-flex items-center gap-1">
             <Eye className="w-3 h-3" />
             {formatNumber(banner.views_count)}
@@ -208,7 +208,7 @@ export function BannerCard({
         {/* Edit link */}
         <Link
           href={`/admin/banners/${banner.id}`}
-          className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-purple-400 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs text-[var(--a-text-2)] hover:text-purple-400 transition-colors"
         >
           <Edit3 className="w-3.5 h-3.5" />
           Редагувати
@@ -218,7 +218,7 @@ export function BannerCard({
           {/* Duplicate */}
           <button
             onClick={() => onDuplicate(banner.id)}
-            className="p-1.5 rounded-lg text-zinc-500 hover:text-purple-400 hover:bg-white/[0.04] transition-all"
+            className="p-1.5 rounded-lg text-[var(--a-text-3)] hover:text-purple-400 hover:bg-[var(--a-bg-hover)] transition-all"
             title="Дублювати"
           >
             <Copy className="w-3.5 h-3.5" />
@@ -228,23 +228,23 @@ export function BannerCard({
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setMenuOpen((v) => !v)}
-              className="p-1.5 rounded-lg text-zinc-500 hover:text-purple-400 hover:bg-white/[0.04] transition-all"
+              className="p-1.5 rounded-lg text-[var(--a-text-3)] hover:text-purple-400 hover:bg-[var(--a-bg-hover)] transition-all"
             >
               <MoreHorizontal className="w-3.5 h-3.5" />
             </button>
 
             {menuOpen && (
-              <div className="absolute right-0 bottom-full mb-1 z-50 w-44 rounded-xl border border-white/[0.06] bg-[#111116]/95 backdrop-blur-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-150">
+              <div className="absolute right-0 bottom-full mb-1 z-50 w-44 rounded-xl border border-[var(--a-border)] bg-[var(--a-bg-card)] backdrop-blur-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-150">
                 <button
                   onClick={() => {
                     onToggleActive(banner.id, !banner.is_active);
                     setMenuOpen(false);
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-zinc-300 hover:bg-white/[0.04] transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-[var(--a-text-body)] hover:bg-[var(--a-bg-hover)] transition-colors"
                 >
                   {banner.is_active ? (
                     <>
-                      <ToggleLeft className="w-4 h-4 text-zinc-500" />
+                      <ToggleLeft className="w-4 h-4 text-[var(--a-text-3)]" />
                       Деактивувати
                     </>
                   ) : (
@@ -255,7 +255,7 @@ export function BannerCard({
                   )}
                 </button>
 
-                <div className="h-px bg-white/[0.04]" />
+                <div className="h-px bg-[var(--a-bg-hover)]" />
 
                 <button
                   onClick={() => {

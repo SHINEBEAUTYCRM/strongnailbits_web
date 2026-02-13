@@ -87,10 +87,10 @@ export function CategoryForm({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Link href="/admin/categories" className="p-2 rounded-lg" style={{ color: "#71717a" }}><ArrowLeft className="w-5 h-5" /></Link>
+          <Link href="/admin/categories" className="p-2 rounded-lg" style={{ color: "var(--a-text-3)" }}><ArrowLeft className="w-5 h-5" /></Link>
           <div>
-            <h1 className="text-xl font-semibold" style={{ color: "#f4f4f5" }}>{isEdit ? "Редагувати категорію" : "Нова категорія"}</h1>
-            {isEdit && productCount !== undefined && <p className="text-xs mt-0.5" style={{ color: "#52525b" }}>{productCount} товарів у категорії</p>}
+            <h1 className="text-xl font-semibold" style={{ color: "var(--a-text)" }}>{isEdit ? "Редагувати категорію" : "Нова категорія"}</h1>
+            {isEdit && productCount !== undefined && <p className="text-xs mt-0.5" style={{ color: "var(--a-text-4)" }}>{productCount} товарів у категорії</p>}
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -99,7 +99,7 @@ export function CategoryForm({
               {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Видалити
             </button>
           )}
-          <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50" style={{ background: "#7c3aed" }}>
+          <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50" style={{ background: "var(--a-accent-btn)" }}>
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Зберегти
           </button>
         </div>
@@ -142,20 +142,20 @@ export function CategoryForm({
           {/* Status */}
           <Section title="Статус">
             <Select label="Статус" value={form.status} onChange={(v) => set("status", v)} options={[{ v: "active", l: "Активна" }, { v: "disabled", l: "Вимкнена" }]} />
-            <p className="text-[11px] mt-2" style={{ color: "#3f3f46" }}>Вимкнена категорія не відображається на сайті та в каталозі</p>
+            <p className="text-[11px] mt-2" style={{ color: "var(--a-text-5)" }}>Вимкнена категорія не відображається на сайті та в каталозі</p>
           </Section>
 
           {/* Hierarchy */}
           <Section title="Ієрархія">
             <Select label="Батьківська категорія" value={form.parent_cs_cart_id} onChange={(v) => set("parent_cs_cart_id", v)}
               options={[{ v: "", l: "— Кореневий рівень —" }, ...parents.map((p) => ({ v: String(p.cs_cart_id), l: "—".repeat(p.depth) + " " + p.name_uk }))]} />
-            <p className="text-[11px] mt-2" style={{ color: "#3f3f46" }}>Визначає місце категорії в дереві навігації</p>
+            <p className="text-[11px] mt-2" style={{ color: "var(--a-text-5)" }}>Визначає місце категорії в дереві навігації</p>
           </Section>
 
           {/* Sort */}
           <Section title="Сортування">
             <Field label="Позиція" value={form.position} onChange={(v) => set("position", v)} type="number" />
-            <p className="text-[11px] mt-2" style={{ color: "#3f3f46" }}>Менше число = вище в списку</p>
+            <p className="text-[11px] mt-2" style={{ color: "var(--a-text-5)" }}>Менше число = вище в списку</p>
           </Section>
         </div>
       </div>
@@ -166,8 +166,8 @@ export function CategoryForm({
 /* ─── Reusable parts ─── */
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl p-5" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
-      <h3 className="text-sm font-medium mb-4" style={{ color: "#a1a1aa" }}>{title}</h3>
+    <div className="rounded-xl p-5" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+      <h3 className="text-sm font-medium mb-4" style={{ color: "var(--a-text-2)" }}>{title}</h3>
       <div className="space-y-3">{children}</div>
     </div>
   );
@@ -176,12 +176,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Field({ label, value, onChange, type = "text", placeholder }: { label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string }) {
   return (
     <div>
-      <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>{label}</label>
+      <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--a-text-3)" }}>{label}</label>
       <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
         className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
-        style={{ background: "#111116", border: "1px solid #1e1e2a", color: "#e4e4e7" }}
-        onFocus={(e) => { e.currentTarget.style.borderColor = "#7c3aed"; }}
-        onBlur={(e) => { e.currentTarget.style.borderColor = "#1e1e2a"; }} />
+        style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)", color: "var(--a-text-body)" }}
+        onFocus={(e) => { e.currentTarget.style.borderColor = "var(--a-accent-btn)"; }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = "var(--a-border)"; }} />
     </div>
   );
 }
@@ -189,12 +189,12 @@ function Field({ label, value, onChange, type = "text", placeholder }: { label: 
 function TextArea({ label, value, onChange, rows = 4 }: { label: string; value: string; onChange: (v: string) => void; rows?: number }) {
   return (
     <div>
-      <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>{label}</label>
+      <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--a-text-3)" }}>{label}</label>
       <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={rows}
         className="w-full px-3 py-2.5 rounded-lg text-sm outline-none resize-y transition-colors"
-        style={{ background: "#111116", border: "1px solid #1e1e2a", color: "#e4e4e7" }}
-        onFocus={(e) => { e.currentTarget.style.borderColor = "#7c3aed"; }}
-        onBlur={(e) => { e.currentTarget.style.borderColor = "#1e1e2a"; }} />
+        style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)", color: "var(--a-text-body)" }}
+        onFocus={(e) => { e.currentTarget.style.borderColor = "var(--a-accent-btn)"; }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = "var(--a-border)"; }} />
     </div>
   );
 }
@@ -202,12 +202,12 @@ function TextArea({ label, value, onChange, rows = 4 }: { label: string; value: 
 function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { v: string; l: string }[] }) {
   return (
     <div>
-      <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>{label}</label>
+      <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--a-text-3)" }}>{label}</label>
       <select value={value} onChange={(e) => onChange(e.target.value)}
         className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors cursor-pointer"
-        style={{ background: "#111116", border: "1px solid #1e1e2a", color: "#e4e4e7" }}
-        onFocus={(e) => { e.currentTarget.style.borderColor = "#7c3aed"; }}
-        onBlur={(e) => { e.currentTarget.style.borderColor = "#1e1e2a"; }}>
+        style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)", color: "var(--a-text-body)" }}
+        onFocus={(e) => { e.currentTarget.style.borderColor = "var(--a-accent-btn)"; }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = "var(--a-border)"; }}>
         {options.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
       </select>
     </div>

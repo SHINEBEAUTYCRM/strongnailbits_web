@@ -14,7 +14,7 @@ export function BackgroundPicker({ selected, onSelect, onApply }: BackgroundPick
       <p
         className="text-[10px] font-semibold uppercase mb-2"
         style={{
-          color: '#6b7280',
+          color: 'var(--a-text-3)',
           letterSpacing: '1.5px',
           fontFamily: 'JetBrains Mono, monospace',
         }}
@@ -40,8 +40,8 @@ export function BackgroundPicker({ selected, onSelect, onApply }: BackgroundPick
               style={{
                 background: isActive
                   ? 'rgba(168, 85, 247, 0.1)'
-                  : 'rgba(255, 255, 255, 0.02)',
-                border: `1px solid ${isActive ? 'rgba(168, 85, 247, 0.3)' : 'rgba(255, 255, 255, 0.04)'}`,
+                  : 'var(--a-bg-hover)',
+                border: `1px solid ${isActive ? 'rgba(168, 85, 247, 0.3)' : 'var(--a-border)'}`,
               }}
             >
               <span
@@ -50,15 +50,15 @@ export function BackgroundPicker({ selected, onSelect, onApply }: BackgroundPick
                   background: preset.color || '#333',
                   border: isActive
                     ? '2px solid rgba(168, 85, 247, 0.6)'
-                    : '2px solid rgba(255,255,255,0.1)',
+                    : '2px solid var(--a-border)',
                   boxShadow: isActive
-                    ? `0 0 8px ${preset.color || '#a855f7'}44`
+                    ? `0 0 8px ${preset.color || 'var(--a-accent)'}44`
                     : 'none',
                 }}
               />
               <span
                 className="text-[11px] truncate"
-                style={{ color: isActive ? '#e5e7eb' : '#9ca3af' }}
+                style={{ color: isActive ? 'var(--a-text-body)' : 'var(--a-text-2)' }}
               >
                 {preset.name}
               </span>

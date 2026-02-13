@@ -116,7 +116,7 @@ export default function AnalyticsPage() {
   if (loading && !data) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <RefreshCw className="h-6 w-6 animate-spin text-zinc-500" />
+        <RefreshCw className="h-6 w-6 animate-spin" style={{ color: "var(--a-text-3)" }} />
       </div>
     );
   }
@@ -139,8 +139,8 @@ export default function AnalyticsPage() {
             <BarChart3 className="h-5 w-5 text-purple-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Аналітика</h1>
-            <p className="text-sm text-zinc-400">Дані в реальному часі</p>
+            <h1 className="text-2xl font-bold" style={{ color: "var(--a-text)" }}>Аналітика</h1>
+            <p className="text-sm" style={{ color: "var(--a-text-2)" }}>Дані в реальному часі</p>
           </div>
         </div>
 
@@ -151,15 +151,17 @@ export default function AnalyticsPage() {
             className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
               autoRefresh
                 ? "bg-emerald-500/10 text-emerald-400"
-                : "bg-zinc-800 text-zinc-500"
+                : ""
             }`}
+            style={!autoRefresh ? { background: "var(--a-bg-hover)", color: "var(--a-text-3)" } : undefined}
           >
             <Activity className={`h-3 w-3 ${autoRefresh ? "animate-pulse" : ""}`} />
             {autoRefresh ? "Live" : "Paused"}
           </button>
           <button
             onClick={fetchData}
-            className="flex items-center gap-1.5 rounded-lg bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-700"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+            style={{ background: "var(--a-bg-hover)", color: "var(--a-text-2)" }}
           >
             <RefreshCw className="h-3 w-3" />
             Оновити
@@ -170,15 +172,15 @@ export default function AnalyticsPage() {
       {/* ── KPI Cards ── */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {/* Active Now */}
-        <div className="rounded-xl border border-[#1e1e2a] bg-[#111116] p-4">
+        <div className="rounded-xl p-4" style={{ border: "1px solid var(--a-border)", background: "var(--a-bg-card)" }}>
           <div className="mb-3 flex items-center justify-between">
-            <span className="text-xs text-zinc-500">Зараз на сайті</span>
+            <span className="text-xs" style={{ color: "var(--a-text-3)" }}>Зараз на сайті</span>
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10">
               <Users className="h-3.5 w-3.5 text-emerald-400" />
             </div>
           </div>
           <div className="flex items-end gap-2">
-            <span className="text-3xl font-bold text-white">
+            <span className="text-3xl font-bold" style={{ color: "var(--a-text)" }}>
               {d.realtime.activeUsers}
             </span>
             <span className="mb-1 flex items-center gap-0.5 text-xs text-emerald-400">
@@ -189,15 +191,15 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Page Views Today */}
-        <div className="rounded-xl border border-[#1e1e2a] bg-[#111116] p-4">
+        <div className="rounded-xl p-4" style={{ border: "1px solid var(--a-border)", background: "var(--a-bg-card)" }}>
           <div className="mb-3 flex items-center justify-between">
-            <span className="text-xs text-zinc-500">Перегляди сьогодні</span>
+            <span className="text-xs" style={{ color: "var(--a-text-3)" }}>Перегляди сьогодні</span>
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/10">
               <Eye className="h-3.5 w-3.5 text-blue-400" />
             </div>
           </div>
           <div className="flex items-end gap-2">
-            <span className="text-3xl font-bold text-white">
+            <span className="text-3xl font-bold" style={{ color: "var(--a-text)" }}>
               {d.today.pageViews.toLocaleString()}
             </span>
             {d.today.pageViewsChange !== 0 && (
@@ -219,25 +221,25 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Orders Today */}
-        <div className="rounded-xl border border-[#1e1e2a] bg-[#111116] p-4">
+        <div className="rounded-xl p-4" style={{ border: "1px solid var(--a-border)", background: "var(--a-bg-card)" }}>
           <div className="mb-3 flex items-center justify-between">
-            <span className="text-xs text-zinc-500">Замовлення сьогодні</span>
+            <span className="text-xs" style={{ color: "var(--a-text-3)" }}>Замовлення сьогодні</span>
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/10">
               <ShoppingCart className="h-3.5 w-3.5 text-amber-400" />
             </div>
           </div>
-          <span className="text-3xl font-bold text-white">{d.today.orders}</span>
+          <span className="text-3xl font-bold" style={{ color: "var(--a-text)" }}>{d.today.orders}</span>
         </div>
 
         {/* Revenue Today */}
-        <div className="rounded-xl border border-[#1e1e2a] bg-[#111116] p-4">
+        <div className="rounded-xl p-4" style={{ border: "1px solid var(--a-border)", background: "var(--a-bg-card)" }}>
           <div className="mb-3 flex items-center justify-between">
-            <span className="text-xs text-zinc-500">Дохід сьогодні</span>
+            <span className="text-xs" style={{ color: "var(--a-text-3)" }}>Дохід сьогодні</span>
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10">
               <DollarSign className="h-3.5 w-3.5 text-emerald-400" />
             </div>
           </div>
-          <span className="text-3xl font-bold text-white">
+          <span className="text-3xl font-bold" style={{ color: "var(--a-text)" }}>
             {d.today.revenue.toLocaleString("uk-UA")} ₴
           </span>
         </div>
@@ -246,14 +248,14 @@ export default function AnalyticsPage() {
       {/* ── Middle row: Live Feed + Top Pages ── */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Live Feed */}
-        <div className="rounded-xl border border-[#1e1e2a] bg-[#111116] p-4">
-          <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-white">
+        <div className="rounded-xl p-4" style={{ border: "1px solid var(--a-border)", background: "var(--a-bg-card)" }}>
+          <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold" style={{ color: "var(--a-text)" }}>
             <Activity className="h-4 w-4 animate-pulse text-emerald-400" />
             Живий потік подій
           </h3>
           <div className="max-h-[340px] space-y-1 overflow-y-auto">
             {d.recentEvents.length === 0 ? (
-              <p className="py-8 text-center text-xs text-zinc-600">
+              <p className="py-8 text-center text-xs" style={{ color: "var(--a-text-4)" }}>
                 Поки немає подій. Відвідайте сайт щоб побачити дані.
               </p>
             ) : (
@@ -270,13 +272,15 @@ export default function AnalyticsPage() {
                 return (
                   <div
                     key={i}
-                    className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-white/[0.02]"
+                    className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors"
+                    onMouseEnter={(ev) => { ev.currentTarget.style.background = "var(--a-bg-hover)"; }}
+                    onMouseLeave={(ev) => { ev.currentTarget.style.background = "transparent"; }}
                   >
                     <Icon className={`h-3.5 w-3.5 shrink-0 ${meta.color}`} />
                     <span className={`w-16 shrink-0 text-[10px] font-medium ${meta.color}`}>
                       {meta.label}
                     </span>
-                    <span className="min-w-0 flex-1 truncate text-xs text-zinc-400">
+                    <span className="min-w-0 flex-1 truncate text-xs" style={{ color: "var(--a-text-2)" }}>
                       {event.product_name ||
                         event.search_query ||
                         event.order_id ||
@@ -288,7 +292,7 @@ export default function AnalyticsPage() {
                         {Number(event.revenue).toLocaleString()} ₴
                       </span>
                     )}
-                    <span className="w-12 shrink-0 text-right text-[10px] text-zinc-600">
+                    <span className="w-12 shrink-0 text-right text-[10px]" style={{ color: "var(--a-text-4)" }}>
                       {ago}
                     </span>
                   </div>
@@ -299,35 +303,35 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Top Pages */}
-        <div className="rounded-xl border border-[#1e1e2a] bg-[#111116] p-4">
-          <h3 className="mb-3 text-sm font-semibold text-white">
+        <div className="rounded-xl p-4" style={{ border: "1px solid var(--a-border)", background: "var(--a-bg-card)" }}>
+          <h3 className="mb-3 text-sm font-semibold" style={{ color: "var(--a-text)" }}>
             Топ сторінки сьогодні
           </h3>
           <div className="space-y-1.5">
             {d.topPages.length === 0 ? (
-              <p className="py-8 text-center text-xs text-zinc-600">
+              <p className="py-8 text-center text-xs" style={{ color: "var(--a-text-4)" }}>
                 Немає даних
               </p>
             ) : (
               d.topPages.map((page, i) => (
                 <div key={page.path} className="flex items-center gap-2">
-                  <span className="w-5 text-right text-[10px] font-bold text-zinc-600">
+                  <span className="w-5 text-right text-[10px] font-bold" style={{ color: "var(--a-text-4)" }}>
                     {i + 1}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="relative h-6 overflow-hidden rounded bg-zinc-800/50">
+                    <div className="relative h-6 overflow-hidden rounded" style={{ background: "var(--a-bg-hover)" }}>
                       <div
                         className="absolute inset-y-0 left-0 rounded bg-purple-500/15"
                         style={{
                           width: `${(page.count / (d.topPages[0]?.count || 1)) * 100}%`,
                         }}
                       />
-                      <span className="relative flex h-full items-center px-2 text-xs text-zinc-300">
+                      <span className="relative flex h-full items-center px-2 text-xs" style={{ color: "var(--a-text-name)" }}>
                         {friendlyPath(page.path)}
                       </span>
                     </div>
                   </div>
-                  <span className="w-10 text-right text-xs font-medium text-zinc-500">
+                  <span className="w-10 text-right text-xs font-medium" style={{ color: "var(--a-text-3)" }}>
                     {page.count}
                   </span>
                 </div>
@@ -340,10 +344,10 @@ export default function AnalyticsPage() {
       {/* ── Bottom row: Devices + Searches ── */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Devices */}
-        <div className="rounded-xl border border-[#1e1e2a] bg-[#111116] p-4">
-          <h3 className="mb-3 text-sm font-semibold text-white">Пристрої</h3>
+        <div className="rounded-xl p-4" style={{ border: "1px solid var(--a-border)", background: "var(--a-bg-card)" }}>
+          <h3 className="mb-3 text-sm font-semibold" style={{ color: "var(--a-text)" }}>Пристрої</h3>
           {totalDevices === 0 ? (
-            <p className="py-4 text-center text-xs text-zinc-600">Немає даних</p>
+            <p className="py-4 text-center text-xs" style={{ color: "var(--a-text-4)" }}>Немає даних</p>
           ) : (
             <div className="space-y-3">
               <DeviceRow
@@ -372,22 +376,23 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Top Searches */}
-        <div className="rounded-xl border border-[#1e1e2a] bg-[#111116] p-4">
-          <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-white">
+        <div className="rounded-xl p-4" style={{ border: "1px solid var(--a-border)", background: "var(--a-bg-card)" }}>
+          <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold" style={{ color: "var(--a-text)" }}>
             <Search className="h-4 w-4 text-cyan-400" />
             Популярні пошукові запити
           </h3>
           {d.topSearches.length === 0 ? (
-            <p className="py-4 text-center text-xs text-zinc-600">Немає пошукових запитів</p>
+            <p className="py-4 text-center text-xs" style={{ color: "var(--a-text-4)" }}>Немає пошукових запитів</p>
           ) : (
             <div className="flex flex-wrap gap-1.5">
               {d.topSearches.map((s) => (
                 <span
                   key={s.query}
-                  className="rounded-full border border-[#1e1e2a] bg-zinc-800/50 px-2.5 py-1 text-xs text-zinc-400"
+                  className="rounded-full px-2.5 py-1 text-xs"
+                  style={{ border: "1px solid var(--a-border)", background: "var(--a-bg-hover)", color: "var(--a-text-2)" }}
                 >
                   {s.query}
-                  <span className="ml-1 text-[10px] text-zinc-600">{s.count}</span>
+                  <span className="ml-1 text-[10px]" style={{ color: "var(--a-text-4)" }}>{s.count}</span>
                 </span>
               ))}
             </div>
@@ -416,17 +421,17 @@ function DeviceRow({
   const pct = total > 0 ? Math.round((count / total) * 100) : 0;
   return (
     <div className="flex items-center gap-3">
-      <Icon className="h-4 w-4 shrink-0 text-zinc-500" />
-      <span className="w-16 text-xs text-zinc-400">{label}</span>
+      <Icon className="h-4 w-4 shrink-0" style={{ color: "var(--a-text-3)" }} />
+      <span className="w-16 text-xs" style={{ color: "var(--a-text-2)" }}>{label}</span>
       <div className="flex-1">
-        <div className="h-2 overflow-hidden rounded-full bg-zinc-800">
+        <div className="h-2 overflow-hidden rounded-full" style={{ background: "var(--a-border)" }}>
           <div
             className={`h-full rounded-full ${color} transition-all`}
             style={{ width: `${pct}%` }}
           />
         </div>
       </div>
-      <span className="w-12 text-right text-xs text-zinc-500">
+      <span className="w-12 text-right text-xs" style={{ color: "var(--a-text-3)" }}>
         {pct}% ({count})
       </span>
     </div>

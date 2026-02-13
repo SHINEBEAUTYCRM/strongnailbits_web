@@ -94,7 +94,7 @@ export default function MarketingDashboard() {
 
   if (loading && !data) return (
     <div className="flex min-h-[60vh] items-center justify-center">
-      <RefreshCw className="h-6 w-6 animate-spin text-zinc-500" />
+      <RefreshCw className="h-6 w-6 animate-spin" style={{ color: "var(--a-text-3)" }} />
     </div>
   );
 
@@ -115,19 +115,19 @@ export default function MarketingDashboard() {
             <Megaphone className="h-5 w-5 text-purple-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Marketing Dashboard</h1>
-            <p className="text-sm text-zinc-400">Всі дані в реальному часі</p>
+            <h1 className="text-2xl font-bold" style={{ color: "var(--a-text)" }}>Marketing Dashboard</h1>
+            <p className="text-sm" style={{ color: "var(--a-text-2)" }}>Всі дані в реальному часі</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setLive(!live)} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium ${live ? "bg-emerald-500/10 text-emerald-400" : "bg-zinc-800 text-zinc-500"}`}>
+          <button onClick={() => setLive(!live)} className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium ${live ? "bg-emerald-500/10 text-emerald-400" : "text-[var(--a-text-3)]"}`} style={!live ? { background: "var(--a-bg-hover)" } : undefined}>
             <Activity className={`h-3 w-3 ${live ? "animate-pulse" : ""}`} />
             {live ? "Live" : "Paused"}
           </button>
-          <button onClick={fetch_} className="flex items-center gap-1.5 rounded-lg bg-zinc-800 px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-700">
+          <button onClick={fetch_} className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs" style={{ background: "var(--a-bg-hover)", color: "var(--a-text-2)" }}>
             <RefreshCw className="h-3 w-3" /> Оновити
           </button>
-          <Link href="/admin/analytics" className="flex items-center gap-1.5 rounded-lg bg-zinc-800 px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-700">
+          <Link href="/admin/analytics" className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs" style={{ background: "var(--a-bg-hover)", color: "var(--a-text-2)" }}>
             <BarChart3 className="h-3 w-3" /> Деталі
           </Link>
         </div>
@@ -148,11 +148,11 @@ export default function MarketingDashboard() {
         <div className="flex items-end gap-1">
           {d.funnel.map((f, i) => (
             <div key={f.step} className="flex flex-1 flex-col items-center gap-1.5">
-              <span className="text-lg font-bold text-white">{f.count}</span>
+              <span className="text-lg font-bold" style={{ color: "var(--a-text)" }}>{f.count}</span>
               <div className="relative w-full overflow-hidden rounded-t-md" style={{ height: `${Math.max((f.count / maxFunnel) * 120, 8)}px`, background: f.color, opacity: 0.8 }} />
-              <span className="text-[10px] text-zinc-500">{f.step}</span>
+              <span className="text-[10px]" style={{ color: "var(--a-text-3)" }}>{f.step}</span>
               {i < d.funnel.length - 1 && f.count > 0 && d.funnel[i + 1].count > 0 && (
-                <span className="absolute -right-3 top-1/2 text-[9px] text-zinc-600">
+                <span className="absolute -right-3 top-1/2 text-[9px]" style={{ color: "var(--a-text-4)" }}>
                   {Math.round((d.funnel[i + 1].count / f.count) * 100)}%
                 </span>
               )}
@@ -160,7 +160,7 @@ export default function MarketingDashboard() {
           ))}
         </div>
         {d.funnel[0].count > 0 && d.funnel[d.funnel.length - 1].count > 0 && (
-          <div className="mt-2 flex items-center gap-1 text-xs text-zinc-500">
+          <div className="mt-2 flex items-center gap-1 text-xs" style={{ color: "var(--a-text-3)" }}>
             <ArrowRight className="h-3 w-3" />
             Загальна конверсія: <span className="font-medium text-emerald-400">{((d.funnel[d.funnel.length - 1].count / d.funnel[0].count) * 100).toFixed(1)}%</span>
           </div>
@@ -178,13 +178,13 @@ export default function MarketingDashboard() {
                   className="w-full rounded-t bg-indigo-500/60 transition-colors hover:bg-indigo-400/80"
                   style={{ height: `${Math.max((h.views / maxHourly) * 100, 2)}%` }}
                 />
-                <div className="pointer-events-none absolute -top-5 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-zinc-800 px-1.5 py-0.5 text-[9px] text-white group-hover:block">
+                <div className="pointer-events-none absolute -top-5 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded px-1.5 py-0.5 text-[9px] group-hover:block" style={{ background: "var(--a-bg-hover)", color: "var(--a-text)" }}>
                   {h.hour} — {h.views}
                 </div>
               </div>
             ))}
           </div>
-          <div className="mt-1 flex justify-between text-[9px] text-zinc-600">
+          <div className="mt-1 flex justify-between text-[9px]" style={{ color: "var(--a-text-4)" }}>
             <span>0:00</span><span>{now_hour()}:00</span>
           </div>
         </Card>
@@ -198,13 +198,13 @@ export default function MarketingDashboard() {
                   className="w-full rounded-t bg-purple-500/60 transition-colors hover:bg-purple-400/80"
                   style={{ height: `${Math.max((w.views / maxWeekly) * 100, 2)}%` }}
                 />
-                <div className="pointer-events-none absolute -top-5 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-zinc-800 px-1.5 py-0.5 text-[9px] text-white group-hover:block">
+                <div className="pointer-events-none absolute -top-5 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded px-1.5 py-0.5 text-[9px] group-hover:block" style={{ background: "var(--a-bg-hover)", color: "var(--a-text)" }}>
                   {w.label}: {w.views} / {w.orders} зам.
                 </div>
               </div>
             ))}
           </div>
-          <div className="mt-1 flex justify-between text-[9px] text-zinc-600">
+          <div className="mt-1 flex justify-between text-[9px]" style={{ color: "var(--a-text-4)" }}>
             {d.weeklyTrend.map((w) => <span key={w.date}>{w.label}</span>)}
           </div>
         </Card>
@@ -218,9 +218,9 @@ export default function MarketingDashboard() {
             <div className="space-y-1.5">
               {d.topProducts.map((p, i) => (
                 <div key={i} className="flex items-center gap-2 text-xs">
-                  <span className="w-4 text-right text-zinc-600 font-bold">{i + 1}</span>
-                  <span className="min-w-0 flex-1 truncate text-zinc-300">{p.name}</span>
-                  <span className="flex items-center gap-1 text-zinc-500">
+                  <span className="w-4 text-right font-bold" style={{ color: "var(--a-text-4)" }}>{i + 1}</span>
+                  <span className="min-w-0 flex-1 truncate" style={{ color: "var(--a-text-name)" }}>{p.name}</span>
+                  <span className="flex items-center gap-1" style={{ color: "var(--a-text-3)" }}>
                     <Eye className="h-3 w-3" />{p.views}
                   </span>
                   <span className="flex items-center gap-1 text-amber-400/80">
@@ -240,14 +240,16 @@ export default function MarketingDashboard() {
                 const m = EVENT_META[e.event_type] || { label: e.event_type, icon: Globe, color: "text-zinc-400" };
                 const Icon = m.icon;
                 return (
-                  <div key={i} className="flex items-center gap-2 rounded px-1.5 py-1 hover:bg-white/[0.02]">
+                  <div key={i} className="flex items-center gap-2 rounded px-1.5 py-1" style={{ cursor: "default" }}
+                    onMouseEnter={(ev) => { ev.currentTarget.style.background = "var(--a-bg-hover)"; }}
+                    onMouseLeave={(ev) => { ev.currentTarget.style.background = "transparent"; }}>
                     <Icon className={`h-3 w-3 shrink-0 ${m.color}`} />
                     <span className={`w-14 shrink-0 text-[10px] font-medium ${m.color}`}>{m.label}</span>
-                    <span className="min-w-0 flex-1 truncate text-[11px] text-zinc-400">
+                    <span className="min-w-0 flex-1 truncate text-[11px]" style={{ color: "var(--a-text-2)" }}>
                       {e.product_name || e.search_query || e.order_id || friendlyPath(e.page_path) || "—"}
                     </span>
                     {e.revenue && <span className="text-[10px] font-bold text-emerald-400">{Number(e.revenue).toLocaleString()} ₴</span>}
-                    <span className="w-10 text-right text-[9px] text-zinc-600">{timeAgo(e.created_at)}</span>
+                    <span className="w-10 text-right text-[9px]" style={{ color: "var(--a-text-4)" }}>{timeAgo(e.created_at)}</span>
                   </div>
                 );
               })
@@ -264,14 +266,14 @@ export default function MarketingDashboard() {
             <div className="space-y-1">
               {d.topPages.map((p, i) => (
                 <div key={p.path} className="flex items-center gap-2 text-xs">
-                  <span className="w-4 text-right text-zinc-600 font-bold">{i + 1}</span>
+                  <span className="w-4 text-right font-bold" style={{ color: "var(--a-text-4)" }}>{i + 1}</span>
                   <div className="min-w-0 flex-1">
-                    <div className="relative h-5 overflow-hidden rounded bg-zinc-800/50">
+                    <div className="relative h-5 overflow-hidden rounded" style={{ background: "var(--a-bg-hover)" }}>
                       <div className="absolute inset-y-0 left-0 rounded bg-indigo-500/15" style={{ width: `${(p.count / (d.topPages[0]?.count || 1)) * 100}%` }} />
-                      <span className="relative flex h-full items-center px-1.5 text-[11px] text-zinc-400">{friendlyPath(p.path)}</span>
+                      <span className="relative flex h-full items-center px-1.5 text-[11px]" style={{ color: "var(--a-text-2)" }}>{friendlyPath(p.path)}</span>
                     </div>
                   </div>
-                  <span className="w-8 text-right text-zinc-500">{p.count}</span>
+                  <span className="w-8 text-right" style={{ color: "var(--a-text-3)" }}>{p.count}</span>
                 </div>
               ))}
             </div>
@@ -283,8 +285,8 @@ export default function MarketingDashboard() {
           {d.topSearches.length === 0 ? <Empty text="Немає пошуків" /> : (
             <div className="flex flex-wrap gap-1.5">
               {d.topSearches.map((s) => (
-                <span key={s.query} className="rounded-full border border-zinc-800 bg-zinc-800/40 px-2.5 py-1 text-xs text-zinc-400">
-                  {s.query} <span className="text-[10px] text-zinc-600">{s.count}</span>
+                <span key={s.query} className="rounded-full px-2.5 py-1 text-xs" style={{ border: "1px solid var(--a-border)", background: "var(--a-bg-hover)", color: "var(--a-text-2)" }}>
+                  {s.query} <span className="text-[10px]" style={{ color: "var(--a-text-4)" }}>{s.count}</span>
                 </span>
               ))}
             </div>
@@ -296,14 +298,14 @@ export default function MarketingDashboard() {
           {/* Sources */}
           {d.trafficSources.length > 0 && (
             <div className="mb-3">
-              <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-zinc-600">Джерела</p>
+              <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider" style={{ color: "var(--a-text-4)" }}>Джерела</p>
               <div className="space-y-1">
                 {d.trafficSources.slice(0, 5).map((s) => (
                   <div key={s.source} className="flex items-center justify-between text-xs">
-                    <span className="flex items-center gap-1.5 text-zinc-400">
-                      <ExternalLink className="h-3 w-3 text-zinc-600" />{s.source}
+                    <span className="flex items-center gap-1.5" style={{ color: "var(--a-text-2)" }}>
+                      <ExternalLink className="h-3 w-3" style={{ color: "var(--a-text-4)" }} />{s.source}
                     </span>
-                    <span className="text-zinc-500">{s.count}</span>
+                    <span style={{ color: "var(--a-text-3)" }}>{s.count}</span>
                   </div>
                 ))}
               </div>
@@ -312,7 +314,7 @@ export default function MarketingDashboard() {
 
           {/* Devices */}
           <div className="mb-3">
-            <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-zinc-600">Пристрої</p>
+            <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider" style={{ color: "var(--a-text-4)" }}>Пристрої</p>
             {totalDevices === 0 ? <Empty text="" /> : (
               <div className="space-y-1.5">
                 {[
@@ -323,12 +325,12 @@ export default function MarketingDashboard() {
                   const pct = totalDevices > 0 ? Math.round((count / totalDevices) * 100) : 0;
                   return (
                     <div key={label} className="flex items-center gap-2 text-xs">
-                      <I className="h-3 w-3 text-zinc-500" />
-                      <span className="w-14 text-zinc-400">{label}</span>
-                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-800">
+                      <I className="h-3 w-3" style={{ color: "var(--a-text-3)" }} />
+                      <span className="w-14" style={{ color: "var(--a-text-2)" }}>{label}</span>
+                      <div className="h-1.5 flex-1 overflow-hidden rounded-full" style={{ background: "var(--a-border)" }}>
                         <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
                       </div>
-                      <span className="w-12 text-right text-zinc-500">{pct}%</span>
+                      <span className="w-12 text-right" style={{ color: "var(--a-text-3)" }}>{pct}%</span>
                     </div>
                   );
                 })}
@@ -339,11 +341,11 @@ export default function MarketingDashboard() {
           {/* Countries */}
           {d.countries.length > 0 && (
             <div>
-              <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-zinc-600">Країни</p>
+              <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider" style={{ color: "var(--a-text-4)" }}>Країни</p>
               <div className="flex flex-wrap gap-1">
                 {d.countries.map((c) => (
-                  <span key={c.code} className="rounded bg-zinc-800/60 px-1.5 py-0.5 text-[10px] text-zinc-400">
-                    {c.code} <span className="text-zinc-600">{c.count}</span>
+                  <span key={c.code} className="rounded px-1.5 py-0.5 text-[10px]" style={{ background: "var(--a-bg-hover)", color: "var(--a-text-2)" }}>
+                    {c.code} <span style={{ color: "var(--a-text-4)" }}>{c.count}</span>
                   </span>
                 ))}
               </div>
@@ -359,8 +361,8 @@ export default function MarketingDashboard() {
 
 function Card({ title, icon: Icon, children, titleExtra }: { title: string; icon: any; children: React.ReactNode; titleExtra?: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-[#1e1e2a] bg-[#111116] p-4">
-      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-white">
+    <div className="rounded-xl p-4" style={{ border: "1px solid var(--a-border)", background: "var(--a-bg-card)" }}>
+      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold" style={{ color: "var(--a-text)" }}>
         <Icon className="h-4 w-4 text-purple-400" />
         {title}
         {titleExtra}
@@ -372,13 +374,13 @@ function Card({ title, icon: Icon, children, titleExtra }: { title: string; icon
 
 function KPICard({ icon: Icon, label, value, change, live: isLive }: { icon: any; label: string; value: number | string; change?: number; live?: boolean }) {
   return (
-    <div className="rounded-xl border border-[#1e1e2a] bg-[#111116] p-3">
+    <div className="rounded-xl p-3" style={{ border: "1px solid var(--a-border)", background: "var(--a-bg-card)" }}>
       <div className="mb-1.5 flex items-center justify-between">
-        <span className="text-[10px] uppercase tracking-wider text-zinc-500">{label}</span>
-        <Icon className="h-3.5 w-3.5 text-zinc-600" />
+        <span className="text-[10px] uppercase tracking-wider" style={{ color: "var(--a-text-3)" }}>{label}</span>
+        <Icon className="h-3.5 w-3.5" style={{ color: "var(--a-text-4)" }} />
       </div>
       <div className="flex items-end gap-1.5">
-        <span className="text-xl font-bold text-white">{value}</span>
+        <span className="text-xl font-bold" style={{ color: "var(--a-text)" }}>{value}</span>
         {isLive && <Activity className="mb-0.5 h-3 w-3 animate-pulse text-emerald-400" />}
         {change !== undefined && change !== 0 && (
           <span className={`mb-0.5 flex items-center gap-0.5 text-[10px] ${change > 0 ? "text-emerald-400" : "text-red-400"}`}>
@@ -392,7 +394,7 @@ function KPICard({ icon: Icon, label, value, change, live: isLive }: { icon: any
 }
 
 function Empty({ text = "Немає даних" }: { text?: string }) {
-  return <p className="py-4 text-center text-xs text-zinc-600">{text}</p>;
+  return <p className="py-4 text-center text-xs" style={{ color: "var(--a-text-4)" }}>{text}</p>;
 }
 
 function timeAgo(iso: string): string {

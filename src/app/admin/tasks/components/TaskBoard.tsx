@@ -82,14 +82,14 @@ export function TaskBoard({ tasks, onTaskClick, onMoveTask, onQuickCreate, mobil
             <div className="flex items-center justify-between mb-3 px-1">
               <div className="flex items-center gap-2">
                 <span style={{ color: col.color, fontSize: 14 }}>{col.icon}</span>
-                <span className="text-sm font-semibold" style={{ color: "#e4e4e7" }}>
+                <span className="text-sm font-semibold" style={{ color: "var(--a-text-body)" }}>
                   {col.label}
                 </span>
                 <span
                   className="text-xs px-1.5 py-0.5 rounded"
                   style={{
-                    background: "rgba(255,255,255,0.04)",
-                    color: "#71717a",
+                    background: "var(--a-bg-hover)",
+                    color: "var(--a-text-3)",
                     fontFamily: "var(--font-jetbrains-mono, 'JetBrains Mono'), monospace",
                   }}
                 >
@@ -102,8 +102,8 @@ export function TaskBoard({ tasks, onTaskClick, onMoveTask, onQuickCreate, mobil
             <div
               className="flex flex-col gap-2 rounded-xl p-2 transition-colors"
               style={{
-                background: isDragOver ? "rgba(168,85,247,0.06)" : "rgba(255,255,255,0.015)",
-                border: `1px solid ${isDragOver ? "rgba(168,85,247,0.2)" : "rgba(255,255,255,0.03)"}`,
+                background: isDragOver ? "rgba(168,85,247,0.06)" : "var(--a-bg-hover)",
+                border: `1px solid ${isDragOver ? "rgba(168,85,247,0.2)" : "var(--a-border)"}`,
                 minHeight: 120,
               }}
             >

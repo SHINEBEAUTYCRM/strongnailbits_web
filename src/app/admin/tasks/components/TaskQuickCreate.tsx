@@ -44,14 +44,14 @@ export function TaskQuickCreate({ columnId, onSubmit }: TaskQuickCreateProps) {
       <button
         onClick={handleOpen}
         className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors"
-        style={{ color: "#52525b" }}
+        style={{ color: "var(--a-text-4)" }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.background = "rgba(255,255,255,0.03)";
-          e.currentTarget.style.color = "#a1a1aa";
+          e.currentTarget.style.background = "var(--a-bg-hover)";
+          e.currentTarget.style.color = "var(--a-text-2)";
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.background = "transparent";
-          e.currentTarget.style.color = "#52525b";
+          e.currentTarget.style.color = "var(--a-text-4)";
         }}
       >
         <Plus className="w-3.5 h-3.5" />
@@ -64,7 +64,7 @@ export function TaskQuickCreate({ columnId, onSubmit }: TaskQuickCreateProps) {
     <div
       className="rounded-lg"
       style={{
-        background: "#0e0e14",
+        background: "var(--a-bg-card)",
         border: "1px solid rgba(168,85,247,0.3)",
         padding: 8,
       }}
@@ -77,7 +77,7 @@ export function TaskQuickCreate({ columnId, onSubmit }: TaskQuickCreateProps) {
         onBlur={handleSubmit}
         placeholder="Назва задачі..."
         className="w-full bg-transparent border-none outline-none text-sm"
-        style={{ color: "#e4e4e7" }}
+        style={{ color: "var(--a-text-body)" }}
       />
     </div>
   );

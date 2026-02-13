@@ -69,7 +69,7 @@ export default function TeamPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#a855f7" }} />
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--a-accent)" }} />
       </div>
     );
   }
@@ -78,11 +78,11 @@ export default function TeamPage() {
     <div className="p-4 md:p-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-5">
-        <h1 className="text-xl font-bold" style={{ color: "#f4f4f5" }}>
+        <h1 className="text-xl font-bold" style={{ color: "var(--a-text)" }}>
           Команда
           <span
             className="ml-2 text-sm font-normal"
-            style={{ color: "#52525b", fontFamily: "var(--font-jetbrains-mono, monospace)" }}
+            style={{ color: "var(--a-text-4)", fontFamily: "var(--font-jetbrains-mono, monospace)" }}
           >
             {members.filter((m) => m.is_active).length}
           </span>
@@ -106,7 +106,7 @@ export default function TeamPage() {
         <div className="relative" style={{ minWidth: 180 }}>
           <Search
             className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5"
-            style={{ color: "#52525b" }}
+            style={{ color: "var(--a-text-4)" }}
           />
           <input
             value={search}
@@ -114,14 +114,14 @@ export default function TeamPage() {
             placeholder="Пошук..."
             className="w-full pl-8 pr-3 py-1.5 rounded-lg text-xs outline-none"
             style={{
-              background: "#111116",
-              border: "1px solid rgba(255,255,255,0.06)",
-              color: "#e4e4e7",
+              background: "var(--a-bg-card)",
+              border: "1px solid var(--a-border)",
+              color: "var(--a-text-body)",
             }}
           />
         </div>
 
-        <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.06)" }} />
+        <div style={{ width: 1, height: 20, background: "var(--a-border)" }} />
 
         {/* Department filter */}
         <DeptButton label="Всі" active={deptFilter === null} onClick={() => setDeptFilter(null)} />
@@ -143,7 +143,7 @@ export default function TeamPage() {
       </div>
 
       {filtered.length === 0 && (
-        <p className="text-center py-12 text-sm" style={{ color: "#52525b" }}>
+        <p className="text-center py-12 text-sm" style={{ color: "var(--a-text-4)" }}>
           Нікого не знайдено
         </p>
       )}
@@ -175,15 +175,15 @@ function MemberCard({ member, onClick }: { member: TeamMemberCard; onClick: () =
       onClick={onClick}
       className="group cursor-pointer rounded-xl p-4 transition-all"
       style={{
-        background: "#0e0e14",
-        border: "1px solid rgba(255,255,255,0.06)",
+        background: "var(--a-bg-card)",
+        border: "1px solid var(--a-border)",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = `${color}40`;
         e.currentTarget.style.boxShadow = `0 0 0 1px ${color}15`;
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+        e.currentTarget.style.borderColor = "var(--a-border)";
         e.currentTarget.style.boxShadow = "none";
       }}
     >
@@ -209,12 +209,12 @@ function MemberCard({ member, onClick }: { member: TeamMemberCard; onClick: () =
 
         <div className="flex-1 min-w-0">
           {/* Name */}
-          <h3 className="text-sm font-semibold truncate" style={{ color: "#e4e4e7" }}>
+          <h3 className="text-sm font-semibold truncate" style={{ color: "var(--a-text-body)" }}>
             {member.name}
           </h3>
 
           {/* Position title or role label */}
-          <p className="text-xs mt-0.5 truncate" style={{ color: "#a1a1aa" }}>
+          <p className="text-xs mt-0.5 truncate" style={{ color: "var(--a-text-2)" }}>
             {member.position_title || roleConfig?.label || member.role}
           </p>
 
@@ -232,7 +232,7 @@ function MemberCard({ member, onClick }: { member: TeamMemberCard; onClick: () =
 
           {/* Department */}
           {member.department && (
-            <p className="text-[11px] mt-1" style={{ color: "#52525b" }}>
+            <p className="text-[11px] mt-1" style={{ color: "var(--a-text-4)" }}>
               {DEPARTMENTS[member.department as DepartmentKey]?.label || member.department}
             </p>
           )}
@@ -249,7 +249,7 @@ function MemberCard({ member, onClick }: { member: TeamMemberCard; onClick: () =
       {/* Meta row */}
       <div
         className="flex items-center justify-between mt-3 pt-3"
-        style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
+        style={{ borderTop: "1px solid var(--a-border)" }}
       >
         <div className="flex items-center gap-3">
           {/* Phone */}
@@ -257,7 +257,7 @@ function MemberCard({ member, onClick }: { member: TeamMemberCard; onClick: () =
             href={`tel:${member.phone}`}
             onClick={(e) => e.stopPropagation()}
             className="flex items-center gap-1 text-[11px] transition-colors"
-            style={{ color: "#71717a" }}
+            style={{ color: "var(--a-text-3)" }}
           >
             <Phone className="w-3 h-3" />
             <span className="font-mono" style={{ fontFamily: "var(--font-jetbrains-mono, monospace)" }}>
@@ -273,7 +273,7 @@ function MemberCard({ member, onClick }: { member: TeamMemberCard; onClick: () =
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
               className="flex items-center gap-1 text-[11px]"
-              style={{ color: "#71717a" }}
+              style={{ color: "var(--a-text-3)" }}
             >
               <AtSign className="w-3 h-3" />
               {member.telegram_username}
@@ -282,7 +282,7 @@ function MemberCard({ member, onClick }: { member: TeamMemberCard; onClick: () =
         </div>
 
         {/* Task stats */}
-        <span className="text-[10px]" style={{ color: "#52525b" }}>
+        <span className="text-[10px]" style={{ color: "var(--a-text-4)" }}>
           {member.tasks_count} задач
           {member.overdue_count > 0 && (
             <span style={{ color: "#ef4444" }}> / {member.overdue_count} простр.</span>
@@ -304,7 +304,7 @@ function DeptButton({ label, active, onClick }: { label: string; active: boolean
       className="px-2.5 py-1 rounded-md text-xs font-medium transition-all whitespace-nowrap"
       style={{
         background: active ? "rgba(168,85,247,0.12)" : "transparent",
-        color: active ? "#a855f7" : "#71717a",
+        color: active ? "var(--a-accent)" : "var(--a-text-3)",
         border: `1px solid ${active ? "rgba(168,85,247,0.2)" : "transparent"}`,
       }}
     >
@@ -341,16 +341,16 @@ function AddMemberModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: 
         className="w-full rounded-2xl p-5"
         style={{
           maxWidth: 420,
-          background: "#0c0c12",
-          border: "1px solid rgba(255,255,255,0.06)",
+          background: "var(--a-bg)",
+          border: "1px solid var(--a-border)",
           animation: "modalIn 0.2s ease-out",
         }}
       >
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-base font-semibold" style={{ color: "#e4e4e7" }}>
+          <h2 className="text-base font-semibold" style={{ color: "var(--a-text-body)" }}>
             Новий співробітник
           </h2>
-          <button type="button" onClick={onClose} style={{ color: "#52525b" }}>
+          <button type="button" onClick={onClose} style={{ color: "var(--a-text-4)" }}>
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -361,22 +361,22 @@ function AddMemberModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: 
 
           {/* Роль (системна — визначає права і відділ) */}
           <div>
-            <label className="text-xs font-medium mb-1 block" style={{ color: "#71717a" }}>Роль</label>
+            <label className="text-xs font-medium mb-1 block" style={{ color: "var(--a-text-3)" }}>Роль</label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value)}
               className="w-full px-3 py-2 rounded-lg text-sm outline-none cursor-pointer"
               style={{
-                background: "#111116",
-                border: "1px solid rgba(255,255,255,0.06)",
-                color: "#d4d4d8",
+                background: "var(--a-bg-card)",
+                border: "1px solid var(--a-border)",
+                color: "var(--a-text-name)",
               }}
             >
               {(Object.entries(ROLES) as [RoleKey, typeof ROLES[RoleKey]][]).map(([key, r]) => (
                 <option key={key} value={key}>{r.label}</option>
               ))}
             </select>
-            <p className="text-[10px] mt-1" style={{ color: "#52525b" }}>
+            <p className="text-[10px] mt-1" style={{ color: "var(--a-text-4)" }}>
               Системна роль — визначає права доступу та відділ
             </p>
           </div>
@@ -388,7 +388,7 @@ function AddMemberModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: 
             onChange={setPositionTitle}
             placeholder="Наприклад: Старший менеджер з продажу"
           />
-          <p className="-mt-2 text-[10px]" style={{ color: "#52525b" }}>
+          <p className="-mt-2 text-[10px]" style={{ color: "var(--a-text-4)" }}>
             Необов&apos;язково. Відображається на картці співробітника
           </p>
         </div>
@@ -411,7 +411,7 @@ function ModalInput({ label, value, onChange, placeholder, type = "text" }: {
 }) {
   return (
     <div>
-      <label className="text-xs font-medium mb-1 block" style={{ color: "#71717a" }}>{label}</label>
+      <label className="text-xs font-medium mb-1 block" style={{ color: "var(--a-text-3)" }}>{label}</label>
       <input
         type={type}
         value={value}
@@ -419,9 +419,9 @@ function ModalInput({ label, value, onChange, placeholder, type = "text" }: {
         placeholder={placeholder}
         className="w-full px-3 py-2 rounded-lg text-sm outline-none"
         style={{
-          background: "#111116",
-          border: "1px solid rgba(255,255,255,0.06)",
-          color: "#d4d4d8",
+          background: "var(--a-bg-card)",
+          border: "1px solid var(--a-border)",
+          color: "var(--a-text-name)",
         }}
       />
     </div>

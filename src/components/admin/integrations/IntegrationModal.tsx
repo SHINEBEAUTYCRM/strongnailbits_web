@@ -125,12 +125,12 @@ export function IntegrationModal({
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto rounded-2xl bg-[#0c0c12] border border-[#1e1e2a] shadow-2xl">
+      <div className="relative w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto rounded-2xl bg-[var(--a-bg)] border border-[var(--a-border)] shadow-2xl">
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between p-5 pb-4 bg-[#0c0c12] border-b border-[#1e1e2a]">
+        <div className="sticky top-0 z-10 flex items-center justify-between p-5 pb-4 bg-[var(--a-bg)] border-b border-[var(--a-border)]">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold text-white">{service.name}</h2>
+              <h2 className="text-lg font-semibold text-[var(--a-text)]">{service.name}</h2>
               <IntegrationStatus
                 isActive={status?.isActive ?? false}
                 isVerified={status?.isVerified ?? false}
@@ -140,20 +140,20 @@ export function IntegrationModal({
               />
             </div>
             <div className="flex items-center gap-3 mt-1">
-              <span className="text-xs text-zinc-500">{service.module}</span>
+              <span className="text-xs text-[var(--a-text-3)]">{service.module}</span>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-[#1a1a24] text-zinc-400 hover:text-white transition-colors"
+            className="p-2 rounded-lg hover:bg-[var(--a-bg-hover)] text-[var(--a-text-2)] hover:text-white transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Description */}
-        <div className="px-5 py-3 border-b border-[#1e1e2a]">
-          <p className="text-sm text-zinc-400">{service.description}</p>
+        <div className="px-5 py-3 border-b border-[var(--a-border)]">
+          <p className="text-sm text-[var(--a-text-2)]">{service.description}</p>
           {service.docsUrl && (
             <a
               href={service.docsUrl}
@@ -168,13 +168,13 @@ export function IntegrationModal({
 
         {/* Tabs */}
         {hasFields && (
-          <div className="flex border-b border-[#1e1e2a]">
+          <div className="flex border-b border-[var(--a-border)]">
             <button
               onClick={() => setActiveTab("config")}
               className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
                 activeTab === "config"
                   ? "text-purple-400 border-b-2 border-purple-500"
-                  : "text-zinc-500 hover:text-zinc-400"
+                  : "text-[var(--a-text-3)] hover:text-[var(--a-text-2)]"
               }`}
             >
               Налаштування
@@ -184,7 +184,7 @@ export function IntegrationModal({
               className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
                 activeTab === "logs"
                   ? "text-purple-400 border-b-2 border-purple-500"
-                  : "text-zinc-500 hover:text-zinc-400"
+                  : "text-[var(--a-text-3)] hover:text-[var(--a-text-2)]"
               }`}
             >
               Логи
@@ -201,7 +201,7 @@ export function IntegrationModal({
                   {/* Fields */}
                   {service.requiredFields.map(field => (
                     <div key={field.key}>
-                      <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+                      <label className="block text-xs font-medium text-[var(--a-text-body)] mb-1.5">
                         {field.label}
                         {field.required && <span className="text-red-400 ml-0.5">*</span>}
                       </label>
@@ -209,7 +209,7 @@ export function IntegrationModal({
                         <select
                           value={config[field.key] || ""}
                           onChange={e => handleFieldChange(field.key, e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg bg-[#111116] border border-[#1e1e2a] text-sm text-white focus:border-purple-500 focus:outline-none transition-colors"
+                          className="w-full px-3 py-2 rounded-lg bg-[var(--a-bg-card)] border border-[var(--a-border)] text-sm text-[var(--a-text)] focus:border-purple-500 focus:outline-none transition-colors"
                         >
                           <option value="">Оберіть...</option>
                           {field.options.map(opt => (
@@ -224,11 +224,11 @@ export function IntegrationModal({
                           value={config[field.key] || ""}
                           onChange={e => handleFieldChange(field.key, e.target.value)}
                           placeholder={field.placeholder || ""}
-                          className="w-full px-3 py-2 rounded-lg bg-[#111116] border border-[#1e1e2a] text-sm text-white placeholder:text-zinc-600 focus:border-purple-500 focus:outline-none transition-colors"
+                          className="w-full px-3 py-2 rounded-lg bg-[var(--a-bg-card)] border border-[var(--a-border)] text-sm text-[var(--a-text)] placeholder:text-[var(--a-text-4)] focus:border-purple-500 focus:outline-none transition-colors"
                         />
                       )}
                       {field.helpText && (
-                        <p className="text-[11px] text-zinc-600 mt-1">{field.helpText}</p>
+                        <p className="text-[11px] text-[var(--a-text-4)] mt-1">{field.helpText}</p>
                       )}
                     </div>
                   ))}
@@ -269,7 +269,7 @@ export function IntegrationModal({
                     <button
                       onClick={handleSave}
                       disabled={saving || verifying}
-                      className="px-4 py-2.5 rounded-lg bg-[#1a1a24] hover:bg-[#222230] disabled:opacity-50 text-zinc-300 text-sm font-medium border border-[#1e1e2a] transition-colors"
+                      className="px-4 py-2.5 rounded-lg bg-[var(--a-bg-hover)] hover:bg-[var(--a-bg-hover)] disabled:opacity-50 text-[var(--a-text-body)] text-sm font-medium border border-[var(--a-border)] transition-colors"
                     >
                       {saving ? "..." : "Зберегти"}
                     </button>
@@ -288,7 +288,7 @@ export function IntegrationModal({
                 </>
               ) : (
                 <div className="text-center py-6">
-                  <p className="text-sm text-zinc-400 mb-2">
+                  <p className="text-sm text-[var(--a-text-2)] mb-2">
                     Вбудована функція — не потребує API-ключів
                   </p>
                 </div>

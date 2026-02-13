@@ -53,10 +53,10 @@ export function NPTrackingBadge({ ttn }: Props) {
     <div className="relative">
       <button
         onClick={loadTracking}
-        className="group flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-mono transition-colors hover:bg-[#1a1a2e]"
-        style={{ color: "#71717a" }}
+        className="group flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-mono transition-colors hover:bg-[var(--a-bg-hover)]"
+        style={{ color: "var(--a-text-3)" }}
       >
-        <Package size={10} className="shrink-0" style={{ color: "#a855f7" }} />
+        <Package size={10} className="shrink-0" style={{ color: "var(--a-accent)" }} />
         ТТН: {ttn}
         {loading && <Loader2 size={10} className="animate-spin" />}
       </button>
@@ -64,20 +64,20 @@ export function NPTrackingBadge({ ttn }: Props) {
       {open && info && (
         <div
           className="absolute left-0 top-full z-50 mt-1 w-64 rounded-xl p-3 shadow-xl"
-          style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}
+          style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}
         >
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="text-xs font-medium" style={{ color: "#e4e4e7" }}>
+              <p className="text-xs font-medium" style={{ color: "var(--a-text-body)" }}>
                 {info.statusEmoji} {info.statusLabel}
               </p>
               {info.cityRecipient && (
-                <p className="mt-1 text-[11px]" style={{ color: "#71717a" }}>
+                <p className="mt-1 text-[11px]" style={{ color: "var(--a-text-3)" }}>
                   {info.cityRecipient}
                 </p>
               )}
               {info.scheduledDate && (
-                <p className="mt-0.5 text-[11px]" style={{ color: "#52525b" }}>
+                <p className="mt-0.5 text-[11px]" style={{ color: "var(--a-text-4)" }}>
                   Очікувана: {info.scheduledDate}
                 </p>
               )}
@@ -91,8 +91,8 @@ export function NPTrackingBadge({ ttn }: Props) {
               href={npUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="shrink-0 rounded-lg p-1.5 transition-colors hover:bg-[#1a1a2e]"
-              style={{ color: "#71717a" }}
+              className="shrink-0 rounded-lg p-1.5 transition-colors hover:bg-[var(--a-bg-hover)]"
+              style={{ color: "var(--a-text-3)" }}
               title="Відкрити на сайті НП"
             >
               <ExternalLink size={12} />

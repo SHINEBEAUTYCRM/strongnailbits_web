@@ -21,9 +21,9 @@ export function TemplateSelector({ selected, onChange }: TemplateSelectorProps) 
             style={{
               background: isActive
                 ? 'rgba(168, 85, 247, 0.15)'
-                : 'rgba(255, 255, 255, 0.03)',
-              border: `1px solid ${isActive ? 'rgba(168, 85, 247, 0.3)' : 'rgba(255, 255, 255, 0.06)'}`,
-              color: isActive ? '#c084fc' : '#9ca3af',
+                : 'var(--a-bg-hover)',
+              border: `1px solid ${isActive ? 'rgba(168, 85, 247, 0.3)' : 'var(--a-border)'}`,
+              color: isActive ? 'var(--a-accent)' : 'var(--a-text-2)',
             }}
             title={`${t.width}×${t.height} — ${t.description}`}
           >

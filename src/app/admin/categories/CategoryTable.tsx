@@ -171,22 +171,22 @@ export function CategoryTable({ categories }: { categories: Cat[] }) {
           {statuses.map((s) => (
             <button key={s.k} onClick={() => setStatusFilter(s.k)}
               className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-              style={statusFilter === s.k ? { background: "#1e1030", color: "#c084fc", border: "1px solid #581c87" } : { background: "#111116", color: "#71717a", border: "1px solid #1e1e2a" }}>
-              {s.l} <span style={{ color: "#3f3f46" }}>({s.count})</span>
+              style={statusFilter === s.k ? { background: "var(--a-accent-bg)", color: "var(--a-accent)", border: "1px solid var(--a-accent)" } : { background: "var(--a-bg-card)", color: "var(--a-text-3)", border: "1px solid var(--a-border)" }}>
+              {s.l} <span style={{ color: "var(--a-text-5)" }}>({s.count})</span>
             </button>
           ))}
-          <button onClick={expandAll} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors" style={{ background: "#111116", color: "#71717a", border: "1px solid #1e1e2a" }}>
+          <button onClick={expandAll} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors" style={{ background: "var(--a-bg-card)", color: "var(--a-text-3)", border: "1px solid var(--a-border)" }}>
             {expanded.size >= tree.filter((r) => r.children.length > 0).length ? "Згорнути все" : "Розгорнути все"}
           </button>
         </div>
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#52525b" }} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--a-text-4)" }} />
             <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Пошук категорій..."
-              className="pl-9 pr-8 py-2 rounded-xl text-sm outline-none w-56" style={{ background: "#111116", border: "1px solid #1e1e2a", color: "#e4e4e7" }} />
-            {search && <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2"><X className="w-3.5 h-3.5" style={{ color: "#52525b" }} /></button>}
+              className="pl-9 pr-8 py-2 rounded-xl text-sm outline-none w-56" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)", color: "var(--a-text)" }} />
+            {search && <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2"><X className="w-3.5 h-3.5" style={{ color: "var(--a-text-4)" }} /></button>}
           </div>
-          <Link href="/admin/categories/new" className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white shrink-0" style={{ background: "#7c3aed" }}>
+          <Link href="/admin/categories/new" className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white shrink-0" style={{ background: "var(--a-accent-btn)" }}>
             <Plus className="w-4 h-4" /> Додати
           </Link>
         </div>
@@ -194,9 +194,9 @@ export function CategoryTable({ categories }: { categories: Cat[] }) {
 
       {/* Bulk actions bar */}
       {selected.size > 0 && (
-        <div className="flex items-center gap-3 mb-4 px-4 py-2.5 rounded-xl" style={{ background: "#111116", border: "1px solid #1e1e2a" }}>
-          <span className="text-xs font-medium" style={{ color: "#a1a1aa" }}>Обрано: {selected.size}</span>
-          <div className="w-px h-4" style={{ background: "#1e1e2a" }} />
+        <div className="flex items-center gap-3 mb-4 px-4 py-2.5 rounded-xl" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+          <span className="text-xs font-medium" style={{ color: "var(--a-text-2)" }}>Обрано: {selected.size}</span>
+          <div className="w-px h-4" style={{ background: "var(--a-border)" }} />
           <button onClick={() => bulkAction("bulk-status", { status: "active" })} disabled={bulkLoading} className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs" style={{ color: "#4ade80", background: "#052e16" }}>
             <Eye className="w-3.5 h-3.5" /> Увімкнути
           </button>
@@ -206,8 +206,8 @@ export function CategoryTable({ categories }: { categories: Cat[] }) {
           <button onClick={() => { if (confirm(`Видалити ${selected.size} категорій?`)) bulkAction("bulk-delete"); }} disabled={bulkLoading} className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs" style={{ color: "#f87171", background: "#1c1017" }}>
             <Trash2 className="w-3.5 h-3.5" /> Видалити
           </button>
-          <button onClick={() => setSelected(new Set())} className="ml-auto text-xs" style={{ color: "#52525b" }}>Скасувати</button>
-          {bulkLoading && <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#7c3aed" }} />}
+          <button onClick={() => setSelected(new Set())} className="ml-auto text-xs" style={{ color: "var(--a-text-4)" }}>Скасувати</button>
+          {bulkLoading && <Loader2 className="w-4 h-4 animate-spin" style={{ color: "var(--a-accent-btn)" }} />}
         </div>
       )}
 
@@ -222,54 +222,54 @@ export function CategoryTable({ categories }: { categories: Cat[] }) {
           const desc = root.description_uk ? strip(root.description_uk) : null;
 
           return (
-            <div key={root.id} className="rounded-2xl overflow-hidden" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
+            <div key={root.id} className="rounded-2xl overflow-hidden" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
               {/* Root category row */}
-              <div className="flex items-center gap-3 px-4 py-3 group" style={{ borderBottom: isOpen ? "1px solid #1e1e2a" : "none" }}>
+              <div className="flex items-center gap-3 px-4 py-3 group" style={{ borderBottom: isOpen ? "1px solid var(--a-border)" : "none" }}>
                 {/* Checkbox */}
                 <button onClick={() => toggleSelect(root.id)} className="shrink-0">
-                  {selected.has(root.id) ? <CheckSquare className="w-4 h-4" style={{ color: "#7c3aed" }} /> : <Square className="w-4 h-4" style={{ color: "#3f3f46" }} />}
+                  {selected.has(root.id) ? <CheckSquare className="w-4 h-4" style={{ color: "var(--a-accent-btn)" }} /> : <Square className="w-4 h-4" style={{ color: "var(--a-text-5)" }} />}
                 </button>
 
                 {/* Expand toggle */}
                 {hasChildren ? (
-                  <button onClick={() => toggleExpand(root.id)} className="shrink-0 p-1 rounded-lg transition-colors" style={{ color: "#52525b" }}>
+                  <button onClick={() => toggleExpand(root.id)} className="shrink-0 p-1 rounded-lg transition-colors" style={{ color: "var(--a-text-4)" }}>
                     {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                   </button>
                 ) : <span className="w-6 shrink-0" />}
 
                 {/* Image */}
                 {root.image_url ? (
-                  <img src={root.image_url} alt="" className="w-10 h-10 rounded-xl object-cover shrink-0" style={{ background: "#141420" }} />
+                  <img src={root.image_url} alt="" className="w-10 h-10 rounded-xl object-cover shrink-0" style={{ background: "var(--a-bg-input)" }} />
                 ) : (
-                  <div className="w-10 h-10 rounded-xl shrink-0 flex items-center justify-center" style={{ background: "#141420" }}>
-                    <FolderTree className="w-4 h-4" style={{ color: "#3f3f46" }} />
+                  <div className="w-10 h-10 rounded-xl shrink-0 flex items-center justify-center" style={{ background: "var(--a-bg-input)" }}>
+                    <FolderTree className="w-4 h-4" style={{ color: "var(--a-text-5)" }} />
                   </div>
                 )}
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <Link href={`/admin/categories/${root.id}`} className="text-sm font-medium hover:underline truncate" style={{ color: rootStatus === "active" ? "#f4f4f5" : "#52525b" }}>
+                    <Link href={`/admin/categories/${root.id}`} className="text-sm font-medium hover:underline truncate" style={{ color: rootStatus === "active" ? "var(--a-text)" : "var(--a-text-4)" }}>
                       {root.name_uk}
                     </Link>
                     {hasChildren && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full shrink-0" style={{ background: "#141420", color: "#52525b" }}>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full shrink-0" style={{ background: "var(--a-bg-input)", color: "var(--a-text-4)" }}>
                         {root.children.length} підкат.
                       </span>
                     )}
                   </div>
-                  {desc && <p className="text-[11px] mt-0.5 line-clamp-1" style={{ color: "#3f3f46" }}>{desc}</p>}
+                  {desc && <p className="text-[11px] mt-0.5 line-clamp-1" style={{ color: "var(--a-text-5)" }}>{desc}</p>}
                 </div>
 
                 {/* Stats */}
                 <div className="hidden sm:flex items-center gap-6 shrink-0">
                   <div className="text-right">
-                    <p className="text-[10px] uppercase" style={{ color: "#3f3f46" }}>Товарів</p>
-                    <p className="text-sm font-mono tabular-nums" style={{ color: root.totalProducts > 0 ? "#a1a1aa" : "#3f3f46" }}>{root.totalProducts}</p>
+                    <p className="text-[10px] uppercase" style={{ color: "var(--a-text-5)" }}>Товарів</p>
+                    <p className="text-sm font-mono tabular-nums" style={{ color: root.totalProducts > 0 ? "var(--a-text-2)" : "var(--a-text-5)" }}>{root.totalProducts}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] uppercase" style={{ color: "#3f3f46" }}>Slug</p>
-                    <p className="text-xs font-mono truncate max-w-[120px]" style={{ color: "#52525b" }}>{root.slug}</p>
+                    <p className="text-[10px] uppercase" style={{ color: "var(--a-text-5)" }}>Slug</p>
+                    <p className="text-xs font-mono truncate max-w-[120px]" style={{ color: "var(--a-text-4)" }}>{root.slug}</p>
                   </div>
                 </div>
 
@@ -283,24 +283,24 @@ export function CategoryTable({ categories }: { categories: Cat[] }) {
                 </button>
 
                 {/* Edit */}
-                <Link href={`/admin/categories/${root.id}`} className="shrink-0 p-2 rounded-lg transition-colors" style={{ color: "#3f3f46" }} title="Редагувати"
-                  onMouseEnter={(e) => { e.currentTarget.style.color = "#a1a1aa"; e.currentTarget.style.background = "#141420"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = "#3f3f46"; e.currentTarget.style.background = "transparent"; }}>
+                <Link href={`/admin/categories/${root.id}`} className="shrink-0 p-2 rounded-lg transition-colors" style={{ color: "var(--a-text-5)" }} title="Редагувати"
+                  onMouseEnter={(e) => { e.currentTarget.style.color = "var(--a-text-2)"; e.currentTarget.style.background = "var(--a-bg-input)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = "var(--a-text-5)"; e.currentTarget.style.background = "transparent"; }}>
                   <Pencil className="w-4 h-4" />
                 </Link>
               </div>
 
               {/* Subcategories dropdown */}
               {hasChildren && isOpen && (
-                <div style={{ background: "#0a0a10" }}>
+                <div style={{ background: "var(--a-bg)" }}>
                   <table className="w-full text-sm">
                     <thead>
-                      <tr style={{ borderBottom: "1px solid #141420" }}>
+                      <tr style={{ borderBottom: "1px solid var(--a-border)" }}>
                         <th className="w-10 pl-14 pr-2 py-2" />
-                        <th className="text-left px-3 py-2 text-[10px] font-medium uppercase tracking-wider" style={{ color: "#27272a" }}>Підкатегорія</th>
-                        <th className="text-left px-3 py-2 text-[10px] font-medium uppercase tracking-wider" style={{ color: "#27272a" }}>Slug</th>
-                        <th className="text-right px-3 py-2 text-[10px] font-medium uppercase tracking-wider" style={{ color: "#27272a" }}>Товарів</th>
-                        <th className="text-center px-3 py-2 text-[10px] font-medium uppercase tracking-wider" style={{ color: "#27272a" }}>Статус</th>
+                        <th className="text-left px-3 py-2 text-[10px] font-medium uppercase tracking-wider" style={{ color: "var(--a-text-6)" }}>Підкатегорія</th>
+                        <th className="text-left px-3 py-2 text-[10px] font-medium uppercase tracking-wider" style={{ color: "var(--a-text-6)" }}>Slug</th>
+                        <th className="text-right px-3 py-2 text-[10px] font-medium uppercase tracking-wider" style={{ color: "var(--a-text-6)" }}>Товарів</th>
+                        <th className="text-center px-3 py-2 text-[10px] font-medium uppercase tracking-wider" style={{ color: "var(--a-text-6)" }}>Статус</th>
                         <th className="w-10 px-3 py-2" />
                       </tr>
                     </thead>
@@ -308,28 +308,28 @@ export function CategoryTable({ categories }: { categories: Cat[] }) {
                       {root.children.map((sub) => {
                         const subStatus = getStatus(sub);
                         return (
-                          <tr key={sub.id} style={{ borderBottom: "1px solid #0e0e14" }} className="group/sub">
+                          <tr key={sub.id} style={{ borderBottom: "1px solid var(--a-border)" }} className="group/sub">
                             <td className="pl-14 pr-2 py-2">
                               <button onClick={() => toggleSelect(sub.id)} className="shrink-0">
-                                {selected.has(sub.id) ? <CheckSquare className="w-3.5 h-3.5" style={{ color: "#7c3aed" }} /> : <Square className="w-3.5 h-3.5" style={{ color: "#27272a" }} />}
+                                {selected.has(sub.id) ? <CheckSquare className="w-3.5 h-3.5" style={{ color: "var(--a-accent-btn)" }} /> : <Square className="w-3.5 h-3.5" style={{ color: "var(--a-text-6)" }} />}
                               </button>
                             </td>
                             <td className="px-3 py-2">
                               <div className="flex items-center gap-2">
                                 {sub.image_url ? (
-                                  <img src={sub.image_url} alt="" className="w-7 h-7 rounded-lg object-cover shrink-0" style={{ background: "#141420" }} />
+                                  <img src={sub.image_url} alt="" className="w-7 h-7 rounded-lg object-cover shrink-0" style={{ background: "var(--a-bg-input)" }} />
                                 ) : (
-                                  <div className="w-7 h-7 rounded-lg shrink-0 flex items-center justify-center" style={{ background: "#111116" }}>
-                                    <FolderTree className="w-3 h-3" style={{ color: "#27272a" }} />
+                                  <div className="w-7 h-7 rounded-lg shrink-0 flex items-center justify-center" style={{ background: "var(--a-bg-card)" }}>
+                                    <FolderTree className="w-3 h-3" style={{ color: "var(--a-text-6)" }} />
                                   </div>
                                 )}
-                                <Link href={`/admin/categories/${sub.id}`} className="text-xs hover:underline truncate" style={{ color: subStatus === "active" ? "#a1a1aa" : "#3f3f46" }}>
+                                <Link href={`/admin/categories/${sub.id}`} className="text-xs hover:underline truncate" style={{ color: subStatus === "active" ? "var(--a-text-2)" : "var(--a-text-5)" }}>
                                   {sub.name_uk}
                                 </Link>
                               </div>
                             </td>
-                            <td className="px-3 py-2 text-[11px] font-mono truncate max-w-[100px]" style={{ color: "#3f3f46" }}>{sub.slug}</td>
-                            <td className="px-3 py-2 text-right text-xs tabular-nums" style={{ color: sub.product_count > 0 ? "#71717a" : "#27272a" }}>{sub.product_count}</td>
+                            <td className="px-3 py-2 text-[11px] font-mono truncate max-w-[100px]" style={{ color: "var(--a-text-5)" }}>{sub.slug}</td>
+                            <td className="px-3 py-2 text-right text-xs tabular-nums" style={{ color: sub.product_count > 0 ? "var(--a-text-3)" : "var(--a-text-6)" }}>{sub.product_count}</td>
                             <td className="px-3 py-2 text-center">
                               <button onClick={() => toggleStatus(sub.id)} disabled={loadingIds.has(sub.id)}
                                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition-all"
@@ -340,9 +340,9 @@ export function CategoryTable({ categories }: { categories: Cat[] }) {
                               </button>
                             </td>
                             <td className="px-3 py-2">
-                              <Link href={`/admin/categories/${sub.id}`} className="p-1 rounded-lg transition-colors inline-flex" style={{ color: "#27272a" }}
-                                onMouseEnter={(e) => { e.currentTarget.style.color = "#a1a1aa"; }}
-                                onMouseLeave={(e) => { e.currentTarget.style.color = "#27272a"; }}>
+                              <Link href={`/admin/categories/${sub.id}`} className="p-1 rounded-lg transition-colors inline-flex" style={{ color: "var(--a-text-6)" }}
+                                onMouseEnter={(e) => { e.currentTarget.style.color = "var(--a-text-2)"; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.color = "var(--a-text-6)"; }}>
                                 <Pencil className="w-3.5 h-3.5" />
                               </Link>
                             </td>
@@ -358,7 +358,7 @@ export function CategoryTable({ categories }: { categories: Cat[] }) {
         })}
 
         {filteredTree.length === 0 && (
-          <div className="rounded-2xl px-4 py-12 text-center" style={{ background: "#0e0e14", border: "1px solid #1e1e2a", color: "#3f3f46" }}>
+          <div className="rounded-2xl px-4 py-12 text-center" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)", color: "var(--a-text-5)" }}>
             {search ? "Нічого не знайдено" : "Категорій немає"}
           </div>
         )}

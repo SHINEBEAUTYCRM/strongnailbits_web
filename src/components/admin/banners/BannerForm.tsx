@@ -241,15 +241,15 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
         <div className="flex items-center gap-3">
           <Link
             href="/admin/banners"
-            className="p-2 rounded-lg transition-colors hover:bg-white/5"
-            style={{ color: "#71717a" }}
+            className="p-2 rounded-lg transition-colors hover:bg-[var(--a-bg-hover)]"
+            style={{ color: "var(--a-text-3)" }}
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="flex items-center gap-3">
             <h1
               className="text-xl font-semibold"
-              style={{ color: "#f4f4f5" }}
+              style={{ color: "var(--a-text)" }}
             >
               {isEdit ? "Редагувати банер" : "Новий банер"}
             </h1>
@@ -280,7 +280,7 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
             onClick={handleSave}
             disabled={saving}
             className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50 transition-colors"
-            style={{ background: "#7c3aed" }}
+            style={{ background: "var(--a-accent-btn)" }}
           >
             {saving ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -331,7 +331,7 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
             <p
               className="text-[11px] mt-2"
               style={{
-                color: "#52525b",
+                color: "var(--a-text-4)",
                 fontFamily: "JetBrains Mono, monospace",
               }}
             >
@@ -345,7 +345,7 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
             <div>
               <p
                 className="text-xs font-medium mb-3"
-                style={{ color: "#71717a" }}
+                style={{ color: "var(--a-text-3)" }}
               >
                 Десктоп зображення
               </p>
@@ -364,11 +364,11 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
             {form.type === "hero_slider" && (
               <div
                 className="mt-4 pt-4"
-                style={{ borderTop: "1px solid #1e1e2a" }}
+                style={{ borderTop: "1px solid var(--a-border)" }}
               >
                 <p
                   className="text-xs font-medium mb-3"
-                  style={{ color: "#71717a" }}
+                  style={{ color: "var(--a-text-3)" }}
                 >
                   Мобільне зображення
                 </p>
@@ -395,7 +395,7 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
             <div>
               <label
                 className="block text-xs font-medium mb-1.5"
-                style={{ color: "#71717a" }}
+                style={{ color: "var(--a-text-3)" }}
               >
                 Заголовок
               </label>
@@ -406,15 +406,15 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
                 placeholder="Заголовок на банері"
                 className="w-full px-3 py-3 rounded-lg text-lg font-semibold outline-none transition-colors"
                 style={{
-                  background: "#111116",
-                  border: "1px solid #1e1e2a",
-                  color: "#e4e4e7",
+                  background: "var(--a-bg-card)",
+                  border: "1px solid var(--a-border)",
+                  color: "var(--a-text-body)",
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "#7c3aed";
+                  e.currentTarget.style.borderColor = "var(--a-accent-btn)";
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "#1e1e2a";
+                  e.currentTarget.style.borderColor = "var(--a-border)";
                 }}
               />
             </div>
@@ -438,7 +438,7 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
             <div>
               <label
                 className="block text-xs font-medium mb-1.5"
-                style={{ color: "#71717a" }}
+                style={{ color: "var(--a-text-3)" }}
               >
                 Промокод
               </label>
@@ -452,26 +452,26 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
                   placeholder="SHINE30"
                   className="flex-1 px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
                   style={{
-                    background: "#111116",
-                    border: "1px solid #1e1e2a",
-                    color: "#e4e4e7",
+                    background: "var(--a-bg-card)",
+                    border: "1px solid var(--a-border)",
+                    color: "var(--a-text-body)",
                     fontFamily: "JetBrains Mono, monospace",
                     letterSpacing: "1px",
                   }}
                   onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "#7c3aed";
+                    e.currentTarget.style.borderColor = "var(--a-accent-btn)";
                   }}
                   onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "#1e1e2a";
+                    e.currentTarget.style.borderColor = "var(--a-border)";
                   }}
                 />
                 <button
                   onClick={copyPromoCode}
                   className="px-3 py-2.5 rounded-lg transition-colors"
                   style={{
-                    background: "#111116",
-                    border: "1px solid #1e1e2a",
-                    color: copied ? "#4ade80" : "#71717a",
+                    background: "var(--a-bg-card)",
+                    border: "1px solid var(--a-border)",
+                    color: copied ? "#4ade80" : "var(--a-text-3)",
                   }}
                   title="Копіювати"
                 >
@@ -491,14 +491,14 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
             <div>
               <label
                 className="block text-xs font-medium mb-1.5"
-                style={{ color: "#71717a" }}
+                style={{ color: "var(--a-text-3)" }}
               >
                 Посилання кнопки
               </label>
               <div className="relative">
                 <LinkIcon
                   className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
-                  style={{ color: "#52525b" }}
+                  style={{ color: "var(--a-text-4)" }}
                 />
                 <input
                   type="text"
@@ -507,15 +507,15 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
                   placeholder="https://..."
                   className="w-full pl-9 pr-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
                   style={{
-                    background: "#111116",
-                    border: "1px solid #1e1e2a",
-                    color: "#e4e4e7",
+                    background: "var(--a-bg-card)",
+                    border: "1px solid var(--a-border)",
+                    color: "var(--a-text-body)",
                   }}
                   onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "#7c3aed";
+                    e.currentTarget.style.borderColor = "var(--a-accent-btn)";
                   }}
                   onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "#1e1e2a";
+                    e.currentTarget.style.borderColor = "var(--a-border)";
                   }}
                 />
               </div>
@@ -528,7 +528,7 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
             <div>
               <label
                 className="block text-xs font-medium mb-1.5"
-                style={{ color: "#71717a" }}
+                style={{ color: "var(--a-text-3)" }}
               >
                 Фоновий колір
               </label>
@@ -539,8 +539,8 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
                   onChange={(e) => set("bg_color", e.target.value)}
                   className="w-10 h-10 rounded-lg cursor-pointer border-0 p-0.5"
                   style={{
-                    background: "#111116",
-                    border: "1px solid #1e1e2a",
+                    background: "var(--a-bg-card)",
+                    border: "1px solid var(--a-border)",
                   }}
                 />
                 <input
@@ -549,16 +549,16 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
                   onChange={(e) => set("bg_color", e.target.value)}
                   className="w-28 px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
                   style={{
-                    background: "#111116",
-                    border: "1px solid #1e1e2a",
-                    color: "#e4e4e7",
+                    background: "var(--a-bg-card)",
+                    border: "1px solid var(--a-border)",
+                    color: "var(--a-text-body)",
                     fontFamily: "JetBrains Mono, monospace",
                   }}
                   onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "#7c3aed";
+                    e.currentTarget.style.borderColor = "var(--a-accent-btn)";
                   }}
                   onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "#1e1e2a";
+                    e.currentTarget.style.borderColor = "var(--a-border)";
                   }}
                 />
               </div>
@@ -568,7 +568,7 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
             <div>
               <label
                 className="block text-xs font-medium mb-1.5"
-                style={{ color: "#71717a" }}
+                style={{ color: "var(--a-text-3)" }}
               >
                 Колір тексту
               </label>
@@ -580,16 +580,16 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
                     background:
                       form.text_color === "#FFFFFF"
                         ? "rgba(124, 58, 237, 0.1)"
-                        : "#111116",
-                    border: `1px solid ${form.text_color === "#FFFFFF" ? "#7c3aed" : "#1e1e2a"}`,
-                    color: "#e4e4e7",
+                        : "var(--a-bg-card)",
+                    border: `1px solid ${form.text_color === "#FFFFFF" ? "var(--a-accent-btn)" : "var(--a-border)"}`,
+                    color: "var(--a-text-body)",
                   }}
                 >
                   <span
                     className="w-4 h-4 rounded-full border"
                     style={{
                       background: "#FFFFFF",
-                      borderColor: "#3f3f46",
+                      borderColor: "var(--a-text-5)",
                     }}
                   />
                   Білий
@@ -601,16 +601,16 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
                     background:
                       form.text_color === "#18181b"
                         ? "rgba(124, 58, 237, 0.1)"
-                        : "#111116",
-                    border: `1px solid ${form.text_color === "#18181b" ? "#7c3aed" : "#1e1e2a"}`,
-                    color: "#e4e4e7",
+                        : "var(--a-bg-card)",
+                    border: `1px solid ${form.text_color === "#18181b" ? "var(--a-accent-btn)" : "var(--a-border)"}`,
+                    color: "var(--a-text-body)",
                   }}
                 >
                   <span
                     className="w-4 h-4 rounded-full border"
                     style={{
                       background: "#18181b",
-                      borderColor: "#3f3f46",
+                      borderColor: "var(--a-text-5)",
                     }}
                   />
                   Темний
@@ -622,12 +622,12 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
             <div>
               <label
                 className="block text-xs font-medium mb-1.5"
-                style={{ color: "#71717a" }}
+                style={{ color: "var(--a-text-3)" }}
               >
                 Затемнення оверлею:{" "}
                 <span
                   style={{
-                    color: "#a1a1aa",
+                    color: "var(--a-text-2)",
                     fontFamily: "JetBrains Mono, monospace",
                   }}
                 >
@@ -641,11 +641,11 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
                 value={form.overlay_opacity}
                 onChange={(e) => set("overlay_opacity", e.target.value)}
                 className="w-full accent-purple-600"
-                style={{ accentColor: "#7c3aed" }}
+                style={{ accentColor: "var(--a-accent-btn)" }}
               />
               <div
                 className="flex justify-between text-[10px] mt-1"
-                style={{ color: "#52525b" }}
+                style={{ color: "var(--a-text-4)" }}
               >
                 <span>0%</span>
                 <span>50%</span>
@@ -662,13 +662,13 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
             {/* Active toggle */}
             <div
               className="flex items-center justify-between p-3 rounded-lg"
-              style={{ background: "#111116", border: "1px solid #1e1e2a" }}
+              style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}
             >
               <div>
-                <p className="text-sm font-medium" style={{ color: "#e4e4e7" }}>
+                <p className="text-sm font-medium" style={{ color: "var(--a-text-body)" }}>
                   {form.is_active ? "Активний" : "Неактивний"}
                 </p>
-                <p className="text-[11px]" style={{ color: "#52525b" }}>
+                <p className="text-[11px]" style={{ color: "var(--a-text-4)" }}>
                   {form.is_active
                     ? "Банер відображається"
                     : "Банер приховано"}
@@ -677,7 +677,7 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
               <button
                 onClick={() => set("is_active", !form.is_active)}
                 className="transition-colors"
-                style={{ color: form.is_active ? "#7c3aed" : "#3f3f46" }}
+                style={{ color: form.is_active ? "var(--a-accent-btn)" : "var(--a-text-5)" }}
               >
                 {form.is_active ? (
                   <ToggleRight className="w-8 h-8" />
@@ -691,7 +691,7 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
             <div>
               <label
                 className="flex items-center gap-1.5 text-xs font-medium mb-1.5"
-                style={{ color: "#71717a" }}
+                style={{ color: "var(--a-text-3)" }}
               >
                 <Calendar className="w-3.5 h-3.5" />
                 Початок показу
@@ -702,16 +702,16 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
                 onChange={(e) => set("starts_at", e.target.value)}
                 className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
                 style={{
-                  background: "#111116",
-                  border: "1px solid #1e1e2a",
-                  color: "#e4e4e7",
+                  background: "var(--a-bg-card)",
+                  border: "1px solid var(--a-border)",
+                  color: "var(--a-text-body)",
                   colorScheme: "dark",
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "#7c3aed";
+                  e.currentTarget.style.borderColor = "var(--a-accent-btn)";
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "#1e1e2a";
+                  e.currentTarget.style.borderColor = "var(--a-border)";
                 }}
               />
             </div>
@@ -719,7 +719,7 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
             <div>
               <label
                 className="flex items-center gap-1.5 text-xs font-medium mb-1.5"
-                style={{ color: "#71717a" }}
+                style={{ color: "var(--a-text-3)" }}
               >
                 <Calendar className="w-3.5 h-3.5" />
                 Кінець показу
@@ -730,16 +730,16 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
                 onChange={(e) => set("ends_at", e.target.value)}
                 className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
                 style={{
-                  background: "#111116",
-                  border: "1px solid #1e1e2a",
-                  color: "#e4e4e7",
+                  background: "var(--a-bg-card)",
+                  border: "1px solid var(--a-border)",
+                  color: "var(--a-text-body)",
                   colorScheme: "dark",
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "#7c3aed";
+                  e.currentTarget.style.borderColor = "var(--a-accent-btn)";
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "#1e1e2a";
+                  e.currentTarget.style.borderColor = "var(--a-border)";
                 }}
               />
             </div>
@@ -761,11 +761,11 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
             {/* Category placement */}
             <div
               className="mt-3 pt-3"
-              style={{ borderTop: "1px solid #1e1e2a" }}
+              style={{ borderTop: "1px solid var(--a-border)" }}
             >
               <p
                 className="text-xs font-medium mb-2"
-                style={{ color: "#71717a" }}
+                style={{ color: "var(--a-text-3)" }}
               >
                 Категорії
               </p>
@@ -776,22 +776,22 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
                 placeholder="Пошук категорії..."
                 className="w-full px-3 py-2 rounded-lg text-sm outline-none transition-colors mb-2"
                 style={{
-                  background: "#111116",
-                  border: "1px solid #1e1e2a",
-                  color: "#e4e4e7",
+                  background: "var(--a-bg-card)",
+                  border: "1px solid var(--a-border)",
+                  color: "var(--a-text-body)",
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "#7c3aed";
+                  e.currentTarget.style.borderColor = "var(--a-accent-btn)";
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "#1e1e2a";
+                  e.currentTarget.style.borderColor = "var(--a-border)";
                 }}
               />
               <div className="max-h-40 overflow-y-auto space-y-1 custom-scrollbar">
                 {filteredCategories.length === 0 && (
                   <p
                     className="text-xs py-2 text-center"
-                    style={{ color: "#3f3f46" }}
+                    style={{ color: "var(--a-text-5)" }}
                   >
                     Категорії не знайдено
                   </p>
@@ -820,7 +820,7 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
             <div>
               <label
                 className="block text-xs font-medium mb-1.5"
-                style={{ color: "#71717a" }}
+                style={{ color: "var(--a-text-3)" }}
               >
                 Пріоритет
               </label>
@@ -829,15 +829,15 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
                 onChange={(e) => set("priority", e.target.value)}
                 className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors cursor-pointer"
                 style={{
-                  background: "#111116",
-                  border: "1px solid #1e1e2a",
-                  color: "#e4e4e7",
+                  background: "var(--a-bg-card)",
+                  border: "1px solid var(--a-border)",
+                  color: "var(--a-text-body)",
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "#7c3aed";
+                  e.currentTarget.style.borderColor = "var(--a-accent-btn)";
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "#1e1e2a";
+                  e.currentTarget.style.borderColor = "var(--a-border)";
                 }}
               >
                 <option value="0">Низький</option>
@@ -894,16 +894,16 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
                 <div>
                   <label
                     className="block text-xs font-medium mb-1.5"
-                    style={{ color: "#71717a" }}
+                    style={{ color: "var(--a-text-3)" }}
                   >
                     ID
                   </label>
                   <div
                     className="px-3 py-2.5 rounded-lg text-xs select-all"
                     style={{
-                      background: "#111116",
-                      border: "1px solid #1e1e2a",
-                      color: "#52525b",
+                      background: "var(--a-bg-card)",
+                      border: "1px solid var(--a-border)",
+                      color: "var(--a-text-4)",
                       fontFamily: "JetBrains Mono, monospace",
                     }}
                   >
@@ -915,14 +915,14 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
                   <div>
                     <label
                       className="block text-[10px] font-medium mb-1"
-                      style={{ color: "#3f3f46" }}
+                      style={{ color: "var(--a-text-5)" }}
                     >
                       Створено
                     </label>
                     <p
                       className="text-xs"
                       style={{
-                        color: "#52525b",
+                        color: "var(--a-text-4)",
                         fontFamily: "JetBrains Mono, monospace",
                       }}
                     >
@@ -938,14 +938,14 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
                   <div>
                     <label
                       className="block text-[10px] font-medium mb-1"
-                      style={{ color: "#3f3f46" }}
+                      style={{ color: "var(--a-text-5)" }}
                     >
                       Оновлено
                     </label>
                     <p
                       className="text-xs"
                       style={{
-                        color: "#52525b",
+                        color: "var(--a-text-4)",
                         fontFamily: "JetBrains Mono, monospace",
                       }}
                     >
@@ -980,11 +980,11 @@ function Section({
   return (
     <div
       className="rounded-xl p-5"
-      style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}
+      style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}
     >
       <h3
         className="text-sm font-medium mb-4"
-        style={{ color: "#a1a1aa" }}
+        style={{ color: "var(--a-text-2)" }}
       >
         {title}
       </h3>
@@ -1010,7 +1010,7 @@ function Field({
     <div>
       <label
         className="block text-xs font-medium mb-1.5"
-        style={{ color: "#71717a" }}
+        style={{ color: "var(--a-text-3)" }}
       >
         {label}
       </label>
@@ -1021,15 +1021,15 @@ function Field({
         placeholder={placeholder}
         className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
         style={{
-          background: "#111116",
-          border: "1px solid #1e1e2a",
-          color: "#e4e4e7",
+          background: "var(--a-bg-card)",
+          border: "1px solid var(--a-border)",
+          color: "var(--a-text-body)",
         }}
         onFocus={(e) => {
-          e.currentTarget.style.borderColor = "#7c3aed";
+          e.currentTarget.style.borderColor = "var(--a-accent-btn)";
         }}
         onBlur={(e) => {
-          e.currentTarget.style.borderColor = "#1e1e2a";
+          e.currentTarget.style.borderColor = "var(--a-border)";
         }}
       />
     </div>
@@ -1053,7 +1053,7 @@ function TextArea({
     <div>
       <label
         className="block text-xs font-medium mb-1.5"
-        style={{ color: "#71717a" }}
+        style={{ color: "var(--a-text-3)" }}
       >
         {label}
       </label>
@@ -1064,15 +1064,15 @@ function TextArea({
         placeholder={placeholder}
         className="w-full px-3 py-2.5 rounded-lg text-sm outline-none resize-y transition-colors"
         style={{
-          background: "#111116",
-          border: "1px solid #1e1e2a",
-          color: "#e4e4e7",
+          background: "var(--a-bg-card)",
+          border: "1px solid var(--a-border)",
+          color: "var(--a-text-body)",
         }}
         onFocus={(e) => {
-          e.currentTarget.style.borderColor = "#7c3aed";
+          e.currentTarget.style.borderColor = "var(--a-accent-btn)";
         }}
         onBlur={(e) => {
-          e.currentTarget.style.borderColor = "#1e1e2a";
+          e.currentTarget.style.borderColor = "var(--a-border)";
         }}
       />
     </div>
@@ -1096,8 +1096,8 @@ function PlacementCheckbox({
       <div
         className="w-5 h-5 rounded-md flex items-center justify-center transition-colors shrink-0"
         style={{
-          background: checked ? "#7c3aed" : "#111116",
-          border: `1px solid ${checked ? "#7c3aed" : "#1e1e2a"}`,
+          background: checked ? "var(--a-accent-btn)" : "var(--a-bg-card)",
+          border: `1px solid ${checked ? "var(--a-accent-btn)" : "var(--a-border)"}`,
         }}
       >
         {checked && (
@@ -1113,7 +1113,7 @@ function PlacementCheckbox({
           </svg>
         )}
       </div>
-      <span className="text-sm" style={{ color: "#a1a1aa" }}>
+      <span className="text-sm" style={{ color: "var(--a-text-2)" }}>
         {label}
       </span>
     </label>
@@ -1132,24 +1132,24 @@ function AnalyticCard({
   return (
     <div
       className="rounded-lg p-3 text-center"
-      style={{ background: "#111116", border: "1px solid #1e1e2a" }}
+      style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}
     >
       <div
         className="flex items-center justify-center mb-1.5"
-        style={{ color: "#52525b" }}
+        style={{ color: "var(--a-text-4)" }}
       >
         {icon}
       </div>
       <p
         className="text-base font-semibold"
         style={{
-          color: "#e4e4e7",
+          color: "var(--a-text-body)",
           fontFamily: "JetBrains Mono, monospace",
         }}
       >
         {value}
       </p>
-      <p className="text-[10px] mt-0.5" style={{ color: "#52525b" }}>
+      <p className="text-[10px] mt-0.5" style={{ color: "var(--a-text-4)" }}>
         {label}
       </p>
     </div>

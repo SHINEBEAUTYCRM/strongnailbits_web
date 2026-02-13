@@ -157,12 +157,12 @@ export function ImageUpload({ onUpload, currentUrl, label, compact }: Props) {
         <input ref={cameraRef} type="file" accept="image/*" capture="environment" onChange={onFileChange} className="hidden" />
         <div className="flex gap-2">
           <button onClick={() => fileRef.current?.click()} className="w-20 h-20 rounded-lg flex flex-col items-center justify-center gap-1 transition-colors"
-            style={{ background: "#111116", border: "1px dashed #27272a", color: "#52525b" }}>
+            style={{ background: "var(--a-bg-card)", border: "1px dashed var(--a-border)", color: "var(--a-text-4)" }}>
             <Upload className="w-4 h-4" />
             <span className="text-[9px]">Файл</span>
           </button>
           <button onClick={() => cameraRef.current?.click()} className="w-20 h-20 rounded-lg flex flex-col items-center justify-center gap-1 transition-colors"
-            style={{ background: "#111116", border: "1px dashed #27272a", color: "#52525b" }}>
+            style={{ background: "var(--a-bg-card)", border: "1px dashed var(--a-border)", color: "var(--a-text-4)" }}>
             <Camera className="w-4 h-4" />
             <span className="text-[9px]">Камера</span>
           </button>
@@ -174,29 +174,29 @@ export function ImageUpload({ onUpload, currentUrl, label, compact }: Props) {
 
   return (
     <div>
-      {label && <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>{label}</label>}
+      {label && <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--a-text-3)" }}>{label}</label>}
 
       <input ref={fileRef} type="file" accept="image/*" onChange={onFileChange} className="hidden" />
       <input ref={cameraRef} type="file" accept="image/*" capture="environment" onChange={onFileChange} className="hidden" />
 
       {/* Idle state — pick source */}
       {stage === "idle" && (
-        <div className="rounded-xl p-6" style={{ background: "#111116", border: "1px dashed #27272a" }}>
+        <div className="rounded-xl p-6" style={{ background: "var(--a-bg-card)", border: "1px dashed var(--a-border)" }}>
           {currentUrl ? (
             <div className="flex items-center gap-4 mb-4">
-              <img src={currentUrl} alt="" className="w-16 h-16 rounded-lg object-cover" style={{ background: "#141420" }} />
-              <p className="text-xs" style={{ color: "#52525b" }}>Поточне зображення</p>
+              <img src={currentUrl} alt="" className="w-16 h-16 rounded-lg object-cover" style={{ background: "var(--a-bg-input)" }} />
+              <p className="text-xs" style={{ color: "var(--a-text-4)" }}>Поточне зображення</p>
             </div>
           ) : (
             <div className="flex justify-center mb-4">
-              <ImageIcon className="w-10 h-10" style={{ color: "#1e1e2a" }} />
+              <ImageIcon className="w-10 h-10" style={{ color: "var(--a-border)" }} />
             </div>
           )}
 
           <div className="flex flex-col sm:flex-row gap-3">
             <button onClick={() => fileRef.current?.click()}
               className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all"
-              style={{ background: "#141420", border: "1px solid #1e1e2a", color: "#a1a1aa" }}>
+              style={{ background: "var(--a-bg-input)", border: "1px solid var(--a-border)", color: "var(--a-text-2)" }}>
               <Upload className="w-4 h-4" /> Обрати файл
             </button>
             <button onClick={() => cameraRef.current?.click()}
@@ -206,7 +206,7 @@ export function ImageUpload({ onUpload, currentUrl, label, compact }: Props) {
             </button>
           </div>
 
-          <p className="text-center text-[10px] mt-3" style={{ color: "#3f3f46" }}>
+          <p className="text-center text-[10px] mt-3" style={{ color: "var(--a-text-5)" }}>
             JPG, PNG, WebP · до 10 МБ · фон буде видалено автоматично
           </p>
         </div>
@@ -214,51 +214,51 @@ export function ImageUpload({ onUpload, currentUrl, label, compact }: Props) {
 
       {/* Preview & processing */}
       {(stage === "preview" || stage === "removing-bg") && (
-        <div className="rounded-xl overflow-hidden" style={{ background: "#111116", border: "1px solid #1e1e2a" }}>
+        <div className="rounded-xl overflow-hidden" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
           {/* Images comparison */}
           <div className="p-4">
             <div className="flex gap-3 justify-center">
               {/* Original */}
               <div className="text-center">
-                <div className="relative rounded-lg overflow-hidden mb-2" style={{ background: "#0a0a10" }}>
+                <div className="relative rounded-lg overflow-hidden mb-2" style={{ background: "var(--a-bg)" }}>
                   {preview && (
                     <img src={preview} alt="Original"
                       className="max-h-[200px] max-w-[200px] object-contain"
                       style={{ opacity: useOriginal ? 1 : processed ? 0.5 : 1 }} />
                   )}
                   {useOriginal && (
-                    <div className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "#7c3aed" }}>
+                    <div className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "var(--a-accent-btn)" }}>
                       <Check className="w-3 h-3 text-white" />
                     </div>
                   )}
                 </div>
-                <p className="text-[10px]" style={{ color: "#52525b" }}>Оригінал</p>
+                <p className="text-[10px]" style={{ color: "var(--a-text-4)" }}>Оригінал</p>
               </div>
 
               {/* Processed */}
               {processed && (
                 <div className="text-center">
                   <div className="relative rounded-lg overflow-hidden mb-2"
-                    style={{ background: "repeating-conic-gradient(#1a1a24 0% 25%, #111116 0% 50%) 50% / 16px 16px" }}>
+                    style={{ background: "repeating-conic-gradient(var(--a-bg-hover) 0% 25%, var(--a-bg-card) 0% 50%) 50% / 16px 16px" }}>
                     <img src={processed} alt="No background"
                       className="max-h-[200px] max-w-[200px] object-contain"
                       style={{ opacity: useOriginal ? 0.5 : 1 }} />
                     {!useOriginal && (
-                      <div className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "#7c3aed" }}>
+                      <div className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "var(--a-accent-btn)" }}>
                         <Check className="w-3 h-3 text-white" />
                       </div>
                     )}
                   </div>
-                  <p className="text-[10px]" style={{ color: "#52525b" }}>Без фону</p>
+                  <p className="text-[10px]" style={{ color: "var(--a-text-4)" }}>Без фону</p>
                 </div>
               )}
             </div>
 
             {/* Processing indicator */}
             {stage === "removing-bg" && (
-              <div className="flex items-center justify-center gap-2 mt-4 py-3 rounded-lg" style={{ background: "#0a0a10" }}>
-                <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#a855f7" }} />
-                <p className="text-xs" style={{ color: "#a1a1aa" }}>{progress}</p>
+              <div className="flex items-center justify-center gap-2 mt-4 py-3 rounded-lg" style={{ background: "var(--a-bg)" }}>
+                <Loader2 className="w-4 h-4 animate-spin" style={{ color: "var(--a-accent)" }} />
+                <p className="text-xs" style={{ color: "var(--a-text-2)" }}>{progress}</p>
               </div>
             )}
           </div>
@@ -271,12 +271,12 @@ export function ImageUpload({ onUpload, currentUrl, label, compact }: Props) {
               <div className="flex gap-2">
                 <button onClick={removeBg}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium"
-                  style={{ background: "#1e1030", border: "1px solid #581c87", color: "#c084fc" }}>
+                  style={{ background: "var(--a-accent-bg)", border: "1px solid var(--a-accent)", color: "var(--a-accent)" }}>
                   <Wand2 className="w-4 h-4" /> Видалити фон
                 </button>
                 <button onClick={() => { setUseOriginal(true); }}
                   className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium"
-                  style={{ background: "#141420", border: "1px solid #1e1e2a", color: "#71717a" }}>
+                  style={{ background: "var(--a-bg-input)", border: "1px solid var(--a-border)", color: "var(--a-text-3)" }}>
                   Пропустити
                 </button>
               </div>
@@ -286,12 +286,12 @@ export function ImageUpload({ onUpload, currentUrl, label, compact }: Props) {
               <div className="flex gap-2">
                 <button onClick={() => setUseOriginal(false)}
                   className="flex-1 px-3 py-2 rounded-lg text-xs font-medium text-center"
-                  style={!useOriginal ? { background: "#1e1030", border: "1px solid #581c87", color: "#c084fc" } : { background: "#141420", border: "1px solid #1e1e2a", color: "#71717a" }}>
+                  style={!useOriginal ? { background: "var(--a-accent-bg)", border: "1px solid var(--a-accent)", color: "var(--a-accent)" } : { background: "var(--a-bg-input)", border: "1px solid var(--a-border)", color: "var(--a-text-3)" }}>
                   Без фону
                 </button>
                 <button onClick={() => setUseOriginal(true)}
                   className="flex-1 px-3 py-2 rounded-lg text-xs font-medium text-center"
-                  style={useOriginal ? { background: "#1e1030", border: "1px solid #581c87", color: "#c084fc" } : { background: "#141420", border: "1px solid #1e1e2a", color: "#71717a" }}>
+                  style={useOriginal ? { background: "var(--a-accent-bg)", border: "1px solid var(--a-accent)", color: "var(--a-accent)" } : { background: "var(--a-bg-input)", border: "1px solid var(--a-border)", color: "var(--a-text-3)" }}>
                   Оригінал
                 </button>
               </div>
@@ -300,7 +300,7 @@ export function ImageUpload({ onUpload, currentUrl, label, compact }: Props) {
             {stage === "preview" && (processed || useOriginal) && (
               <button onClick={upload}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white"
-                style={{ background: "#7c3aed" }}>
+                style={{ background: "var(--a-accent-btn)" }}>
                 <Upload className="w-4 h-4" /> Завантажити
               </button>
             )}
@@ -309,7 +309,7 @@ export function ImageUpload({ onUpload, currentUrl, label, compact }: Props) {
               {stage === "preview" && (
                 <button onClick={reset}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs"
-                  style={{ color: "#52525b" }}>
+                  style={{ color: "var(--a-text-4)" }}>
                   <RotateCcw className="w-3.5 h-3.5" /> Скасувати
                 </button>
               )}
@@ -320,9 +320,9 @@ export function ImageUpload({ onUpload, currentUrl, label, compact }: Props) {
 
       {/* Uploading */}
       {stage === "uploading" && (
-        <div className="rounded-xl p-6 flex flex-col items-center gap-3" style={{ background: "#111116", border: "1px solid #1e1e2a" }}>
-          <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#a855f7" }} />
-          <p className="text-sm" style={{ color: "#a1a1aa" }}>{progress}</p>
+        <div className="rounded-xl p-6 flex flex-col items-center gap-3" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+          <Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--a-accent)" }} />
+          <p className="text-sm" style={{ color: "var(--a-text-2)" }}>{progress}</p>
         </div>
       )}
     </div>

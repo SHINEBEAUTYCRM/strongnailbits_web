@@ -56,11 +56,11 @@ export default function AdminUsersPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold mb-1 flex items-center gap-3" style={{ color: "#f4f4f5" }}>
-          <Shield className="w-6 h-6" style={{ color: "#a855f7" }} />
+        <h1 className="text-2xl font-semibold mb-1 flex items-center gap-3" style={{ color: "var(--a-text)" }}>
+          <Shield className="w-6 h-6" style={{ color: "var(--a-accent)" }} />
           Користувачі адмінки
         </h1>
-        <p className="text-sm" style={{ color: "#52525b" }}>
+        <p className="text-sm" style={{ color: "var(--a-text-4)" }}>
           Контроль доступу: одобрення, блокування, зміна ролей
         </p>
       </div>
@@ -69,7 +69,7 @@ export default function AdminUsersPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#a855f7" }} />
+          <Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--a-accent)" }} />
         </div>
       ) : (
         <>
@@ -113,27 +113,27 @@ export default function AdminUsersPage() {
 
           {/* Active users */}
           <div>
-            <h2 className="text-sm font-medium mb-3 flex items-center gap-2" style={{ color: "#a1a1aa" }}>
+            <h2 className="text-sm font-medium mb-3 flex items-center gap-2" style={{ color: "var(--a-text-2)" }}>
               <ShieldCheck className="w-4 h-4" style={{ color: "#4ade80" }} /> Активні ({approved.length})
             </h2>
             {approved.length === 0 ? (
-              <div className="rounded-xl p-8 text-center" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
-                <p style={{ color: "#3f3f46" }}>Немає активних адмін-користувачів</p>
+              <div className="rounded-xl p-8 text-center" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+                <p style={{ color: "var(--a-text-5)" }}>Немає активних адмін-користувачів</p>
               </div>
             ) : (
-              <div className="rounded-xl overflow-hidden" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
+              <div className="rounded-xl overflow-hidden" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
                 <table className="w-full text-sm">
                   <thead>
-                    <tr style={{ borderBottom: "1px solid #1e1e2a" }}>
-                      <th className="text-left px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Користувач</th>
-                      <th className="text-center px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Роль</th>
-                      <th className="text-center px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Дата</th>
-                      <th className="text-right px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "#3f3f46" }}>Дії</th>
+                    <tr style={{ borderBottom: "1px solid var(--a-border)" }}>
+                      <th className="text-left px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "var(--a-text-5)" }}>Користувач</th>
+                      <th className="text-center px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "var(--a-text-5)" }}>Роль</th>
+                      <th className="text-center px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "var(--a-text-5)" }}>Дата</th>
+                      <th className="text-right px-4 py-3 text-[11px] font-medium uppercase tracking-wider" style={{ color: "var(--a-text-5)" }}>Дії</th>
                     </tr>
                   </thead>
                   <tbody>
                     {approved.map((u) => (
-                      <tr key={u.id} className="hover:bg-[#111118] transition-colors" style={{ borderBottom: "1px solid #141420" }}>
+                      <tr key={u.id} className="transition-colors" style={{ borderBottom: "1px solid var(--a-border)" }}>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
@@ -141,8 +141,8 @@ export default function AdminUsersPage() {
                               {(u.first_name?.[0] || u.email[0]).toUpperCase()}
                             </div>
                             <div className="min-w-0">
-                              <p className="text-sm" style={{ color: "#e4e4e7" }}>{u.first_name} {u.last_name}</p>
-                              <p className="text-[11px]" style={{ color: "#52525b" }}>{u.email}</p>
+                              <p className="text-sm" style={{ color: "var(--a-text)" }}>{u.first_name} {u.last_name}</p>
+                              <p className="text-[11px]" style={{ color: "var(--a-text-4)" }}>{u.email}</p>
                             </div>
                           </div>
                         </td>
@@ -153,7 +153,7 @@ export default function AdminUsersPage() {
                             {u.role === "admin" ? "Адмін" : "Менеджер"}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-center text-xs" style={{ color: "#52525b" }}>
+                        <td className="px-4 py-3 text-center text-xs" style={{ color: "var(--a-text-4)" }}>
                           {new Date(u.created_at).toLocaleDateString("uk-UA")}
                         </td>
                         <td className="px-4 py-3 text-right">
@@ -161,7 +161,7 @@ export default function AdminUsersPage() {
                             {u.role === "manager" && (
                               <button onClick={() => doAction("set-role", u.id, { role: "admin" })} disabled={actionLoading === u.id}
                                 className="px-2.5 py-1 rounded-lg text-[10px] font-medium"
-                                style={{ color: "#a855f7", background: "#141420", border: "1px solid #1e1e2a" }}
+                                style={{ color: "#a855f7", background: "var(--a-bg-input)", border: "1px solid var(--a-border)" }}
                                 title="Підвищити до адміна">
                                 ↑ Адмін
                               </button>
@@ -169,14 +169,14 @@ export default function AdminUsersPage() {
                             {u.role === "admin" && (
                               <button onClick={() => doAction("set-role", u.id, { role: "manager" })} disabled={actionLoading === u.id}
                                 className="px-2.5 py-1 rounded-lg text-[10px] font-medium"
-                                style={{ color: "#60a5fa", background: "#141420", border: "1px solid #1e1e2a" }}
+                                style={{ color: "#60a5fa", background: "var(--a-bg-input)", border: "1px solid var(--a-border)" }}
                                 title="Понизити до менеджера">
                                 ↓ Менеджер
                               </button>
                             )}
                             <button onClick={() => doAction("block", u.id)} disabled={actionLoading === u.id}
                               className="px-2.5 py-1 rounded-lg text-[10px] font-medium"
-                              style={{ color: "#f87171", background: "#141420", border: "1px solid #1e1e2a" }}
+                              style={{ color: "#f87171", background: "var(--a-bg-input)", border: "1px solid var(--a-border)" }}
                               title="Заблокувати">
                               <ShieldX className="w-3 h-3" />
                             </button>

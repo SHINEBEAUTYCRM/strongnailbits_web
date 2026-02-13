@@ -31,7 +31,7 @@ export function TaskFilters({
       <div className="relative" style={{ minWidth: 180 }}>
         <Search
           className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5"
-          style={{ color: "#52525b" }}
+          style={{ color: "var(--a-text-4)" }}
         />
         <input
           ref={searchInputRef}
@@ -40,21 +40,21 @@ export function TaskFilters({
           placeholder="Пошук..."
           className="w-full pl-8 pr-3 py-1.5 rounded-lg text-xs outline-none transition-colors"
           style={{
-            background: "#111116",
-            border: "1px solid rgba(255,255,255,0.06)",
-            color: "#e4e4e7",
+            background: "var(--a-bg-card)",
+            border: "1px solid var(--a-border)",
+            color: "var(--a-text-body)",
           }}
           onFocus={(e) => {
             e.currentTarget.style.borderColor = "rgba(168,85,247,0.3)";
           }}
           onBlur={(e) => {
-            e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+            e.currentTarget.style.borderColor = "var(--a-border)";
           }}
         />
       </div>
 
       {/* Separator */}
-      <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.06)" }} />
+      <div style={{ width: 1, height: 20, background: "var(--a-border)" }} />
 
       {/* Assignee filter */}
       <div className="flex items-center gap-1 flex-wrap">
@@ -74,7 +74,7 @@ export function TaskFilters({
       </div>
 
       {/* Separator */}
-      <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.06)" }} />
+      <div style={{ width: 1, height: 20, background: "var(--a-border)" }} />
 
       {/* Priority filter */}
       <div className="flex items-center gap-1 flex-wrap">
@@ -115,7 +115,7 @@ function FilterButton({
             ? `${activeColor}18`
             : "rgba(168,85,247,0.12)"
           : "transparent",
-        color: isActive ? (activeColor || "#a855f7") : "#71717a",
+        color: isActive ? (activeColor || "#a855f7") : "var(--a-text-3)",
         border: `1px solid ${isActive ? (activeColor ? `${activeColor}30` : "rgba(168,85,247,0.2)") : "transparent"}`,
       }}
     >

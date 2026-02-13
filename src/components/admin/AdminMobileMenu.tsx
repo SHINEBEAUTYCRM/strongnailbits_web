@@ -75,27 +75,25 @@ export function AdminMobileMenu({ open, onClose, displayName, displayEmail }: Ad
         className="fixed top-0 left-0 bottom-0 z-[61] flex flex-col overflow-hidden"
         style={{
           width: "min(320px, 85vw)",
-          background: "rgba(8, 8, 12, 0.98)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          borderRight: "1px solid rgba(255,255,255,0.06)",
+          background: "var(--a-bg-card)",
+          borderRight: "1px solid var(--a-border)",
           animation: "slideInLeft 200ms ease",
         }}
       >
         {/* Header */}
         <div
           className="flex items-center justify-between h-14 px-4 shrink-0"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+          style={{ borderBottom: "1px solid var(--a-border)" }}
         >
           <Link href="/admin" className="flex items-center gap-2" onClick={onClose}>
-            <span className="text-lg font-bold tracking-wider" style={{ color: "#a855f7" }}>
+            <span className="text-lg font-bold tracking-wider" style={{ color: "var(--a-accent)" }}>
               ShineShop
             </span>
-            <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: "#555" }}>
+            <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: "var(--a-text-4)" }}>
               OS
             </span>
           </Link>
-          <button onClick={onClose} style={{ color: "#888" }}>
+          <button onClick={onClose} style={{ color: "var(--a-text-3)" }}>
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -114,8 +112,8 @@ export function AdminMobileMenu({ open, onClose, displayName, displayEmail }: Ad
                   onClick={() => toggleSection(section.id)}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-100"
                   style={{
-                    color: isSoonSection ? "#444" : active ? "#a855f7" : "#999",
-                    background: expanded ? "rgba(255,255,255,0.03)" : "transparent",
+                    color: isSoonSection ? "var(--a-text-5)" : active ? "var(--a-accent)" : "var(--a-text-3)",
+                    background: expanded ? "var(--a-bg-hover)" : "transparent",
                     cursor: isSoonSection ? "default" : "pointer",
                   }}
                 >
@@ -125,8 +123,8 @@ export function AdminMobileMenu({ open, onClose, displayName, displayEmail }: Ad
                     <span
                       style={{
                         fontSize: 10,
-                        color: "#555",
-                        background: "rgba(255,255,255,0.04)",
+                        color: "var(--a-text-4)",
+                        background: "var(--a-bg-hover)",
                         padding: "2px 6px",
                         borderRadius: 4,
                       }}
@@ -139,7 +137,7 @@ export function AdminMobileMenu({ open, onClose, displayName, displayEmail }: Ad
                       className="w-4 h-4 shrink-0 transition-transform duration-200"
                       style={{
                         transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
-                        color: "#555",
+                        color: "var(--a-text-4)",
                       }}
                     />
                   )}
@@ -149,7 +147,7 @@ export function AdminMobileMenu({ open, onClose, displayName, displayEmail }: Ad
                 {expanded && !isSoonSection && (
                   <div
                     className="ml-3 pl-3 mt-1 mb-2"
-                    style={{ borderLeft: "1px solid rgba(255,255,255,0.06)" }}
+                    style={{ borderLeft: "1px solid var(--a-border)" }}
                   >
                     {section.children.map((child) => {
                       const ChildIcon = child.icon;
@@ -161,15 +159,15 @@ export function AdminMobileMenu({ open, onClose, displayName, displayEmail }: Ad
                           <div
                             key={child.href + child.label}
                             className="flex items-center gap-2.5 px-3 py-2 rounded-lg"
-                            style={{ color: "#444", cursor: "default", fontSize: 13 }}
+                            style={{ color: "var(--a-text-5)", cursor: "default", fontSize: 13 }}
                           >
                             <ChildIcon className="w-4 h-4 shrink-0" />
                             <span className="flex-1 truncate">{child.label}</span>
                             <span
                               style={{
                                 fontSize: 10,
-                                color: "#555",
-                                background: "rgba(255,255,255,0.04)",
+                                color: "var(--a-text-4)",
+                                background: "var(--a-bg-hover)",
                                 padding: "2px 6px",
                                 borderRadius: 4,
                               }}
@@ -186,8 +184,8 @@ export function AdminMobileMenu({ open, onClose, displayName, displayEmail }: Ad
                           href={child.href}
                           className="flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors duration-100"
                           style={{
-                            color: childActive ? "#a855f7" : "#aaa",
-                            background: childActive ? "rgba(168,85,247,0.06)" : "transparent",
+                            color: childActive ? "var(--a-accent)" : "var(--a-text-2)",
+                            background: childActive ? "var(--a-accent-bg)" : "transparent",
                             fontSize: 13,
                           }}
                         >
@@ -206,7 +204,7 @@ export function AdminMobileMenu({ open, onClose, displayName, displayEmail }: Ad
         {/* Footer: user info + DANGROW */}
         <div
           className="shrink-0 px-4 py-3"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+          style={{ borderTop: "1px solid var(--a-border)" }}
         >
           <div className="flex items-center gap-3 mb-3">
             <div
@@ -216,10 +214,10 @@ export function AdminMobileMenu({ open, onClose, displayName, displayEmail }: Ad
               {(displayName[0] || "A").toUpperCase()}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium truncate" style={{ color: "#e4e4e7" }}>
+              <p className="text-sm font-medium truncate" style={{ color: "var(--a-text)" }}>
                 {displayName}
               </p>
-              <p className="text-[11px] truncate" style={{ color: "#555" }}>
+              <p className="text-[11px] truncate" style={{ color: "var(--a-text-4)" }}>
                 {displayEmail}
               </p>
             </div>

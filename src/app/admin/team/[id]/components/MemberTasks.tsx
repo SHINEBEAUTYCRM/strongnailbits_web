@@ -31,7 +31,7 @@ export function MemberTasks({ memberId, onTaskClick }: MemberTasksProps) {
   if (loading) {
     return (
       <div className="flex justify-center py-8">
-        <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#52525b" }} />
+        <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--a-text-4)" }} />
       </div>
     );
   }
@@ -77,8 +77,8 @@ function Section({ icon, title, count, children }: {
     <div>
       <div className="flex items-center gap-2 mb-2">
         {icon}
-        <span className="text-xs font-semibold" style={{ color: "#a1a1aa" }}>{title}</span>
-        <span className="text-[10px] font-mono" style={{ color: "#52525b", fontFamily: "var(--font-jetbrains-mono, monospace)" }}>{count}</span>
+        <span className="text-xs font-semibold" style={{ color: "var(--a-text-2)" }}>{title}</span>
+        <span className="text-[10px] font-mono" style={{ color: "var(--a-text-4)", fontFamily: "var(--font-jetbrains-mono, monospace)" }}>{count}</span>
       </div>
       <div className="flex flex-col gap-1">{children}</div>
     </div>
@@ -94,12 +94,12 @@ function TaskRow({ task, onClick }: { task: Task; onClick: () => void }) {
     <button
       onClick={onClick}
       className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors text-xs"
-      style={{ background: "rgba(255,255,255,0.02)" }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
+      style={{ background: "var(--a-bg-hover)" }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = "var(--a-bg-hover)"; e.currentTarget.style.opacity = "0.8"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = "var(--a-bg-hover)"; e.currentTarget.style.opacity = "1"; }}
     >
       <span className="w-2 h-2 rounded-full shrink-0" style={{ background: priority?.color || "#71717a" }} />
-      <span className="flex-1 truncate" style={{ color: "#d4d4d8" }}>{task.title}</span>
+      <span className="flex-1 truncate" style={{ color: "var(--a-text-name)" }}>{task.title}</span>
       {col && (
         <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: `${col.color}15`, color: col.color }}>
           {col.label}
@@ -109,7 +109,7 @@ function TaskRow({ task, onClick }: { task: Task; onClick: () => void }) {
         <span
           className="text-[10px] font-mono shrink-0"
           style={{
-            color: isOverdue ? "#ef4444" : "#52525b",
+            color: isOverdue ? "#ef4444" : "var(--a-text-4)",
             fontFamily: "var(--font-jetbrains-mono, monospace)",
           }}
         >
@@ -121,7 +121,7 @@ function TaskRow({ task, onClick }: { task: Task; onClick: () => void }) {
 }
 
 function Empty({ text }: { text: string }) {
-  return <p className="text-xs py-3 text-center" style={{ color: "#52525b" }}>{text}</p>;
+  return <p className="text-xs py-3 text-center" style={{ color: "var(--a-text-4)" }}>{text}</p>;
 }
 
 function formatShortDate(date: string): string {

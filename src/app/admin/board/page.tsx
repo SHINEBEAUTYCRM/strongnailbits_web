@@ -8,11 +8,11 @@ const BoardClient = dynamic(() => import("./components/BoardClient"), {
     <div
       style={{
         height: "calc(100vh - 64px)",
-        background: "#0e0e14",
+        background: "var(--a-bg-card)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        color: "#52525b",
+        color: "var(--a-text-4)",
         fontSize: 14,
       }}
     >

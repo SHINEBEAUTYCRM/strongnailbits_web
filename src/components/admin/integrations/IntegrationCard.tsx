@@ -41,25 +41,25 @@ export function IntegrationCard({ service, status, onClick }: IntegrationCardPro
   return (
     <button
       onClick={onClick}
-      className="w-full text-left p-4 rounded-xl bg-[#111116] border border-[#1e1e2a] hover:border-[#27272a] transition-all group"
+      className="w-full text-left p-4 rounded-xl bg-[var(--a-bg-card)] border border-[var(--a-border)] hover:border-[var(--a-border)] transition-all group"
     >
       <div className="flex items-start gap-3">
         {/* Icon */}
-        <div className="w-9 h-9 rounded-lg bg-[#1a1a24] flex items-center justify-center flex-shrink-0 group-hover:bg-purple-500/10 transition-colors">
-          <Icon className="w-4.5 h-4.5 text-zinc-400 group-hover:text-purple-400 transition-colors" />
+        <div className="w-9 h-9 rounded-lg bg-[var(--a-bg-hover)] flex items-center justify-center flex-shrink-0 group-hover:bg-purple-500/10 transition-colors">
+          <Icon className="w-4.5 h-4.5 text-[var(--a-text-2)] group-hover:text-purple-400 transition-colors" />
         </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-sm font-medium text-white truncate">{service.name}</h3>
+            <h3 className="text-sm font-medium text-[var(--a-text)] truncate">{service.name}</h3>
             {isRequired && (
               <span className="text-[9px] px-1 py-0.5 rounded bg-purple-500/20 text-purple-300 font-medium flex-shrink-0">
                 REC
               </span>
             )}
           </div>
-          <p className="text-[11px] text-zinc-500 line-clamp-2 mb-2">{service.description}</p>
+          <p className="text-[11px] text-[var(--a-text-3)] line-clamp-2 mb-2">{service.description}</p>
 
           <div className="flex items-center justify-end">
             <IntegrationStatus

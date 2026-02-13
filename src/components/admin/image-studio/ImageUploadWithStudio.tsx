@@ -104,7 +104,7 @@ export function ImageUploadWithStudio({
       {label && (
         <label
           className="block text-xs font-medium mb-1.5"
-          style={{ color: '#71717a' }}
+          style={{ color: 'var(--a-text-3)' }}
         >
           {label}
         </label>
@@ -124,15 +124,15 @@ export function ImageUploadWithStudio({
           <div
             className="rounded-xl overflow-hidden"
             style={{
-              background: '#111116',
-              border: '1px solid rgba(255, 255, 255, 0.06)',
+              background: 'var(--a-bg-card)',
+              border: '1px solid var(--a-border)',
             }}
           >
             <img
               src={value}
               alt=""
               className="w-full max-h-[200px] object-contain"
-              style={{ background: '#0a0a10' }}
+              style={{ background: 'var(--a-bg)' }}
             />
           </div>
           <button
@@ -150,14 +150,14 @@ export function ImageUploadWithStudio({
         <div
           className="rounded-xl p-6 mb-3"
           style={{
-            background: '#111116',
-            border: '1px dashed #27272a',
+            background: 'var(--a-bg-card)',
+            border: '1px dashed var(--a-border)',
           }}
         >
           <div className="flex justify-center mb-3">
-            <ImageIcon className="w-10 h-10" style={{ color: '#1e1e2a' }} />
+            <ImageIcon className="w-10 h-10" style={{ color: 'var(--a-border)' }} />
           </div>
-          <p className="text-center text-xs" style={{ color: '#4b5563' }}>
+          <p className="text-center text-xs" style={{ color: 'var(--a-text-4)' }}>
             Оберіть спосіб додавання зображення
           </p>
         </div>
@@ -168,12 +168,12 @@ export function ImageUploadWithStudio({
         <div
           className="rounded-xl p-6 mb-3 flex flex-col items-center gap-3"
           style={{
-            background: '#111116',
-            border: '1px solid #1e1e2a',
+            background: 'var(--a-bg-card)',
+            border: '1px solid var(--a-border)',
           }}
         >
-          <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#a855f7' }} />
-          <p className="text-sm" style={{ color: '#a1a1aa' }}>
+          <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--a-accent)' }} />
+          <p className="text-sm" style={{ color: 'var(--a-text-2)' }}>
             Завантаження...
           </p>
         </div>
@@ -196,9 +196,9 @@ export function ImageUploadWithStudio({
           disabled={isUploading}
           className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all"
           style={{
-            background: '#141420',
-            border: '1px solid #1e1e2a',
-            color: '#a1a1aa',
+            background: 'var(--a-bg-input)',
+            border: '1px solid var(--a-border)',
+            color: 'var(--a-text-2)',
           }}
         >
           {isUploading ? (
@@ -222,7 +222,7 @@ export function ImageUploadWithStudio({
               style={{
                 background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(236, 72, 153, 0.15))',
                 border: '1px solid rgba(168, 85, 247, 0.2)',
-                color: '#c084fc',
+                color: 'var(--a-accent)',
               }}
             >
               <Sparkles className="w-4 h-4" />
@@ -234,7 +234,7 @@ export function ImageUploadWithStudio({
 
       <p
         className="text-center text-[10px] mt-2"
-        style={{ color: '#3f3f46' }}
+        style={{ color: 'var(--a-text-5)' }}
       >
         JPG, PNG, WebP · до 10 МБ
       </p>

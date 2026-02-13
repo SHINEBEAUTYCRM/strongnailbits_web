@@ -88,7 +88,7 @@ export default function Admin1CPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#a855f7" }} />
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--a-accent)" }} />
       </div>
     );
   }
@@ -109,15 +109,15 @@ export default function Admin1CPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold flex items-center gap-3" style={{ color: "#f4f4f5" }}>
-            <Activity className="w-6 h-6" style={{ color: "#a855f7" }} />
+          <h1 className="text-2xl font-semibold flex items-center gap-3" style={{ color: "var(--a-text)" }}>
+            <Activity className="w-6 h-6" style={{ color: "var(--a-accent)" }} />
             Моніторинг 1С
           </h1>
-          <p className="text-sm mt-1" style={{ color: "#52525b" }}>Запити, помилки, синхронізовані сутності. Оновлюється в реальному часі.</p>
+          <p className="text-sm mt-1" style={{ color: "var(--a-text-4)" }}>Запити, помилки, синхронізовані сутності. Оновлюється в реальному часі.</p>
         </div>
         <button onClick={() => { setLoading(true); fetchStats(); }}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm"
-          style={{ background: "#141420", border: "1px solid #1e1e2a", color: "#a1a1aa" }}>
+          style={{ background: "var(--a-bg-input)", border: "1px solid var(--a-border)", color: "var(--a-text-2)" }}>
           <RefreshCw className="w-4 h-4" /> Оновити
         </button>
       </div>
@@ -134,8 +134,8 @@ export default function Admin1CPage() {
       {/* Sync status */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Entity counts */}
-        <div className="rounded-xl p-5" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
-          <h3 className="text-sm font-medium mb-4" style={{ color: "#71717a" }}>Дані в системі</h3>
+        <div className="rounded-xl p-5" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+          <h3 className="text-sm font-medium mb-4" style={{ color: "var(--a-text-3)" }}>Дані в системі</h3>
           <div className="space-y-3">
             <EntityRow icon={Package} label="Товарів з 1С" value={entities.products_synced} dir="in" />
             <EntityRow icon={Users} label="Клієнтів з 1С" value={entities.customers_synced} dir="in" />
@@ -148,8 +148,8 @@ export default function Admin1CPage() {
         </div>
 
         {/* Last sync times */}
-        <div className="rounded-xl p-5" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
-          <h3 className="text-sm font-medium mb-4" style={{ color: "#71717a" }}>Остання синхронізація</h3>
+        <div className="rounded-xl p-5" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+          <h3 className="text-sm font-medium mb-4" style={{ color: "var(--a-text-3)" }}>Остання синхронізація</h3>
           <div className="space-y-4">
             <SyncRow label="Товари" endpoint="POST /products" data={last_sync.products} />
             <SyncRow label="Клієнти" endpoint="POST /customers" data={last_sync.customers} />
@@ -158,9 +158,9 @@ export default function Admin1CPage() {
 
           {!last_sync.products && !last_sync.customers && !last_sync.orders && (
             <div className="text-center py-6">
-              <Clock className="w-8 h-8 mx-auto mb-2" style={{ color: "#3f3f46" }} />
-              <p className="text-sm" style={{ color: "#3f3f46" }}>Синхронізація ще не запускалась</p>
-              <p className="text-xs mt-1" style={{ color: "#27272a" }}>Передайте ТЗ та API-токен програмісту 1С</p>
+              <Clock className="w-8 h-8 mx-auto mb-2" style={{ color: "var(--a-text-5)" }} />
+              <p className="text-sm" style={{ color: "var(--a-text-5)" }}>Синхронізація ще не запускалась</p>
+              <p className="text-xs mt-1" style={{ color: "var(--a-text-6)" }}>Передайте ТЗ та API-токен програмісту 1С</p>
             </div>
           )}
         </div>
@@ -186,12 +186,12 @@ export default function Admin1CPage() {
               <tbody>
                 {recent_errors.map((e) => (
                   <tr key={e.id} style={{ borderBottom: "1px solid #2a0a0a" }}>
-                    <td className="px-4 py-2 text-xs whitespace-nowrap" style={{ color: "#a1a1aa" }}>{fmtDate(e.created_at)}</td>
+                    <td className="px-4 py-2 text-xs whitespace-nowrap" style={{ color: "var(--a-text-2)" }}>{fmtDate(e.created_at)}</td>
                     <td className="px-4 py-2">
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded" style={{ color: METHOD_COLORS[e.method] || "#a1a1aa", background: "#141420" }}>
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded" style={{ color: METHOD_COLORS[e.method] || "var(--a-text-2)", background: "var(--a-bg-input)" }}>
                         {e.method}
                       </span>
-                      <span className="text-xs ml-2" style={{ color: "#d4d4d8" }}>{e.endpoint}</span>
+                      <span className="text-xs ml-2" style={{ color: "var(--a-text-name)" }}>{e.endpoint}</span>
                     </td>
                     <td className="px-4 py-2 text-center">
                       <span className="text-xs font-mono" style={{ color: "#f87171" }}>{e.status_code}</span>
@@ -206,34 +206,36 @@ export default function Admin1CPage() {
       )}
 
       {/* Recent requests */}
-      <div className="rounded-xl overflow-hidden" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
-        <div className="px-4 py-3" style={{ borderBottom: "1px solid #1e1e2a" }}>
-          <h3 className="text-sm font-medium" style={{ color: "#71717a" }}>Останні запити</h3>
+      <div className="rounded-xl overflow-hidden" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+        <div className="px-4 py-3" style={{ borderBottom: "1px solid var(--a-border)" }}>
+          <h3 className="text-sm font-medium" style={{ color: "var(--a-text-3)" }}>Останні запити</h3>
         </div>
         {recent_requests.length === 0 ? (
-          <div className="px-4 py-12 text-center" style={{ color: "#3f3f46" }}>
+          <div className="px-4 py-12 text-center" style={{ color: "var(--a-text-5)" }}>
             Запитів ще не було
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr style={{ borderBottom: "1px solid #1e1e2a" }}>
-                  <th className="text-left px-4 py-2 text-[10px] uppercase" style={{ color: "#3f3f46" }}>Час</th>
-                  <th className="text-left px-4 py-2 text-[10px] uppercase" style={{ color: "#3f3f46" }}>Ендпоінт</th>
-                  <th className="text-center px-4 py-2 text-[10px] uppercase" style={{ color: "#3f3f46" }}>Статус</th>
-                  <th className="text-right px-4 py-2 text-[10px] uppercase" style={{ color: "#3f3f46" }}>Час відп.</th>
+                <tr style={{ borderBottom: "1px solid var(--a-border)" }}>
+                  <th className="text-left px-4 py-2 text-[10px] uppercase" style={{ color: "var(--a-text-5)" }}>Час</th>
+                  <th className="text-left px-4 py-2 text-[10px] uppercase" style={{ color: "var(--a-text-5)" }}>Ендпоінт</th>
+                  <th className="text-center px-4 py-2 text-[10px] uppercase" style={{ color: "var(--a-text-5)" }}>Статус</th>
+                  <th className="text-right px-4 py-2 text-[10px] uppercase" style={{ color: "var(--a-text-5)" }}>Час відп.</th>
                 </tr>
               </thead>
               <tbody>
                 {recent_requests.map((r) => (
-                  <tr key={r.id} className="hover:bg-[#111118] transition-colors" style={{ borderBottom: "1px solid #141420" }}>
-                    <td className="px-4 py-2 text-xs whitespace-nowrap" style={{ color: "#a1a1aa" }}>{fmtDate(r.created_at)}</td>
+                  <tr key={r.id} className="transition-colors" style={{ borderBottom: "1px solid var(--a-border)" }}
+                    onMouseEnter={(ev) => { ev.currentTarget.style.background = "var(--a-bg-hover)"; }}
+                    onMouseLeave={(ev) => { ev.currentTarget.style.background = "transparent"; }}>
+                    <td className="px-4 py-2 text-xs whitespace-nowrap" style={{ color: "var(--a-text-2)" }}>{fmtDate(r.created_at)}</td>
                     <td className="px-4 py-2">
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded" style={{ color: METHOD_COLORS[r.method] || "#a1a1aa", background: "#141420" }}>
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded" style={{ color: METHOD_COLORS[r.method] || "var(--a-text-2)", background: "var(--a-bg-input)" }}>
                         {r.method}
                       </span>
-                      <span className="text-xs ml-2" style={{ color: "#d4d4d8" }}>{r.endpoint}</span>
+                      <span className="text-xs ml-2" style={{ color: "var(--a-text-name)" }}>{r.endpoint}</span>
                     </td>
                     <td className="px-4 py-2 text-center">
                       <span className="text-xs font-mono px-2 py-0.5 rounded-full"
@@ -243,7 +245,7 @@ export default function Admin1CPage() {
                         {r.status_code}
                       </span>
                     </td>
-                    <td className="px-4 py-2 text-right text-xs font-mono" style={{ color: "#71717a" }}>
+                    <td className="px-4 py-2 text-right text-xs font-mono" style={{ color: "var(--a-text-3)" }}>
                       {r.response_time_ms ? `${r.response_time_ms}ms` : "—"}
                     </td>
                   </tr>
@@ -259,10 +261,10 @@ export default function Admin1CPage() {
 
 function StatCard({ icon: Icon, label, value, color }: { icon: typeof Activity; label: string; value: number | string; color: string }) {
   return (
-    <div className="rounded-xl p-4" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
+    <div className="rounded-xl p-4" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
       <div className="flex items-center gap-2 mb-2">
         <Icon className="w-4 h-4" style={{ color }} />
-        <span className="text-[11px] uppercase tracking-wider" style={{ color: "#52525b" }}>{label}</span>
+        <span className="text-[11px] uppercase tracking-wider" style={{ color: "var(--a-text-4)" }}>{label}</span>
       </div>
       <p className="text-2xl font-semibold" style={{ color }}>{value}</p>
     </div>
@@ -272,12 +274,12 @@ function StatCard({ icon: Icon, label, value, color }: { icon: typeof Activity; 
 function EntityRow({ icon: Icon, label, value, dir, warn }: { icon: typeof Package; label: string; value: number; dir: "in" | "out" | "both"; warn?: boolean }) {
   return (
     <div className="flex items-center gap-3">
-      <Icon className="w-4 h-4 shrink-0" style={{ color: warn ? "#fbbf24" : "#52525b" }} />
-      <span className="text-sm flex-1" style={{ color: "#a1a1aa" }}>{label}</span>
+      <Icon className="w-4 h-4 shrink-0" style={{ color: warn ? "#fbbf24" : "var(--a-text-4)" }} />
+      <span className="text-sm flex-1" style={{ color: "var(--a-text-2)" }}>{label}</span>
       {dir === "in" && <ArrowDownLeft className="w-3 h-3" style={{ color: "#4ade80" }} />}
       {dir === "out" && <ArrowUpRight className="w-3 h-3" style={{ color: "#60a5fa" }} />}
-      {dir === "both" && <RefreshCw className="w-3 h-3" style={{ color: "#a855f7" }} />}
-      <span className="text-sm font-medium tabular-nums" style={{ color: warn ? "#fbbf24" : "#e4e4e7" }}>{value}</span>
+      {dir === "both" && <RefreshCw className="w-3 h-3" style={{ color: "var(--a-accent)" }} />}
+      <span className="text-sm font-medium tabular-nums" style={{ color: warn ? "#fbbf24" : "var(--a-text-body)" }}>{value}</span>
     </div>
   );
 }
@@ -287,10 +289,10 @@ function SyncRow({ label, endpoint, data }: { label: string; endpoint: string; d
     return (
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm" style={{ color: "#a1a1aa" }}>{label}</p>
-          <p className="text-[10px] font-mono" style={{ color: "#3f3f46" }}>{endpoint}</p>
+          <p className="text-sm" style={{ color: "var(--a-text-2)" }}>{label}</p>
+          <p className="text-[10px] font-mono" style={{ color: "var(--a-text-5)" }}>{endpoint}</p>
         </div>
-        <span className="text-xs" style={{ color: "#3f3f46" }}>Ніколи</span>
+        <span className="text-xs" style={{ color: "var(--a-text-5)" }}>Ніколи</span>
       </div>
     );
   }
@@ -300,13 +302,13 @@ function SyncRow({ label, endpoint, data }: { label: string; endpoint: string; d
   return (
     <div className="flex items-center justify-between">
       <div>
-        <p className="text-sm flex items-center gap-2" style={{ color: "#a1a1aa" }}>
+        <p className="text-sm flex items-center gap-2" style={{ color: "var(--a-text-2)" }}>
           {label}
           {ok ? <CheckCircle className="w-3.5 h-3.5" style={{ color: "#4ade80" }} /> : <XCircle className="w-3.5 h-3.5" style={{ color: "#f87171" }} />}
         </p>
-        <p className="text-[10px] font-mono" style={{ color: "#3f3f46" }}>{endpoint}</p>
+        <p className="text-[10px] font-mono" style={{ color: "var(--a-text-5)" }}>{endpoint}</p>
       </div>
-      <span className="text-xs" style={{ color: ok ? "#71717a" : "#f87171" }}>{timeAgo(data.created_at)}</span>
+      <span className="text-xs" style={{ color: ok ? "var(--a-text-3)" : "#f87171" }}>{timeAgo(data.created_at)}</span>
     </div>
   );
 }

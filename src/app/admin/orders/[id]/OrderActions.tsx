@@ -99,8 +99,8 @@ export function OrderActions({
       {success && <div className="px-4 py-2.5 rounded-lg text-sm" style={{ color: "#4ade80", background: "#052e16", border: "1px solid #166534" }}>{success}</div>}
 
       {/* Quick status progression */}
-      <div className="rounded-xl p-5" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
-        <h3 className="text-sm font-medium mb-4" style={{ color: "#a1a1aa" }}>Статус замовлення</h3>
+      <div className="rounded-xl p-5" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+        <h3 className="text-sm font-medium mb-4" style={{ color: "var(--a-text-2)" }}>Статус замовлення</h3>
 
         {/* Status pipeline */}
         <div className="flex items-center gap-1 mb-4 overflow-x-auto pb-1">
@@ -114,17 +114,17 @@ export function OrderActions({
                 style={isActive
                   ? { color: s.color, background: s.bg, border: `1px solid ${s.color}40` }
                   : isPast
-                    ? { color: s.color, background: "transparent", border: "1px solid #1e1e2a", opacity: 0.6 }
-                    : { color: "#52525b", background: "transparent", border: "1px solid #1e1e2a" }}>
+                    ? { color: s.color, background: "transparent", border: "1px solid var(--a-border)", opacity: 0.6 }
+                    : { color: "var(--a-text-4)", background: "transparent", border: "1px solid var(--a-border)" }}>
                 <Icon className="w-3.5 h-3.5" />
                 {s.label}
               </button>
             );
           })}
-          <div className="w-px h-6 shrink-0" style={{ background: "#27272a" }} />
+          <div className="w-px h-6 shrink-0" style={{ background: "var(--a-border)" }} />
           <button onClick={() => quickStatus("cancelled")} disabled={saving || status === "cancelled"}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all shrink-0"
-            style={status === "cancelled" ? { color: "#f87171", background: "#450a0a", border: "1px solid #7f1d1d" } : { color: "#52525b", background: "transparent", border: "1px solid #1e1e2a" }}>
+            style={status === "cancelled" ? { color: "#f87171", background: "#450a0a", border: "1px solid #7f1d1d" } : { color: "var(--a-text-4)", background: "transparent", border: "1px solid var(--a-border)" }}>
             <XCircle className="w-3.5 h-3.5" /> Скасувати
           </button>
         </div>
@@ -144,29 +144,29 @@ export function OrderActions({
       </div>
 
       {/* TTN */}
-      <div className="rounded-xl p-5" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
-        <h3 className="text-sm font-medium mb-3" style={{ color: "#a1a1aa" }}>ТТН Нова Пошта</h3>
+      <div className="rounded-xl p-5" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+        <h3 className="text-sm font-medium mb-3" style={{ color: "var(--a-text-2)" }}>ТТН Нова Пошта</h3>
         <input type="text" value={ttn} onChange={(e) => setTtn(e.target.value)} placeholder="20450000000000"
           className="w-full px-3 py-2.5 rounded-lg text-sm outline-none font-mono transition-colors"
-          style={{ background: "#111116", border: "1px solid #1e1e2a", color: "#e4e4e7", letterSpacing: "0.5px" }}
-          onFocus={(e) => { e.currentTarget.style.borderColor = "#7c3aed"; }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = "#1e1e2a"; }} />
+          style={{ background: "var(--a-bg-input)", border: "1px solid var(--a-border)", color: "var(--a-text-body)", letterSpacing: "0.5px" }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = "var(--a-accent-btn)"; }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = "var(--a-border)"; }} />
         {ttn && (
           <a href={`https://novaposhta.ua/tracking/?cargo_number=${ttn}`} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 mt-2 text-xs" style={{ color: "#a855f7" }}>
+            className="inline-flex items-center gap-1.5 mt-2 text-xs" style={{ color: "var(--a-accent)" }}>
             <Truck className="w-3.5 h-3.5" /> Відстежити на Новій Пошті →
           </a>
         )}
       </div>
 
       {/* Payment */}
-      <div className="rounded-xl p-5" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
-        <h3 className="text-sm font-medium mb-3" style={{ color: "#a1a1aa" }}>Оплата</h3>
+      <div className="rounded-xl p-5" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+        <h3 className="text-sm font-medium mb-3" style={{ color: "var(--a-text-2)" }}>Оплата</h3>
         <div className="flex gap-2">
           {PAYMENT_STATUSES.map((ps) => (
             <button key={ps.value} onClick={() => setPaymentStatus(ps.value)}
               className="flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all text-center"
-              style={paymentStatus === ps.value ? { color: ps.color, background: ps.bg, border: `1px solid ${ps.color}40` } : { color: "#52525b", background: "transparent", border: "1px solid #1e1e2a" }}>
+              style={paymentStatus === ps.value ? { color: ps.color, background: ps.bg, border: `1px solid ${ps.color}40` } : { color: "var(--a-text-4)", background: "transparent", border: "1px solid var(--a-border)" }}>
               {ps.label}
             </button>
           ))}
@@ -174,36 +174,36 @@ export function OrderActions({
       </div>
 
       {/* Financials */}
-      <div className="rounded-xl p-5" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
-        <h3 className="text-sm font-medium mb-3" style={{ color: "#a1a1aa" }}>Фінанси</h3>
+      <div className="rounded-xl p-5" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+        <h3 className="text-sm font-medium mb-3" style={{ color: "var(--a-text-2)" }}>Фінанси</h3>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>Доставка (₴)</label>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--a-text-3)" }}>Доставка (₴)</label>
             <input type="number" value={shippingCost} onChange={(e) => setShippingCost(e.target.value)}
               className="w-full px-3 py-2 rounded-lg text-sm outline-none font-mono transition-colors"
-              style={{ background: "#111116", border: "1px solid #1e1e2a", color: "#e4e4e7" }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = "#7c3aed"; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = "#1e1e2a"; }} />
+              style={{ background: "var(--a-bg-input)", border: "1px solid var(--a-border)", color: "var(--a-text-body)" }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = "var(--a-accent-btn)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--a-border)"; }} />
           </div>
           <div>
-            <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>Знижка (₴)</label>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--a-text-3)" }}>Знижка (₴)</label>
             <input type="number" value={discount} onChange={(e) => setDiscount(e.target.value)}
               className="w-full px-3 py-2 rounded-lg text-sm outline-none font-mono transition-colors"
-              style={{ background: "#111116", border: "1px solid #1e1e2a", color: "#e4e4e7" }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = "#7c3aed"; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = "#1e1e2a"; }} />
+              style={{ background: "var(--a-bg-input)", border: "1px solid var(--a-border)", color: "var(--a-text-body)" }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = "var(--a-accent-btn)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--a-border)"; }} />
           </div>
         </div>
       </div>
 
       {/* Notes */}
-      <div className="rounded-xl p-5" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
-        <h3 className="text-sm font-medium mb-3" style={{ color: "#a1a1aa" }}>Примітки</h3>
+      <div className="rounded-xl p-5" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+        <h3 className="text-sm font-medium mb-3" style={{ color: "var(--a-text-2)" }}>Примітки</h3>
         <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Внутрішні нотатки до замовлення..."
           className="w-full px-3 py-2.5 rounded-lg text-sm outline-none resize-y transition-colors"
-          style={{ background: "#111116", border: "1px solid #1e1e2a", color: "#e4e4e7" }}
-          onFocus={(e) => { e.currentTarget.style.borderColor = "#7c3aed"; }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = "#1e1e2a"; }} />
+          style={{ background: "var(--a-bg-input)", border: "1px solid var(--a-border)", color: "var(--a-text-body)" }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = "var(--a-accent-btn)"; }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = "var(--a-border)"; }} />
       </div>
 
       {/* Save button */}

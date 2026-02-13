@@ -31,7 +31,7 @@ export function ExportButton({ entity, label = "Експорт CSV" }: { entity:
       onClick={handleExport}
       disabled={loading}
       className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-50"
-      style={{ background: "#111116", color: "#a1a1aa", border: "1px solid #1e1e2a" }}
+      style={{ background: "var(--a-bg-card)", color: "var(--a-text-2)", border: "1px solid var(--a-border)" }}
     >
       {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
       {label}

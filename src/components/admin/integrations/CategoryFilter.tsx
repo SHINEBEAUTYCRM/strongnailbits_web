@@ -57,13 +57,13 @@ function FilterButton({
       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
         isActive
           ? "bg-purple-600 text-white"
-          : "bg-[#111116] text-zinc-400 border border-[#1e1e2a] hover:border-[#27272a] hover:text-zinc-300"
+          : "bg-[var(--a-bg-card)] text-[var(--a-text-2)] border border-[var(--a-border)] hover:border-[var(--a-border)] hover:text-[var(--a-text-body)]"
       }`}
     >
       {label}
       <span
         className={`text-[10px] px-1 rounded ${
-          isActive ? "bg-purple-500 text-white" : "bg-zinc-800 text-zinc-500"
+          isActive ? "bg-purple-500 text-white" : "bg-[var(--a-bg-hover)] text-[var(--a-text-3)]"
         }`}
       >
         {count}

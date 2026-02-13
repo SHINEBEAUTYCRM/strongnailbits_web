@@ -237,15 +237,15 @@ export function TaskModal({ task, teamMembers, currentUserId, onClose, onUpdate,
         style={{
           maxWidth: 560,
           maxHeight: "90vh",
-          background: "#0c0c12",
-          border: "1px solid rgba(255,255,255,0.06)",
+          background: "var(--a-bg)",
+          border: "1px solid var(--a-border)",
           animation: "modalIn 0.2s ease-out",
         }}
       >
         {/* Header */}
         <div
           className="flex items-center justify-between px-5 py-3"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+          style={{ borderBottom: "1px solid var(--a-border)" }}
         >
           <div className="flex items-center gap-2">
             {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#a855f7" }} />}
@@ -254,9 +254,9 @@ export function TaskModal({ task, teamMembers, currentUserId, onClose, onUpdate,
             <button
               onClick={handleDelete}
               className="p-1.5 rounded-md transition-colors"
-              style={{ color: "#52525b" }}
+              style={{ color: "var(--a-text-4)" }}
               onMouseEnter={(e) => { e.currentTarget.style.color = "#ef4444"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = "#52525b"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "var(--a-text-4)"; }}
               title="Видалити"
             >
               <Trash2 className="w-4 h-4" />
@@ -264,9 +264,9 @@ export function TaskModal({ task, teamMembers, currentUserId, onClose, onUpdate,
             <button
               onClick={onClose}
               className="p-1.5 rounded-md transition-colors"
-              style={{ color: "#52525b" }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = "#e4e4e7"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = "#52525b"; }}
+              style={{ color: "var(--a-text-4)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "var(--a-text-body)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "var(--a-text-4)"; }}
             >
               <X className="w-4 h-4" />
             </button>
@@ -281,19 +281,19 @@ export function TaskModal({ task, teamMembers, currentUserId, onClose, onUpdate,
             onChange={(e) => setTitle(e.target.value)}
             onBlur={handleTitleBlur}
             className="w-full bg-transparent border-none outline-none text-lg font-semibold"
-            style={{ color: "#e4e4e7" }}
+            style={{ color: "var(--a-text-body)" }}
           />
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 px-5" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="flex gap-1 px-5" style={{ borderBottom: "1px solid var(--a-border)" }}>
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-colors relative"
               style={{
-                color: activeTab === tab.id ? "#a855f7" : "#71717a",
+                color: activeTab === tab.id ? "#a855f7" : "var(--a-text-3)",
               }}
             >
               {tab.icon}
@@ -383,9 +383,9 @@ function DetailsTab({
           rows={3}
           className="w-full mt-1.5 px-3 py-2 rounded-lg text-sm outline-none resize-none"
           style={{
-            background: "#111116",
-            border: "1px solid rgba(255,255,255,0.06)",
-            color: "#d4d4d8",
+            background: "var(--a-bg-card)",
+            border: "1px solid var(--a-border)",
+            color: "var(--a-text-body)",
           }}
         />
       </div>
@@ -398,9 +398,9 @@ function DetailsTab({
           onChange={(e) => onSaveField("assignee_id", e.target.value || null)}
           className="w-full mt-1.5 px-3 py-2 rounded-lg text-sm outline-none cursor-pointer"
           style={{
-            background: "#111116",
-            border: "1px solid rgba(255,255,255,0.06)",
-            color: "#d4d4d8",
+            background: "var(--a-bg-card)",
+            border: "1px solid var(--a-border)",
+            color: "var(--a-text-body)",
           }}
         >
           <option value="">Не призначено</option>
@@ -420,9 +420,9 @@ function DetailsTab({
               onClick={() => onSaveField("priority", p.id)}
               className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
               style={{
-                background: task.priority === p.id ? `${p.color}18` : "#111116",
-                border: `1px solid ${task.priority === p.id ? `${p.color}40` : "rgba(255,255,255,0.06)"}`,
-                color: task.priority === p.id ? p.color : "#71717a",
+                background: task.priority === p.id ? `${p.color}18` : "var(--a-bg-card)",
+                border: `1px solid ${task.priority === p.id ? `${p.color}40` : "var(--a-border)"}`,
+                color: task.priority === p.id ? p.color : "var(--a-text-3)",
               }}
             >
               {p.emoji} {p.label}
@@ -441,9 +441,9 @@ function DetailsTab({
               onClick={() => onSaveField("column_id", col.id)}
               className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
               style={{
-                background: task.column_id === col.id ? `${col.color}18` : "#111116",
-                border: `1px solid ${task.column_id === col.id ? `${col.color}40` : "rgba(255,255,255,0.06)"}`,
-                color: task.column_id === col.id ? col.color : "#71717a",
+                background: task.column_id === col.id ? `${col.color}18` : "var(--a-bg-card)",
+                border: `1px solid ${task.column_id === col.id ? `${col.color}40` : "var(--a-border)"}`,
+                color: task.column_id === col.id ? col.color : "var(--a-text-3)",
               }}
             >
               {col.icon} {col.label}
@@ -461,10 +461,9 @@ function DetailsTab({
           onChange={(e) => onSaveField("due_date", e.target.value || null)}
           className="mt-1.5 px-3 py-2 rounded-lg text-sm outline-none"
           style={{
-            background: "#111116",
-            border: "1px solid rgba(255,255,255,0.06)",
-            color: "#d4d4d8",
-            colorScheme: "dark",
+            background: "var(--a-bg-card)",
+            border: "1px solid var(--a-border)",
+            color: "var(--a-text-body)",
           }}
         />
       </div>
@@ -479,9 +478,9 @@ function DetailsTab({
           placeholder="#SHINE-XXXX"
           className="w-full mt-1.5 px-3 py-2 rounded-lg text-sm outline-none"
           style={{
-            background: "#111116",
-            border: "1px solid rgba(255,255,255,0.06)",
-            color: "#d4d4d8",
+            background: "var(--a-bg-card)",
+            border: "1px solid var(--a-border)",
+            color: "var(--a-text-body)",
             fontFamily: "var(--font-jetbrains-mono, 'JetBrains Mono'), monospace",
           }}
         />
@@ -499,9 +498,9 @@ function DetailsTab({
                 onClick={() => onTagToggle(tag)}
                 className="px-2 py-1 rounded-md text-[11px] font-medium transition-all"
                 style={{
-                  background: active ? "rgba(168,85,247,0.12)" : "#111116",
-                  border: `1px solid ${active ? "rgba(168,85,247,0.3)" : "rgba(255,255,255,0.06)"}`,
-                  color: active ? "#a78bfa" : "#71717a",
+                  background: active ? "rgba(168,85,247,0.12)" : "var(--a-bg-card)",
+                  border: `1px solid ${active ? "rgba(168,85,247,0.3)" : "var(--a-border)"}`,
+                  color: active ? "#a78bfa" : "var(--a-text-3)",
                 }}
               >
                 {tag}
@@ -515,14 +514,14 @@ function DetailsTab({
       <div>
         <FieldLabel icon={<Check className="w-3 h-3" />} label="Чеклист" />
         {loadingChecklist ? (
-          <Loader2 className="w-4 h-4 animate-spin mt-2" style={{ color: "#52525b" }} />
+          <Loader2 className="w-4 h-4 animate-spin mt-2" style={{ color: "var(--a-text-4)" }} />
         ) : (
           <div className="flex flex-col gap-1 mt-1.5">
             {checklist.map((item) => (
               <label
                 key={item.id}
                 className="flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer group"
-                style={{ background: "rgba(255,255,255,0.02)" }}
+                style={{ background: "var(--a-bg-hover)" }}
               >
                 <input
                   type="checkbox"
@@ -533,7 +532,7 @@ function DetailsTab({
                 <span
                   className="text-sm"
                   style={{
-                    color: item.done ? "#52525b" : "#d4d4d8",
+                    color: item.done ? "var(--a-text-4)" : "var(--a-text-body)",
                     textDecoration: item.done ? "line-through" : "none",
                   }}
                 >
@@ -548,12 +547,12 @@ function DetailsTab({
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); onAddCheckItem(); } }}
                 placeholder="Додати пункт..."
                 className="flex-1 px-2 py-1.5 rounded-lg text-sm bg-transparent outline-none"
-                style={{ color: "#d4d4d8", border: "1px solid rgba(255,255,255,0.04)" }}
+                style={{ color: "var(--a-text-body)", border: "1px solid var(--a-border)" }}
               />
               <button
                 onClick={onAddCheckItem}
                 className="p-1 rounded"
-                style={{ color: "#71717a" }}
+                style={{ color: "var(--a-text-3)" }}
               >
                 <Plus className="w-4 h-4" />
               </button>
@@ -593,10 +592,10 @@ function CommentsTab({
     <div className="flex flex-col h-full">
       {loading ? (
         <div className="flex justify-center py-8">
-          <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#52525b" }} />
+          <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--a-text-4)" }} />
         </div>
       ) : comments.length === 0 ? (
-        <p className="text-center text-xs py-8" style={{ color: "#52525b" }}>
+        <p className="text-center text-xs py-8" style={{ color: "var(--a-text-4)" }}>
           Коментарів поки немає
         </p>
       ) : (
@@ -622,14 +621,14 @@ function CommentsTab({
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium" style={{ color: "#d4d4d8" }}>
+                  <span className="text-xs font-medium" style={{ color: "var(--a-text-body)" }}>
                     {c.author?.name || "Невідомий"}
                   </span>
-                  <span className="text-[10px]" style={{ color: "#52525b", fontFamily: "var(--font-jetbrains-mono, monospace)" }}>
+                  <span className="text-[10px]" style={{ color: "var(--a-text-4)", fontFamily: "var(--font-jetbrains-mono, monospace)" }}>
                     {formatTime(c.created_at)}
                   </span>
                 </div>
-                <p className="text-sm mt-0.5" style={{ color: "#a1a1aa" }}>
+                <p className="text-sm mt-0.5" style={{ color: "var(--a-text-2)" }}>
                   {c.text}
                 </p>
               </div>
@@ -641,7 +640,7 @@ function CommentsTab({
       {/* Comment input */}
       <div
         className="flex items-center gap-2 mt-auto pt-3"
-        style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+        style={{ borderTop: "1px solid var(--a-border)" }}
       >
         <input
           value={newComment}
@@ -650,9 +649,9 @@ function CommentsTab({
           placeholder="Написати коментар..."
           className="flex-1 px-3 py-2 rounded-lg text-sm outline-none"
           style={{
-            background: "#111116",
-            border: "1px solid rgba(255,255,255,0.06)",
-            color: "#d4d4d8",
+            background: "var(--a-bg-card)",
+            border: "1px solid var(--a-border)",
+            color: "var(--a-text-body)",
           }}
         />
         <button
@@ -691,14 +690,14 @@ function ActivityTab({ activity, loading }: { activity: TaskActivity[]; loading:
   if (loading) {
     return (
       <div className="flex justify-center py-8">
-        <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#52525b" }} />
+        <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--a-text-4)" }} />
       </div>
     );
   }
 
   if (activity.length === 0) {
     return (
-      <p className="text-center text-xs py-8" style={{ color: "#52525b" }}>
+      <p className="text-center text-xs py-8" style={{ color: "var(--a-text-4)" }}>
         Поки немає активності
       </p>
     );
@@ -718,18 +717,18 @@ function ActivityTab({ activity, loading }: { activity: TaskActivity[]; loading:
           <div key={a.id} className="flex items-start gap-2.5">
             <div
               className="shrink-0 w-1.5 h-1.5 rounded-full mt-1.5"
-              style={{ background: "#52525b" }}
+              style={{ background: "var(--a-text-4)" }}
             />
             <div>
-              <span className="text-xs" style={{ color: "#a1a1aa" }}>
-                <span style={{ color: "#d4d4d8", fontWeight: 500 }}>
+              <span className="text-xs" style={{ color: "var(--a-text-2)" }}>
+                <span style={{ color: "var(--a-text-body)", fontWeight: 500 }}>
                   {a.actor?.name || "Система"}
                 </span>{" "}
                 {detail}
               </span>
               <div
                 className="text-[10px] mt-0.5"
-                style={{ color: "#52525b", fontFamily: "var(--font-jetbrains-mono, monospace)" }}
+                style={{ color: "var(--a-text-4)", fontFamily: "var(--font-jetbrains-mono, monospace)" }}
               >
                 {formatTime(a.created_at)}
               </div>
@@ -748,8 +747,8 @@ function ActivityTab({ activity, loading }: { activity: TaskActivity[]; loading:
 function FieldLabel({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
     <div className="flex items-center gap-1.5">
-      <span style={{ color: "#52525b" }}>{icon}</span>
-      <span className="text-xs font-medium" style={{ color: "#71717a" }}>{label}</span>
+      <span style={{ color: "var(--a-text-4)" }}>{icon}</span>
+      <span className="text-xs font-medium" style={{ color: "var(--a-text-3)" }}>{label}</span>
     </div>
   );
 }

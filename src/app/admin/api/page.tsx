@@ -148,8 +148,8 @@ export default function ApiHubPage() {
             <Cable className="h-5 w-5 text-purple-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">API & Інтеграції</h1>
-            <p className="text-sm text-zinc-500">Центр управління зовнішніми підключеннями</p>
+            <h1 className="text-2xl font-bold" style={{ color: "var(--a-text)" }}>API & Інтеграції</h1>
+            <p className="text-sm" style={{ color: "var(--a-text-3)" }}>Центр управління зовнішніми підключеннями</p>
           </div>
         </div>
       </div>
@@ -158,8 +158,8 @@ export default function ApiHubPage() {
       {stats.length > 0 && (
         <div className="mb-8 grid grid-cols-2 md:grid-cols-4 gap-3">
           {stats.map(s => (
-            <div key={s.label} className="rounded-xl bg-[#111116] border border-[#1e1e2a] p-4">
-              <p className="text-[10px] font-medium text-zinc-600 uppercase tracking-wide">{s.label}</p>
+            <div key={s.label} className="rounded-xl p-4" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+              <p className="text-[10px] font-medium uppercase tracking-wide" style={{ color: "var(--a-text-4)" }}>{s.label}</p>
               <p className={`mt-1 text-2xl font-bold ${
                 s.color === "red" ? "text-red-400" :
                 s.color === "emerald" ? "text-emerald-400" :
@@ -173,8 +173,8 @@ export default function ApiHubPage() {
       )}
 
       {/* How it works */}
-      <div className="mb-8 rounded-2xl bg-[#111116] border border-[#1e1e2a] p-6">
-        <h2 className="text-sm font-semibold text-white mb-4">Як підключити зовнішню систему за 4 кроки</h2>
+      <div className="mb-8 rounded-2xl p-6" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+        <h2 className="text-sm font-semibold mb-4" style={{ color: "var(--a-text)" }}>Як підключити зовнішню систему за 4 кроки</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {FLOW_STEPS.map(step => (
             <div key={step.step} className="flex items-start gap-3">
@@ -182,8 +182,8 @@ export default function ApiHubPage() {
                 <step.icon className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-white">{step.step}. {step.title}</p>
-                <p className="mt-0.5 text-[11px] text-zinc-500 leading-relaxed">{step.desc}</p>
+                <p className="text-xs font-semibold" style={{ color: "var(--a-text)" }}>{step.step}. {step.title}</p>
+                <p className="mt-0.5 text-[11px] leading-relaxed" style={{ color: "var(--a-text-3)" }}>{step.desc}</p>
               </div>
             </div>
           ))}
@@ -209,21 +209,21 @@ export default function ApiHubPage() {
                     <Icon className={`h-5 w-5 ${c.text}`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-semibold text-white">{section.title}</h3>
-                    <p className="text-xs text-zinc-500 mt-0.5">{section.description}</p>
+                    <h3 className="text-sm font-semibold" style={{ color: "var(--a-text)" }}>{section.title}</h3>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--a-text-3)" }}>{section.description}</p>
                   </div>
                 </div>
 
                 {/* Expandable description */}
                 <button
                   onClick={() => setExpanded(isExpanded ? null : section.id)}
-                  className="mb-3 text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors"
+                  className="mb-3 text-[11px] transition-colors" style={{ color: "var(--a-text-4)" }}
                 >
                   {isExpanded ? "Сховати деталі ▲" : "Детальніше ▼"}
                 </button>
 
                 {isExpanded && (
-                  <p className="mb-3 text-xs text-zinc-400 leading-relaxed bg-black/20 rounded-lg p-3">
+                  <p className="mb-3 text-xs leading-relaxed bg-black/20 rounded-lg p-3" style={{ color: "var(--a-text-2)" }}>
                     {section.longDescription}
                   </p>
                 )}
@@ -252,30 +252,30 @@ export default function ApiHubPage() {
       </div>
 
       {/* Architecture hint */}
-      <div className="mt-8 rounded-2xl bg-[#111116] border border-[#1e1e2a] p-6">
-        <h2 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+      <div className="mt-8 rounded-2xl p-6" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+        <h2 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: "var(--a-text)" }}>
           <Shield className="h-4 w-4 text-purple-400" />
           Архітектура безпеки
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-[11px] text-zinc-500">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-[11px]" style={{ color: "var(--a-text-3)" }}>
           <div className="flex items-start gap-2">
             <Key className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
             <div>
-              <p className="font-medium text-zinc-300">Bearer Token + SHA-256</p>
+              <p className="font-medium" style={{ color: "var(--a-text)" }}>Bearer Token + SHA-256</p>
               <p className="mt-0.5">Кожен токен хешується. Оригінал показується тільки один раз при створенні.</p>
             </div>
           </div>
           <div className="flex items-start gap-2">
             <Shield className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
             <div>
-              <p className="font-medium text-zinc-300">Permissions + IP Whitelist</p>
+              <p className="font-medium" style={{ color: "var(--a-text)" }}>Permissions + IP Whitelist</p>
               <p className="mt-0.5">Кожен токен бачить тільки те, що дозволено. Можна обмежити по IP.</p>
             </div>
           </div>
           <div className="flex items-start gap-2">
             <Activity className="h-3.5 w-3.5 text-blue-400 shrink-0 mt-0.5" />
             <div>
-              <p className="font-medium text-zinc-300">Rate Limit + Логування</p>
+              <p className="font-medium" style={{ color: "var(--a-text)" }}>Rate Limit + Логування</p>
               <p className="mt-0.5">10–300 запитів/хв на токен. Кожен запит логується з IP та часом відповіді.</p>
             </div>
           </div>

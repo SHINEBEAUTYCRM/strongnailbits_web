@@ -32,7 +32,7 @@ export function IntegrationLogs({ slug }: IntegrationLogsProps) {
 
   if (loading) {
     return (
-      <div className="py-8 text-center text-zinc-500 text-sm">
+      <div className="py-8 text-center text-[var(--a-text-3)] text-sm">
         Завантаження логів...
       </div>
     );
@@ -40,7 +40,7 @@ export function IntegrationLogs({ slug }: IntegrationLogsProps) {
 
   if (logs.length === 0) {
     return (
-      <div className="py-8 text-center text-zinc-600 text-sm">
+      <div className="py-8 text-center text-[var(--a-text-4)] text-sm">
         Логів ще немає
       </div>
     );
@@ -51,7 +51,7 @@ export function IntegrationLogs({ slug }: IntegrationLogsProps) {
       {logs.map(log => (
         <div
           key={log.id}
-          className="flex items-start gap-3 p-3 rounded-lg bg-[#0c0c12] border border-[#1a1a24]"
+          className="flex items-start gap-3 p-3 rounded-lg bg-[var(--a-bg)] border border-[var(--a-border)]"
         >
           {/* Status dot */}
           <div className="mt-1.5 flex-shrink-0">
@@ -71,18 +71,18 @@ export function IntegrationLogs({ slug }: IntegrationLogsProps) {
           {/* Content */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-zinc-300">{log.action}</span>
+              <span className="text-xs font-medium text-[var(--a-text-body)]">{log.action}</span>
               {log.duration_ms && (
-                <span className="text-[10px] text-zinc-600">{log.duration_ms}ms</span>
+                <span className="text-[10px] text-[var(--a-text-4)]">{log.duration_ms}ms</span>
               )}
             </div>
             {log.message && (
-              <p className="text-[11px] text-zinc-500 mt-0.5 truncate">{log.message}</p>
+              <p className="text-[11px] text-[var(--a-text-3)] mt-0.5 truncate">{log.message}</p>
             )}
           </div>
 
           {/* Time */}
-          <span className="text-[10px] text-zinc-600 flex-shrink-0">
+          <span className="text-[10px] text-[var(--a-text-4)] flex-shrink-0">
             {formatTime(log.created_at)}
           </span>
         </div>

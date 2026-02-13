@@ -20,19 +20,19 @@ export function BannerTypeSelector({ value, onChange }: BannerTypeSelectorProps)
             onClick={() => onChange(opt.value)}
             className="flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl text-center transition-all"
             style={{
-              background: isActive ? 'rgba(168, 85, 247, 0.1)' : 'rgba(255, 255, 255, 0.02)',
-              border: `1px solid ${isActive ? 'rgba(168, 85, 247, 0.4)' : 'rgba(255, 255, 255, 0.06)'}`,
+              background: isActive ? 'rgba(168, 85, 247, 0.1)' : 'var(--a-bg-hover)',
+              border: `1px solid ${isActive ? 'rgba(168, 85, 247, 0.4)' : 'var(--a-border)'}`,
               boxShadow: isActive ? '0 0 20px rgba(168, 85, 247, 0.1)' : 'none',
             }}
           >
             <span className="text-xl">{opt.icon}</span>
-            <span className="text-xs font-medium" style={{ color: isActive ? '#e5e7eb' : '#9ca3af' }}>
+            <span className="text-xs font-medium" style={{ color: isActive ? 'var(--a-text-body)' : 'var(--a-text-2)' }}>
               {opt.label}
             </span>
             <span
               className="text-[9px]"
               style={{
-                color: '#6b7280',
+                color: 'var(--a-text-3)',
                 fontFamily: 'JetBrains Mono, monospace',
               }}
             >

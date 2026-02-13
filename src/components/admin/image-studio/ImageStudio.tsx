@@ -144,8 +144,8 @@ export function ImageStudio({
             className="absolute top-0 left-0 right-0 h-12 flex items-center justify-between px-4"
             style={{
               zIndex: 10,
-              background: 'rgba(8, 8, 12, 0.98)',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+              background: 'var(--a-bg)',
+              borderBottom: '1px solid var(--a-border)',
             }}
           >
             <div className="flex items-center gap-3">
@@ -155,15 +155,15 @@ export function ImageStudio({
                   background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(236, 72, 153, 0.15))',
                 }}
               >
-                <Sparkles className="w-3.5 h-3.5" style={{ color: '#c084fc' }} />
-                <span className="text-xs font-semibold" style={{ color: '#e5e7eb' }}>
+                <Sparkles className="w-3.5 h-3.5" style={{ color: 'var(--a-accent)' }} />
+                <span className="text-xs font-semibold" style={{ color: 'var(--a-text-body)' }}>
                   AI Image Studio
                 </span>
               </div>
               <span
                 className="text-[10px] uppercase"
                 style={{
-                  color: '#4b5563',
+                  color: 'var(--a-text-4)',
                   fontFamily: 'JetBrains Mono, monospace',
                   letterSpacing: '1px',
                 }}
@@ -176,8 +176,8 @@ export function ImageStudio({
               onClick={handleClose}
               className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
               style={{
-                color: '#6b7280',
-                background: 'rgba(255, 255, 255, 0.03)',
+                color: 'var(--a-text-3)',
+                background: 'var(--a-bg-hover)',
               }}
             >
               <X className="w-4 h-4" />
@@ -213,7 +213,7 @@ export function ImageStudio({
           style={{
             background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(236, 72, 153, 0.15))',
             border: '1px solid rgba(168, 85, 247, 0.2)',
-            color: '#c084fc',
+            color: 'var(--a-accent)',
           }}
         >
           <Sparkles className="w-4 h-4" />

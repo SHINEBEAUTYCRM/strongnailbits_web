@@ -245,14 +245,14 @@ export default function TasksPage() {
       {/* ── Header ── */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-5">
         <div className="flex items-center gap-4">
-          <h1 className="text-xl font-bold" style={{ color: "#f4f4f5" }}>
+          <h1 className="text-xl font-bold" style={{ color: "var(--a-text)" }}>
             Задачі
           </h1>
 
           {/* View switcher */}
           <div
             className="flex items-center rounded-lg overflow-hidden"
-            style={{ background: "#111116", border: "1px solid rgba(255,255,255,0.06)" }}
+            style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}
           >
             {views.map((v) => (
               <button
@@ -261,7 +261,7 @@ export default function TasksPage() {
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors"
                 style={{
                   background: view === v.id ? "rgba(168,85,247,0.12)" : "transparent",
-                  color: view === v.id ? "#a855f7" : "#71717a",
+                  color: view === v.id ? "#a855f7" : "var(--a-text-3)",
                 }}
               >
                 {v.icon}
@@ -273,19 +273,19 @@ export default function TasksPage() {
 
         {/* Stats */}
         <div className="flex items-center gap-3">
-          <span className="text-xs" style={{ color: "#71717a" }}>
+          <span className="text-xs" style={{ color: "var(--a-text-3)" }}>
             Всього{" "}
-            <span style={{ color: "#d4d4d8", fontFamily: "var(--font-jetbrains-mono, monospace)" }}>
+            <span style={{ color: "var(--a-text-body)", fontFamily: "var(--font-jetbrains-mono, monospace)" }}>
               {totalTasks}
             </span>
           </span>
-          <span className="text-xs" style={{ color: "#71717a" }}>
+          <span className="text-xs" style={{ color: "var(--a-text-3)" }}>
             Готово{" "}
             <span style={{ color: "#22c55e", fontFamily: "var(--font-jetbrains-mono, monospace)" }}>
               {doneTasks}
             </span>
           </span>
-          <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.04)" }}>
+          <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--a-bg-hover)" }}>
             <div
               className="h-full rounded-full transition-all"
               style={{ width: `${progressPct}%`, background: "#22c55e", opacity: 0.6 }}
@@ -322,7 +322,7 @@ export default function TasksPage() {
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all"
                 style={{
                   background: mobileColumn === col.id ? `${col.color}15` : "transparent",
-                  color: mobileColumn === col.id ? col.color : "#71717a",
+                  color: mobileColumn === col.id ? col.color : "var(--a-text-3)",
                   border: `1px solid ${mobileColumn === col.id ? `${col.color}30` : "transparent"}`,
                 }}
               >

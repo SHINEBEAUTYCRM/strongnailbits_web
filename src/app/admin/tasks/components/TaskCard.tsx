@@ -29,8 +29,8 @@ export const TaskCard = memo(function TaskCard({ task, onClick, onDragStart }: T
       onClick={() => onClick(task)}
       className="group cursor-pointer select-none"
       style={{
-        background: "#0e0e14",
-        border: "1px solid rgba(255,255,255,0.06)",
+        background: "var(--a-bg-card)",
+        border: "1px solid var(--a-border)",
         borderRadius: 8,
         padding: "10px 12px",
         transition: "border-color 0.15s, box-shadow 0.15s",
@@ -40,7 +40,7 @@ export const TaskCard = memo(function TaskCard({ task, onClick, onDragStart }: T
         e.currentTarget.style.boxShadow = "0 0 0 1px rgba(168,85,247,0.1)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+        e.currentTarget.style.borderColor = "var(--a-border)";
         e.currentTarget.style.boxShadow = "none";
       }}
     >
@@ -53,13 +53,13 @@ export const TaskCard = memo(function TaskCard({ task, onClick, onDragStart }: T
             width: 8,
             height: 8,
             borderRadius: "50%",
-            background: priority?.color || "#71717a",
+            background: priority?.color || "var(--a-text-3)",
             display: "inline-block",
           }}
         />
         <span
           className="text-sm font-medium leading-snug line-clamp-2"
-          style={{ color: "#e4e4e7" }}
+          style={{ color: "var(--a-text-body)" }}
         >
           {task.title}
         </span>
@@ -83,7 +83,7 @@ export const TaskCard = memo(function TaskCard({ task, onClick, onDragStart }: T
           {extraTags > 0 && (
             <span
               className="text-[10px] px-1.5 py-0.5 rounded"
-              style={{ background: "rgba(255,255,255,0.04)", color: "#71717a" }}
+              style={{ background: "var(--a-bg-hover)", color: "var(--a-text-3)" }}
             >
               +{extraTags}
             </span>
@@ -120,7 +120,7 @@ export const TaskCard = memo(function TaskCard({ task, onClick, onDragStart }: T
             <span
               className="flex items-center gap-1 text-[11px]"
               style={{
-                color: task.checklist_done === task.checklist_total ? "#22c55e" : "#71717a",
+                color: task.checklist_done === task.checklist_total ? "#22c55e" : "var(--a-text-3)",
               }}
             >
               <CheckSquare className="w-3 h-3" />
@@ -130,7 +130,7 @@ export const TaskCard = memo(function TaskCard({ task, onClick, onDragStart }: T
 
           {/* Comments count */}
           {(task.comments_count ?? 0) > 0 && (
-            <span className="flex items-center gap-1 text-[11px]" style={{ color: "#71717a" }}>
+            <span className="flex items-center gap-1 text-[11px]" style={{ color: "var(--a-text-3)" }}>
               <MessageSquare className="w-3 h-3" />
               {task.comments_count}
             </span>
@@ -138,7 +138,7 @@ export const TaskCard = memo(function TaskCard({ task, onClick, onDragStart }: T
 
           {/* Attachments count */}
           {(task.attachments_count ?? 0) > 0 && (
-            <span className="flex items-center gap-1 text-[11px]" style={{ color: "#71717a" }}>
+            <span className="flex items-center gap-1 text-[11px]" style={{ color: "var(--a-text-3)" }}>
               <Paperclip className="w-3 h-3" />
               {task.attachments_count}
             </span>
@@ -146,7 +146,7 @@ export const TaskCard = memo(function TaskCard({ task, onClick, onDragStart }: T
 
           {/* Recurring icon */}
           {task.recurring && (
-            <RotateCw className="w-3 h-3" style={{ color: "#71717a" }} />
+            <RotateCw className="w-3 h-3" style={{ color: "var(--a-text-3)" }} />
           )}
 
           {/* Linked order */}
@@ -171,7 +171,7 @@ export const TaskCard = memo(function TaskCard({ task, onClick, onDragStart }: T
             className="text-[11px]"
             style={{
               fontFamily: "var(--font-jetbrains-mono, 'JetBrains Mono'), monospace",
-              color: isOverdue ? "#ef4444" : isToday ? "#f59e0b" : "#52525b",
+              color: isOverdue ? "#ef4444" : isToday ? "#f59e0b" : "var(--a-text-4)",
             }}
           >
             {formatShortDate(task.due_date)}

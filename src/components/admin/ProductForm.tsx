@@ -116,8 +116,8 @@ export function ProductForm({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Link href="/admin/products" className="p-2 rounded-lg" style={{ color: "#71717a" }}><ArrowLeft className="w-5 h-5" /></Link>
-          <h1 className="text-xl font-semibold" style={{ color: "#f4f4f5" }}>{isEdit ? "Редагувати товар" : "Новий товар"}</h1>
+          <Link href="/admin/products" className="p-2 rounded-lg" style={{ color: "var(--a-text-3)" }}><ArrowLeft className="w-5 h-5" /></Link>
+          <h1 className="text-xl font-semibold" style={{ color: "var(--a-text)" }}>{isEdit ? "Редагувати товар" : "Новий товар"}</h1>
         </div>
         <div className="flex items-center gap-3">
           {isEdit && (
@@ -125,7 +125,7 @@ export function ProductForm({
               {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Видалити
             </button>
           )}
-          <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50" style={{ background: "#7c3aed" }}>
+          <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50" style={{ background: "var(--a-accent-btn)" }}>
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Зберегти
           </button>
         </div>
@@ -156,7 +156,7 @@ export function ProductForm({
           {/* Images */}
           <Section title="Зображення">
             <div>
-              <p className="text-xs font-medium mb-3" style={{ color: "#71717a" }}>Головне зображення</p>
+              <p className="text-xs font-medium mb-3" style={{ color: "var(--a-text-3)" }}>Головне зображення</p>
               <ImageUploadWithStudio
                 value={form.main_image_url}
                 onChange={(url) => set("main_image_url", url)}
@@ -168,12 +168,12 @@ export function ProductForm({
               />
             </div>
 
-            <div className="mt-4 pt-4" style={{ borderTop: "1px solid #1e1e2a" }}>
-              <p className="text-xs font-medium mb-3" style={{ color: "#71717a" }}>Додаткові зображення</p>
+            <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--a-border)" }}>
+              <p className="text-xs font-medium mb-3" style={{ color: "var(--a-text-3)" }}>Додаткові зображення</p>
               <div className="flex flex-wrap gap-2 mb-3">
                 {form.images.map((url, i) => (
                   <div key={i} className="relative group">
-                    <img src={url} alt="" className="w-20 h-20 rounded-lg object-cover" style={{ background: "#141420" }} />
+                    <img src={url} alt="" className="w-20 h-20 rounded-lg object-cover" style={{ background: "var(--a-bg-input)" }} />
                     <button onClick={() => removeImage(i)} className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "#450a0a", color: "#f87171" }}><X className="w-3 h-3" /></button>
                   </div>
                 ))}
@@ -182,12 +182,12 @@ export function ProductForm({
 
               {/* Manual URL fallback */}
               <details className="mt-2">
-                <summary className="text-[10px] cursor-pointer" style={{ color: "#3f3f46" }}>
+                <summary className="text-[10px] cursor-pointer" style={{ color: "var(--a-text-5)" }}>
                   Або додати за URL...
                 </summary>
                 <div className="flex gap-2 mt-2">
-                  <input type="text" value={newImageUrl} onChange={(e) => setNewImageUrl(e.target.value)} placeholder="URL зображення" className="flex-1 px-3 py-2 rounded-lg text-sm outline-none" style={{ background: "#111116", border: "1px solid #1e1e2a", color: "#e4e4e7" }} onKeyDown={(e) => e.key === "Enter" && addImage()} />
-                  <button onClick={addImage} className="px-3 py-2 rounded-lg" style={{ background: "#141420", color: "#71717a", border: "1px solid #1e1e2a" }}><Plus className="w-4 h-4" /></button>
+                  <input type="text" value={newImageUrl} onChange={(e) => setNewImageUrl(e.target.value)} placeholder="URL зображення" className="flex-1 px-3 py-2 rounded-lg text-sm outline-none" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)", color: "var(--a-text-body)" }} onKeyDown={(e) => e.key === "Enter" && addImage()} />
+                  <button onClick={addImage} className="px-3 py-2 rounded-lg" style={{ background: "var(--a-bg-input)", color: "var(--a-text-3)", border: "1px solid var(--a-border)" }}><Plus className="w-4 h-4" /></button>
                 </div>
               </details>
             </div>
@@ -242,8 +242,8 @@ export function ProductForm({
 /* ─── Reusable form parts ─── */
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl p-5" style={{ background: "#0e0e14", border: "1px solid #1e1e2a" }}>
-      <h3 className="text-sm font-medium mb-4" style={{ color: "#a1a1aa" }}>{title}</h3>
+    <div className="rounded-xl p-5" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+      <h3 className="text-sm font-medium mb-4" style={{ color: "var(--a-text-2)" }}>{title}</h3>
       <div className="space-y-3">{children}</div>
     </div>
   );
@@ -252,12 +252,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Field({ label, value, onChange, type = "text", placeholder }: { label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string }) {
   return (
     <div>
-      <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>{label}</label>
+      <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--a-text-3)" }}>{label}</label>
       <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
         className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
-        style={{ background: "#111116", border: "1px solid #1e1e2a", color: "#e4e4e7" }}
-        onFocus={(e) => { e.currentTarget.style.borderColor = "#7c3aed"; }}
-        onBlur={(e) => { e.currentTarget.style.borderColor = "#1e1e2a"; }} />
+        style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)", color: "var(--a-text-body)" }}
+        onFocus={(e) => { e.currentTarget.style.borderColor = "var(--a-accent-btn)"; }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = "var(--a-border)"; }} />
     </div>
   );
 }
@@ -265,12 +265,12 @@ function Field({ label, value, onChange, type = "text", placeholder }: { label: 
 function TextArea({ label, value, onChange, rows = 4 }: { label: string; value: string; onChange: (v: string) => void; rows?: number }) {
   return (
     <div>
-      <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>{label}</label>
+      <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--a-text-3)" }}>{label}</label>
       <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={rows}
         className="w-full px-3 py-2.5 rounded-lg text-sm outline-none resize-y transition-colors"
-        style={{ background: "#111116", border: "1px solid #1e1e2a", color: "#e4e4e7" }}
-        onFocus={(e) => { e.currentTarget.style.borderColor = "#7c3aed"; }}
-        onBlur={(e) => { e.currentTarget.style.borderColor = "#1e1e2a"; }} />
+        style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)", color: "var(--a-text-body)" }}
+        onFocus={(e) => { e.currentTarget.style.borderColor = "var(--a-accent-btn)"; }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = "var(--a-border)"; }} />
     </div>
   );
 }
@@ -278,12 +278,12 @@ function TextArea({ label, value, onChange, rows = 4 }: { label: string; value: 
 function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { v: string; l: string }[] }) {
   return (
     <div>
-      <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>{label}</label>
+      <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--a-text-3)" }}>{label}</label>
       <select value={value} onChange={(e) => onChange(e.target.value)}
         className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors cursor-pointer"
-        style={{ background: "#111116", border: "1px solid #1e1e2a", color: "#e4e4e7" }}
-        onFocus={(e) => { e.currentTarget.style.borderColor = "#7c3aed"; }}
-        onBlur={(e) => { e.currentTarget.style.borderColor = "#1e1e2a"; }}>
+        style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)", color: "var(--a-text-body)" }}
+        onFocus={(e) => { e.currentTarget.style.borderColor = "var(--a-accent-btn)"; }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = "var(--a-border)"; }}>
         {options.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
       </select>
     </div>
@@ -294,10 +294,10 @@ function Checkbox({ label, checked, onChange }: { label: string; checked: boolea
   return (
     <label className="flex items-center gap-2.5 cursor-pointer py-1 group" onClick={() => onChange(!checked)}>
       <div className="w-5 h-5 rounded-md flex items-center justify-center transition-colors shrink-0"
-        style={{ background: checked ? "#7c3aed" : "#111116", border: `1px solid ${checked ? "#7c3aed" : "#1e1e2a"}` }}>
+        style={{ background: checked ? "var(--a-accent-btn)" : "var(--a-bg-card)", border: `1px solid ${checked ? "var(--a-accent-btn)" : "var(--a-border)"}` }}>
         {checked && <svg viewBox="0 0 12 12" className="w-3 h-3"><path d="M2 6l3 3 5-5" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>}
       </div>
-      <span className="text-sm" style={{ color: "#a1a1aa" }}>{label}</span>
+      <span className="text-sm" style={{ color: "var(--a-text-2)" }}>{label}</span>
     </label>
   );
 }

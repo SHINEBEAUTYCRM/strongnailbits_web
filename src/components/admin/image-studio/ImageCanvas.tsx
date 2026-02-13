@@ -152,7 +152,7 @@ export function ImageCanvas() {
       {/* Template selector */}
       <div
         className="px-4 py-3 border-b"
-        style={{ borderColor: 'rgba(255, 255, 255, 0.06)' }}
+        style={{ borderColor: 'var(--a-border)' }}
       >
         <TemplateSelector
           selected={selectedTemplate}
@@ -169,10 +169,10 @@ export function ImageCanvas() {
             border: '1px solid rgba(168, 85, 247, 0.12)',
           }}
         >
-          <Package className="w-4 h-4 flex-shrink-0" style={{ color: '#a855f7' }} />
+          <Package className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--a-accent)' }} />
           <div className="flex-1 min-w-0">
             {canvasImage.productName && (
-              <p className="text-xs font-medium truncate" style={{ color: '#e5e7eb' }}>
+              <p className="text-xs font-medium truncate" style={{ color: 'var(--a-text-body)' }}>
                 {canvasImage.productName}
               </p>
             )}
@@ -180,7 +180,7 @@ export function ImageCanvas() {
               <p
                 className="text-[10px] truncate"
                 style={{
-                  color: '#6b7280',
+                  color: 'var(--a-text-3)',
                   fontFamily: 'JetBrains Mono, monospace',
                   letterSpacing: '0.5px',
                 }}
@@ -194,13 +194,13 @@ export function ImageCanvas() {
               src={processedImage || canvasImage.url}
               alt=""
               className="w-8 h-8 rounded object-cover flex-shrink-0"
-              style={{ background: '#111116' }}
+              style={{ background: 'var(--a-bg-card)' }}
             />
           )}
           <button
             onClick={() => setCanvasImage({ id: '', url: '', source: 'upload' })}
             className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-colors"
-            style={{ color: '#6b7280', background: 'rgba(255,255,255,0.05)' }}
+            style={{ color: 'var(--a-text-3)', background: 'var(--a-bg-hover)' }}
             title="Скинути зображення"
           >
             <X className="w-3 h-3" />
@@ -216,12 +216,12 @@ export function ImageCanvas() {
             maxWidth: '100%',
             aspectRatio: `${aspectRatio}`,
             maxHeight: '100%',
-            background: displayImage ? '#0a0a10' : 'rgba(8, 8, 12, 0.5)',
+            background: displayImage ? 'var(--a-bg)' : 'rgba(8, 8, 12, 0.5)',
             border: isDragOver
-              ? '2px dashed #a855f7'
+              ? '2px dashed var(--a-accent)'
               : displayImage
-                ? '1px solid rgba(255, 255, 255, 0.06)'
-                : '2px dashed rgba(255, 255, 255, 0.08)',
+                ? '1px solid var(--a-border)'
+                : '2px dashed var(--a-border)',
             boxShadow: isDragOver
               ? '0 0 30px rgba(168, 85, 247, 0.15)'
               : 'none',
@@ -233,12 +233,12 @@ export function ImageCanvas() {
           {/* Порожній стан */}
           {!displayImage && !isProcessing && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-8">
-              <ImageIcon className="w-12 h-12" style={{ color: '#1e1e2a' }} />
+              <ImageIcon className="w-12 h-12" style={{ color: 'var(--a-border)' }} />
               <div className="text-center">
-                <p className="text-sm font-medium" style={{ color: '#4b5563' }}>
+                <p className="text-sm font-medium" style={{ color: 'var(--a-text-4)' }}>
                   Перетягніть зображення сюди
                 </p>
-                <p className="text-xs mt-1" style={{ color: '#374151' }}>
+                <p className="text-xs mt-1" style={{ color: 'var(--a-text-5)' }}>
                   з іншого сайту, з панелі зліва або з комп&apos;ютера
                 </p>
               </div>
@@ -250,19 +250,19 @@ export function ImageCanvas() {
                 <div
                   className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg"
                   style={{
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    background: 'var(--a-bg-hover)',
+                    border: '1px solid var(--a-border)',
                   }}
                 >
-                  <LinkIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#4b5563' }} />
+                  <LinkIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--a-text-4)' }} />
                   <input
                     type="text"
                     value={pasteUrl}
                     onChange={(e) => setPasteUrl(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handlePasteUrl()}
                     placeholder="Вставте URL зображення..."
-                    className="flex-1 bg-transparent text-xs outline-none placeholder:text-[#374151]"
-                    style={{ color: '#e5e7eb' }}
+                    className="flex-1 bg-transparent text-xs outline-none placeholder:text-[var(--a-text-5)]"
+                    style={{ color: 'var(--a-text-body)' }}
                   />
                 </div>
                 <button
@@ -272,9 +272,9 @@ export function ImageCanvas() {
                   style={{
                     background: pasteUrl.trim()
                       ? 'rgba(168, 85, 247, 0.15)'
-                      : 'rgba(255, 255, 255, 0.03)',
-                    border: `1px solid ${pasteUrl.trim() ? 'rgba(168, 85, 247, 0.3)' : 'rgba(255, 255, 255, 0.06)'}`,
-                    color: pasteUrl.trim() ? '#c084fc' : '#4b5563',
+                      : 'var(--a-bg-hover)',
+                    border: `1px solid ${pasteUrl.trim() ? 'rgba(168, 85, 247, 0.3)' : 'var(--a-border)'}`,
+                    color: pasteUrl.trim() ? 'var(--a-accent)' : 'var(--a-text-4)',
                   }}
                 >
                   <Globe className="w-3.5 h-3.5" />
@@ -292,7 +292,7 @@ export function ImageCanvas() {
                 <span
                   className="text-[10px]"
                   style={{
-                    color: '#9ca3af',
+                    color: 'var(--a-text-2)',
                     fontFamily: 'JetBrains Mono, monospace',
                     letterSpacing: '0.5px',
                   }}
@@ -322,7 +322,7 @@ export function ImageCanvas() {
               <div className="relative">
                 <Loader2
                   className="w-10 h-10 animate-spin"
-                  style={{ color: '#a855f7' }}
+                  style={{ color: 'var(--a-accent)' }}
                 />
                 <div
                   className="absolute inset-0 animate-pulse rounded-full"
@@ -332,7 +332,7 @@ export function ImageCanvas() {
                   }}
                 />
               </div>
-              <p className="text-sm font-medium" style={{ color: '#e5e7eb' }}>
+              <p className="text-sm font-medium" style={{ color: 'var(--a-text-body)' }}>
                 {processingLabel || 'PhotoRoom обробляє...'}
               </p>
               {displayImage && (
@@ -355,11 +355,11 @@ export function ImageCanvas() {
                 backdropFilter: 'blur(4px)',
               }}
             >
-              <Globe className="w-8 h-8" style={{ color: '#c084fc' }} />
-              <p className="text-lg font-semibold" style={{ color: '#c084fc' }}>
+              <Globe className="w-8 h-8" style={{ color: 'var(--a-accent)' }} />
+              <p className="text-lg font-semibold" style={{ color: 'var(--a-accent)' }}>
                 Відпустіть для завантаження
               </p>
-              <p className="text-xs" style={{ color: '#9ca3af' }}>
+              <p className="text-xs" style={{ color: 'var(--a-text-2)' }}>
                 Зображення буде збережено автоматично
               </p>
             </div>

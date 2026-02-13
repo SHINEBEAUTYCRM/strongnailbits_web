@@ -97,7 +97,7 @@ export default function TeamMemberPage() {
   if (loading || !member) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#a855f7" }} />
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: "var(--a-accent)" }} />
       </div>
     );
   }
@@ -108,9 +108,9 @@ export default function TeamMemberPage() {
       <button
         onClick={() => router.push("/admin/team")}
         className="flex items-center gap-2 text-xs mb-5 transition-colors"
-        style={{ color: "#71717a" }}
-        onMouseEnter={(e) => { e.currentTarget.style.color = "#a1a1aa"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.color = "#71717a"; }}
+        style={{ color: "var(--a-text-3)" }}
+        onMouseEnter={(e) => { e.currentTarget.style.color = "var(--a-text-2)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = "var(--a-text-3)"; }}
       >
         <ArrowLeft className="w-3.5 h-3.5" />
         Команда
@@ -126,7 +126,7 @@ export default function TeamMemberPage() {
           {/* Tab bar */}
           <div
             className="flex gap-1 mb-4 rounded-lg overflow-hidden inline-flex"
-            style={{ background: "#111116", border: "1px solid rgba(255,255,255,0.06)" }}
+            style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}
           >
             {tabs.map((tab) => (
               <button
@@ -135,7 +135,7 @@ export default function TeamMemberPage() {
                 className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium transition-colors"
                 style={{
                   background: activeTab === tab.id ? "rgba(168,85,247,0.12)" : "transparent",
-                  color: activeTab === tab.id ? "#a855f7" : "#71717a",
+                  color: activeTab === tab.id ? "var(--a-accent)" : "var(--a-text-3)",
                 }}
               >
                 {tab.icon}
@@ -148,8 +148,8 @@ export default function TeamMemberPage() {
           <div
             className="rounded-xl p-4"
             style={{
-              background: "#0e0e14",
-              border: "1px solid rgba(255,255,255,0.06)",
+              background: "var(--a-bg-card)",
+              border: "1px solid var(--a-border)",
               minHeight: 300,
             }}
           >

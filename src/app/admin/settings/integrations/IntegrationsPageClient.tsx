@@ -106,8 +106,8 @@ export function IntegrationsPageClient() {
             <Plug className="w-5 h-5 text-purple-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Інтеграції</h1>
-            <p className="text-sm text-zinc-400">
+            <h1 className="text-2xl font-bold" style={{ color: "var(--a-text)" }}>Інтеграції</h1>
+            <p className="text-sm" style={{ color: "var(--a-text-2)" }}>
               {SERVICE_REGISTRY.length} сервісів — налаштуйте API-ключі
             </p>
           </div>
@@ -116,7 +116,8 @@ export function IntegrationsPageClient() {
         <button
           onClick={() => { setLoading(true); fetchStatuses(); }}
           disabled={loading}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#111116] border border-[#1e1e2a] text-zinc-400 hover:text-white text-xs transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors disabled:opacity-50"
+          style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)", color: "var(--a-text-2)" }}
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
           Оновити
@@ -133,13 +134,14 @@ export function IntegrationsPageClient() {
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--a-text-3)" }} />
         <input
           type="text"
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           placeholder="Пошук сервісу..."
-          className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#111116] border border-[#1e1e2a] text-sm text-white placeholder:text-zinc-600 focus:border-purple-500 focus:outline-none transition-colors"
+          className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm placeholder:text-zinc-600 focus:border-purple-500 focus:outline-none transition-colors"
+          style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)", color: "var(--a-text)" }}
         />
       </div>
 
@@ -152,17 +154,17 @@ export function IntegrationsPageClient() {
 
       {/* Services Grid */}
       {loading ? (
-        <div className="py-20 text-center text-zinc-500 text-sm">
-          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-3 text-zinc-600" />
+        <div className="py-20 text-center text-sm" style={{ color: "var(--a-text-3)" }}>
+          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-3" style={{ color: "var(--a-text-4)" }} />
           Завантаження статусів...
         </div>
       ) : (
         <div className="space-y-8">
           {groupedServices.map(group => (
             <div key={group.category}>
-              <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
+              <h2 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--a-text-3)" }}>
                 {group.label}
-                <span className="ml-2 text-zinc-600">{group.services.length}</span>
+                <span className="ml-2" style={{ color: "var(--a-text-4)" }}>{group.services.length}</span>
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {group.services.map(service => (
@@ -178,7 +180,7 @@ export function IntegrationsPageClient() {
           ))}
 
           {filteredServices.length === 0 && (
-            <div className="py-12 text-center text-zinc-500 text-sm">
+            <div className="py-12 text-center text-sm" style={{ color: "var(--a-text-3)" }}>
               Сервісів не знайдено
             </div>
           )}
@@ -210,11 +212,11 @@ function MiniStat({
 }) {
   const valueColor = color
     ? { emerald: "text-emerald-400", purple: "text-purple-400", red: "text-red-400" }[color]
-    : "text-white";
+    : "text-[var(--a-text)]";
 
   return (
-    <div className="p-3 rounded-xl bg-[#111116] border border-[#1e1e2a]">
-      <p className="text-[10px] text-zinc-500 uppercase tracking-wider">{label}</p>
+    <div className="p-3 rounded-xl" style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}>
+      <p className="text-[10px] uppercase tracking-wider" style={{ color: "var(--a-text-3)" }}>{label}</p>
       <p className={`text-2xl font-bold mt-0.5 ${valueColor}`}>{value}</p>
     </div>
   );
