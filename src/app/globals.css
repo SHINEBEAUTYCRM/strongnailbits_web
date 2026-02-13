@@ -741,10 +741,12 @@ body {
   box-shadow: var(--a-card-shadow);
 }
 
-/* ── tldraw isolation — prevent CSS transitions from killing canvas ── */
+/* ── tldraw isolation — prevent CSS transitions/animations from killing canvas ── */
 .tl-container,
-.tl-container * {
+.tl-container *,
+[data-tldraw] * {
   transition: none !important;
+  animation: none !important;
 }
 
 /* ── Scrollbar — subtle for light theme ── */

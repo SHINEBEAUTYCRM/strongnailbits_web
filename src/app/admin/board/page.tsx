@@ -1,34 +1,76 @@
 import { createClient } from "@/lib/supabase/server";
-import BoardWrapper from "./components/BoardWrapper";
+import BoardLoader from "./components/BoardLoader";
 
 export default async function BoardPage() {
   const supabase = await createClient();
 
-  // Fetch board list (without heavy snapshots)
-  const { data: boards } = await supabase
+  // Get or create default board
+  let { data: board } = await supabase
     .from("boards")
-    .select("id, name, updated_at")
-    .order("updated_at", { ascending: false });
+    .select("id, name, snapshot")
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .single();
 
-  const defaultBoard = boards?.[0];
-
-  // Fetch snapshot for the default board
-  let snapshot = null;
-  if (defaultBoard) {
-    const { data } = await supabase
+  if (!board) {
+    const { data: newBoard } = await supabase
       .from("boards")
-      .select("snapshot")
-      .eq("id", defaultBoard.id)
+      .insert({ name: "Головна дошка" })
+      .select("id, name, snapshot")
       .single();
-    snapshot = data?.snapshot ?? null;
+    board = newBoard;
+  }
+
+  if (!board) {
+    return (
+      <div style={{ padding: 40, color: "#ef4444" }}>
+        Помилка створення дошки
+      </div>
+    );
   }
 
   return (
-    <BoardWrapper
-      boardId={defaultBoard?.id || null}
-      boardName={defaultBoard?.name || "Нова дошка"}
-      initialSnapshot={snapshot}
-      boards={boards || []}
-    />
+    <>
+      {/* Minimal header — OUTSIDE tldraw container */}
+      <div
+        style={{
+          height: 40,
+          padding: "0 16px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          background: "var(--a-bg-card, #0e0e14)",
+          borderBottom: "1px solid var(--a-border, rgba(255,255,255,0.06))",
+        }}
+      >
+        <span
+          style={{
+            color: "var(--a-text, #f0f0f0)",
+            fontSize: 14,
+            fontWeight: 500,
+          }}
+        >
+          {board.name}
+        </span>
+        <span
+          id="shine-board-status"
+          style={{ fontSize: 12, color: "var(--a-text-4, #888)" }}
+        />
+      </div>
+
+      {/* TLDRAW CONTAINER — position: fixed, as per official docs */}
+      <div
+        style={{
+          position: "fixed",
+          top: 104 /* 64px nav + 40px board header */,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          /* NOTHING ELSE. No overflow, transition, filter, opacity */
+        }}
+      >
+        <BoardLoader boardId={board.id} initialSnapshot={board.snapshot} />
+      </div>
+    </>
   );
 }
