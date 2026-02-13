@@ -257,7 +257,7 @@ async function handleContact(
   // Search by last 9 digits — format-independent matching
   const { data: members } = await supabase
     .from("team_members")
-    .select("id, name, telegram_chat_id")
+    .select("id, name, phone, telegram_chat_id")
     .eq("is_active", true);
 
   const member = members?.find((m) => getPhoneDigits(m.phone) === last9) || null;
