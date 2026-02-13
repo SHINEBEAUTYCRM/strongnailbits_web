@@ -131,6 +131,7 @@ export const adminNavigation: NavSection[] = [
     label: "Команда",
     icon: UsersRound,
     children: [
+      { label: "Команда", href: "/admin/team", icon: UsersRound },
       { label: "Задачі", href: "/admin/tasks", icon: CheckSquare },
       { label: "Shine Board", href: "/admin/board", icon: Palette },
       { label: "Чат", href: "/admin/chat", icon: MessageCircle },

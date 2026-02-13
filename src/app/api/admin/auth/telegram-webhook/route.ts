@@ -2,9 +2,12 @@
  * Telegram Admin Bot Webhook — @ShineShopAdminBot
  *
  * Handles:
- * - /start → request phone contact → link team_members.telegram_chat_id
+ * - /start  → onboarding: welcome + request phone contact
+ * - /help   → list of commands + login instructions
+ * - /status → show linked profile or ask to link
+ * - contact → link team_members.telegram_chat_id
  * - auth_confirm:token → confirm auth request
- * - auth_deny:token → deny auth request
+ * - auth_deny:token    → deny auth request
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -70,6 +73,17 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
+// ────── Constants ──────
+
+const ADMIN_URL = "https://shineshopb2b.com/admin";
+const ROLE_LABELS: Record<string, string> = {
+  ceo: "CEO",
+  admin: "Адмін",
+  manager: "Менеджер",
+  content: "Контент",
+  developer: "Розробник",
+};
+
 // ────── Update Router ──────
 
 async function handleUpdate(update: TgUpdate): Promise<void> {
@@ -79,6 +93,7 @@ async function handleUpdate(update: TgUpdate): Promise<void> {
   const callbackQuery = update.callback_query;
   const chatId = message?.chat?.id || callbackQuery?.message?.chat?.id;
   const callbackData = callbackQuery?.data;
+  const text = message?.text?.trim() || "";
 
   if (!chatId) return;
 
@@ -99,73 +114,239 @@ async function handleUpdate(update: TgUpdate): Promise<void> {
     return;
   }
 
-  // ─── /start command ───
-  if (message?.text?.trim() === "/start") {
+  // ─── /start — onboarding ───
+  if (text === "/start") {
+    await handleStart(chatId);
+    return;
+  }
+
+  // ─── /help — commands & instructions ───
+  if (text === "/help") {
+    await handleHelp(chatId);
+    return;
+  }
+
+  // ─── /status — profile info ───
+  if (text === "/status") {
+    await handleStatus(supabase, chatId);
+    return;
+  }
+
+  // ─── Contact shared — link phone ───
+  if (message?.contact) {
+    await handleContact(supabase, chatId, message.contact.phone_number);
+    return;
+  }
+
+  // ─── Unknown message — show help ───
+  await handleUnknown(chatId);
+}
+
+// ────── /start ──────
+
+async function handleStart(chatId: number): Promise<void> {
+  await tgApi("sendMessage", {
+    chat_id: chatId,
+    text: [
+      "🟣 *ShineShop Admin Panel*",
+      "",
+      "Вітаю\\! Я бот для входу в адмін\\-панель ShineShop\\.",
+      "",
+      "📋 *Як почати:*",
+      "1\\. Надішліть свій номер телефону \\(кнопка нижче\\)",
+      "2\\. Відкрийте [адмін\\-панель](https://shineshopb2b.com/admin)",
+      "3\\. Введіть свій номер — отримаєте підтвердження тут",
+      "",
+      "Потрібна допомога? Натисніть /help",
+    ].join("\n"),
+    parse_mode: "MarkdownV2",
+    reply_markup: {
+      keyboard: [[{ text: "📱 Надіслати номер", request_contact: true }]],
+      one_time_keyboard: true,
+      resize_keyboard: true,
+    },
+  });
+}
+
+// ────── /help ──────
+
+async function handleHelp(chatId: number): Promise<void> {
+  await tgApi("sendMessage", {
+    chat_id: chatId,
+    text: [
+      "📖 *Доступні команди:*",
+      "",
+      "/start — Прив'язати номер телефону",
+      "/status — Мій профіль та статус",
+      "/help — Ця довідка",
+      "",
+      "🔐 *Як увійти в адмінку:*",
+      "1\\. Відкрийте [shineshopb2b\\.com/admin](https://shineshopb2b.com/admin)",
+      "2\\. Введіть номер телефону",
+      "3\\. Натисніть «✅ Підтвердити вхід» тут у боті",
+      "",
+      "⚡ Вхід миттєвий — сторінка оновиться автоматично\\.",
+    ].join("\n"),
+    parse_mode: "MarkdownV2",
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: "🔗 Відкрити адмінку", url: ADMIN_URL }],
+      ],
+    },
+  });
+}
+
+// ────── /status ──────
+
+async function handleStatus(
+  supabase: ReturnType<typeof createAdminClient>,
+  chatId: number,
+): Promise<void> {
+  const { data: member } = await supabase
+    .from("team_members")
+    .select("name, phone, role, is_active")
+    .eq("telegram_chat_id", chatId)
+    .maybeSingle();
+
+  if (!member) {
     await tgApi("sendMessage", {
       chat_id: chatId,
-      text: "👋 Вітаю! Я бот адмін-панелі ShineShop.\n\nНадішліть свій номер телефону для прив'язки акаунта:",
-      reply_markup: {
-        keyboard: [[{ text: "📱 Надіслати номер", request_contact: true }]],
-        one_time_keyboard: true,
-        resize_keyboard: true,
-      },
+      text: [
+        "⚠️ Ваш Telegram ще не прив'язано до акаунта.",
+        "",
+        "Натисніть /start і надішліть свій номер телефону.",
+      ].join("\n"),
     });
     return;
   }
 
-  // ─── Contact shared ───
-  if (message?.contact) {
-    const phone = normalizePhone(message.contact.phone_number);
+  // Mask phone: +380*****1234
+  const masked = member.phone.slice(0, 4) + "*****" + member.phone.slice(-4);
+  const roleLabel = ROLE_LABELS[member.role] || member.role;
+  const statusLabel = member.is_active ? "✅ Активний" : "⛔ Деактивовано";
 
-    const { data: member } = await supabase
-      .from("team_members")
-      .select("id, name, telegram_chat_id")
-      .eq("phone", phone)
-      .eq("is_active", true)
-      .maybeSingle();
+  await tgApi("sendMessage", {
+    chat_id: chatId,
+    text: [
+      "👤 *Ваш профіль:*",
+      "",
+      `*Ім'я:* ${escapeMarkdown(member.name)}`,
+      `*Роль:* ${escapeMarkdown(roleLabel)}`,
+      `*Телефон:* \`${masked}\``,
+      `*Статус:* ${statusLabel}`,
+    ].join("\n"),
+    parse_mode: "MarkdownV2",
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: "🔗 Відкрити адмінку", url: ADMIN_URL }],
+      ],
+    },
+  });
+}
 
-    if (!member) {
-      await tgApi("sendMessage", {
-        chat_id: chatId,
-        text: "❌ Цей номер не знайдено в системі.\nЗверніться до адміністратора для додавання.",
-        reply_markup: { remove_keyboard: true },
-      });
-      return;
-    }
+// ────── Contact shared ──────
 
-    if (member.telegram_chat_id && member.telegram_chat_id !== chatId) {
-      await tgApi("sendMessage", {
-        chat_id: chatId,
-        text: "⚠️ Цей номер вже прив'язано до іншого Telegram.\nЗверніться до адміністратора.",
-        reply_markup: { remove_keyboard: true },
-      });
-      return;
-    }
+async function handleContact(
+  supabase: ReturnType<typeof createAdminClient>,
+  chatId: number,
+  phoneNumber: string,
+): Promise<void> {
+  const phone = normalizePhone(phoneNumber);
 
-    await supabase
-      .from("team_members")
-      .update({ telegram_chat_id: chatId })
-      .eq("id", member.id);
+  const { data: member } = await supabase
+    .from("team_members")
+    .select("id, name, telegram_chat_id")
+    .eq("phone", phone)
+    .eq("is_active", true)
+    .maybeSingle();
 
+  if (!member) {
     await tgApi("sendMessage", {
       chat_id: chatId,
       text: [
-        "✅ Акаунт прив'язано!",
+        "❌ Цей номер не знайдено в системі.",
         "",
-        `${member.name}, тепер ви можете входити в адмін-панель через Telegram.`,
-        "",
-        "Відкрийте shineshopb2b.com/admin і введіть свій номер телефону.",
+        "Зверніться до адміністратора для додавання вашого номера.",
       ].join("\n"),
       reply_markup: { remove_keyboard: true },
     });
     return;
   }
 
-  // ─── Unknown message ───
+  if (member.telegram_chat_id && member.telegram_chat_id !== chatId) {
+    await tgApi("sendMessage", {
+      chat_id: chatId,
+      text: [
+        "⚠️ Цей номер вже прив'язано до іншого Telegram.",
+        "Зверніться до адміністратора.",
+      ].join("\n"),
+      reply_markup: { remove_keyboard: true },
+    });
+    return;
+  }
+
+  await supabase
+    .from("team_members")
+    .update({ telegram_chat_id: chatId })
+    .eq("id", member.id);
+
   await tgApi("sendMessage", {
     chat_id: chatId,
-    text: "Це бот для авторизації в адмін-панелі ShineShop.\nНатисніть /start для початку.",
+    text: [
+      `✅ *Акаунт прив'язано\\!*`,
+      "",
+      `${escapeMarkdown(member.name)}, тепер ви можете входити в адмін\\-панель\\.`,
+      "",
+      "📋 *Що далі:*",
+      "1\\. Відкрийте адмінку \\(кнопка нижче\\)",
+      "2\\. Введіть номер телефону",
+      "3\\. Підтвердіть вхід тут у боті",
+      "",
+      "Потрібна допомога? /help",
+    ].join("\n"),
+    parse_mode: "MarkdownV2",
+    reply_markup: {
+      remove_keyboard: true,
+    },
   });
+
+  // Send separate message with inline button (can't mix keyboard removal + inline)
+  await tgApi("sendMessage", {
+    chat_id: chatId,
+    text: "👇 Перейдіть в адмінку:",
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: "🔗 Відкрити адмінку", url: ADMIN_URL }],
+      ],
+    },
+  });
+}
+
+// ────── Unknown message ──────
+
+async function handleUnknown(chatId: number): Promise<void> {
+  await tgApi("sendMessage", {
+    chat_id: chatId,
+    text: [
+      "Це бот для авторизації в адмін-панелі ShineShop.",
+      "",
+      "Доступні команди:",
+      "/start — Прив'язати номер",
+      "/status — Мій профіль",
+      "/help — Довідка",
+    ].join("\n"),
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: "🔗 Відкрити адмінку", url: ADMIN_URL }],
+      ],
+    },
+  });
+}
+
+// ────── Helpers ──────
+
+function escapeMarkdown(text: string): string {
+  return text.replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, "\\$&");
 }
 
 // ────── Auth Confirm ──────
