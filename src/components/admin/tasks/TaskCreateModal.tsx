@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { X, ChevronDown } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { createAdminBrowserClient } from "@/lib/supabase/client";
 import type { ColumnId, Priority, TeamMemberShort } from "@/types/tasks";
 import { COLUMNS, PRIORITIES, AVAILABLE_TAGS } from "@/types/tasks";
 
@@ -39,7 +39,7 @@ export function TaskCreateModal({ open, onClose, defaultColumn = "new" }: TaskCr
     setShowTags(false);
     setTimeout(() => titleRef.current?.focus(), 100);
 
-    const supabase = createClient();
+    const supabase = createAdminBrowserClient();
     supabase
       .from("team_members")
       .select("id, name, avatar_url")

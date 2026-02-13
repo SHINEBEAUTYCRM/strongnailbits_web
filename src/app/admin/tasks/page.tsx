@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { LayoutGrid, Calendar, BarChart3, Loader2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { createAdminBrowserClient } from "@/lib/supabase/client";
 import type { Task, ColumnId, Priority, TaskView, TeamMemberShort } from "@/types/tasks";
 import { COLUMNS } from "@/types/tasks";
 import { TaskBoard } from "./components/TaskBoard";
@@ -43,16 +43,22 @@ export default function TasksPage() {
       const res = await fetch("/api/admin/tasks");
       if (res.ok) {
         const data = await res.json();
-        setTasks(data);
+        if (Array.isArray(data)) {
+          setTasks(data);
+        }
+        // If response is not ok (401, 500) — keep existing cached data
       }
-    } catch { /* ignore */ } finally {
+    } catch {
+      // Network error — keep existing cached data, don't clear
+      console.warn("[Tasks] fetch failed, keeping cached data");
+    } finally {
       setLoading(false);
     }
   };
 
   const loadTeamMembers = async () => {
     try {
-      const supabase = createClient();
+      const supabase = createAdminBrowserClient();
       const { data } = await supabase
         .from("team_members")
         .select("id, name, avatar_url")
@@ -76,28 +82,42 @@ export default function TasksPage() {
 
   // ── Realtime ──
   useEffect(() => {
-    const supabase = createClient();
+    let channel: ReturnType<ReturnType<typeof createAdminBrowserClient>["channel"]> | null = null;
 
-    const channel = supabase
-      .channel("tasks-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, (payload: { eventType: string; new: unknown; old: unknown }) => {
-        if (payload.eventType === "INSERT") {
-          // Reload to get full joined data
-          loadTasks();
-        } else if (payload.eventType === "UPDATE") {
-          const updated = payload.new as Task;
-          setTasks((prev) =>
-            prev.map((t) => (t.id === updated.id ? { ...t, ...updated } : t)),
-          );
-        } else if (payload.eventType === "DELETE") {
-          const deleted = payload.old as { id: string };
-          setTasks((prev) => prev.filter((t) => t.id !== deleted.id));
-        }
-      })
-      .subscribe();
+    try {
+      const supabase = createAdminBrowserClient();
+      channel = supabase
+        .channel("tasks-realtime")
+        .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, (payload: { eventType: string; new: unknown; old: unknown }) => {
+          try {
+            if (payload.eventType === "INSERT") {
+              loadTasks();
+            } else if (payload.eventType === "UPDATE") {
+              const updated = payload.new as Task;
+              setTasks((prev) =>
+                prev.map((t) => (t.id === updated.id ? { ...t, ...updated } : t)),
+              );
+            } else if (payload.eventType === "DELETE") {
+              const deleted = payload.old as { id: string };
+              setTasks((prev) => prev.filter((t) => t.id !== deleted.id));
+            }
+          } catch (err) {
+            console.warn("[Tasks Realtime] handler error, keeping cached data:", err);
+          }
+        })
+        .subscribe((status: string) => {
+          if (status === "CHANNEL_ERROR") {
+            console.warn("[Tasks Realtime] channel error — keeping cached data");
+          }
+        });
+    } catch (err) {
+      console.warn("[Tasks Realtime] subscription setup failed:", err);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        try { createAdminBrowserClient().removeChannel(channel); } catch { /* ignore */ }
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
