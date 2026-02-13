@@ -1,38 +1,173 @@
-import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { randomUUID } from "crypto";
 
-export interface AdminUser {
+/* ------------------------------------------------------------------ */
+/*  Types                                                              */
+/* ------------------------------------------------------------------ */
+
+export interface TeamMember {
   id: string;
-  email: string;
-  first_name: string | null;
-  last_name: string | null;
+  name: string;
+  phone: string;
   role: string;
+  telegram_chat_id: number | null;
+  avatar_url: string | null;
+  is_active: boolean;
 }
 
-/**
- * Get the current admin user from the session.
- * Returns null if not authenticated or not an admin/manager.
- */
+export interface AuthRequest {
+  id: string;
+  token: string;
+  phone: string;
+  team_member_id: string;
+  status: "pending" | "confirmed" | "expired";
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+  confirmed_at: string | null;
+  expires_at: string;
+}
+
+export interface AdminSession {
+  id: string;
+  team_member_id: string;
+  session_token: string;
+  expires_at: string;
+  created_at: string;
+}
+
+/** Compatible interface for AdminShell */
+export interface AdminUser {
+  id: string;
+  name: string;
+  phone: string;
+  role: string;
+  avatar_url: string | null;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Cookie name                                                        */
+/* ------------------------------------------------------------------ */
+
+export const SESSION_COOKIE = "admin_session";
+
+/* ------------------------------------------------------------------ */
+/*  Phone normalization                                                */
+/* ------------------------------------------------------------------ */
+
+export function normalizePhone(phone: string): string {
+  // Remove everything except digits and +
+  let cleaned = phone.replace(/[^\d+]/g, "");
+
+  // 0XXXXXXXXX → +380XXXXXXXXX
+  if (cleaned.startsWith("0") && cleaned.length === 10) {
+    cleaned = "+380" + cleaned.slice(1);
+  }
+  // 380XXXXXXXXX → +380XXXXXXXXX
+  else if (cleaned.startsWith("380") && !cleaned.startsWith("+")) {
+    cleaned = "+" + cleaned;
+  }
+  // If no + prefix and starts with digits
+  else if (!cleaned.startsWith("+")) {
+    cleaned = "+" + cleaned;
+  }
+
+  return cleaned;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Token generation                                                   */
+/* ------------------------------------------------------------------ */
+
+export function generateToken(): string {
+  return randomUUID().replace(/-/g, "") + randomUUID().replace(/-/g, "");
+}
+
+/* ------------------------------------------------------------------ */
+/*  Get current team member from session cookie                        */
+/* ------------------------------------------------------------------ */
+
 export async function getAdminUser(): Promise<AdminUser | null> {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
+    const cookieStore = await cookies();
+    const sessionToken = cookieStore.get(SESSION_COOKIE)?.value;
+    if (!sessionToken) return null;
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id, email, first_name, last_name, role, admin_approved")
-      .eq("id", user.id)
-      .single();
+    const supabase = createAdminClient();
 
-    if (!profile || !["admin", "manager"].includes(profile.role || "")) return null;
-    if (!profile.admin_approved) return null;
+    const { data: session } = await supabase
+      .from("admin_sessions")
+      .select("team_member_id, expires_at")
+      .eq("session_token", sessionToken)
+      .maybeSingle();
+
+    if (!session) return null;
+
+    // Check expiration
+    if (new Date(session.expires_at) < new Date()) {
+      // Clean up expired session
+      await supabase.from("admin_sessions").delete().eq("session_token", sessionToken);
+      return null;
+    }
+
+    const { data: member } = await supabase
+      .from("team_members")
+      .select("id, name, phone, role, avatar_url, is_active")
+      .eq("id", session.team_member_id)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (!member) return null;
 
     return {
-      id: profile.id,
-      email: profile.email,
-      first_name: profile.first_name,
-      last_name: profile.last_name,
-      role: profile.role,
+      id: member.id,
+      name: member.name,
+      phone: member.phone,
+      role: member.role,
+      avatar_url: member.avatar_url,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Validate session token (for middleware — no cookies() usage)        */
+/* ------------------------------------------------------------------ */
+
+export async function validateSession(sessionToken: string): Promise<AdminUser | null> {
+  try {
+    const supabase = createAdminClient();
+
+    const { data: session } = await supabase
+      .from("admin_sessions")
+      .select("team_member_id, expires_at")
+      .eq("session_token", sessionToken)
+      .maybeSingle();
+
+    if (!session) return null;
+
+    if (new Date(session.expires_at) < new Date()) {
+      await supabase.from("admin_sessions").delete().eq("session_token", sessionToken);
+      return null;
+    }
+
+    const { data: member } = await supabase
+      .from("team_members")
+      .select("id, name, phone, role, avatar_url, is_active")
+      .eq("id", session.team_member_id)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (!member) return null;
+
+    return {
+      id: member.id,
+      name: member.name,
+      phone: member.phone,
+      role: member.role,
+      avatar_url: member.avatar_url,
     };
   } catch {
     return null;
