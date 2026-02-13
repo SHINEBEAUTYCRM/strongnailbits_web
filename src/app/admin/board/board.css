@@ -1,0 +1,16 @@
+/* Shine Board — tldraw dark theme overrides */
+
+.shine-board-wrapper {
+  border-radius: 0;
+  overflow: hidden;
+}
+
+/* Force dark mode background */
+.tl-theme__dark {
+  --color-background: #0e0e14;
+}
+
+/* Ensure tldraw fills the container */
+.shine-board-wrapper .tl-container {
+  border-radius: 0;
+}
