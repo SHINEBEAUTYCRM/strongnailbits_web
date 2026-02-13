@@ -382,9 +382,34 @@ export default function AdminLoginPage() {
                 </span>
               </div>
 
+              <a
+                href="https://t.me/ShineShopAdminBot"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full mt-4 py-2.5 rounded-xl text-sm font-medium transition-colors"
+                style={{
+                  color: "#a1a1aa",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  background: "transparent",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "#7c3aed";
+                  e.currentTarget.style.color = "#e4e4e7";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+                  e.currentTarget.style.color = "#a1a1aa";
+                }}
+              >
+                Відкрити @ShineShopAdminBot
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M7 17L17 7M17 7H7M17 7V17" />
+                </svg>
+              </a>
+
               <button
                 onClick={handleReset}
-                className="block mx-auto mt-4 text-xs transition-colors"
+                className="block mx-auto mt-3 text-xs transition-colors"
                 style={{ color: "#52525b" }}
                 onMouseEnter={(e) => { e.currentTarget.style.color = "#a1a1aa"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = "#52525b"; }}
