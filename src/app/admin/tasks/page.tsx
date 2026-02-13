@@ -80,7 +80,7 @@ export default function TasksPage() {
 
     const channel = supabase
       .channel("tasks-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, (payload) => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, (payload: { eventType: string; new: Record<string, unknown>; old: Record<string, unknown> }) => {
         if (payload.eventType === "INSERT") {
           // Reload to get full joined data
           loadTasks();
