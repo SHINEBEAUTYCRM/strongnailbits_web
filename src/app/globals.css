@@ -931,7 +931,7 @@ body {
     left: 0;
     right: 0;
     z-index: 50;
-    height: 64px;
+    height: 72px;
     padding-bottom: env(safe-area-inset-bottom);
     background: rgba(255, 255, 255, 0.96);
     backdrop-filter: blur(16px);
@@ -944,7 +944,7 @@ body {
 
   .mobile-nav-spacer {
     display: block;
-    height: calc(64px + env(safe-area-inset-bottom));
+    height: calc(72px + env(safe-area-inset-bottom));
   }
 
   .mobile-nav-item {
@@ -952,9 +952,11 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
+    gap: 4px;
     flex: 1;
-    padding: 8px 4px;
+    min-width: 64px;
+    min-height: 48px;
+    padding: 8px 16px;
     text-decoration: none;
     color: var(--t3, #888);
     border: none;
