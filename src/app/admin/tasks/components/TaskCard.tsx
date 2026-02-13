@@ -8,10 +8,9 @@ import { PRIORITIES } from "@/types/tasks";
 interface TaskCardProps {
   task: Task;
   onClick: (task: Task) => void;
-  onDragStart: (e: React.DragEvent, task: Task) => void;
 }
 
-export const TaskCard = memo(function TaskCard({ task, onClick, onDragStart }: TaskCardProps) {
+export const TaskCard = memo(function TaskCard({ task, onClick }: TaskCardProps) {
   const priority = PRIORITIES.find((p) => p.id === task.priority);
   const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.column_id !== "done";
   const isToday =
@@ -24,8 +23,6 @@ export const TaskCard = memo(function TaskCard({ task, onClick, onDragStart }: T
 
   return (
     <div
-      draggable
-      onDragStart={(e) => onDragStart(e, task)}
       onClick={() => onClick(task)}
       className="group cursor-pointer select-none"
       style={{
@@ -37,7 +34,7 @@ export const TaskCard = memo(function TaskCard({ task, onClick, onDragStart }: T
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = "rgba(168,85,247,0.25)";
-        e.currentTarget.style.boxShadow = "0 0 0 1px rgba(168,85,247,0.1)";
+        e.currentTarget.style.boxShadow = "0 4px 12px rgba(168,85,247,0.08)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.borderColor = "var(--a-border)";

@@ -117,15 +117,13 @@ export default function TasksPage() {
       const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
       if (isInput) return;
 
-      if (e.key === "n" || e.key === "N") {
-        e.preventDefault();
-        // Focus on the quick create input of the first column
-        // This is handled by the board itself
-      }
-      if (e.key === "1") { e.preventDefault(); setView("board"); }
-      if (e.key === "2") { e.preventDefault(); setView("calendar"); }
-      if (e.key === "3") { e.preventDefault(); setView("dashboard"); }
       if (e.key === "/") { e.preventDefault(); searchInputRef.current?.focus(); }
+      // Priority filters
+      if (e.key === "1") { e.preventDefault(); setPriorityFilter((p) => p === "urgent" ? null : "urgent"); }
+      if (e.key === "2") { e.preventDefault(); setPriorityFilter((p) => p === "high" ? null : "high"); }
+      if (e.key === "3") { e.preventDefault(); setPriorityFilter((p) => p === "medium" ? null : "medium"); }
+      if (e.key === "4") { e.preventDefault(); setPriorityFilter((p) => p === "low" ? null : "low"); }
+      if (e.key === "Escape") { e.preventDefault(); setPriorityFilter(null); setSearch(""); }
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
@@ -181,12 +179,14 @@ export default function TasksPage() {
   );
 
   const handleQuickCreate = useCallback(
-    async (title: string, columnId: ColumnId) => {
+    async (title: string, columnId: ColumnId, priority?: Priority) => {
       try {
+        const body: Record<string, unknown> = { title, column_id: columnId, created_by: currentUserId };
+        if (priority) body.priority = priority;
         const res = await fetch("/api/admin/tasks", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title, column_id: columnId, created_by: currentUserId }),
+          body: JSON.stringify(body),
         });
         if (res.ok) {
           const task = await res.json();
@@ -368,6 +368,71 @@ export default function TasksPage() {
           onDelete={handleDeleteTask}
         />
       )}
+
+      {/* ── Keyboard shortcuts tooltip ── */}
+      <KeyboardShortcutsTooltip />
+    </div>
+  );
+}
+
+/* ─── Shortcuts tooltip ─── */
+function KeyboardShortcutsTooltip() {
+  const [show, setShow] = useState(false);
+
+  const shortcuts = [
+    { key: "C", desc: "Нова задача" },
+    { key: "/", desc: "Пошук" },
+    { key: "1-4", desc: "Фільтр пріоритету" },
+    { key: "Esc", desc: "Скинути фільтри" },
+  ];
+
+  return (
+    <div className="fixed bottom-4 right-4 z-40">
+      <div
+        className="relative"
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+      >
+        <button
+          className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+          style={{
+            background: "var(--a-bg-card)",
+            border: "1px solid var(--a-border)",
+            color: "var(--a-text-4)",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+          }}
+        >
+          ?
+        </button>
+        {show && (
+          <div
+            className="absolute bottom-10 right-0 rounded-xl p-3 min-w-[180px]"
+            style={{
+              background: "var(--a-bg-card)",
+              border: "1px solid var(--a-border)",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
+              animation: "fadeScaleIn 0.15s ease-out",
+            }}
+          >
+            <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: "var(--a-text-4)" }}>
+              Скорочення
+            </p>
+            {shortcuts.map((s) => (
+              <div key={s.key} className="flex items-center justify-between gap-4 py-1">
+                <kbd
+                  className="text-[10px] font-mono px-1.5 py-0.5 rounded"
+                  style={{ background: "var(--a-bg-hover)", color: "var(--a-text-2)" }}
+                >
+                  {s.key}
+                </kbd>
+                <span className="text-[11px]" style={{ color: "var(--a-text-3)" }}>
+                  {s.desc}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

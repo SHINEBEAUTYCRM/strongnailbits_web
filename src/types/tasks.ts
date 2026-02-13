@@ -54,6 +54,8 @@ export const AVAILABLE_TAGS = [
   "дизайн",
   "баг",
   "SEO",
+  "маркетинг",
+  "UX",
 ] as const;
 
 export type TaskTag = (typeof AVAILABLE_TAGS)[number];

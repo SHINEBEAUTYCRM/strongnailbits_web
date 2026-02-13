@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AdminTopNav } from "./AdminTopNav";
 import { AdminMobileMenu } from "./AdminMobileMenu";
 import { SearchModal } from "./SearchModal";
+import { TaskCreateModal } from "./tasks/TaskCreateModal";
 import { useAdminTheme } from "@/lib/admin/theme";
 import type { AdminUser } from "@/lib/admin/auth";
 
@@ -13,6 +14,7 @@ export function AdminShell({ children, adminUser }: { children: React.ReactNode;
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [createTaskOpen, setCreateTaskOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const { theme, resolved, setTheme } = useAdminTheme();
 
@@ -21,17 +23,24 @@ export function AdminShell({ children, adminUser }: { children: React.ReactNode;
     setMobileOpen(false);
   }, [pathname]);
 
-  // ⌘K shortcut to open search
+  // ⌘K shortcut + 'C' to open task create
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         setSearchOpen(true);
       }
+      // 'C' key — open task create (only if not in input/textarea)
+      const target = e.target as HTMLElement;
+      const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
+      if (e.key === "c" && !e.metaKey && !e.ctrlKey && !isInput && !searchOpen && !createTaskOpen) {
+        e.preventDefault();
+        setCreateTaskOpen(true);
+      }
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, []);
+  }, [searchOpen, createTaskOpen]);
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -59,6 +68,7 @@ export function AdminShell({ children, adminUser }: { children: React.ReactNode;
       <AdminTopNav
         onMobileOpen={() => setMobileOpen(true)}
         onSearchOpen={() => setSearchOpen(true)}
+        onNewTask={() => setCreateTaskOpen(true)}
         displayName={displayName}
         displayEmail={displayPhone}
         displayInitial={displayInitial}
@@ -87,6 +97,9 @@ export function AdminShell({ children, adminUser }: { children: React.ReactNode;
 
       {/* Search modal */}
       <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
+
+      {/* Task create modal (global) */}
+      <TaskCreateModal open={createTaskOpen} onClose={() => setCreateTaskOpen(false)} />
     </div>
   );
 }

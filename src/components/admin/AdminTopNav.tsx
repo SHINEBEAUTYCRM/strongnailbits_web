@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Search, Bell, ChevronDown } from "lucide-react";
+import { Menu, Search, Bell, ChevronDown, Plus } from "lucide-react";
 import { adminNavigation, type NavSection } from "@/lib/admin/navigation";
 import { AdminNavDropdown } from "./AdminNavDropdown";
 import { AdminProfileDropdown } from "./AdminProfileDropdown";
@@ -13,6 +13,7 @@ import type { AdminTheme } from "@/lib/admin/theme";
 interface AdminTopNavProps {
   onMobileOpen: () => void;
   onSearchOpen: () => void;
+  onNewTask?: () => void;
   displayName: string;
   displayEmail: string;
   displayInitial: string;
@@ -26,6 +27,7 @@ interface AdminTopNavProps {
 export function AdminTopNav({
   onMobileOpen,
   onSearchOpen,
+  onNewTask,
   displayName,
   displayEmail,
   displayInitial,
@@ -228,6 +230,29 @@ export function AdminTopNav({
 
       {/* Right controls */}
       <div className="flex items-center gap-1.5 px-3 lg:px-4 shrink-0 ml-auto">
+        {/* New Task */}
+        {onNewTask && (
+          <>
+            <button
+              onClick={onNewTask}
+              className="hidden sm:flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors"
+              style={{ background: "#a855f7" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#9333ea"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#a855f7"; }}
+            >
+              <Plus size={15} />
+              <span>Нова задача</span>
+            </button>
+            <button
+              onClick={onNewTask}
+              className="sm:hidden flex items-center justify-center w-8 h-8 rounded-full text-white"
+              style={{ background: "#a855f7" }}
+            >
+              <Plus size={16} />
+            </button>
+          </>
+        )}
+
         {/* Search */}
         <button
           onClick={onSearchOpen}

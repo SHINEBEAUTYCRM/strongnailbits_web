@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
   X, Check, Plus, Loader2, Send,
   Calendar, User, Flag, Tag, Link2, RotateCw,
-  MessageSquare, History, Trash2,
+  MessageSquare, History, Trash2, Copy, MoreHorizontal, Archive,
 } from "lucide-react";
 import type {
   Task, ColumnId, Priority, TeamMemberShort,
@@ -21,8 +21,6 @@ interface TaskModalProps {
   onDelete: (taskId: string) => Promise<void>;
 }
 
-type TabId = "details" | "comments" | "log";
-
 const COLUMN_LABELS: Record<ColumnId, string> = {
   new: "Нові",
   progress: "В роботі",
@@ -31,10 +29,10 @@ const COLUMN_LABELS: Record<ColumnId, string> = {
 };
 
 export function TaskModal({ task, teamMembers, currentUserId, onClose, onUpdate, onDelete }: TaskModalProps) {
-  const [activeTab, setActiveTab] = useState<TabId>("details");
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
   const [saving, setSaving] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   // Checklist
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
@@ -51,16 +49,33 @@ export function TaskModal({ task, teamMembers, currentUserId, onClose, onUpdate,
   const [activity, setActivity] = useState<TaskActivity[]>([]);
   const [loadingActivity, setLoadingActivity] = useState(true);
 
+  // Tags open
+  const [showAllTags, setShowAllTags] = useState(false);
+
   const overlayRef = useRef<HTMLDivElement>(null);
-  const titleRef = useRef<HTMLInputElement>(null);
+  const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // ── URL update ──
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("task", task.id);
+    window.history.replaceState({}, "", url.toString());
+    return () => {
+      const cleanUrl = new URL(window.location.href);
+      cleanUrl.searchParams.delete("task");
+      window.history.replaceState({}, "", cleanUrl.toString());
+    };
+  }, [task.id]);
 
   // ── Close on Escape ──
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
+      if ((e.metaKey || e.ctrlKey) && e.key === "d") { e.preventDefault(); handleDelete(); }
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onClose]);
 
   // ── Load data on mount ──
@@ -75,58 +90,42 @@ export function TaskModal({ task, teamMembers, currentUserId, onClose, onUpdate,
     setLoadingChecklist(true);
     try {
       const res = await fetch(`/api/admin/tasks/${task.id}/checklist`);
-      // The API only has POST/PATCH, we need a GET. Fetch from the task API won't
-      // work directly, so we'll use the Supabase client
-      // For simplicity — load from main tasks API won't work, let's use an inline approach
-      // Actually, let me load from Supabase client directly
-      if (!res.ok) {
+      if (res.ok) {
+        const data = await res.json();
+        setChecklist(Array.isArray(data) ? data : []);
+      } else {
         setChecklist([]);
-        return;
       }
-      const data = await res.json();
-      setChecklist(Array.isArray(data) ? data : []);
-    } catch {
-      setChecklist([]);
-    } finally {
-      setLoadingChecklist(false);
-    }
+    } catch { setChecklist([]); } finally { setLoadingChecklist(false); }
   };
 
   const loadComments = async () => {
     setLoadingComments(true);
     try {
       const res = await fetch(`/api/admin/tasks/${task.id}/comments`);
-      if (!res.ok) {
+      if (res.ok) {
+        const data = await res.json();
+        setComments(Array.isArray(data) ? data : []);
+      } else {
         setComments([]);
-        return;
       }
-      const data = await res.json();
-      setComments(Array.isArray(data) ? data : []);
-    } catch {
-      setComments([]);
-    } finally {
-      setLoadingComments(false);
-    }
+    } catch { setComments([]); } finally { setLoadingComments(false); }
   };
 
   const loadActivity = async () => {
     setLoadingActivity(true);
     try {
       const res = await fetch(`/api/admin/tasks/${task.id}/activity`);
-      if (!res.ok) {
+      if (res.ok) {
+        const data = await res.json();
+        setActivity(Array.isArray(data) ? data : []);
+      } else {
         setActivity([]);
-        return;
       }
-      const data = await res.json();
-      setActivity(Array.isArray(data) ? data : []);
-    } catch {
-      setActivity([]);
-    } finally {
-      setLoadingActivity(false);
-    }
+    } catch { setActivity([]); } finally { setLoadingActivity(false); }
   };
 
-  // ── Save field ──
+  // ── Save field with debounce ──
   const saveField = useCallback(
     async (field: string, value: unknown) => {
       setSaving(true);
@@ -139,21 +138,31 @@ export function TaskModal({ task, teamMembers, currentUserId, onClose, onUpdate,
     [task.id, currentUserId, onUpdate],
   );
 
-  // ── Title blur ──
-  const handleTitleBlur = () => {
-    if (title.trim() && title !== task.title) {
-      saveField("title", title.trim());
-    }
+  const debouncedSave = useCallback(
+    (field: string, value: unknown) => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(() => saveField(field, value), 500);
+    },
+    [saveField],
+  );
+
+  useEffect(() => {
+    return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
+  }, []);
+
+  // ── Title change ──
+  const handleTitleChange = (val: string) => {
+    setTitle(val);
+    debouncedSave("title", val.trim());
   };
 
-  // ── Description blur ──
-  const handleDescBlur = () => {
-    if (description !== task.description) {
-      saveField("description", description);
-    }
+  // ── Description change ──
+  const handleDescChange = (val: string) => {
+    setDescription(val);
+    debouncedSave("description", val);
   };
 
-  // ── Add checklist item ──
+  // ── Checklist ──
   const handleAddCheckItem = async () => {
     if (!newCheckItem.trim()) return;
     try {
@@ -170,9 +179,7 @@ export function TaskModal({ task, teamMembers, currentUserId, onClose, onUpdate,
     } catch { /* ignore */ }
   };
 
-  // ── Toggle checklist item ──
   const handleToggleCheckItem = async (item: ChecklistItem) => {
-    // Optimistic
     setChecklist((prev) => prev.map((i) => (i.id === item.id ? { ...i, done: !i.done } : i)));
     try {
       await fetch(`/api/admin/tasks/${task.id}/checklist`, {
@@ -181,12 +188,11 @@ export function TaskModal({ task, teamMembers, currentUserId, onClose, onUpdate,
         body: JSON.stringify({ item_id: item.id, done: !item.done }),
       });
     } catch {
-      // Revert
       setChecklist((prev) => prev.map((i) => (i.id === item.id ? { ...i, done: item.done } : i)));
     }
   };
 
-  // ── Add comment ──
+  // ── Comments ──
   const handleAddComment = async () => {
     if (!newComment.trim() || sendingComment) return;
     setSendingComment(true);
@@ -201,9 +207,7 @@ export function TaskModal({ task, teamMembers, currentUserId, onClose, onUpdate,
         setComments((prev) => [...prev, comment]);
         setNewComment("");
       }
-    } catch { /* ignore */ } finally {
-      setSendingComment(false);
-    }
+    } catch { /* ignore */ } finally { setSendingComment(false); }
   };
 
   // ── Delete ──
@@ -213,17 +217,40 @@ export function TaskModal({ task, teamMembers, currentUserId, onClose, onUpdate,
     onClose();
   };
 
-  // ── Tag toggle ──
+  // ── Tags ──
   const handleTagToggle = (tag: string) => {
     const newTags = task.tags.includes(tag) ? task.tags.filter((t) => t !== tag) : [...task.tags, tag];
     saveField("tags", newTags);
   };
 
-  const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
-    { id: "details", label: "Деталі", icon: <Flag className="w-3.5 h-3.5" /> },
-    { id: "comments", label: "Коментарі", icon: <MessageSquare className="w-3.5 h-3.5" /> },
-    { id: "log", label: "Лог", icon: <History className="w-3.5 h-3.5" /> },
-  ];
+  // ── Copy ID ──
+  const handleCopyId = () => {
+    navigator.clipboard.writeText(task.id);
+    setShowMenu(false);
+  };
+
+  // ── Duplicate ──
+  const handleDuplicate = async () => {
+    setShowMenu(false);
+    try {
+      await fetch("/api/admin/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: `${task.title} (копія)`,
+          description: task.description,
+          column_id: task.column_id,
+          priority: task.priority,
+          assignee_id: task.assignee_id,
+          tags: task.tags,
+          created_by: currentUserId,
+        }),
+      });
+    } catch { /* ignore */ }
+  };
+
+  const checkDone = checklist.filter((c) => c.done).length;
+  const checkTotal = checklist.length;
 
   return (
     <div
@@ -235,32 +262,74 @@ export function TaskModal({ task, teamMembers, currentUserId, onClose, onUpdate,
       <div
         className="w-full rounded-2xl overflow-hidden flex flex-col"
         style={{
-          maxWidth: 560,
+          maxWidth: 780,
           maxHeight: "90vh",
           background: "var(--a-bg)",
           border: "1px solid var(--a-border)",
-          animation: "modalIn 0.2s ease-out",
+          animation: "fadeScaleIn 0.15s ease-out",
         }}
       >
-        {/* Header */}
+        {/* ──────── Header ──────── */}
         <div
-          className="flex items-center justify-between px-5 py-3"
+          className="flex items-center justify-between px-5 py-2.5"
           style={{ borderBottom: "1px solid var(--a-border)" }}
         >
           <div className="flex items-center gap-2">
             {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#a855f7" }} />}
+            <span className="text-[10px] font-mono" style={{ color: "var(--a-text-4)" }}>
+              {task.id.slice(0, 8).toUpperCase()}
+            </span>
           </div>
           <div className="flex items-center gap-1">
-            <button
-              onClick={handleDelete}
-              className="p-1.5 rounded-md transition-colors"
-              style={{ color: "var(--a-text-4)" }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = "#ef4444"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = "var(--a-text-4)"; }}
-              title="Видалити"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            {/* Three-dot menu */}
+            <div className="relative">
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                className="p-1.5 rounded-md transition-colors"
+                style={{ color: "var(--a-text-4)" }}
+              >
+                <MoreHorizontal className="w-4 h-4" />
+              </button>
+              {showMenu && (
+                <div
+                  className="absolute right-0 top-8 rounded-lg py-1 min-w-[160px] z-50"
+                  style={{
+                    background: "var(--a-bg-card)",
+                    border: "1px solid var(--a-border)",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+                  }}
+                >
+                  <button
+                    onClick={handleCopyId}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-colors"
+                    style={{ color: "var(--a-text-2)" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "var(--a-bg-hover)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                  >
+                    <Copy className="w-3.5 h-3.5" /> Копіювати ID
+                  </button>
+                  <button
+                    onClick={handleDuplicate}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-colors"
+                    style={{ color: "var(--a-text-2)" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "var(--a-bg-hover)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                  >
+                    <Archive className="w-3.5 h-3.5" /> Дублювати
+                  </button>
+                  <div style={{ borderTop: "1px solid var(--a-border)", margin: "4px 0" }} />
+                  <button
+                    onClick={handleDelete}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-colors"
+                    style={{ color: "#ef4444" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "var(--a-bg-hover)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Видалити
+                  </button>
+                </div>
+              )}
+            </div>
             <button
               onClick={onClose}
               className="p-1.5 rounded-md transition-colors"
@@ -273,402 +342,392 @@ export function TaskModal({ task, teamMembers, currentUserId, onClose, onUpdate,
           </div>
         </div>
 
-        {/* Title */}
-        <div className="px-5 pt-4 pb-2">
-          <input
-            ref={titleRef}
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onBlur={handleTitleBlur}
-            className="w-full bg-transparent border-none outline-none text-lg font-semibold"
-            style={{ color: "var(--a-text-body)" }}
-          />
-        </div>
+        {/* ──────── Two-column body ──────── */}
+        <div className="flex-1 overflow-y-auto" style={{ maxHeight: "75vh" }}>
+          <div className="flex flex-col md:flex-row">
+            {/* ── Left column (60%) ── */}
+            <div className="flex-1 md:w-[60%] px-5 py-4 space-y-5" style={{ borderRight: "1px solid var(--a-border)" }}>
+              {/* Title */}
+              <input
+                value={title}
+                onChange={(e) => handleTitleChange(e.target.value)}
+                className="w-full bg-transparent border-none outline-none text-lg font-semibold"
+                style={{ color: "var(--a-text-body)" }}
+                placeholder="Назва задачі"
+              />
 
-        {/* Tabs */}
-        <div className="flex gap-1 px-5" style={{ borderBottom: "1px solid var(--a-border)" }}>
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-colors relative"
-              style={{
-                color: activeTab === tab.id ? "#a855f7" : "var(--a-text-3)",
-              }}
-            >
-              {tab.icon}
-              {tab.label}
-              {activeTab === tab.id && (
-                <span
-                  className="absolute bottom-0 left-0 right-0 h-0.5"
-                  style={{ background: "#a855f7" }}
-                />
-              )}
-            </button>
-          ))}
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto px-5 py-4" style={{ maxHeight: "60vh" }}>
-          {activeTab === "details" && (
-            <DetailsTab
-              task={task}
-              description={description}
-              setDescription={setDescription}
-              onDescBlur={handleDescBlur}
-              teamMembers={teamMembers}
-              onSaveField={saveField}
-              checklist={checklist}
-              loadingChecklist={loadingChecklist}
-              newCheckItem={newCheckItem}
-              setNewCheckItem={setNewCheckItem}
-              onAddCheckItem={handleAddCheckItem}
-              onToggleCheckItem={handleToggleCheckItem}
-              onTagToggle={handleTagToggle}
-            />
-          )}
-          {activeTab === "comments" && (
-            <CommentsTab
-              comments={comments}
-              loading={loadingComments}
-              newComment={newComment}
-              setNewComment={setNewComment}
-              onAddComment={handleAddComment}
-              sending={sendingComment}
-            />
-          )}
-          {activeTab === "log" && (
-            <ActivityTab activity={activity} loading={loadingActivity} />
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════
-// ──── Details Tab ────
-// ═══════════════════════════════════════
-
-function DetailsTab({
-  task, description, setDescription, onDescBlur,
-  teamMembers, onSaveField,
-  checklist, loadingChecklist, newCheckItem, setNewCheckItem, onAddCheckItem, onToggleCheckItem,
-  onTagToggle,
-}: {
-  task: Task;
-  description: string;
-  setDescription: (v: string) => void;
-  onDescBlur: () => void;
-  teamMembers: TeamMemberShort[];
-  onSaveField: (field: string, value: unknown) => void;
-  checklist: ChecklistItem[];
-  loadingChecklist: boolean;
-  newCheckItem: string;
-  setNewCheckItem: (v: string) => void;
-  onAddCheckItem: () => void;
-  onToggleCheckItem: (item: ChecklistItem) => void;
-  onTagToggle: (tag: string) => void;
-}) {
-  return (
-    <div className="flex flex-col gap-5">
-      {/* Description */}
-      <div>
-        <FieldLabel icon={<Flag className="w-3 h-3" />} label="Опис" />
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          onBlur={onDescBlur}
-          placeholder="Додати опис..."
-          rows={3}
-          className="w-full mt-1.5 px-3 py-2 rounded-lg text-sm outline-none resize-none"
-          style={{
-            background: "var(--a-bg-card)",
-            border: "1px solid var(--a-border)",
-            color: "var(--a-text-body)",
-          }}
-        />
-      </div>
-
-      {/* Assignee */}
-      <div>
-        <FieldLabel icon={<User className="w-3 h-3" />} label="Виконавець" />
-        <select
-          value={task.assignee_id || ""}
-          onChange={(e) => onSaveField("assignee_id", e.target.value || null)}
-          className="w-full mt-1.5 px-3 py-2 rounded-lg text-sm outline-none cursor-pointer"
-          style={{
-            background: "var(--a-bg-card)",
-            border: "1px solid var(--a-border)",
-            color: "var(--a-text-body)",
-          }}
-        >
-          <option value="">Не призначено</option>
-          {teamMembers.map((m) => (
-            <option key={m.id} value={m.id}>{m.name}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Priority */}
-      <div>
-        <FieldLabel icon={<Flag className="w-3 h-3" />} label="Пріоритет" />
-        <div className="flex gap-1.5 mt-1.5 flex-wrap">
-          {PRIORITIES.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => onSaveField("priority", p.id)}
-              className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
-              style={{
-                background: task.priority === p.id ? `${p.color}18` : "var(--a-bg-card)",
-                border: `1px solid ${task.priority === p.id ? `${p.color}40` : "var(--a-border)"}`,
-                color: task.priority === p.id ? p.color : "var(--a-text-3)",
-              }}
-            >
-              {p.emoji} {p.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Status (column) */}
-      <div>
-        <FieldLabel icon={<Flag className="w-3 h-3" />} label="Статус" />
-        <div className="flex gap-1.5 mt-1.5 flex-wrap">
-          {COLUMNS.map((col) => (
-            <button
-              key={col.id}
-              onClick={() => onSaveField("column_id", col.id)}
-              className="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
-              style={{
-                background: task.column_id === col.id ? `${col.color}18` : "var(--a-bg-card)",
-                border: `1px solid ${task.column_id === col.id ? `${col.color}40` : "var(--a-border)"}`,
-                color: task.column_id === col.id ? col.color : "var(--a-text-3)",
-              }}
-            >
-              {col.icon} {col.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Due date */}
-      <div>
-        <FieldLabel icon={<Calendar className="w-3 h-3" />} label="Дедлайн" />
-        <input
-          type="date"
-          value={task.due_date || ""}
-          onChange={(e) => onSaveField("due_date", e.target.value || null)}
-          className="mt-1.5 px-3 py-2 rounded-lg text-sm outline-none"
-          style={{
-            background: "var(--a-bg-card)",
-            border: "1px solid var(--a-border)",
-            color: "var(--a-text-body)",
-          }}
-        />
-      </div>
-
-      {/* Linked order */}
-      <div>
-        <FieldLabel icon={<Link2 className="w-3 h-3" />} label="Замовлення" />
-        <input
-          type="text"
-          defaultValue={task.linked_order || ""}
-          onBlur={(e) => onSaveField("linked_order", e.target.value || null)}
-          placeholder="#SHINE-XXXX"
-          className="w-full mt-1.5 px-3 py-2 rounded-lg text-sm outline-none"
-          style={{
-            background: "var(--a-bg-card)",
-            border: "1px solid var(--a-border)",
-            color: "var(--a-text-body)",
-            fontFamily: "var(--font-jetbrains-mono, 'JetBrains Mono'), monospace",
-          }}
-        />
-      </div>
-
-      {/* Tags */}
-      <div>
-        <FieldLabel icon={<Tag className="w-3 h-3" />} label="Теги" />
-        <div className="flex flex-wrap gap-1.5 mt-1.5">
-          {AVAILABLE_TAGS.map((tag) => {
-            const active = task.tags.includes(tag);
-            return (
-              <button
-                key={tag}
-                onClick={() => onTagToggle(tag)}
-                className="px-2 py-1 rounded-md text-[11px] font-medium transition-all"
-                style={{
-                  background: active ? "rgba(168,85,247,0.12)" : "var(--a-bg-card)",
-                  border: `1px solid ${active ? "rgba(168,85,247,0.3)" : "var(--a-border)"}`,
-                  color: active ? "#a78bfa" : "var(--a-text-3)",
-                }}
-              >
-                {tag}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Checklist */}
-      <div>
-        <FieldLabel icon={<Check className="w-3 h-3" />} label="Чеклист" />
-        {loadingChecklist ? (
-          <Loader2 className="w-4 h-4 animate-spin mt-2" style={{ color: "var(--a-text-4)" }} />
-        ) : (
-          <div className="flex flex-col gap-1 mt-1.5">
-            {checklist.map((item) => (
-              <label
-                key={item.id}
-                className="flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer group"
-                style={{ background: "var(--a-bg-hover)" }}
-              >
-                <input
-                  type="checkbox"
-                  checked={item.done}
-                  onChange={() => onToggleCheckItem(item)}
-                  className="accent-purple-500"
-                />
-                <span
-                  className="text-sm"
+              {/* Description */}
+              <div>
+                <textarea
+                  value={description}
+                  onChange={(e) => handleDescChange(e.target.value)}
+                  placeholder="Додай опис..."
+                  rows={4}
+                  className="w-full px-3 py-2 rounded-lg text-sm outline-none resize-none"
                   style={{
-                    color: item.done ? "var(--a-text-4)" : "var(--a-text-body)",
-                    textDecoration: item.done ? "line-through" : "none",
+                    background: "var(--a-bg-card)",
+                    border: "1px solid var(--a-border)",
+                    color: "var(--a-text-body)",
+                  }}
+                />
+              </div>
+
+              {/* ── Checklist ── */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Check className="w-3.5 h-3.5" style={{ color: "var(--a-text-4)" }} />
+                  <span className="text-xs font-medium" style={{ color: "var(--a-text-3)" }}>Чеклист</span>
+                  {checkTotal > 0 && (
+                    <>
+                      <span className="text-[10px] font-mono" style={{ color: "var(--a-text-4)" }}>
+                        {checkDone}/{checkTotal}
+                      </span>
+                      <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "var(--a-bg-hover)", maxWidth: 80 }}>
+                        <div className="h-full rounded-full" style={{ width: `${checkTotal > 0 ? (checkDone / checkTotal) * 100 : 0}%`, background: "#22c55e" }} />
+                      </div>
+                    </>
+                  )}
+                </div>
+                {loadingChecklist ? (
+                  <Loader2 className="w-4 h-4 animate-spin" style={{ color: "var(--a-text-4)" }} />
+                ) : (
+                  <div className="flex flex-col gap-1">
+                    {checklist.map((item) => (
+                      <label
+                        key={item.id}
+                        className="flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer"
+                        style={{ background: "var(--a-bg-hover)" }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={item.done}
+                          onChange={() => handleToggleCheckItem(item)}
+                          className="accent-purple-500"
+                        />
+                        <span
+                          className="text-sm"
+                          style={{
+                            color: item.done ? "var(--a-text-4)" : "var(--a-text-body)",
+                            textDecoration: item.done ? "line-through" : "none",
+                          }}
+                        >
+                          {item.text}
+                        </span>
+                      </label>
+                    ))}
+                    <div className="flex items-center gap-2 mt-1">
+                      <input
+                        value={newCheckItem}
+                        onChange={(e) => setNewCheckItem(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddCheckItem(); } }}
+                        placeholder="Додати пункт..."
+                        className="flex-1 px-2 py-1.5 rounded-lg text-sm bg-transparent outline-none"
+                        style={{ color: "var(--a-text-body)", border: "1px solid var(--a-border)" }}
+                      />
+                      <button onClick={handleAddCheckItem} className="p-1 rounded" style={{ color: "var(--a-text-3)" }}>
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* ── Comments ── */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <MessageSquare className="w-3.5 h-3.5" style={{ color: "var(--a-text-4)" }} />
+                  <span className="text-xs font-medium" style={{ color: "var(--a-text-3)" }}>Коментарі</span>
+                </div>
+                {loadingComments ? (
+                  <Loader2 className="w-4 h-4 animate-spin" style={{ color: "var(--a-text-4)" }} />
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {comments.length === 0 && (
+                      <p className="text-xs" style={{ color: "var(--a-text-4)" }}>Поки немає коментарів</p>
+                    )}
+                    {comments.map((c) => (
+                      <div key={c.id} className="flex gap-2.5">
+                        <div
+                          className="shrink-0 flex items-center justify-center text-[9px] font-bold uppercase"
+                          style={{
+                            width: 26,
+                            height: 26,
+                            borderRadius: "50%",
+                            background: "rgba(168,85,247,0.12)",
+                            color: "#a855f7",
+                          }}
+                        >
+                          {(c.author?.name || "?").split(" ").map((w) => w[0]).join("").slice(0, 2)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium" style={{ color: "var(--a-text-body)" }}>
+                              {c.author?.name || "Невідомий"}
+                            </span>
+                            <span className="text-[10px]" style={{ color: "var(--a-text-4)", fontFamily: "var(--font-jetbrains-mono, monospace)" }}>
+                              {formatRelativeTime(c.created_at)}
+                            </span>
+                          </div>
+                          <p className="text-sm mt-0.5" style={{ color: "var(--a-text-2)" }}>{c.text}</p>
+                        </div>
+                      </div>
+                    ))}
+                    {/* Comment input */}
+                    <div className="flex items-center gap-2">
+                      <input
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        onKeyDown={(e) => {
+                          if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); handleAddComment(); }
+                          if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAddComment(); }
+                        }}
+                        placeholder="Написати коментар..."
+                        className="flex-1 px-3 py-2 rounded-lg text-sm outline-none"
+                        style={{
+                          background: "var(--a-bg-card)",
+                          border: "1px solid var(--a-border)",
+                          color: "var(--a-text-body)",
+                        }}
+                      />
+                      <button
+                        onClick={handleAddComment}
+                        disabled={!newComment.trim() || sendingComment}
+                        className="p-2 rounded-lg transition-colors disabled:opacity-40"
+                        style={{ background: "rgba(168,85,247,0.15)", color: "#a855f7" }}
+                      >
+                        {sendingComment ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ── Right sidebar (40%) ── */}
+            <div className="md:w-[40%] px-5 py-4 space-y-4">
+              {/* Status */}
+              <SidebarField icon={<Flag className="w-3.5 h-3.5" />} label="Статус">
+                <div className="flex flex-wrap gap-1">
+                  {COLUMNS.map((col) => (
+                    <button
+                      key={col.id}
+                      onClick={() => saveField("column_id", col.id)}
+                      className="px-2 py-1 rounded-md text-[11px] font-medium transition-all"
+                      style={{
+                        background: task.column_id === col.id ? `${col.color}18` : "var(--a-bg-card)",
+                        border: `1px solid ${task.column_id === col.id ? `${col.color}40` : "var(--a-border)"}`,
+                        color: task.column_id === col.id ? col.color : "var(--a-text-3)",
+                      }}
+                    >
+                      {col.icon} {col.label}
+                    </button>
+                  ))}
+                </div>
+              </SidebarField>
+
+              {/* Priority */}
+              <SidebarField icon={<Flag className="w-3.5 h-3.5" />} label="Пріоритет">
+                <div className="flex flex-wrap gap-1">
+                  {PRIORITIES.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => saveField("priority", p.id)}
+                      className="px-2 py-1 rounded-md text-[11px] font-medium transition-all"
+                      style={{
+                        background: task.priority === p.id ? `${p.color}18` : "var(--a-bg-card)",
+                        border: `1px solid ${task.priority === p.id ? `${p.color}40` : "var(--a-border)"}`,
+                        color: task.priority === p.id ? p.color : "var(--a-text-3)",
+                      }}
+                    >
+                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: p.color, display: "inline-block", marginRight: 4 }} />
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </SidebarField>
+
+              {/* Assignee */}
+              <SidebarField icon={<User className="w-3.5 h-3.5" />} label="Виконавець">
+                <select
+                  value={task.assignee_id || ""}
+                  onChange={(e) => saveField("assignee_id", e.target.value || null)}
+                  className="w-full px-2 py-1.5 rounded-lg text-xs outline-none cursor-pointer"
+                  style={{
+                    background: "var(--a-bg-card)",
+                    border: "1px solid var(--a-border)",
+                    color: "var(--a-text-body)",
                   }}
                 >
-                  {item.text}
+                  <option value="">Не призначено</option>
+                  {teamMembers.map((m) => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
+                </select>
+              </SidebarField>
+
+              {/* Due date */}
+              <SidebarField icon={<Calendar className="w-3.5 h-3.5" />} label="Дедлайн">
+                <input
+                  type="date"
+                  value={task.due_date || ""}
+                  onChange={(e) => saveField("due_date", e.target.value || null)}
+                  className="w-full px-2 py-1.5 rounded-lg text-xs outline-none"
+                  style={{
+                    background: "var(--a-bg-card)",
+                    border: "1px solid var(--a-border)",
+                    color: "var(--a-text-body)",
+                  }}
+                />
+              </SidebarField>
+
+              {/* Tags */}
+              <SidebarField icon={<Tag className="w-3.5 h-3.5" />} label="Теги">
+                <div className="flex flex-wrap gap-1">
+                  {task.tags.map((tag) => (
+                    <button
+                      key={tag}
+                      onClick={() => handleTagToggle(tag)}
+                      className="px-2 py-0.5 rounded-md text-[10px] font-medium"
+                      style={{
+                        background: "rgba(168,85,247,0.12)",
+                        border: "1px solid rgba(168,85,247,0.25)",
+                        color: "#a78bfa",
+                      }}
+                    >
+                      {tag} ×
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setShowAllTags(!showAllTags)}
+                    className="px-2 py-0.5 rounded-md text-[10px]"
+                    style={{
+                      background: "var(--a-bg-hover)",
+                      color: "var(--a-text-3)",
+                      border: "1px solid var(--a-border)",
+                    }}
+                  >
+                    +
+                  </button>
+                </div>
+                {showAllTags && (
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {AVAILABLE_TAGS.filter((t) => !task.tags.includes(t)).map((tag) => (
+                      <button
+                        key={tag}
+                        onClick={() => handleTagToggle(tag)}
+                        className="px-1.5 py-0.5 rounded text-[10px] transition-colors"
+                        style={{
+                          background: "var(--a-bg-card)",
+                          color: "var(--a-text-4)",
+                          border: "1px solid var(--a-border)",
+                        }}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </SidebarField>
+
+              {/* Linked order */}
+              {task.linked_order && (
+                <SidebarField icon={<Link2 className="w-3.5 h-3.5" />} label="Замовлення">
+                  <span className="text-xs font-mono" style={{ color: "#a855f7" }}>
+                    #{task.linked_order.replace(/\D/g, "")}
+                  </span>
+                </SidebarField>
+              )}
+
+              {/* Recurring */}
+              {task.recurring && (
+                <SidebarField icon={<RotateCw className="w-3.5 h-3.5" />} label="Повторення">
+                  <span className="text-xs" style={{ color: "#a78bfa" }}>
+                    {task.recurring.label}
+                  </span>
+                </SidebarField>
+              )}
+
+              {/* Created */}
+              <SidebarField icon={<Calendar className="w-3.5 h-3.5" />} label="Створено">
+                <span className="text-xs font-mono" style={{ color: "var(--a-text-4)" }}>
+                  {formatDate(task.created_at)}
                 </span>
-              </label>
-            ))}
-            <div className="flex items-center gap-2 mt-1">
-              <input
-                value={newCheckItem}
-                onChange={(e) => setNewCheckItem(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); onAddCheckItem(); } }}
-                placeholder="Додати пункт..."
-                className="flex-1 px-2 py-1.5 rounded-lg text-sm bg-transparent outline-none"
-                style={{ color: "var(--a-text-body)", border: "1px solid var(--a-border)" }}
-              />
-              <button
-                onClick={onAddCheckItem}
-                className="p-1 rounded"
-                style={{ color: "var(--a-text-3)" }}
-              >
-                <Plus className="w-4 h-4" />
-              </button>
+              </SidebarField>
             </div>
           </div>
-        )}
-      </div>
 
-      {/* Recurring badge */}
-      {task.recurring && (
-        <div>
-          <FieldLabel icon={<RotateCw className="w-3 h-3" />} label="Повторення" />
-          <span className="inline-flex items-center gap-1 mt-1.5 px-2 py-1 rounded-md text-xs" style={{ background: "rgba(168,85,247,0.1)", color: "#a78bfa" }}>
-            🔁 {task.recurring.label}
-          </span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════
-// ──── Comments Tab ────
-// ═══════════════════════════════════════
-
-function CommentsTab({
-  comments, loading, newComment, setNewComment, onAddComment, sending,
-}: {
-  comments: TaskComment[];
-  loading: boolean;
-  newComment: string;
-  setNewComment: (v: string) => void;
-  onAddComment: () => void;
-  sending: boolean;
-}) {
-  return (
-    <div className="flex flex-col h-full">
-      {loading ? (
-        <div className="flex justify-center py-8">
-          <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--a-text-4)" }} />
-        </div>
-      ) : comments.length === 0 ? (
-        <p className="text-center text-xs py-8" style={{ color: "var(--a-text-4)" }}>
-          Коментарів поки немає
-        </p>
-      ) : (
-        <div className="flex flex-col gap-3 mb-4">
-          {comments.map((c) => (
-            <div key={c.id} className="flex gap-2.5">
-              {/* Avatar */}
-              <div
-                className="shrink-0 flex items-center justify-center text-[9px] font-bold uppercase"
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: "50%",
-                  background: "rgba(168,85,247,0.12)",
-                  color: "#a855f7",
-                }}
-              >
-                {(c.author?.name || "?")
-                  .split(" ")
-                  .map((w) => w[0])
-                  .join("")
-                  .slice(0, 2)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium" style={{ color: "var(--a-text-body)" }}>
-                    {c.author?.name || "Невідомий"}
-                  </span>
-                  <span className="text-[10px]" style={{ color: "var(--a-text-4)", fontFamily: "var(--font-jetbrains-mono, monospace)" }}>
-                    {formatTime(c.created_at)}
-                  </span>
-                </div>
-                <p className="text-sm mt-0.5" style={{ color: "var(--a-text-2)" }}>
-                  {c.text}
-                </p>
-              </div>
+          {/* ──────── Activity Log (bottom) ──────── */}
+          <div
+            className="px-5 py-3"
+            style={{ borderTop: "1px solid var(--a-border)" }}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <History className="w-3.5 h-3.5" style={{ color: "var(--a-text-4)" }} />
+              <span className="text-xs font-medium" style={{ color: "var(--a-text-3)" }}>Лог активності</span>
             </div>
-          ))}
-        </div>
-      )}
+            {loadingActivity ? (
+              <Loader2 className="w-4 h-4 animate-spin" style={{ color: "var(--a-text-4)" }} />
+            ) : activity.length === 0 ? (
+              <p className="text-[11px]" style={{ color: "var(--a-text-4)" }}>Поки немає активності</p>
+            ) : (
+              <div className="flex flex-col gap-1.5 max-h-[120px] overflow-y-auto">
+                {activity.map((a) => {
+                  let detail = ACTION_LABELS[a.action] || a.action;
+                  if (a.action === "moved" && a.details) {
+                    const d = a.details as Record<string, string>;
+                    const from = COLUMN_LABELS[d.from as ColumnId] || d.from;
+                    const to = COLUMN_LABELS[d.to as ColumnId] || d.to;
+                    detail = `перемістив ${from} → ${to}`;
+                  }
 
-      {/* Comment input */}
-      <div
-        className="flex items-center gap-2 mt-auto pt-3"
-        style={{ borderTop: "1px solid var(--a-border)" }}
-      >
-        <input
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onAddComment(); } }}
-          placeholder="Написати коментар..."
-          className="flex-1 px-3 py-2 rounded-lg text-sm outline-none"
-          style={{
-            background: "var(--a-bg-card)",
-            border: "1px solid var(--a-border)",
-            color: "var(--a-text-body)",
-          }}
-        />
-        <button
-          onClick={onAddComment}
-          disabled={!newComment.trim() || sending}
-          className="p-2 rounded-lg transition-colors disabled:opacity-40"
-          style={{ background: "rgba(168,85,247,0.15)", color: "#a855f7" }}
-        >
-          {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-        </button>
+                  return (
+                    <div key={a.id} className="flex items-center gap-2">
+                      <span
+                        className="w-1 h-1 rounded-full shrink-0"
+                        style={{ background: "var(--a-text-4)" }}
+                      />
+                      <span className="text-[11px]" style={{ color: "var(--a-text-2)" }}>
+                        <span style={{ fontWeight: 500, color: "var(--a-text-body)" }}>
+                          {a.actor?.name || "Система"}
+                        </span>{" "}
+                        {detail}
+                      </span>
+                      <span
+                        className="text-[10px] ml-auto shrink-0"
+                        style={{ color: "var(--a-text-4)", fontFamily: "var(--font-jetbrains-mono, monospace)" }}
+                      >
+                        {formatRelativeTime(a.created_at)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
 // ═══════════════════════════════════════
-// ──── Activity Tab ────
+// ──── Sidebar Field ────
+// ═══════════════════════════════════════
+
+function SidebarField({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <span style={{ color: "var(--a-text-4)" }}>{icon}</span>
+        <span className="text-[11px] font-medium" style={{ color: "var(--a-text-3)" }}>{label}</span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════
+// ──── Helpers ────
 // ═══════════════════════════════════════
 
 const ACTION_LABELS: Record<string, string> = {
@@ -679,85 +738,22 @@ const ACTION_LABELS: Record<string, string> = {
   checklist: "оновив чеклист",
 };
 
-const COLUMN_LABEL_MAP: Record<string, string> = {
-  new: "Нові",
-  progress: "В роботі",
-  review: "Перевірка",
-  done: "Готово",
-};
-
-function ActivityTab({ activity, loading }: { activity: TaskActivity[]; loading: boolean }) {
-  if (loading) {
-    return (
-      <div className="flex justify-center py-8">
-        <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--a-text-4)" }} />
-      </div>
-    );
-  }
-
-  if (activity.length === 0) {
-    return (
-      <p className="text-center text-xs py-8" style={{ color: "var(--a-text-4)" }}>
-        Поки немає активності
-      </p>
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-3">
-      {activity.map((a) => {
-        let detail = ACTION_LABELS[a.action] || a.action;
-        if (a.action === "moved" && a.details) {
-          const from = COLUMN_LABEL_MAP[(a.details as Record<string, string>).from] || (a.details as Record<string, string>).from;
-          const to = COLUMN_LABEL_MAP[(a.details as Record<string, string>).to] || (a.details as Record<string, string>).to;
-          detail = `перемістив з ${from} → ${to}`;
-        }
-
-        return (
-          <div key={a.id} className="flex items-start gap-2.5">
-            <div
-              className="shrink-0 w-1.5 h-1.5 rounded-full mt-1.5"
-              style={{ background: "var(--a-text-4)" }}
-            />
-            <div>
-              <span className="text-xs" style={{ color: "var(--a-text-2)" }}>
-                <span style={{ color: "var(--a-text-body)", fontWeight: 500 }}>
-                  {a.actor?.name || "Система"}
-                </span>{" "}
-                {detail}
-              </span>
-              <div
-                className="text-[10px] mt-0.5"
-                style={{ color: "var(--a-text-4)", fontFamily: "var(--font-jetbrains-mono, monospace)" }}
-              >
-                {formatTime(a.created_at)}
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════
-// ──── Helpers ────
-// ═══════════════════════════════════════
-
-function FieldLabel({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return (
-    <div className="flex items-center gap-1.5">
-      <span style={{ color: "var(--a-text-4)" }}>{icon}</span>
-      <span className="text-xs font-medium" style={{ color: "var(--a-text-3)" }}>{label}</span>
-    </div>
-  );
-}
-
-function formatTime(iso: string): string {
+function formatDate(iso: string): string {
   const d = new Date(iso);
   const day = d.getDate().toString().padStart(2, "0");
   const month = (d.getMonth() + 1).toString().padStart(2, "0");
-  const h = d.getHours().toString().padStart(2, "0");
-  const m = d.getMinutes().toString().padStart(2, "0");
-  return `${day}.${month} ${h}:${m}`;
+  const year = d.getFullYear();
+  return `${day}.${month}.${year}`;
+}
+
+function formatRelativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "щойно";
+  if (mins < 60) return `${mins} хв`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} год`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} дн`;
+  return formatDate(iso);
 }
