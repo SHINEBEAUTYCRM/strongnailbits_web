@@ -20,7 +20,6 @@ interface Board {
 interface BoardHeaderProps {
   board: Board;
   boards: Board[];
-  saving: boolean;
   onBoardSelect: (id: string) => void;
   onBoardCreate: () => void;
   onBoardDelete: (id: string) => void;
@@ -30,7 +29,6 @@ interface BoardHeaderProps {
 export default function BoardHeader({
   board,
   boards,
-  saving,
   onBoardSelect,
   onBoardCreate,
   onBoardDelete,
@@ -41,8 +39,20 @@ export default function BoardHeader({
   const [editName, setEditName] = useState(board.name);
   const [fullscreen, setFullscreen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // Save indicator — driven by CustomEvent from ShineBoard, NOT parent state
+  const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Listen for save status from ShineBoard via CustomEvent
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ saving: boolean }>).detail;
+      setSaving(detail.saving);
+    };
+    window.addEventListener("board-save-status", handler);
+    return () => window.removeEventListener("board-save-status", handler);
+  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -84,7 +94,6 @@ export default function BoardHeader({
     }
   };
 
-  // Listen for fullscreen changes (e.g. Esc key)
   useEffect(() => {
     const handler = () => setFullscreen(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", handler);
@@ -93,7 +102,7 @@ export default function BoardHeader({
 
   return (
     <div
-      className="flex items-center justify-between px-4 py-2.5"
+      className="flex items-center justify-between px-4 py-2.5 shrink-0"
       style={{
         background: "#0e0e14",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
@@ -180,8 +189,7 @@ export default function BoardHeader({
                     }}
                     className="w-full flex items-center justify-between px-3 py-2.5 text-sm transition-colors hover:bg-white/5"
                     style={{
-                      color:
-                        b.id === board.id ? "#a855f7" : "#a1a1aa",
+                      color: b.id === board.id ? "#a855f7" : "#a1a1aa",
                       background:
                         b.id === board.id
                           ? "rgba(168,85,247,0.05)"
@@ -189,7 +197,10 @@ export default function BoardHeader({
                     }}
                   >
                     <span className="truncate">{b.name}</span>
-                    <span className="text-xs shrink-0 ml-2" style={{ color: "#52525b" }}>
+                    <span
+                      className="text-xs shrink-0 ml-2"
+                      style={{ color: "#52525b" }}
+                    >
                       {new Date(b.updated_at).toLocaleDateString("uk-UA", {
                         day: "numeric",
                         month: "short",
@@ -261,7 +272,10 @@ export default function BoardHeader({
                     setConfirmDelete(false);
                   }}
                   className="px-2 py-1 rounded text-xs font-medium"
-                  style={{ background: "rgba(239,68,68,0.15)", color: "#ef4444" }}
+                  style={{
+                    background: "rgba(239,68,68,0.15)",
+                    color: "#ef4444",
+                  }}
                 >
                   Так
                 </button>

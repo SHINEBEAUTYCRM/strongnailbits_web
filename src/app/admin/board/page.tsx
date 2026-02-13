@@ -14,7 +14,10 @@ const ShineBoard = dynamic(() => import("./components/ShineBoard"), {
       className="flex items-center justify-center"
       style={{ height: "100%", background: "#08080c" }}
     >
-      <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#a855f7" }} />
+      <Loader2
+        className="w-8 h-8 animate-spin"
+        style={{ color: "#a855f7" }}
+      />
     </div>
   ),
 });
@@ -31,12 +34,11 @@ export default function BoardPage() {
   const [boards, setBoards] = useState<Board[]>([]);
   const [currentBoard, setCurrentBoard] = useState<Board | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  // Only increment boardKey when deliberately switching boards
   const [boardKey, setBoardKey] = useState(0);
   const currentBoardIdRef = useRef<string | null>(null);
 
-  // Load board list (without snapshots)
+  // No more `saving` state here — BoardHeader listens via CustomEvent
+
   const loadBoards = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/boards");
@@ -51,7 +53,6 @@ export default function BoardPage() {
     return [];
   }, []);
 
-  // Load specific board with snapshot
   const loadBoard = useCallback(async (boardId: string) => {
     try {
       const res = await fetch(`/api/admin/boards/${boardId}`);
@@ -66,7 +67,6 @@ export default function BoardPage() {
     }
   }, []);
 
-  // Initial load
   useEffect(() => {
     (async () => {
       const boardList = await loadBoards();
@@ -77,7 +77,6 @@ export default function BoardPage() {
     })();
   }, [loadBoards, loadBoard]);
 
-  // Create new board
   const handleCreate = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/boards", {
@@ -95,7 +94,6 @@ export default function BoardPage() {
     }
   }, [loadBoards, loadBoard]);
 
-  // Delete board
   const handleDelete = useCallback(
     async (boardId: string) => {
       try {
@@ -115,7 +113,6 @@ export default function BoardPage() {
     [loadBoards, loadBoard],
   );
 
-  // Rename board — does NOT reload/remount canvas
   const handleRename = useCallback(
     async (boardId: string, name: string) => {
       try {
@@ -124,7 +121,6 @@ export default function BoardPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name }),
         });
-        // Update local state without remounting
         setBoards((prev) =>
           prev.map((b) => (b.id === boardId ? { ...b, name } : b)),
         );
@@ -138,7 +134,6 @@ export default function BoardPage() {
     [],
   );
 
-  // Switch board
   const handleBoardSelect = useCallback(
     async (boardId: string) => {
       if (boardId === currentBoardIdRef.current) return;
@@ -146,11 +141,6 @@ export default function BoardPage() {
     },
     [loadBoard],
   );
-
-  // Save status — uses useCallback so reference is stable
-  const handleSaveStatusChange = useCallback((isSaving: boolean) => {
-    setSaving(isSaving);
-  }, []);
 
   if (loading) {
     return (
@@ -192,13 +182,16 @@ export default function BoardPage() {
 
   return (
     <div
-      className="flex flex-col"
-      style={{ height: "calc(100vh - 64px)", background: "#08080c" }}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "calc(100vh - 64px)",
+        background: "#08080c",
+      }}
     >
       <BoardHeader
         board={currentBoard}
         boards={boards}
-        saving={saving}
         onBoardSelect={handleBoardSelect}
         onBoardCreate={handleCreate}
         onBoardDelete={handleDelete}
@@ -206,8 +199,8 @@ export default function BoardPage() {
       />
       <div
         style={{
-          position: "relative",
           flex: 1,
+          position: "relative",
           minHeight: 0,
         }}
       >
@@ -215,7 +208,6 @@ export default function BoardPage() {
           key={boardKey}
           boardId={currentBoard.id}
           initialSnapshot={currentBoard.snapshot ?? null}
-          onSaveStatusChange={handleSaveStatusChange}
         />
       </div>
     </div>
