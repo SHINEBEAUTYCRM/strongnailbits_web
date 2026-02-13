@@ -16,7 +16,6 @@ export default function BoardClient({
   boardId,
   boardName,
   initialSnapshot,
-  boards,
 }: Props) {
   const editorRef = useRef<Editor | null>(null);
   const boardIdRef = useRef(boardId);
@@ -29,7 +28,7 @@ export default function BoardClient({
   // Keep boardId ref in sync
   boardIdRef.current = boardId;
 
-  // Save snapshot to server
+  // Save snapshot to server — only uses refs, no deps that change
   const saveToServer = useCallback(async () => {
     const editor = editorRef.current;
     const id = boardIdRef.current;
@@ -61,12 +60,20 @@ export default function BoardClient({
     (editor: Editor) => {
       editorRef.current = editor;
 
-      // Load saved snapshot using tldraw v4 API
-      if (initialSnapshot) {
+      // Force dark mode (tldraw v4 API)
+      editor.user.updateUserPreferences({ colorScheme: "dark" });
+
+      // Load saved snapshot with validation
+      if (
+        initialSnapshot &&
+        typeof initialSnapshot === "object" &&
+        initialSnapshot !== null
+      ) {
         try {
           loadSnapshot(editor.store, initialSnapshot);
         } catch (e) {
-          console.warn("[Board] Snapshot load failed:", e);
+          console.warn("[Board] Corrupt snapshot, starting fresh:", e);
+          // Canvas stays clean — this is OK
         }
       }
 
@@ -79,7 +86,7 @@ export default function BoardClient({
         { scope: "document" },
       );
     },
-    [], // Empty deps — handleMount is created once, initialSnapshot is captured in closure
+    [], // Empty deps — created once, initialSnapshot captured in closure
   );
 
   // Cleanup timers on unmount
@@ -132,9 +139,24 @@ export default function BoardClient({
         </span>
       </div>
 
-      {/* Canvas — fills all remaining space */}
-      <div style={{ flex: 1, position: "relative", minHeight: 0 }}>
-        <div style={{ position: "absolute", inset: 0 }}>
+      {/* Canvas — guaranteed size */}
+      <div
+        style={{
+          flex: 1,
+          position: "relative",
+          minHeight: 0,
+          height: "calc(100vh - 64px - 48px)",
+        }}
+      >
+        <div
+          className="tl-theme__dark"
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+          }}
+        >
           <Tldraw onMount={handleMount} autoFocus />
         </div>
       </div>

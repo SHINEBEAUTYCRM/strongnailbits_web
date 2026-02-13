@@ -683,6 +683,12 @@ body {
   box-shadow: var(--a-card-shadow);
 }
 
+/* ── tldraw isolation — prevent CSS transitions from killing canvas ── */
+.tl-container,
+.tl-container * {
+  transition: none !important;
+}
+
 /* ── Scrollbar — subtle for light theme ── */
 [data-admin-theme="light"] .admin-content::-webkit-scrollbar-track {
   background: var(--a-bg);
