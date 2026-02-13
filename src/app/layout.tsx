@@ -3,6 +3,7 @@ import { Unbounded, Inter, JetBrains_Mono } from "next/font/google";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ToastContainer } from "@/components/ui/Toast";
+import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import { ValentineHearts } from "@/components/ui/ValentineHearts";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
 import { SiteTracker } from "@/components/analytics/SiteTracker";
@@ -124,6 +125,7 @@ export default function RootLayout({
         <Header />
         <main className="min-h-[calc(100dvh-80px)]">{children}</main>
         <Footer />
+        <MobileBottomNav />
         <ValentineHearts />
         <ToastContainer />
       </body>
