@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     const supabase = createAdminClient();
     const body = await request.json();
 
-    const { name, phone, role } = body;
+    const { name, phone, role, position_title } = body;
     if (!name || !phone || !role) {
       return NextResponse.json({ error: "Ім'я, телефон та роль обов'язкові" }, { status: 400 });
     }
@@ -91,16 +91,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Невідома роль" }, { status: 400 });
     }
 
+    const insertData: Record<string, unknown> = {
+      name,
+      phone,
+      role,
+      department: roleConfig.department,
+      color: roleConfig.color,
+      is_active: true,
+    };
+    if (position_title) insertData.position_title = position_title;
+
     const { data: member, error } = await supabase
       .from("team_members")
-      .insert({
-        name,
-        phone,
-        role,
-        department: roleConfig.department,
-        color: roleConfig.color,
-        is_active: true,
-      })
+      .insert(insertData)
       .select()
       .single();
 

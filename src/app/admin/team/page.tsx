@@ -52,12 +52,12 @@ export default function TeamPage() {
     return true;
   });
 
-  const handleAdd = useCallback(async (name: string, phone: string, role: string) => {
+  const handleAdd = useCallback(async (name: string, phone: string, role: string, positionTitle: string) => {
     try {
       const res = await fetch("/api/admin/team", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone, role }),
+        body: JSON.stringify({ name, phone, role, position_title: positionTitle || undefined }),
       });
       if (res.ok) {
         setShowAddModal(false);
@@ -213,6 +213,11 @@ function MemberCard({ member, onClick }: { member: TeamMemberCard; onClick: () =
             {member.name}
           </h3>
 
+          {/* Position title or role label */}
+          <p className="text-xs mt-0.5 truncate" style={{ color: "#a1a1aa" }}>
+            {member.position_title || roleConfig?.label || member.role}
+          </p>
+
           {/* Role badge */}
           <span
             className="inline-block text-[10px] px-2 py-0.5 rounded-md mt-1 font-medium"
@@ -312,15 +317,16 @@ function DeptButton({ label, active, onClick }: { label: string; active: boolean
 // ──── Add Member Modal ────
 // ═══════════════════════════════════════
 
-function AddMemberModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (name: string, phone: string, role: string) => void }) {
+function AddMemberModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (name: string, phone: string, role: string, positionTitle: string) => void }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [role, setRole] = useState<string>("sales_manager");
+  const [positionTitle, setPositionTitle] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim() && phone.trim()) {
-      onSubmit(name.trim(), phone.trim(), role);
+      onSubmit(name.trim(), phone.trim(), role, positionTitle.trim());
     }
   };
 
@@ -353,6 +359,7 @@ function AddMemberModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: 
           <ModalInput label="Ім'я" value={name} onChange={setName} placeholder="Ім'я Прізвище" />
           <ModalInput label="Телефон" value={phone} onChange={setPhone} placeholder="+380XXXXXXXXX" type="tel" />
 
+          {/* Роль (системна — визначає права і відділ) */}
           <div>
             <label className="text-xs font-medium mb-1 block" style={{ color: "#71717a" }}>Роль</label>
             <select
@@ -369,7 +376,21 @@ function AddMemberModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: 
                 <option key={key} value={key}>{r.label}</option>
               ))}
             </select>
+            <p className="text-[10px] mt-1" style={{ color: "#52525b" }}>
+              Системна роль — визначає права доступу та відділ
+            </p>
           </div>
+
+          {/* Посада (вільний текст — те що бачать на картці) */}
+          <ModalInput
+            label="Посада"
+            value={positionTitle}
+            onChange={setPositionTitle}
+            placeholder="Наприклад: Старший менеджер з продажу"
+          />
+          <p className="-mt-2 text-[10px]" style={{ color: "#52525b" }}>
+            Необов&apos;язково. Відображається на картці співробітника
+          </p>
         </div>
 
         <button
