@@ -54,12 +54,12 @@ export const BANNER_SIZES: Record<BannerType, { width: number; height: number; l
 
 /** Типи банерів для UI */
 export const BANNER_TYPE_OPTIONS: { value: BannerType; label: string; icon: string }[] = [
-  { value: 'hero_slider',     label: 'Слайдер головної', icon: '🖼️' },
-  { value: 'promo_strip',     label: 'Промо-стрічка',    icon: '📢' },
-  { value: 'category_banner', label: 'Банер категорії',  icon: '📁' },
-  { value: 'side_banner',     label: 'Бічний банер',     icon: '📐' },
-  { value: 'popup',           label: 'Pop-up',           icon: '💬' },
-  { value: 'stories',         label: 'Stories',          icon: '📱' },
+  { value: 'hero_slider',     label: 'Слайдер головної', icon: 'image' },
+  { value: 'promo_strip',     label: 'Промо-стрічка',    icon: 'megaphone' },
+  { value: 'category_banner', label: 'Банер категорії',  icon: 'layout-grid' },
+  { value: 'side_banner',     label: 'Бічний банер',     icon: 'panel-right' },
+  { value: 'popup',           label: 'Pop-up',           icon: 'message-square' },
+  { value: 'stories',         label: 'Stories',          icon: 'smartphone' },
 ];
 
 /** Placement options */
@@ -81,9 +81,9 @@ export function getBannerStatus(banner: Banner): BannerStatus {
   return 'active';
 }
 
-export const BANNER_STATUS_CONFIG: Record<BannerStatus, { label: string; color: string; dot: string }> = {
-  active:    { label: 'Активний',     color: '#22c55e', dot: '🟢' },
-  scheduled: { label: 'Запланований', color: '#facc15', dot: '🟡' },
-  expired:   { label: 'Завершений',   color: '#ef4444', dot: '🔴' },
-  inactive:  { label: 'Неактивний',   color: '#6b7280', dot: '⚫' },
+export const BANNER_STATUS_CONFIG: Record<BannerStatus, { label: string; color: string }> = {
+  active:    { label: 'Активний',     color: '#22c55e' },
+  scheduled: { label: 'Запланований', color: '#facc15' },
+  expired:   { label: 'Завершений',   color: '#ef4444' },
+  inactive:  { label: 'Неактивний',   color: '#6b7280' },
 };

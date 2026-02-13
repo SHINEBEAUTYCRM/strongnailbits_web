@@ -7,9 +7,18 @@
 import { useEffect } from 'react';
 import { useBannersStore } from '@/store/banners-store';
 import { BannerCard } from './BannerCard';
-import { Loader2, ImageIcon } from 'lucide-react';
+import { Loader2, ImageIcon, Image, Megaphone, LayoutGrid, PanelRight, MessageSquare, Smartphone } from 'lucide-react';
 import type { BannerType } from '@/types/banners';
 import { BANNER_TYPE_OPTIONS, getBannerStatus } from '@/types/banners';
+
+const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+  image: Image,
+  megaphone: Megaphone,
+  'layout-grid': LayoutGrid,
+  'panel-right': PanelRight,
+  'message-square': MessageSquare,
+  smartphone: Smartphone,
+};
 
 // ----------------------------------------------------------------
 //  Filter config
@@ -76,16 +85,19 @@ export function BannersList() {
         >
           Всі
         </TabButton>
-        {BANNER_TYPE_OPTIONS.map((opt) => (
-          <TabButton
-            key={opt.value}
-            active={filter.type === opt.value}
-            onClick={() => setTypeFilter(opt.value)}
-          >
-            <span className="mr-1">{opt.icon}</span>
-            {opt.label}
-          </TabButton>
-        ))}
+        {BANNER_TYPE_OPTIONS.map((opt) => {
+          const Icon = ICON_MAP[opt.icon];
+          return (
+            <TabButton
+              key={opt.value}
+              active={filter.type === opt.value}
+              onClick={() => setTypeFilter(opt.value)}
+            >
+              {Icon && <Icon size={13} className="mr-1 opacity-60" />}
+              {opt.label}
+            </TabButton>
+          );
+        })}
       </div>
 
       {/* ── Status filter tabs ────────────────────────── */}

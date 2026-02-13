@@ -17,6 +17,12 @@ import {
   Trash2,
   ToggleLeft,
   ToggleRight,
+  Image,
+  Megaphone,
+  LayoutGrid,
+  PanelRight,
+  MessageSquare,
+  Smartphone,
 } from 'lucide-react';
 import { BannerStatusBadge } from './BannerStatusBadge';
 import type { Banner, BannerType } from '@/types/banners';
@@ -34,16 +40,16 @@ interface BannerCardProps {
 }
 
 // ----------------------------------------------------------------
-//  Type icon map (emoji fallback)
+//  Type icon map (Lucide icons)
 // ----------------------------------------------------------------
 
-const TYPE_ICONS: Record<BannerType, string> = {
-  hero_slider: '🖼️',
-  promo_strip: '📢',
-  category_banner: '📁',
-  side_banner: '📐',
-  popup: '💬',
-  stories: '📱',
+const TYPE_ICONS: Record<BannerType, React.ComponentType<{ size?: number; className?: string }>> = {
+  hero_slider: Image,
+  promo_strip: Megaphone,
+  category_banner: LayoutGrid,
+  side_banner: PanelRight,
+  popup: MessageSquare,
+  stories: Smartphone,
 };
 
 // ----------------------------------------------------------------
@@ -117,9 +123,7 @@ export function BannerCard({
             className="w-full h-full flex items-center justify-center"
             style={{ background: banner.bg_color || '#16131e' }}
           >
-            <span className="text-4xl opacity-40 select-none">
-              {TYPE_ICONS[banner.type]}
-            </span>
+            {(() => { const Icon = TYPE_ICONS[banner.type]; return <Icon size={40} className="opacity-30 text-zinc-400" />; })()}
           </div>
         )}
 
