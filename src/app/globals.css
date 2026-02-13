@@ -878,6 +878,20 @@ body {
   opacity: 0.5;
 }
 
+/* ── Board page — full-bleed within admin shell ── */
+.board-fullbleed {
+  margin: -1rem;            /* counteract admin-content p-4 */
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 56px); /* 56px = AdminTopNav height */
+  overflow: hidden;
+}
+@media (min-width: 1024px) {
+  .board-fullbleed {
+    margin: -1.5rem;        /* counteract admin-content lg:p-6 */
+  }
+}
+
 /* ── tldraw isolation — prevent CSS transitions/animations from killing canvas ── */
 .tl-container,
 .tl-container *,

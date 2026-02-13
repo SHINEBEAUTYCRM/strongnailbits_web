@@ -31,11 +31,12 @@ export default async function BoardPage() {
   }
 
   return (
-    <>
-      {/* Minimal header — OUTSIDE tldraw container */}
+    <div className="board-fullbleed">
+      {/* Minimal header */}
       <div
         style={{
           height: 40,
+          flexShrink: 0,
           padding: "0 16px",
           display: "flex",
           alignItems: "center",
@@ -62,18 +63,10 @@ export default async function BoardPage() {
         </div>
       </div>
 
-      {/* TLDRAW CONTAINER — position: fixed, as per official docs */}
-      <div
-        style={{
-          position: "fixed",
-          top: 104 /* 64px nav + 40px board header */,
-          left: 0,
-          right: 0,
-          bottom: 0,
-        }}
-      >
+      {/* TLDRAW — fills remaining space via flex */}
+      <div style={{ flex: 1, position: "relative", minHeight: 0 }}>
         <BoardLoader boardId={board.id} initialSnapshot={board.snapshot} />
       </div>
-    </>
+    </div>
   );
 }
