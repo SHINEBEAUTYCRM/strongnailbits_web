@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { randomUUID } from "crypto";
+
+// Re-export phone utils for backward compatibility
+export { normalizePhone, phoneLast9, phoneLast9 as getPhoneDigits } from "./phone";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -53,43 +55,12 @@ export interface AdminUser {
 export const SESSION_COOKIE = "admin_session";
 
 /* ------------------------------------------------------------------ */
-/*  Phone normalization                                                */
-/* ------------------------------------------------------------------ */
-
-export function normalizePhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-
-  // 0637443889 → +380637443889
-  if (digits.startsWith("0") && digits.length === 10) {
-    return "+38" + digits;
-  }
-  // 380637443889 → +380637443889
-  if (digits.startsWith("380") && digits.length === 12) {
-    return "+" + digits;
-  }
-  // 80637443889 → +380637443889
-  if (digits.startsWith("80") && digits.length === 11) {
-    return "+3" + digits;
-  }
-  // Already has +
-  if (phone.startsWith("+")) {
-    return "+" + digits;
-  }
-  return "+" + digits;
-}
-
-/** Get last 9 digits (after country code) — for format-independent matching */
-export function getPhoneDigits(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  return digits.slice(-9);
-}
-
-/* ------------------------------------------------------------------ */
-/*  Token generation                                                   */
+/*  Token generation (32 hex chars — fits Telegram callback_data)      */
 /* ------------------------------------------------------------------ */
 
 export function generateToken(): string {
-  return randomUUID().replace(/-/g, "") + randomUUID().replace(/-/g, "");
+  // Use Web Crypto API (Edge-safe, no Node.js crypto import)
+  return crypto.randomUUID().replace(/-/g, "");
 }
 
 /* ------------------------------------------------------------------ */

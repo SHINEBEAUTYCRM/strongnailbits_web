@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { normalizePhone, getPhoneDigits, generateToken } from "@/lib/admin/auth";
+import { phoneLast9 } from "@/lib/admin/phone";
+import { sendTelegramMessage } from "@/lib/admin/telegram";
+import { generateToken } from "@/lib/admin/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +11,10 @@ const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
 export async function POST(request: NextRequest) {
   try {
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
     const userAgent = request.headers.get("user-agent") || "unknown";
 
     // Rate limiting: max 3 requests per IP per 5 minutes
@@ -18,7 +23,7 @@ export async function POST(request: NextRequest) {
     if (rl && rl.resetAt > now && rl.count >= 3) {
       return NextResponse.json(
         { error: "Занадто багато спроб. Спробуйте через 5 хвилин." },
-        { status: 429 }
+        { status: 429 },
       );
     }
     if (!rl || rl.resetAt <= now) {
@@ -29,103 +34,148 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const rawPhone = body.phone;
+
     if (!rawPhone || typeof rawPhone !== "string") {
-      return NextResponse.json({ error: "Номер телефону обов'язковий" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Введіть номер телефону" },
+        { status: 400 },
+      );
     }
 
-    const phone = normalizePhone(rawPhone);
-    const last9 = getPhoneDigits(phone);
+    // 1. Find team member by last 9 digits
+    const last9 = phoneLast9(rawPhone);
+    console.log("[AuthRequest] Phone last9:", last9);
 
-    // Validate: must have 9 digits after country code
     if (last9.length !== 9) {
-      return NextResponse.json({ error: "Невірний формат номера" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Невірний формат номера" },
+        { status: 400 },
+      );
     }
 
     const supabase = createAdminClient();
 
-    // Check team_members — match by last 9 digits (format-independent)
-    const { data: members } = await supabase
+    const { data: members, error: dbError } = await supabase
       .from("team_members")
       .select("id, name, phone, telegram_chat_id, is_active")
       .eq("is_active", true);
 
-    const member = members?.find((m) => getPhoneDigits(m.phone) === last9) || null;
+    if (dbError) {
+      console.error("[AuthRequest] DB error:", dbError);
+      return NextResponse.json(
+        { error: "Помилка бази даних" },
+        { status: 500 },
+      );
+    }
+
+    const member = members?.find((m) => phoneLast9(m.phone) === last9) || null;
 
     if (!member) {
+      console.log("[AuthRequest] No member found for last9:", last9);
+      console.log(
+        "[AuthRequest] Available phones:",
+        members?.map((m) => m.phone),
+      );
       return NextResponse.json(
-        { error: "Доступ заборонено. Зверніться до адміністратора." },
-        { status: 403 }
+        { error: "Номер не знайдено в системі" },
+        { status: 404 },
       );
     }
 
+    // 2. Check that Telegram is linked
     if (!member.telegram_chat_id) {
       return NextResponse.json(
-        { error: "no_telegram", message: "Спочатку напишіть /start боту @ShineShopAdminBot" },
-        { status: 400 }
+        {
+          error: "no_telegram",
+          message:
+            "Спочатку прив'яжіть Telegram: відкрийте @ShineShopAdminBot і надішліть /start",
+        },
+        { status: 400 },
       );
     }
 
-    // Generate auth request
+    // 3. Create auth token
     const token = generateToken();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
-    const { error: insertError } = await supabase.from("auth_requests").insert({
-      token,
-      phone,
-      team_member_id: member.id,
-      ip_address: ip,
-      user_agent: userAgent,
-    });
+    const { error: insertError } = await supabase
+      .from("auth_requests")
+      .insert({
+        token,
+        phone: member.phone,
+        team_member_id: member.id,
+        status: "pending",
+        ip_address: ip,
+        user_agent: userAgent,
+        expires_at: expiresAt.toISOString(),
+      });
 
     if (insertError) {
       console.error("[AuthRequest] Insert error:", insertError);
-      return NextResponse.json({ error: "Помилка сервера" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Помилка створення запиту" },
+        { status: 500 },
+      );
     }
 
-    // Parse user agent for display
-    const uaShort = parseUserAgent(userAgent);
-    const timeStr = new Date().toLocaleString("uk-UA", { timeZone: "Europe/Kyiv" });
+    // 4. Send Telegram message
+    const browser = parseUserAgent(userAgent);
+    const timeStr = new Date().toLocaleString("uk-UA", {
+      timeZone: "Europe/Kyiv",
+    });
 
-    // Send Telegram message via Admin Bot
-    const botToken = process.env.TELEGRAM_ADMIN_BOT_TOKEN;
-    if (!botToken) {
-      console.error("[AuthRequest] TELEGRAM_ADMIN_BOT_TOKEN not set");
-      return NextResponse.json({ error: "Помилка конфігурації" }, { status: 500 });
-    }
-
-    const tgResponse = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: member.telegram_chat_id,
-        text:
-          `🔐 Запит на вхід в адмінку\n\n` +
-          `👤 ${member.name}\n` +
-          `📱 ${phone}\n` +
-          `🌐 ${uaShort}\n` +
-          `📍 IP: ${ip}\n` +
-          `🕐 ${timeStr}\n\n` +
-          `Це ви?`,
+    const result = await sendTelegramMessage(
+      member.telegram_chat_id,
+      `🔐 <b>Запит на вхід в адмінку</b>\n\n` +
+        `👤 ${member.name}\n` +
+        `📱 ${member.phone}\n` +
+        `💻 ${browser}\n` +
+        `📍 IP: ${ip}\n` +
+        `🕐 ${timeStr}\n\n` +
+        `Це ви?`,
+      {
+        parse_mode: "HTML",
         reply_markup: {
           inline_keyboard: [
             [
-              { text: "✅ Підтвердити вхід", callback_data: `auth_confirm:${token}` },
+              {
+                text: "✅ Підтвердити вхід",
+                callback_data: `auth_confirm:${token}`,
+              },
               { text: "❌ Це не я", callback_data: `auth_deny:${token}` },
             ],
           ],
         },
-      }),
-    });
+      },
+    );
 
-    if (!tgResponse.ok) {
-      const tgError = await tgResponse.text();
-      console.error("[AuthRequest] Telegram error:", tgError);
-      return NextResponse.json({ error: "Не вдалося надіслати повідомлення в Telegram" }, { status: 500 });
+    if (!result.ok) {
+      console.error("[AuthRequest] Telegram send failed:", result.error);
+
+      // Clean up — delete auth_request since message didn't go through
+      await supabase.from("auth_requests").delete().eq("token", token);
+
+      return NextResponse.json(
+        {
+          error: `Не вдалося надіслати в Telegram: ${result.error}`,
+        },
+        { status: 500 },
+      );
     }
 
-    return NextResponse.json({ token });
+    // 5. Success
+    return NextResponse.json({
+      ok: true,
+      token,
+      expires_at: expiresAt.toISOString(),
+      member_name: member.name,
+    });
   } catch (err) {
     console.error("[AuthRequest] Error:", err);
-    return NextResponse.json({ error: "Помилка сервера" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Внутрішня помилка сервера" },
+      { status: 500 },
+    );
   }
 }
 

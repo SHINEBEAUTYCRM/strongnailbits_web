@@ -12,21 +12,37 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { normalizePhone, getPhoneDigits } from "@/lib/admin/auth";
+import { normalizePhone, phoneLast9 } from "@/lib/admin/phone";
+import { sendTelegramMessage } from "@/lib/admin/telegram";
 
 export const dynamic = "force-dynamic";
 
 interface TgUpdate {
   message?: {
     message_id: number;
-    from: { id: number; first_name?: string; last_name?: string; username?: string };
+    from: {
+      id: number;
+      first_name?: string;
+      last_name?: string;
+      username?: string;
+    };
     chat: { id: number; type: string };
     text?: string;
-    contact?: { phone_number: string; first_name?: string; last_name?: string; user_id?: number };
+    contact?: {
+      phone_number: string;
+      first_name?: string;
+      last_name?: string;
+      user_id?: number;
+    };
   };
   callback_query?: {
     id: string;
-    from: { id: number; first_name?: string; last_name?: string; username?: string };
+    from: {
+      id: number;
+      first_name?: string;
+      last_name?: string;
+      username?: string;
+    };
     message?: { chat: { id: number }; message_id: number };
     data?: string;
   };
@@ -36,17 +52,28 @@ const ADMIN_BOT_TOKEN = () => process.env.TELEGRAM_ADMIN_BOT_TOKEN || "";
 
 // ────── Telegram API helpers ──────
 
-async function tgApi(method: string, body: Record<string, unknown>): Promise<boolean> {
+async function tgApi(
+  method: string,
+  body: Record<string, unknown>,
+): Promise<boolean> {
   const token = ADMIN_BOT_TOKEN();
   if (!token) return false;
   try {
-    const res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    const res = await fetch(
+      `https://api.telegram.org/bot${token}/${method}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+    if (!res.ok) {
+      const err = await res.text();
+      console.error(`[AdminBot] tgApi ${method} error:`, err);
+    }
     return res.ok;
-  } catch {
+  } catch (e) {
+    console.error(`[AdminBot] tgApi ${method} exception:`, e);
     return false;
   }
 }
@@ -57,7 +84,9 @@ export async function POST(request: NextRequest) {
   // Verify webhook secret
   const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
   if (secret) {
-    const headerSecret = request.headers.get("x-telegram-bot-api-secret-token");
+    const headerSecret = request.headers.get(
+      "x-telegram-bot-api-secret-token",
+    );
     if (headerSecret !== secret) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -103,14 +132,26 @@ async function handleUpdate(update: TgUpdate): Promise<void> {
   // ─── Auth confirm callback ───
   if (callbackQuery && callbackData?.startsWith("auth_confirm:")) {
     const authToken = callbackData.replace("auth_confirm:", "");
-    await handleAuthConfirm(supabase, callbackQuery.id, chatId, callbackQuery.message?.message_id, authToken);
+    await handleAuthConfirm(
+      supabase,
+      callbackQuery.id,
+      chatId,
+      callbackQuery.message?.message_id,
+      authToken,
+    );
     return;
   }
 
   // ─── Auth deny callback ───
   if (callbackQuery && callbackData?.startsWith("auth_deny:")) {
     const authToken = callbackData.replace("auth_deny:", "");
-    await handleAuthDeny(supabase, callbackQuery.id, chatId, callbackQuery.message?.message_id, authToken);
+    await handleAuthDeny(
+      supabase,
+      callbackQuery.id,
+      chatId,
+      callbackQuery.message?.message_id,
+      authToken,
+    );
     return;
   }
 
@@ -189,9 +230,7 @@ async function handleHelp(chatId: number): Promise<void> {
     ].join("\n"),
     parse_mode: "MarkdownV2",
     reply_markup: {
-      inline_keyboard: [
-        [{ text: "🔗 Відкрити адмінку", url: ADMIN_URL }],
-      ],
+      inline_keyboard: [[{ text: "🔗 Відкрити адмінку", url: ADMIN_URL }]],
     },
   });
 }
@@ -221,7 +260,8 @@ async function handleStatus(
   }
 
   // Mask phone: +380*****1234
-  const masked = member.phone.slice(0, 4) + "*****" + member.phone.slice(-4);
+  const masked =
+    member.phone.slice(0, 4) + "*****" + member.phone.slice(-4);
   const roleLabel = ROLE_LABELS[member.role] || member.role;
   const statusLabel = member.is_active ? "✅ Активний" : "⛔ Деактивовано";
 
@@ -237,9 +277,7 @@ async function handleStatus(
     ].join("\n"),
     parse_mode: "MarkdownV2",
     reply_markup: {
-      inline_keyboard: [
-        [{ text: "🔗 Відкрити адмінку", url: ADMIN_URL }],
-      ],
+      inline_keyboard: [[{ text: "🔗 Відкрити адмінку", url: ADMIN_URL }]],
     },
   });
 }
@@ -252,7 +290,7 @@ async function handleContact(
   phoneNumber: string,
 ): Promise<void> {
   const phone = normalizePhone(phoneNumber);
-  const last9 = getPhoneDigits(phone);
+  const last9 = phoneLast9(phone);
 
   // Search by last 9 digits — format-independent matching
   const { data: members } = await supabase
@@ -260,7 +298,8 @@ async function handleContact(
     .select("id, name, phone, telegram_chat_id")
     .eq("is_active", true);
 
-  const member = members?.find((m) => getPhoneDigits(m.phone) === last9) || null;
+  const member =
+    members?.find((m) => phoneLast9(m.phone) === last9) || null;
 
   if (!member) {
     await tgApi("sendMessage", {
@@ -317,9 +356,7 @@ async function handleContact(
     chat_id: chatId,
     text: "👇 Перейдіть в адмінку:",
     reply_markup: {
-      inline_keyboard: [
-        [{ text: "🔗 Відкрити адмінку", url: ADMIN_URL }],
-      ],
+      inline_keyboard: [[{ text: "🔗 Відкрити адмінку", url: ADMIN_URL }]],
     },
   });
 }
@@ -338,9 +375,7 @@ async function handleUnknown(chatId: number): Promise<void> {
       "/help — Довідка",
     ].join("\n"),
     reply_markup: {
-      inline_keyboard: [
-        [{ text: "🔗 Відкрити адмінку", url: ADMIN_URL }],
-      ],
+      inline_keyboard: [[{ text: "🔗 Відкрити адмінку", url: ADMIN_URL }]],
     },
   });
 }
@@ -360,6 +395,11 @@ async function handleAuthConfirm(
   messageId: number | undefined,
   authToken: string,
 ): Promise<void> {
+  // First — answer callback to remove loading spinner on the button
+  await tgApi("answerCallbackQuery", {
+    callback_query_id: callbackQueryId,
+  });
+
   const { data: authReq } = await supabase
     .from("auth_requests")
     .update({ status: "confirmed", confirmed_at: new Date().toISOString() })
@@ -370,25 +410,28 @@ async function handleAuthConfirm(
     .maybeSingle();
 
   if (!authReq) {
-    await tgApi("answerCallbackQuery", {
-      callback_query_id: callbackQueryId,
-      text: "❌ Запит вже оброблено або прострочено",
-    });
+    await sendTelegramMessage(
+      chatId,
+      "⏰ Запит вже не активний. Спробуйте ще раз.",
+    );
     return;
   }
 
-  await tgApi("answerCallbackQuery", {
-    callback_query_id: callbackQueryId,
-    text: "✅ Вхід підтверджено!",
+  const timeStr = new Date().toLocaleString("uk-UA", {
+    timeZone: "Europe/Kyiv",
   });
 
-  const timeStr = new Date().toLocaleString("uk-UA", { timeZone: "Europe/Kyiv" });
   if (messageId) {
     await tgApi("editMessageText", {
       chat_id: chatId,
       message_id: messageId,
       text: `✅ Вхід підтверджено о ${timeStr}`,
     });
+  } else {
+    await sendTelegramMessage(
+      chatId,
+      "✅ Вхід підтверджено! Сторінка оновиться автоматично.",
+    );
   }
 }
 
@@ -401,16 +444,16 @@ async function handleAuthDeny(
   messageId: number | undefined,
   authToken: string,
 ): Promise<void> {
+  // First — answer callback
+  await tgApi("answerCallbackQuery", {
+    callback_query_id: callbackQueryId,
+  });
+
   await supabase
     .from("auth_requests")
     .update({ status: "expired" })
     .eq("token", authToken)
     .eq("status", "pending");
-
-  await tgApi("answerCallbackQuery", {
-    callback_query_id: callbackQueryId,
-    text: "❌ Запит відхилено",
-  });
 
   if (messageId) {
     await tgApi("editMessageText", {
@@ -418,5 +461,10 @@ async function handleAuthDeny(
       message_id: messageId,
       text: "❌ Вхід відхилено. Якщо це не ви — зверніться до адміністратора.",
     });
+  } else {
+    await sendTelegramMessage(
+      chatId,
+      "🚫 Вхід відхилено. Якщо це не ви — змініть пароль.",
+    );
   }
 }

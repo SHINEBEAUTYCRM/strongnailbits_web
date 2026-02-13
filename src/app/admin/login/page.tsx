@@ -83,9 +83,9 @@ export default function AdminLoginPage() {
                 setStatus("error");
                 setError("Помилка мережі");
               }
-            } else if (newStatus === "expired") {
+            } else if (newStatus === "expired" || newStatus === "denied") {
               setStatus("error");
-              setError("Запит відхилено.");
+              setError("Вхід відхилено.");
             }
           }
         )
@@ -128,9 +128,19 @@ export default function AdminLoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
+        // Handle specific error types by HTTP status
         if (data.error === "no_telegram") {
           setStatus("no_telegram");
-          setError(data.message);
+          setError(data.message || "Спочатку прив'яжіть Telegram");
+        } else if (res.status === 404) {
+          setStatus("error");
+          setError("Номер не знайдено в системі. Зверніться до адміністратора.");
+        } else if (res.status === 429) {
+          setStatus("error");
+          setError(data.error || "Занадто багато спроб. Зачекайте 5 хвилин.");
+        } else if (res.status === 500) {
+          setStatus("error");
+          setError("Не вдалося надіслати повідомлення. Перевірте Telegram бота.");
         } else {
           setStatus("error");
           setError(data.error || "Помилка сервера");
