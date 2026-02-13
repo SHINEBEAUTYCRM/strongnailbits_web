@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useEffect, useState } from "react";
+import { useCallback, useRef, useEffect } from "react";
 import { Tldraw, Editor, getSnapshot, loadSnapshot } from "tldraw";
 import type { TLEditorSnapshot, TLStoreSnapshot } from "tldraw";
 import "tldraw/tldraw.css";
@@ -21,20 +21,22 @@ export default function BoardClient({
   const boardIdRef = useRef(boardId);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSavingRef = useRef(false);
-  const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "idle">(
-    "idle",
-  );
+  // NO useState for save status — direct DOM updates to avoid re-renders
 
   boardIdRef.current = boardId;
 
-  // Save snapshot to server
+  // Save snapshot to server — zero React state updates
   const saveToServer = useCallback(async () => {
     const editor = editorRef.current;
     const id = boardIdRef.current;
     if (!editor || !id || isSavingRef.current) return;
 
     isSavingRef.current = true;
-    setSaveStatus("saving");
+    const indicator = document.getElementById("board-save-indicator");
+    if (indicator) {
+      indicator.textContent = "Зберігається...";
+      indicator.style.color = "#f59e0b";
+    }
 
     try {
       const snapshot = getSnapshot(editor.store);
@@ -43,10 +45,15 @@ export default function BoardClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ snapshot }),
       });
-      setSaveStatus("saved");
+      if (indicator) {
+        indicator.textContent = "Збережено";
+        indicator.style.color = "#22c55e";
+      }
     } catch (e) {
       console.error("[Board] Save error:", e);
-      setSaveStatus("idle");
+      if (indicator) {
+        indicator.textContent = "";
+      }
     } finally {
       isSavingRef.current = false;
     }
@@ -137,22 +144,9 @@ export default function BoardClient({
           {boardName}
         </span>
         <span
-          style={{
-            color:
-              saveStatus === "saving"
-                ? "#f59e0b"
-                : saveStatus === "saved"
-                  ? "#22c55e"
-                  : "var(--a-text-4)",
-            fontSize: 12,
-          }}
-        >
-          {saveStatus === "saving"
-            ? "Зберігається..."
-            : saveStatus === "saved"
-              ? "Збережено"
-              : ""}
-        </span>
+          id="board-save-indicator"
+          style={{ fontSize: 12, color: "var(--a-text-4)" }}
+        />
       </div>
 
       {/* Canvas — guaranteed size */}
