@@ -878,18 +878,22 @@ body {
   opacity: 0.5;
 }
 
-/* ── Board page — full-bleed within admin shell ── */
-.board-fullbleed {
-  margin: -1rem;            /* counteract admin-content p-4 */
+/* ── Board page — fills admin-content, no scroll ── */
+.admin-content:has(.board-page) {
+  overflow: hidden !important;
+  padding: 0 !important;
+}
+.admin-content:has(.board-page) > div {
+  max-width: none !important;
+  margin: 0 !important;
+  height: 100% !important;
+}
+
+.board-page {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 56px); /* 56px = AdminTopNav height */
+  height: 100%;
   overflow: hidden;
-}
-@media (min-width: 1024px) {
-  .board-fullbleed {
-    margin: -1.5rem;        /* counteract admin-content lg:p-6 */
-  }
 }
 
 /* ── tldraw isolation — prevent CSS transitions/animations from killing canvas ── */

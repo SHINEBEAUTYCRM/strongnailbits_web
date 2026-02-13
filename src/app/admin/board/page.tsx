@@ -1,14 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
-import BoardLoader from "./components/BoardLoader";
-import SaveButton from "./components/SaveButton";
+import BoardCanvas from "./BoardCanvas";
 
 export default async function BoardPage() {
   const supabase = await createClient();
 
-  // Get or create default board
   let { data: board } = await supabase
     .from("boards")
-    .select("id, name, snapshot")
+    .select("id, name")
     .order("updated_at", { ascending: false })
     .limit(1)
     .single();
@@ -17,7 +15,7 @@ export default async function BoardPage() {
     const { data: newBoard } = await supabase
       .from("boards")
       .insert({ name: "Головна дошка" })
-      .select("id, name, snapshot")
+      .select("id, name")
       .single();
     board = newBoard;
   }
@@ -31,11 +29,12 @@ export default async function BoardPage() {
   }
 
   return (
-    <div className="board-fullbleed">
-      {/* Minimal header */}
+    <div className="board-page">
+      {/* Header */}
       <div
         style={{
-          height: 40,
+          height: 44,
+          minHeight: 44,
           flexShrink: 0,
           padding: "0 16px",
           display: "flex",
@@ -48,6 +47,7 @@ export default async function BoardPage() {
         <span
           style={{
             color: "var(--a-text, #f0f0f0)",
+            fontFamily: "Outfit, sans-serif",
             fontSize: 14,
             fontWeight: 500,
           }}
@@ -57,15 +57,30 @@ export default async function BoardPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <span
             id="shine-board-status"
-            style={{ fontSize: 12, color: "var(--a-text-4, #888)" }}
+            style={{ fontSize: 12, fontFamily: "Outfit, sans-serif" }}
           />
-          <SaveButton />
+          <button
+            id="shine-board-save-btn"
+            style={{
+              background: "#a855f7",
+              color: "#fff",
+              border: "none",
+              borderRadius: 8,
+              padding: "7px 20px",
+              fontSize: 13,
+              fontFamily: "Outfit, sans-serif",
+              fontWeight: 500,
+              cursor: "pointer",
+            }}
+          >
+            Зберегти
+          </button>
         </div>
       </div>
 
-      {/* TLDRAW — fills remaining space via flex */}
-      <div style={{ flex: 1, position: "relative", minHeight: 0 }}>
-        <BoardLoader boardId={board.id} initialSnapshot={board.snapshot} />
+      {/* Canvas — fills remaining space */}
+      <div style={{ flex: 1, minHeight: 0, position: "relative" }}>
+        <BoardCanvas boardId={board.id} />
       </div>
     </div>
   );
