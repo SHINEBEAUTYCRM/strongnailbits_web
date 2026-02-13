@@ -25,6 +25,33 @@ import {
   Zap,
 } from "lucide-react";
 
+// ────── Markdown renderer (simple, no deps) ──────
+
+function renderMarkdown(text: string): string {
+  return text
+    // Code blocks ```...```
+    .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre style="background:var(--a-bg-input);padding:12px;border-radius:8px;overflow-x:auto;font-size:13px;margin:8px 0"><code>$2</code></pre>')
+    // Headers
+    .replace(/^### \*\*(.*?)\*\*/gm, '<h4 style="font-weight:600;margin:12px 0 4px">$1</h4>')
+    .replace(/^### (.*)/gm, '<h4 style="font-weight:600;margin:12px 0 4px">$1</h4>')
+    .replace(/^## (.*)/gm, '<h3 style="font-weight:600;font-size:15px;margin:14px 0 6px">$1</h3>')
+    .replace(/^# (.*)/gm, '<h2 style="font-weight:700;font-size:17px;margin:16px 0 8px">$1</h2>')
+    // Bold & italic
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    // Inline code
+    .replace(/`([^`]+)`/g, '<code style="background:var(--a-bg-input);padding:1px 5px;border-radius:4px;font-size:12px">$1</code>')
+    // Unordered list items (- or •)
+    .replace(/^[-•] (.*)/gm, '<li style="margin-left:16px;list-style:disc;margin-bottom:2px">$1</li>')
+    // Ordered list items
+    .replace(/^\d+\. (.*)/gm, '<li style="margin-left:16px;list-style:decimal;margin-bottom:2px">$1</li>')
+    // Horizontal rule
+    .replace(/^---$/gm, '<hr style="border:none;border-top:1px solid var(--a-border);margin:12px 0" />')
+    // Line breaks (preserve paragraph spacing)
+    .replace(/\n\n/g, '<br/><br/>')
+    .replace(/\n/g, '<br/>');
+}
+
 // ────── Types ──────
 
 interface FunnelStage {
@@ -128,12 +155,12 @@ export default function FunnelsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10">
-            <Filter size={20} className="text-indigo-400" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "var(--a-accent-bg)" }}>
+            <Filter size={20} style={{ color: "var(--a-accent)" }} />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white">SmartЛійки</h1>
-            <p className="text-sm text-gray-400">
+            <h1 className="text-xl font-bold" style={{ color: "var(--a-text)" }}>SmartЛійки</h1>
+            <p className="text-sm" style={{ color: "var(--a-text-2)" }}>
               Воронки, повідомлення та аналітика конверсій
             </p>
           </div>
@@ -145,7 +172,10 @@ export default function FunnelsPage() {
               fetchFunnels();
               fetchMsgStats();
             }}
-            className="flex h-9 items-center gap-1.5 rounded-lg border border-white/10 px-3 text-sm text-gray-400 transition-colors hover:bg-white/5 hover:text-white"
+            className="flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm transition-colors"
+            style={{ border: "1px solid var(--a-border)", color: "var(--a-text-2)" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--a-bg-hover)"; e.currentTarget.style.color = "var(--a-text)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--a-text-2)"; }}
           >
             <RefreshCw size={14} />
             Оновити
@@ -158,16 +188,16 @@ export default function FunnelsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 rounded-xl border border-white/5 bg-[#13131a] p-1">
+      <div className="flex gap-1 rounded-xl p-1" style={{ border: "1px solid var(--a-border)", background: "var(--a-bg-card)" }}>
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-              activeTab === tab.id
-                ? "bg-white/10 text-white"
-                : "text-gray-500 hover:text-gray-300"
-            }`}
+            className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+            style={{
+              background: activeTab === tab.id ? "var(--a-bg-hover)" : "transparent",
+              color: activeTab === tab.id ? "var(--a-text)" : "var(--a-text-3)",
+            }}
           >
             {tab.icon}
             {tab.label}
@@ -227,9 +257,9 @@ export default function FunnelsPage() {
 function FunnelsTab({ funnels }: { funnels: Funnel[] }) {
   if (funnels.length === 0) {
     return (
-      <div className="rounded-2xl border border-white/5 bg-[#13131a] p-12 text-center">
-        <Filter size={40} className="mx-auto mb-3 text-gray-600" />
-        <p className="text-gray-400">
+      <div className="rounded-2xl p-12 text-center" style={{ border: "1px solid var(--a-border)", background: "var(--a-bg-card)", boxShadow: "var(--a-card-shadow)" }}>
+        <Filter size={40} className="mx-auto mb-3" style={{ color: "var(--a-text-4)" }} />
+        <p style={{ color: "var(--a-text-2)" }}>
           Лійки ще не створені. Виконайте SQL-схему для створення шаблонних воронок.
         </p>
       </div>
@@ -252,7 +282,7 @@ function FunnelCard({ funnel }: { funnel: Funnel }) {
   );
 
   return (
-    <div className="rounded-2xl border border-white/5 bg-[#13131a] p-5 transition-all hover:border-white/10">
+    <div className="rounded-2xl p-5 transition-all" style={{ border: "1px solid var(--a-border)", background: "var(--a-bg-card)", boxShadow: "var(--a-card-shadow)" }}>
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -263,23 +293,24 @@ function FunnelCard({ funnel }: { funnel: Funnel }) {
             <Target size={18} style={{ color: funnel.color }} />
           </div>
           <div>
-            <h3 className="font-semibold text-white">{funnel.name}</h3>
+            <h3 className="font-semibold" style={{ color: "var(--a-text)" }}>{funnel.name}</h3>
             {funnel.description && (
-              <p className="text-xs text-gray-500">{funnel.description}</p>
+              <p className="text-xs" style={{ color: "var(--a-text-3)" }}>{funnel.description}</p>
             )}
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <p className="text-lg font-bold text-white">
+            <p className="text-lg font-bold" style={{ color: "var(--a-text)" }}>
               {funnel.conversionRate}%
             </p>
-            <p className="text-[10px] uppercase text-gray-500">Конверсія</p>
+            <p className="text-[10px] uppercase" style={{ color: "var(--a-text-3)" }}>Конверсія</p>
           </div>
           <Link
             href={`/admin/funnels/${funnel.id}`}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-gray-400 transition-colors hover:bg-white/5 hover:text-white"
+            className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
+            style={{ border: "1px solid var(--a-border)", color: "var(--a-text-3)" }}
           >
             <ChevronRight size={16} />
           </Link>
@@ -304,12 +335,12 @@ function FunnelCard({ funnel }: { funnel: Funnel }) {
                     style={{
                       backgroundColor: stage.color
                         ? `${stage.color}25`
-                        : "#1e1e2e",
+                        : "var(--a-bg-input)",
                       minWidth: "100%",
                       borderLeft: `3px solid ${stage.color || "#6366f1"}`,
                     }}
                   >
-                    <span className="truncate text-xs font-medium text-white/80">
+                    <span className="truncate text-xs font-medium" style={{ color: "var(--a-text)" }}>
                       {stage.name}
                     </span>
                   </div>
@@ -322,7 +353,7 @@ function FunnelCard({ funnel }: { funnel: Funnel }) {
                     {count}
                   </span>
                   {i > 0 && count > 0 && (
-                    <span className="text-[10px] text-gray-500">
+                    <span className="text-[10px]" style={{ color: "var(--a-text-3)" }}>
                       {(
                         (count /
                           (funnel.stageCounts[funnel.stages[0].id] || 1)) *
@@ -345,7 +376,7 @@ function FunnelCard({ funnel }: { funnel: Funnel }) {
       </div>
 
       {/* Bottom stats */}
-      <div className="mt-3 flex items-center gap-4 border-t border-white/5 pt-3 text-xs text-gray-500">
+      <div className="mt-3 flex items-center gap-4 pt-3 text-xs" style={{ borderTop: "1px solid var(--a-border)", color: "var(--a-text-3)" }}>
         <span>
           <Users size={12} className="mr-1 inline" />
           {funnel.totalContacts} контактів
@@ -356,7 +387,7 @@ function FunnelCard({ funnel }: { funnel: Funnel }) {
         </span>
         <span>{funnel.stages.length} етапів</span>
         {!funnel.is_active && (
-          <span className="rounded bg-red-500/10 px-1.5 py-0.5 text-red-400">
+          <span className="rounded px-1.5 py-0.5" style={{ background: "var(--a-st-cancelled-bg)", color: "var(--a-st-cancelled-c)" }}>
             Неактивна
           </span>
         )}
@@ -399,22 +430,22 @@ function MessagingTab({ stats }: { stats: MessagingStats | null }) {
       </div>
 
       {/* Recent messages */}
-      <div className="rounded-2xl border border-white/5 bg-[#13131a]">
-        <div className="flex items-center justify-between border-b border-white/5 px-5 py-3">
-          <h3 className="text-sm font-semibold text-white">
+      <div className="rounded-2xl" style={{ border: "1px solid var(--a-border)", background: "var(--a-bg-card)", boxShadow: "var(--a-card-shadow)" }}>
+        <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: "1px solid var(--a-border)" }}>
+          <h3 className="text-sm font-semibold" style={{ color: "var(--a-text)" }}>
             Останні повідомлення
           </h3>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs" style={{ color: "var(--a-text-3)" }}>
             Витрати SMS: {stats?.totalSmsCost || "0.00"} грн
           </span>
         </div>
 
         {!stats?.recentMessages?.length ? (
-          <div className="p-8 text-center text-sm text-gray-500">
+          <div className="p-8 text-center text-sm" style={{ color: "var(--a-text-3)" }}>
             Повідомлення ще не відправлялись
           </div>
         ) : (
-          <div className="divide-y divide-white/5">
+          <div style={{ borderColor: "var(--a-border)" }} className="divide-y">
             {stats.recentMessages.map((msg) => (
               <MessageRow key={msg.id} message={msg} />
             ))}
@@ -459,10 +490,10 @@ function MessageRow({ message }: { message: RecentMessage }) {
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-white">{name}</span>
-          <span className="text-xs text-gray-600">{time}</span>
+          <span className="text-sm font-medium" style={{ color: "var(--a-text)" }}>{name}</span>
+          <span className="text-xs" style={{ color: "var(--a-text-4)" }}>{time}</span>
         </div>
-        <p className="truncate text-xs text-gray-500">
+        <p className="truncate text-xs" style={{ color: "var(--a-text-3)" }}>
           {message.rendered_text?.slice(0, 80) || "—"}
         </p>
       </div>
@@ -485,7 +516,7 @@ function MessageRow({ message }: { message: RecentMessage }) {
 function StatsTab({ stats }: { stats: MessagingStats | null }) {
   if (!stats) {
     return (
-      <div className="py-12 text-center text-gray-500">
+      <div className="py-12 text-center" style={{ color: "var(--a-text-3)" }}>
         <Loader2 size={24} className="mx-auto mb-2 animate-spin" />
         Завантаження...
       </div>
@@ -517,8 +548,8 @@ function StatsTab({ stats }: { stats: MessagingStats | null }) {
       </div>
 
       {/* Channel breakdown */}
-      <div className="rounded-2xl border border-white/5 bg-[#13131a] p-5">
-        <h3 className="mb-4 text-sm font-semibold text-white">
+      <div className="rounded-2xl p-5" style={{ border: "1px solid var(--a-border)", background: "var(--a-bg-card)", boxShadow: "var(--a-card-shadow)" }}>
+        <h3 className="mb-4 text-sm font-semibold" style={{ color: "var(--a-text)" }}>
           Розподіл каналів
         </h3>
         <div className="space-y-3">
@@ -588,14 +619,14 @@ function ChannelBar({
   return (
     <div>
       <div className="mb-1 flex items-center justify-between text-xs">
-        <span className="flex items-center gap-1.5 text-gray-400">
+        <span className="flex items-center gap-1.5" style={{ color: "var(--a-text-2)" }}>
           {icon} {label}
         </span>
-        <span className="text-gray-500">
+        <span style={{ color: "var(--a-text-3)" }}>
           {count} ({pct.toFixed(0)}%)
         </span>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-white/5">
+      <div className="h-2 overflow-hidden rounded-full" style={{ background: "var(--a-bg-hover)" }}>
         <div
           className="h-full rounded-full transition-all"
           style={{ width: `${pct}%`, backgroundColor: color }}
@@ -722,16 +753,16 @@ function AITab({ funnels }: { funnels: Funnel[] }) {
   return (
     <div className="space-y-4">
       {/* AI Header */}
-      <div className="rounded-2xl border border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-indigo-500/5 p-5">
+      <div className="rounded-2xl p-5" style={{ border: "1px solid var(--a-border)", background: "var(--a-accent-bg)", boxShadow: "var(--a-card-shadow)" }}>
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/15">
-            <Brain size={20} className="text-purple-400" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "rgba(168,85,247,0.12)" }}>
+            <Brain size={20} style={{ color: "var(--a-accent)" }} />
           </div>
           <div className="flex-1">
-            <h3 className="font-semibold text-white">
+            <h3 className="font-semibold" style={{ color: "var(--a-text)" }}>
               AI Advisor — Claude
             </h3>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs" style={{ color: "var(--a-text-2)" }}>
               Аналіз воронок, рекомендації, генерація повідомлень, скоринг
               контактів
             </p>
@@ -752,13 +783,13 @@ function AITab({ funnels }: { funnels: Funnel[] }) {
 
         {/* Quick stats for AI context */}
         <div className="mt-3 flex flex-wrap gap-2">
-          <span className="rounded-md bg-white/5 px-2 py-1 text-xs text-gray-400">
+          <span className="rounded-md px-2 py-1 text-xs" style={{ background: "var(--a-bg-hover)", color: "var(--a-text-2)" }}>
             {funnels.length} воронок
           </span>
-          <span className="rounded-md bg-white/5 px-2 py-1 text-xs text-gray-400">
+          <span className="rounded-md px-2 py-1 text-xs" style={{ background: "var(--a-bg-hover)", color: "var(--a-text-2)" }}>
             {funnels.reduce((s, f) => s + f.totalContacts, 0)} контактів
           </span>
-          <span className="rounded-md bg-white/5 px-2 py-1 text-xs text-gray-400">
+          <span className="rounded-md px-2 py-1 text-xs" style={{ background: "var(--a-bg-hover)", color: "var(--a-text-2)" }}>
             {funnels.reduce((s, f) => s + f.convertedContacts, 0)} конверсій
           </span>
         </div>
@@ -771,22 +802,25 @@ function AITab({ funnels }: { funnels: Funnel[] }) {
             key={action.label}
             onClick={() => sendMessage(action.prompt)}
             disabled={loading}
-            className="flex items-center gap-2 rounded-xl border border-white/5 bg-[#13131a] p-3 text-left text-xs text-gray-400 transition-all hover:border-purple-500/30 hover:text-white disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl p-3 text-left text-xs transition-all disabled:opacity-50"
+            style={{ border: "1px solid var(--a-border)", background: "var(--a-bg-card)", color: "var(--a-text-2)", boxShadow: "var(--a-card-shadow)" }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--a-accent)"; e.currentTarget.style.color = "var(--a-text)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--a-border)"; e.currentTarget.style.color = "var(--a-text-2)"; }}
           >
-            <span className="text-purple-400">{action.icon}</span>
+            <span style={{ color: "var(--a-accent)" }}>{action.icon}</span>
             {action.label}
           </button>
         ))}
       </div>
 
       {/* Chat Area */}
-      <div className="rounded-2xl border border-white/5 bg-[#13131a]">
+      <div className="rounded-2xl" style={{ border: "1px solid var(--a-border)", background: "var(--a-bg-card)", boxShadow: "var(--a-card-shadow)" }}>
         {/* Messages */}
         <div className="max-h-[500px] min-h-[200px] space-y-3 overflow-y-auto p-4">
           {messages.length === 0 ? (
             <div className="py-12 text-center">
-              <Brain size={32} className="mx-auto mb-2 text-purple-500/30" />
-              <p className="text-sm text-gray-600">
+              <Brain size={32} className="mx-auto mb-2" style={{ color: "var(--a-text-5)" }} />
+              <p className="text-sm" style={{ color: "var(--a-text-4)" }}>
                 Задайте питання або оберіть швидку дію вище
               </p>
             </div>
@@ -797,26 +831,29 @@ function AITab({ funnels }: { funnels: Funnel[] }) {
                 className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
-                    msg.role === "user"
-                      ? "bg-purple-600/20 text-purple-200"
-                      : "bg-white/5 text-gray-300"
-                  }`}
+                  className="max-w-[85%] rounded-2xl px-4 py-2.5 text-sm"
+                  style={{
+                    background: msg.role === "user" ? "var(--a-accent-bg)" : "var(--a-bg-hover)",
+                    color: msg.role === "user" ? "var(--a-accent)" : "var(--a-text-body)",
+                  }}
                 >
                   {msg.role === "assistant" && (
-                    <div className="mb-1 flex items-center gap-1 text-[10px] text-purple-400">
+                    <div className="mb-1 flex items-center gap-1 text-[10px]" style={{ color: "var(--a-accent)" }}>
                       <Brain size={10} /> Claude AI
                     </div>
                   )}
-                  <div className="whitespace-pre-wrap">{msg.content}</div>
+                  <div
+                    className="prose-ai"
+                    dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
+                  />
                 </div>
               </div>
             ))
           )}
           {loading && (
             <div className="flex justify-start">
-              <div className="flex items-center gap-2 rounded-2xl bg-white/5 px-4 py-3 text-sm text-gray-500">
-                <Loader2 size={14} className="animate-spin text-purple-400" />
+              <div className="flex items-center gap-2 rounded-2xl px-4 py-3 text-sm" style={{ background: "var(--a-bg-hover)", color: "var(--a-text-3)" }}>
+                <Loader2 size={14} className="animate-spin" style={{ color: "var(--a-accent)" }} />
                 AI думає...
               </div>
             </div>
@@ -824,7 +861,7 @@ function AITab({ funnels }: { funnels: Funnel[] }) {
         </div>
 
         {/* Input */}
-        <div className="border-t border-white/5 p-3">
+        <div className="p-3" style={{ borderTop: "1px solid var(--a-border)" }}>
           <div className="flex gap-2">
             <input
               type="text"
@@ -837,13 +874,15 @@ function AITab({ funnels }: { funnels: Funnel[] }) {
                 }
               }}
               placeholder="Запитайте AI про воронки, повідомлення, стратегії..."
-              className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-purple-500/50 focus:outline-none"
+              className="flex-1 rounded-xl px-4 py-2.5 text-sm focus:outline-none"
+              style={{ background: "var(--a-bg-input)", border: "1px solid var(--a-border)", color: "var(--a-text)" }}
               disabled={loading}
             />
             <button
               onClick={() => sendMessage(input)}
               disabled={loading || !input.trim()}
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-600 text-white transition-colors hover:bg-purple-500 disabled:opacity-30"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-white transition-colors hover:bg-purple-500 disabled:opacity-30"
+              style={{ background: "var(--a-accent)" }}
             >
               <Send size={16} />
             </button>
@@ -870,7 +909,7 @@ function StatCard({
   sub?: string;
 }) {
   return (
-    <div className="rounded-xl border border-white/5 bg-[#13131a] p-4">
+    <div className="rounded-xl p-4" style={{ border: "1px solid var(--a-border)", background: "var(--a-bg-card)", boxShadow: "var(--a-card-shadow)", borderLeft: `3px solid ${color}` }}>
       <div className="mb-2 flex items-center gap-2">
         <div
           className="flex h-7 w-7 items-center justify-center rounded-lg"
@@ -878,10 +917,10 @@ function StatCard({
         >
           {icon}
         </div>
-        <span className="text-xs text-gray-500">{label}</span>
+        <span className="text-xs" style={{ color: "var(--a-text-3)" }}>{label}</span>
       </div>
-      <p className="text-2xl font-bold text-white">{value}</p>
-      {sub && <p className="mt-0.5 text-xs text-gray-500">{sub}</p>}
+      <p className="text-2xl font-bold" style={{ color: "var(--a-text)", fontFamily: "'JetBrains Mono', monospace" }}>{value}</p>
+      {sub && <p className="mt-0.5 text-xs" style={{ color: "var(--a-text-3)" }}>{sub}</p>}
     </div>
   );
 }
@@ -898,12 +937,12 @@ function MiniStat({
   color: string;
 }) {
   return (
-    <div className="rounded-xl border border-white/5 bg-[#13131a] p-3">
+    <div className="rounded-xl p-3" style={{ border: "1px solid var(--a-border)", background: "var(--a-bg-card)", boxShadow: "var(--a-card-shadow)" }}>
       <div className="mb-1.5 flex items-center gap-1.5">
         <span style={{ color }}>{icon}</span>
-        <span className="text-[11px] text-gray-500">{label}</span>
+        <span className="text-[11px]" style={{ color: "var(--a-text-3)" }}>{label}</span>
       </div>
-      <p className="text-lg font-bold text-white">{value}</p>
+      <p className="text-lg font-bold" style={{ color: "var(--a-text)" }}>{value}</p>
     </div>
   );
 }
@@ -920,12 +959,12 @@ function BigStat({
   color: string;
 }) {
   return (
-    <div className="rounded-xl border border-white/5 bg-[#13131a] p-5 text-center">
-      <p className="mb-1 text-xs text-gray-500">{label}</p>
+    <div className="rounded-xl p-5 text-center" style={{ border: "1px solid var(--a-border)", background: "var(--a-bg-card)", boxShadow: "var(--a-card-shadow)" }}>
+      <p className="mb-1 text-xs" style={{ color: "var(--a-text-3)" }}>{label}</p>
       <p className="text-3xl font-bold" style={{ color }}>
         {value}
       </p>
-      <p className="mt-1 text-xs text-gray-500">{sub}</p>
+      <p className="mt-1 text-xs" style={{ color: "var(--a-text-3)" }}>{sub}</p>
     </div>
   );
 }

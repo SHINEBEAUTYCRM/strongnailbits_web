@@ -355,16 +355,18 @@ body {
 
 /* Light theme — WCAG AA contrast on white (#fff) checked */
 [data-admin-theme="light"] {
-  --a-bg:          #f5f6f8;
+  --a-bg:          #f5f5f7;           /* Apple-like light gray, NOT white */
   --a-bg-sidebar:  #ffffff;
   --a-bg-header:   #ffffff;
-  --a-bg-card:     #ffffff;
+  --a-bg-card:     #ffffff;           /* White cards ON gray bg = contrast */
   --a-bg-input:    #f1f5f9;
-  --a-bg-hover:    #f8fafc;
+  --a-bg-hover:    #f0f0f4;
   --a-bg-active:   #ede9fe;
   --a-bg-muted:    #f1f5f9;
-  --a-border:      #e2e8f0;
-  --a-border-sub:  #f1f5f9;
+  --a-bg-surface:  #f9f9fb;
+  --a-border:      rgba(0, 0, 0, 0.08);
+  --a-border-sub:  rgba(0, 0, 0, 0.04);
+  --a-border-hover: rgba(0, 0, 0, 0.14);
   --a-text:        #0f172a;
   --a-text-name:   #1e293b;
   --a-text-body:   #334155;
@@ -376,7 +378,8 @@ body {
   --a-accent:      #7c3aed;
   --a-accent-bg:   #f5f3ff;
   --a-accent-btn:  #7c3aed;
-  --a-shadow:      rgba(0,0,0,0.04);
+  --a-shadow:      0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+  --a-shadow-lg:   0 4px 12px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
   --a-card-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
   /* Status badges — light pastel */
   --a-st-new-c:        #2563eb; --a-st-new-bg:        #dbeafe;
@@ -739,6 +742,140 @@ body {
   background: var(--a-bg-card) !important;
   border-color: var(--a-border) !important;
   box-shadow: var(--a-card-shadow);
+}
+
+/* ================================================================ */
+/*  Light theme: Card depth & button visibility                      */
+/* ================================================================ */
+
+/* Every card/panel gets shadow + border in light theme */
+[data-admin-theme="light"] .admin-content .rounded-xl[style*="var(--a-bg-card)"],
+[data-admin-theme="light"] .admin-content .rounded-2xl[style*="var(--a-bg-card)"] {
+  box-shadow: var(--a-card-shadow) !important;
+  border: 1px solid var(--a-border) !important;
+}
+
+/* Rounded containers with dark Tailwind bg get card treatment */
+[data-admin-theme="light"] .admin-content .bg-\[\#13131a\] {
+  background-color: var(--a-bg-card) !important;
+  box-shadow: var(--a-card-shadow);
+  border: 1px solid var(--a-border) !important;
+}
+
+/* Semi-transparent white bg → subtle fill */
+[data-admin-theme="light"] .admin-content .bg-white\/5,
+[data-admin-theme="light"] .admin-content .bg-white\/\[0\.02\],
+[data-admin-theme="light"] .admin-content .bg-white\/\[0\.03\] {
+  background-color: var(--a-bg-hover) !important;
+}
+[data-admin-theme="light"] .admin-content .bg-white\/10 {
+  background-color: var(--a-bg-input) !important;
+}
+
+/* Gradient overlays — soften for light */
+[data-admin-theme="light"] .admin-content .from-purple-500\/5 {
+  --tw-gradient-from: rgba(168,85,247,0.04) !important;
+}
+[data-admin-theme="light"] .admin-content .to-indigo-500\/5 {
+  --tw-gradient-to: rgba(99,102,241,0.04) !important;
+}
+
+/* Purple accent overlays */
+[data-admin-theme="light"] .admin-content .bg-purple-500\/10,
+[data-admin-theme="light"] .admin-content .bg-purple-500\/15 {
+  background-color: rgba(168,85,247,0.08) !important;
+}
+[data-admin-theme="light"] .admin-content .bg-purple-600\/20 {
+  background-color: rgba(124,58,237,0.08) !important;
+}
+[data-admin-theme="light"] .admin-content .bg-indigo-500\/10 {
+  background-color: rgba(99,102,241,0.08) !important;
+}
+
+/* Text color overrides for Tailwind classes on funnels & other pages */
+[data-admin-theme="light"] .admin-content .text-gray-300 {
+  color: var(--a-text-body) !important;
+}
+[data-admin-theme="light"] .admin-content .text-gray-400 {
+  color: var(--a-text-2) !important;
+}
+[data-admin-theme="light"] .admin-content .text-gray-500 {
+  color: var(--a-text-3) !important;
+}
+[data-admin-theme="light"] .admin-content .text-gray-600 {
+  color: var(--a-text-4) !important;
+}
+[data-admin-theme="light"] .admin-content .text-purple-200 {
+  color: var(--a-accent) !important;
+}
+[data-admin-theme="light"] .admin-content .text-purple-400 {
+  color: var(--a-accent) !important;
+}
+
+/* Input fields */
+[data-admin-theme="light"] .admin-content input.bg-white\/5,
+[data-admin-theme="light"] .admin-content input.border-white\/10 {
+  background: var(--a-bg-input) !important;
+  border-color: var(--a-border) !important;
+  color: var(--a-text) !important;
+}
+[data-admin-theme="light"] .admin-content .placeholder\:text-gray-600::placeholder {
+  color: var(--a-text-4) !important;
+}
+[data-admin-theme="light"] .admin-content .focus\:border-purple-500\/50:focus {
+  border-color: var(--a-accent) !important;
+}
+
+/* Hover overrides */
+[data-admin-theme="light"] .admin-content .hover\:text-white:hover {
+  color: var(--a-text) !important;
+}
+[data-admin-theme="light"] .admin-content .hover\:text-gray-300:hover {
+  color: var(--a-text-body) !important;
+}
+[data-admin-theme="light"] .admin-content .hover\:border-white\/10:hover {
+  border-color: var(--a-border-hover) !important;
+}
+[data-admin-theme="light"] .admin-content .hover\:border-purple-500\/30:hover {
+  border-color: var(--a-accent) !important;
+}
+[data-admin-theme="light"] .admin-content .hover\:bg-white\/5:hover {
+  background-color: var(--a-bg-hover) !important;
+}
+
+/* Borders */
+[data-admin-theme="light"] .admin-content .border-purple-500\/20 {
+  border-color: rgba(124,58,237,0.15) !important;
+}
+
+/* Admin page body background */
+[data-admin-theme="light"] .admin-content {
+  background: var(--a-bg) !important;
+}
+
+/* ── AI Advisor markdown prose ── */
+.prose-ai {
+  line-height: 1.65;
+  word-break: break-word;
+}
+.prose-ai h2, .prose-ai h3, .prose-ai h4 {
+  color: var(--a-text);
+}
+.prose-ai strong {
+  color: var(--a-text);
+  font-weight: 600;
+}
+.prose-ai li {
+  padding-left: 4px;
+}
+.prose-ai code {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+.prose-ai pre {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+.prose-ai hr {
+  opacity: 0.5;
 }
 
 /* ── tldraw isolation — prevent CSS transitions/animations from killing canvas ── */
