@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { Send, AlertCircle, Loader2, Clock, Check, Phone, XCircle } from "lucide-react";
 import { DangrowBadge } from "@/components/admin/DangrowBadge";
 import { createClient } from "@/lib/supabase/client";
@@ -9,14 +8,14 @@ import { createClient } from "@/lib/supabase/client";
 type Status = "idle" | "sending" | "waiting" | "confirmed" | "error" | "no_telegram";
 
 export default function AdminLoginPage() {
-  const router = useRouter();
   const [phone, setPhone] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
   const [token, setToken] = useState<string | null>(null);
-  const [countdown, setCountdown] = useState(300); // 5 minutes in seconds
+  const [countdown, setCountdown] = useState(300);
   const inputRef = useRef<HTMLInputElement>(null);
   const channelRef = useRef<ReturnType<typeof createClient>["channel"] | null>(null);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Focus input on mount
   useEffect(() => {
@@ -35,12 +34,65 @@ export default function AdminLoginPage() {
     return () => clearInterval(timer);
   }, [status, countdown]);
 
-  // Supabase Realtime subscription
-  const subscribeToToken = useCallback(
+  // ── Create session and redirect ──
+  const createSessionAndRedirect = useCallback(async (authToken: string) => {
+    try {
+      const res = await fetch("/api/admin/auth/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: authToken }),
+      });
+
+      if (res.ok) {
+        setStatus("confirmed");
+        // Use window.location for full page reload — ensures cookie is picked up by middleware
+        setTimeout(() => {
+          window.location.href = "/admin";
+        }, 800);
+      } else {
+        const data = await res.json();
+        setStatus("error");
+        setError(data.error || "Помилка створення сесії");
+      }
+    } catch {
+      setStatus("error");
+      setError("Помилка мережі");
+    }
+  }, []);
+
+  // ── Polling fallback (every 3s) ──
+  const startPolling = useCallback(
+    (authToken: string) => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+
+      pollingRef.current = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/admin/auth/check?token=${authToken}`);
+          const data = await res.json();
+
+          if (data.status === "confirmed") {
+            stopPolling();
+            stopRealtime();
+            await createSessionAndRedirect(authToken);
+          } else if (data.status === "expired" || data.status === "denied") {
+            stopPolling();
+            stopRealtime();
+            setStatus("error");
+            setError("Вхід відхилено.");
+          }
+        } catch {
+          // Ignore network errors in polling — will retry
+        }
+      }, 3000);
+    },
+    [createSessionAndRedirect],
+  );
+
+  // ── Supabase Realtime subscription ──
+  const startRealtime = useCallback(
     (authToken: string) => {
       const supabase = createClient();
 
-      // Unsubscribe from previous channel if exists
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current as never);
       }
@@ -58,52 +110,47 @@ export default function AdminLoginPage() {
           async (payload: { new: Record<string, unknown> }) => {
             const newStatus = (payload.new as { status: string }).status;
             if (newStatus === "confirmed") {
-              setStatus("confirmed");
-
-              // Create session
-              try {
-                const res = await fetch("/api/admin/auth/confirm", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ token: authToken }),
-                });
-
-                if (res.ok) {
-                  // Brief delay for animation
-                  setTimeout(() => {
-                    router.push("/admin");
-                    router.refresh();
-                  }, 1000);
-                } else {
-                  const data = await res.json();
-                  setStatus("error");
-                  setError(data.error || "Помилка створення сесії");
-                }
-              } catch {
-                setStatus("error");
-                setError("Помилка мережі");
-              }
+              stopPolling();
+              stopRealtime();
+              await createSessionAndRedirect(authToken);
             } else if (newStatus === "expired" || newStatus === "denied") {
+              stopPolling();
+              stopRealtime();
               setStatus("error");
               setError("Вхід відхилено.");
             }
-          }
+          },
         )
         .subscribe();
 
       channelRef.current = channel as never;
     },
-    [router]
+    [createSessionAndRedirect],
   );
 
-  // Cleanup subscription on unmount
+  // ── Cleanup helpers ──
+  const stopPolling = () => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+  };
+
+  const stopRealtime = () => {
+    if (channelRef.current) {
+      const supabase = createClient();
+      supabase.removeChannel(channelRef.current as never);
+      channelRef.current = null;
+    }
+  };
+
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (channelRef.current) {
-        const supabase = createClient();
-        supabase.removeChannel(channelRef.current as never);
-      }
+      stopPolling();
+      stopRealtime();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -128,7 +175,6 @@ export default function AdminLoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        // Handle specific error types by HTTP status
         if (data.error === "no_telegram") {
           setStatus("no_telegram");
           setError(data.message || "Спочатку прив'яжіть Telegram");
@@ -148,11 +194,12 @@ export default function AdminLoginPage() {
         return;
       }
 
-      // Success — switch to waiting state
+      // Success — switch to waiting, start both Realtime + polling
       setToken(data.token);
       setStatus("waiting");
       setCountdown(300);
-      subscribeToToken(data.token);
+      startRealtime(data.token);
+      startPolling(data.token);
     } catch {
       setStatus("error");
       setError("Помилка мережі");
@@ -164,17 +211,12 @@ export default function AdminLoginPage() {
     setError("");
     setToken(null);
     setCountdown(300);
-    if (channelRef.current) {
-      const supabase = createClient();
-      supabase.removeChannel(channelRef.current as never);
-      channelRef.current = null;
-    }
+    stopPolling();
+    stopRealtime();
   };
 
   const formatPhone = (value: string) => {
-    // Only allow digits, max 9
     const digits = value.replace(/\D/g, "").slice(0, 9);
-    // Format: XX XXX XX XX
     let formatted = "";
     for (let i = 0; i < digits.length; i++) {
       if (i === 2 || i === 5 || i === 7) formatted += " ";
@@ -244,7 +286,6 @@ export default function AdminLoginPage() {
                     if (el) el.style.borderColor = "rgba(255,255,255,0.1)";
                   }}
                 >
-                  {/* Fixed +380 prefix */}
                   <span
                     className="shrink-0 px-3 py-3 text-sm select-none"
                     style={{
@@ -255,9 +296,7 @@ export default function AdminLoginPage() {
                   >
                     +380
                   </span>
-                  {/* Separator */}
                   <span style={{ width: 1, height: 24, background: "rgba(255,255,255,0.1)", flexShrink: 0 }} />
-                  {/* Input for 9 digits */}
                   <input
                     ref={inputRef}
                     type="tel"
@@ -288,11 +327,11 @@ export default function AdminLoginPage() {
                 ) : (
                   <Send className="w-4 h-4" />
                 )}
-                Надіслати запит
+                {status === "sending" ? "Надсилаємо..." : "Увійти"}
               </button>
 
               <p className="text-center text-xs mt-4" style={{ color: "#52525b" }}>
-                Увійдіть за допомогою Telegram
+                Вхід через Telegram
               </p>
             </form>
           )}
@@ -300,7 +339,7 @@ export default function AdminLoginPage() {
           {/* ── WAITING: Telegram confirmation ── */}
           {status === "waiting" && (
             <div className="text-center py-4">
-              {/* Pulsing Telegram icon */}
+              {/* Pulsing icon */}
               <div className="relative inline-flex items-center justify-center mb-5">
                 <div
                   className="absolute w-20 h-20 rounded-full animate-ping"
@@ -323,10 +362,10 @@ export default function AdminLoginPage() {
               </div>
 
               <h3 className="text-lg font-semibold mb-2" style={{ color: "#e4e4e7" }}>
-                Підтвердіть вхід в Telegram
+                Перевірте Telegram
               </h3>
               <p className="text-sm mb-4" style={{ color: "#71717a" }}>
-                Натисніть кнопку «✅ Підтвердити» в повідомленні від бота
+                Натисніть кнопку «Підтвердити» в повідомленні від бота
               </p>
 
               {/* Timer */}
@@ -365,7 +404,7 @@ export default function AdminLoginPage() {
                 <Check className="w-8 h-8" style={{ color: "#22c55e" }} />
               </div>
               <h3 className="text-lg font-semibold mb-2" style={{ color: "#22c55e" }}>
-                Вхід підтверджено!
+                Вхід підтверджено
               </h3>
               <p className="text-sm" style={{ color: "#71717a" }}>
                 Переходимо в адмінку...

@@ -12,6 +12,7 @@ const ADMIN_PUBLIC = ["/admin/login", "/admin/register", "/admin/unauthorized", 
 const ADMIN_AUTH_API = [
   "/api/admin/auth/request",
   "/api/admin/auth/confirm",
+  "/api/admin/auth/check",
   "/api/admin/auth/telegram-webhook",
   "/api/admin/auth/logout",
 ];
