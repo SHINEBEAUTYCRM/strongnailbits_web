@@ -80,16 +80,18 @@ export default function TasksPage() {
 
     const channel = supabase
       .channel("tasks-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, (payload: { eventType: string; new: Record<string, unknown>; old: Record<string, unknown> }) => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, (payload: { eventType: string; new: unknown; old: unknown }) => {
         if (payload.eventType === "INSERT") {
           // Reload to get full joined data
           loadTasks();
         } else if (payload.eventType === "UPDATE") {
+          const updated = payload.new as Task;
           setTasks((prev) =>
-            prev.map((t) => (t.id === (payload.new as Task).id ? { ...t, ...payload.new as Task } : t)),
+            prev.map((t) => (t.id === updated.id ? { ...t, ...updated } : t)),
           );
         } else if (payload.eventType === "DELETE") {
-          setTasks((prev) => prev.filter((t) => t.id !== (payload.old as { id: string }).id));
+          const deleted = payload.old as { id: string };
+          setTasks((prev) => prev.filter((t) => t.id !== deleted.id));
         }
       })
       .subscribe();
