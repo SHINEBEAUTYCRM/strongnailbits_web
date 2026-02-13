@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import BoardLoader from "./components/BoardLoader";
+import SaveButton from "./components/SaveButton";
 
 export default async function BoardPage() {
   const supabase = await createClient();
@@ -52,10 +53,13 @@ export default async function BoardPage() {
         >
           {board.name}
         </span>
-        <span
-          id="shine-board-status"
-          style={{ fontSize: 12, color: "var(--a-text-4, #888)" }}
-        />
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span
+            id="shine-board-status"
+            style={{ fontSize: 12, color: "var(--a-text-4, #888)" }}
+          />
+          <SaveButton />
+        </div>
       </div>
 
       {/* TLDRAW CONTAINER — position: fixed, as per official docs */}
@@ -66,7 +70,6 @@ export default async function BoardPage() {
           left: 0,
           right: 0,
           bottom: 0,
-          /* NOTHING ELSE. No overflow, transition, filter, opacity */
         }}
       >
         <BoardLoader boardId={board.id} initialSnapshot={board.snapshot} />

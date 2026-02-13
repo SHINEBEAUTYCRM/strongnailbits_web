@@ -14,14 +14,54 @@ export default function TldrawWrapper({
   initialSnapshot,
 }: TldrawWrapperProps) {
   const editorRef = useRef<Editor | null>(null);
-  const boardIdRef = useRef(boardId);
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isMountedRef = useRef(false);
+  const loadedRef = useRef(false);
 
-  boardIdRef.current = boardId;
+  const handleMount = useCallback((editor: Editor) => {
+    editorRef.current = editor;
 
-  // Save snapshot — ZERO React state, direct DOM for indicator
-  const save = useCallback(async () => {
+    // Sync theme
+    const isDark =
+      document.documentElement.getAttribute("data-admin-theme") !== "light";
+    editor.user.updateUserPreferences({
+      colorScheme: isDark ? "dark" : "light",
+    });
+
+    // Load server snapshot ONLY if localStorage is empty (first visit)
+    if (initialSnapshot && !loadedRef.current) {
+      const localKey = `TLDRAW_DOCUMENT_v2_shine-board-${boardId}`;
+      const hasLocal = localStorage.getItem(localKey);
+      if (!hasLocal) {
+        try {
+          loadSnapshot(
+            editor.store,
+            initialSnapshot as Parameters<typeof loadSnapshot>[1],
+          );
+        } catch (e) {
+          console.warn("Snapshot load failed, starting fresh:", e);
+        }
+      }
+      loadedRef.current = true;
+    }
+
+    // Watch theme changes
+    const observer = new MutationObserver(() => {
+      const dark =
+        document.documentElement.getAttribute("data-admin-theme") !== "light";
+      editor.user.updateUserPreferences({
+        colorScheme: dark ? "dark" : "light",
+      });
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-admin-theme"],
+    });
+
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Manual save to server — exposed via window for header button
+  const handleSave = useCallback(async () => {
     const editor = editorRef.current;
     if (!editor) return;
 
@@ -35,7 +75,7 @@ export default function TldrawWrapper({
 
       const snapshot = getSnapshot(editor.store);
 
-      await fetch(`/api/admin/boards/${boardIdRef.current}`, {
+      await fetch(`/api/admin/boards/${boardId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ snapshot }),
@@ -45,66 +85,28 @@ export default function TldrawWrapper({
         el.textContent = "Збережено";
         el.style.color = "#22c55e";
       }
+      setTimeout(() => {
+        if (el) el.textContent = "";
+      }, 3000);
     } catch (e) {
       console.error("Board save failed:", e);
       if (el) {
-        el.textContent = "Помилка збереження";
+        el.textContent = "Помилка";
         el.style.color = "#ef4444";
       }
     }
-  }, []);
+  }, [boardId]);
 
-  const handleMount = useCallback((editor: Editor) => {
-    editorRef.current = editor;
+  // Expose save to window so header button can call it
+  if (typeof window !== "undefined") {
+    (window as /* eslint-disable-line @typescript-eslint/no-explicit-any */ any).__shineBoardSave = handleSave;
+  }
 
-    // Sync theme
-    const syncTheme = () => {
-      const isDark =
-        document.documentElement.getAttribute("data-admin-theme") !== "light";
-      editor.user.updateUserPreferences({
-        colorScheme: isDark ? "dark" : "light",
-      });
-    };
-    syncTheme();
-
-    // Load snapshot if available (only on first mount)
-    if (initialSnapshot && !isMountedRef.current) {
-      try {
-        loadSnapshot(
-          editor.store,
-          initialSnapshot as Parameters<typeof loadSnapshot>[1],
-        );
-      } catch (e) {
-        console.warn("Snapshot load failed, starting fresh:", e);
-      }
-    }
-    isMountedRef.current = true;
-
-    // Autosave: debounce 5s
-    const cleanup = editor.store.listen(
-      () => {
-        if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-        saveTimerRef.current = setTimeout(save, 5000);
-      },
-      { scope: "document" },
-    );
-
-    // Watch theme changes
-    const observer = new MutationObserver(syncTheme);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["data-admin-theme"],
-    });
-
-    // Cleanup
-    return () => {
-      cleanup();
-      observer.disconnect();
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    };
-    // Empty deps — mount ONCE, forever
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  return <Tldraw onMount={handleMount} autoFocus />;
+  return (
+    <Tldraw
+      persistenceKey={`shine-board-${boardId}`}
+      onMount={handleMount}
+      autoFocus
+    />
+  );
 }
