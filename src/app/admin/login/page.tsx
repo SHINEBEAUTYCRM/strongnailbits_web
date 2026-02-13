@@ -55,7 +55,7 @@ export default function AdminLoginPage() {
             table: "auth_requests",
             filter: `token=eq.${authToken}`,
           },
-          async (payload) => {
+          async (payload: { new: Record<string, unknown> }) => {
             const newStatus = (payload.new as { status: string }).status;
             if (newStatus === "confirmed") {
               setStatus("confirmed");
