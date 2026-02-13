@@ -12,7 +12,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { normalizePhone } from "@/lib/admin/auth";
+import { normalizePhone, getPhoneDigits } from "@/lib/admin/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -252,13 +252,15 @@ async function handleContact(
   phoneNumber: string,
 ): Promise<void> {
   const phone = normalizePhone(phoneNumber);
+  const last9 = getPhoneDigits(phone);
 
-  const { data: member } = await supabase
+  // Search by last 9 digits — format-independent matching
+  const { data: members } = await supabase
     .from("team_members")
     .select("id, name, telegram_chat_id")
-    .eq("phone", phone)
-    .eq("is_active", true)
-    .maybeSingle();
+    .eq("is_active", true);
+
+  const member = members?.find((m) => getPhoneDigits(m.phone) === last9) || null;
 
   if (!member) {
     await tgApi("sendMessage", {

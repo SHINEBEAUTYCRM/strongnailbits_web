@@ -57,23 +57,31 @@ export const SESSION_COOKIE = "admin_session";
 /* ------------------------------------------------------------------ */
 
 export function normalizePhone(phone: string): string {
-  // Remove everything except digits and +
-  let cleaned = phone.replace(/[^\d+]/g, "");
+  const digits = phone.replace(/\D/g, "");
 
-  // 0XXXXXXXXX → +380XXXXXXXXX
-  if (cleaned.startsWith("0") && cleaned.length === 10) {
-    cleaned = "+380" + cleaned.slice(1);
+  // 0637443889 → +380637443889
+  if (digits.startsWith("0") && digits.length === 10) {
+    return "+38" + digits;
   }
-  // 380XXXXXXXXX → +380XXXXXXXXX
-  else if (cleaned.startsWith("380") && !cleaned.startsWith("+")) {
-    cleaned = "+" + cleaned;
+  // 380637443889 → +380637443889
+  if (digits.startsWith("380") && digits.length === 12) {
+    return "+" + digits;
   }
-  // If no + prefix and starts with digits
-  else if (!cleaned.startsWith("+")) {
-    cleaned = "+" + cleaned;
+  // 80637443889 → +380637443889
+  if (digits.startsWith("80") && digits.length === 11) {
+    return "+3" + digits;
   }
+  // Already has +
+  if (phone.startsWith("+")) {
+    return "+" + digits;
+  }
+  return "+" + digits;
+}
 
-  return cleaned;
+/** Get last 9 digits (after country code) — for format-independent matching */
+export function getPhoneDigits(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  return digits.slice(-9);
 }
 
 /* ------------------------------------------------------------------ */

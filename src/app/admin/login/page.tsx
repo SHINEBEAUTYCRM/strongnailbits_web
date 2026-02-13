@@ -108,8 +108,9 @@ export default function AdminLoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phone.trim()) {
-      setError("Введіть номер телефону");
+    const digits = phone.replace(/\s/g, "");
+    if (digits.length !== 9) {
+      setError("Введіть 9 цифр номера");
       return;
     }
 
@@ -117,10 +118,11 @@ export default function AdminLoginPage() {
     setError("");
 
     try {
+      const fullPhone = "+380" + digits;
       const res = await fetch("/api/admin/auth/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: phone.trim() }),
+        body: JSON.stringify({ phone: fullPhone }),
       });
 
       const data = await res.json();
@@ -160,9 +162,15 @@ export default function AdminLoginPage() {
   };
 
   const formatPhone = (value: string) => {
-    // Only allow digits and +
-    const cleaned = value.replace(/[^\d+]/g, "");
-    setPhone(cleaned);
+    // Only allow digits, max 9
+    const digits = value.replace(/\D/g, "").slice(0, 9);
+    // Format: XX XXX XX XX
+    let formatted = "";
+    for (let i = 0; i < digits.length; i++) {
+      if (i === 2 || i === 5 || i === 7) formatted += " ";
+      formatted += digits[i];
+    }
+    setPhone(formatted);
   };
 
   const formatCountdown = (secs: number) => {
@@ -210,32 +218,48 @@ export default function AdminLoginPage() {
                   <Phone className="w-3.5 h-3.5" />
                   Номер телефону
                 </label>
-                <div className="relative">
+                <div
+                  className="flex items-center rounded-[10px] overflow-hidden transition-colors"
+                  style={{
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                  }}
+                  onClick={() => inputRef.current?.focus()}
+                  onFocus={() => {
+                    const el = inputRef.current?.parentElement;
+                    if (el) el.style.borderColor = "#7c3aed";
+                  }}
+                  onBlur={() => {
+                    const el = inputRef.current?.parentElement;
+                    if (el) el.style.borderColor = "rgba(255,255,255,0.1)";
+                  }}
+                >
+                  {/* Fixed +380 prefix */}
                   <span
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-sm"
-                    style={{ color: "#52525b" }}
+                    className="shrink-0 px-3 py-3 text-sm select-none"
+                    style={{
+                      color: "#a1a1aa",
+                      fontFamily: "var(--font-jetbrains-mono, 'JetBrains Mono'), monospace",
+                      background: "rgba(0,0,0,0.2)",
+                    }}
                   >
-                    🇺🇦
+                    +380
                   </span>
+                  {/* Separator */}
+                  <span style={{ width: 1, height: 24, background: "rgba(255,255,255,0.1)", flexShrink: 0 }} />
+                  {/* Input for 9 digits */}
                   <input
                     ref={inputRef}
                     type="tel"
                     value={phone}
                     onChange={(e) => formatPhone(e.target.value)}
-                    placeholder="+380XXXXXXXXX"
+                    placeholder="63 744 38 89"
                     disabled={status === "sending"}
-                    className="w-full pl-10 pr-3 py-3 rounded-xl text-sm outline-none transition-colors"
+                    maxLength={12}
+                    className="flex-1 px-3 py-3 text-sm outline-none bg-transparent"
                     style={{
-                      background: "#111116",
-                      border: "1px solid #1e1e2a",
                       color: "#e4e4e7",
                       fontFamily: "var(--font-jetbrains-mono, 'JetBrains Mono'), monospace",
-                    }}
-                    onFocus={(e) => {
-                      e.currentTarget.style.borderColor = "#7c3aed";
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.borderColor = "#1e1e2a";
                     }}
                   />
                 </div>
@@ -243,7 +267,7 @@ export default function AdminLoginPage() {
 
               <button
                 type="submit"
-                disabled={status === "sending" || !phone.trim()}
+                disabled={status === "sending" || phone.replace(/\s/g, "").length !== 9}
                 className="w-full py-3 rounded-xl text-sm font-semibold text-white disabled:opacity-50 flex items-center justify-center gap-2 transition-opacity"
                 style={{
                   background: "linear-gradient(135deg, #7c3aed, #a855f7)",

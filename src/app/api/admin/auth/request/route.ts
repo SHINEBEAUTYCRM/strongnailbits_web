@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { normalizePhone, generateToken } from "@/lib/admin/auth";
+import { normalizePhone, getPhoneDigits, generateToken } from "@/lib/admin/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -34,21 +34,22 @@ export async function POST(request: NextRequest) {
     }
 
     const phone = normalizePhone(rawPhone);
+    const last9 = getPhoneDigits(phone);
 
-    // Validate Ukrainian phone format
-    if (!/^\+380\d{9}$/.test(phone)) {
-      return NextResponse.json({ error: "Невірний формат номера. Має бути +380XXXXXXXXX" }, { status: 400 });
+    // Validate: must have 9 digits after country code
+    if (last9.length !== 9) {
+      return NextResponse.json({ error: "Невірний формат номера" }, { status: 400 });
     }
 
     const supabase = createAdminClient();
 
-    // Check team_members
-    const { data: member } = await supabase
+    // Check team_members — match by last 9 digits (format-independent)
+    const { data: members } = await supabase
       .from("team_members")
       .select("id, name, phone, telegram_chat_id, is_active")
-      .eq("phone", phone)
-      .eq("is_active", true)
-      .maybeSingle();
+      .eq("is_active", true);
+
+    const member = members?.find((m) => getPhoneDigits(m.phone) === last9) || null;
 
     if (!member) {
       return NextResponse.json(
