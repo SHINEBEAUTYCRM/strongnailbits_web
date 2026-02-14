@@ -28,7 +28,9 @@ export default function TeamPage() {
         const data = await res.json();
         setMembers(data);
       }
-    } catch { /* ignore */ } finally {
+    } catch (err) {
+      console.error('[Team] Fetch failed:', err);
+    } finally {
       setLoading(false);
     }
   };
@@ -40,7 +42,9 @@ export default function TeamPage() {
         const data = await res.json();
         setCurrentRole(data.role || "");
       }
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.error('[Team] Load current user failed:', err);
+    }
   };
 
   const isCeo = currentRole === "ceo";
@@ -63,7 +67,9 @@ export default function TeamPage() {
         setShowAddModal(false);
         loadMembers();
       }
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.error('[Team] Add member failed:', err);
+    }
   }, []);
 
   if (loading) {

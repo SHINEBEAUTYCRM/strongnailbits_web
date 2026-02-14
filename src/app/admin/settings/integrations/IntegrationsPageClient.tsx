@@ -35,8 +35,8 @@ export function IntegrationsPageClient() {
         setStatuses(json.data);
         setStats(json.stats);
       }
-    } catch {
-      // silent
+    } catch (err) {
+      console.error('[Integrations] Stats fetch failed:', err);
     }
     setLoading(false);
   }, []);

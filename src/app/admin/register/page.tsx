@@ -43,7 +43,8 @@ export default function AdminRegisterPage() {
       }
 
       setSuccess(true);
-    } catch {
+    } catch (err) {
+      console.error('[Register] Submit failed:', err);
       setError("Помилка мережі");
     }
     setLoading(false);

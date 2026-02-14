@@ -14,8 +14,9 @@ export async function aiMatchProduct(
 ): Promise<FoundProduct | null> {
   if (candidates.length === 0) return null;
 
-  const apiKey = process.env.CLAUDE_API_KEY;
-  if (!apiKey) throw new Error('CLAUDE_API_KEY not set');
+  const { getServiceField } = await import('@/lib/integrations/config-resolver');
+  const apiKey = await getServiceField('claude-api', 'api_key');
+  if (!apiKey) throw new Error('Claude API not configured');
 
   const candidateList = candidates.map((c, i) =>
     `${i + 1}. "${c.title}" ${c.price ? `(${c.price})` : ''} → ${c.url}`,
@@ -86,7 +87,8 @@ ${candidateList}
       confidence: result.confidence,
       match_reason: result.reason,
     };
-  } catch {
+  } catch (err) {
+    console.error('[Enrichment:AIMatch] Match failed:', err);
     return null;
   }
 }

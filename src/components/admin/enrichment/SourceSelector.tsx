@@ -40,7 +40,9 @@ export function SourceSelector({ brandId, selectedSources, onSourcesChange }: Pr
           onSourcesChange(brandSources);
         }
       }
-    } catch { /* silent */ }
+    } catch (err) {
+      console.error('[SourceSelector] Fetch sources failed:', err);
+    }
   }
 
   function toggleSource(url: string) {

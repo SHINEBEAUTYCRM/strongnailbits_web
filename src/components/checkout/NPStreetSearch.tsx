@@ -55,7 +55,8 @@ export function NPStreetSearch({ cityRef, value, onSelect, onClear, error }: Pro
         );
         const data = await res.json();
         setResults(data.streets || []);
-      } catch {
+      } catch (err) {
+        console.error('[NPStreetSearch] Search failed:', err);
         setResults([]);
       } finally {
         setLoading(false);

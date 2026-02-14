@@ -650,8 +650,8 @@ async function adminInventory(
     try {
       const { data: sumData } = await supabase.rpc("sum_active_product_quantity");
       totalQuantity = Number(sumData) || 0;
-    } catch {
-      // RPC not available — skip sum
+    } catch (err) {
+      console.error('[Telegram:AdminTools] RPC sum failed:', err);
     }
 
     // Category breakdown (top 10 by in-stock count)
@@ -984,7 +984,7 @@ async function adminReplyToClient(
 
   // Send message to client via bot
   const { getBot } = await import("./bot");
-  const bot = getBot();
+  const bot = await getBot();
 
   await bot.sendMessage(profile.telegram_chat_id, `💬 <b>Відповідь менеджера:</b>\n\n${message}`, {
     parse_mode: "HTML",
@@ -1039,7 +1039,7 @@ async function adminBroadcast(
 
   // Send via bot
   const { getBot } = await import("./bot");
-  const bot = getBot();
+  const bot = await getBot();
   let sent = 0;
   let failed = 0;
 
@@ -1055,7 +1055,8 @@ async function adminBroadcast(
       if (sent % 25 === 0) {
         await new Promise((r) => setTimeout(r, 1000));
       }
-    } catch {
+    } catch (err) {
+      console.error('[Telegram:AdminTools] Broadcast send failed:', err);
       failed++;
     }
   }

@@ -65,7 +65,8 @@ export function ImageUploadWithStudio({
       }
 
       onChange(data.url);
-    } catch {
+    } catch (err) {
+      console.error('[ImageUpload] Upload failed:', err);
       setError('Помилка мережі');
     } finally {
       setIsUploading(false);

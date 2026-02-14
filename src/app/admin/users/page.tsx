@@ -28,7 +28,10 @@ export default function AdminUsersPage() {
       const res = await fetch("/api/admin/users");
       const data = await res.json();
       setUsers(data.users || []);
-    } catch { setError("Помилка завантаження"); }
+    } catch (err) {
+      console.error('[Users] Fetch failed:', err);
+      setError("Помилка завантаження");
+    }
     setLoading(false);
   }, []);
 
@@ -46,7 +49,10 @@ export default function AdminUsersPage() {
       const data = await res.json();
       if (!data.ok) setError(data.error || "Помилка");
       else await fetchUsers();
-    } catch { setError("Помилка мережі"); }
+    } catch (err) {
+      console.error('[Users] Action failed:', err);
+      setError("Помилка мережі");
+    }
     setActionLoading(null);
   };
 

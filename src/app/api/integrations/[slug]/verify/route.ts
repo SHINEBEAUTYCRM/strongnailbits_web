@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceBySlug } from '@/lib/integrations/registry';
 import { SimpleKeyIntegration } from '@/lib/integrations/base';
+import { invalidateServiceCache } from '@/lib/integrations/config-resolver';
 
 /**
  * POST /api/integrations/[slug]/verify
@@ -65,6 +66,7 @@ export async function POST(
         // Save config
         const integration = new SimpleKeyIntegration(slug, requiredKeys);
         await integration.verifyAndSave(config);
+        invalidateServiceCache(slug);
 
         // Send test message if chat_id provided
         if (config.chat_id) {
@@ -82,7 +84,8 @@ export async function POST(
                 signal: AbortSignal.timeout(10000),
               }
             );
-          } catch {
+          } catch (err) {
+            console.error('[API:Integrations:Verify] Telegram chat test failed:', err);
             return NextResponse.json({
               success: false,
               message: `Бот @${tgData.result.username} знайдено, але Chat ID невірний. Напишіть боту і спробуйте ще раз.`,
@@ -129,6 +132,7 @@ export async function POST(
         // Save verified config
         const integration = new SimpleKeyIntegration(slug, requiredKeys);
         await integration.verifyAndSave(config);
+        invalidateServiceCache(slug);
 
         return NextResponse.json({
           success: true,
@@ -146,6 +150,9 @@ export async function POST(
     // ── Базова верифікація для інших сервісів ──
     const integration = new SimpleKeyIntegration(slug, requiredKeys);
     const result = await integration.verifyAndSave(config);
+
+    // Invalidate cached config after verify & save
+    invalidateServiceCache(slug);
 
     return NextResponse.json(result);
   } catch (err) {

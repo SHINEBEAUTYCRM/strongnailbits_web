@@ -14,6 +14,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { TelegramBot } from "@/lib/telegram/bot";
+import { getServiceField } from "@/lib/integrations/config-resolver";
 
 export const dynamic = "force-dynamic";
 
@@ -26,10 +27,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const token = await getServiceField('telegram-bot', 'bot_token');
   if (!token) {
     return NextResponse.json(
-      { error: "TELEGRAM_BOT_TOKEN not set" },
+      { error: "Telegram bot token not configured" },
       { status: 500 },
     );
   }

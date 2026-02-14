@@ -63,8 +63,8 @@ export async function sendDailyReport(): Promise<{ success: boolean; error?: str
     try {
       const balance = await getAlphaSmsBalance();
       if (balance !== null) smsBalance = balance;
-    } catch {
-      // skip
+    } catch (err) {
+      console.error('[Telegram:DailyReport] SMS balance check failed:', err);
     }
 
     // ── Send daily report ──

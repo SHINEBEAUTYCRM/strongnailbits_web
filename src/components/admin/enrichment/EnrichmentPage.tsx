@@ -55,7 +55,9 @@ export function EnrichmentPage() {
     try {
       const res = await fetch('/api/enrichment/stats');
       if (res.ok) setStats(await res.json());
-    } catch { /* silent */ }
+    } catch (err) {
+      console.error('[EnrichmentPage] Fetch stats failed:', err);
+    }
   }, []);
 
   useEffect(() => {

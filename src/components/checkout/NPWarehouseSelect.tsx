@@ -81,7 +81,8 @@ export function NPWarehouseSelect({
       const res = await fetch(`/api/nova-poshta/warehouses?${params}`);
       const data = await res.json();
       return data.totalInCity ?? data.total ?? 0;
-    } catch {
+    } catch (err) {
+      console.error('[NPWarehouse] Count fetch failed:', err);
       return 0;
     }
   }
@@ -100,7 +101,8 @@ export function NPWarehouseSelect({
         const count = data.totalInCity ?? data.total ?? 0;
         if (activeTab === "branch") setBranchCount(count);
         else setPostomatCount(count);
-      } catch {
+      } catch (err) {
+        console.error('[NPWarehouse] Search failed:', err);
         setWarehouses([]);
       } finally {
         setLoading(false);

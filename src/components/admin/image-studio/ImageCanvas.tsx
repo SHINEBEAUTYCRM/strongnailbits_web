@@ -69,8 +69,8 @@ export function ImageCanvas() {
           const img: SelectedImage = JSON.parse(jsonData);
           setCanvasImage(img);
           return;
-        } catch {
-          // Fallback
+        } catch (err) {
+          console.error('[ImageCanvas] Load failed:', err);
         }
       }
 

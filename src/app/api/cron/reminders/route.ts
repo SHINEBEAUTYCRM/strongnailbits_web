@@ -6,6 +6,7 @@
 import { NextResponse } from "next/server";
 import { verifyCronSecret } from "@/lib/integrations/cron-runner";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getServiceField } from "@/lib/integrations/config-resolver";
 
 export async function GET(request: Request) {
   if (!verifyCronSecret(request)) {
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
   }
 
   const supabase = createAdminClient();
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const botToken = await getServiceField('telegram-bot', 'bot_token');
 
   if (!botToken) {
     return NextResponse.json({ error: "Bot not configured" }, { status: 500 });

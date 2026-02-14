@@ -6,19 +6,22 @@
 // ================================================================
 
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getServiceField } from '@/lib/integrations/config-resolver';
 import type { EnrichmentProduct, AIMetadata } from './types';
 
 const VOYAGE_API = 'https://api.voyageai.com/v1/embeddings';
 const VOYAGE_MODEL = 'voyage-3-lite';
 const EMBEDDING_DIMENSIONS = 1024;
 
-function getVoyageKey(): string {
-  // Voyage AI accepts Anthropic API key
-  const key = process.env.VOYAGE_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
-  if (!key) {
-    throw new Error('Missing ANTHROPIC_API_KEY (or VOYAGE_API_KEY) for embeddings');
-  }
-  return key;
+async function getVoyageKey(): Promise<string> {
+  // Try voyage-ai config first, then claude-api as fallback (Voyage accepts Anthropic keys)
+  const voyageKey = await getServiceField('voyage-ai', 'api_key');
+  if (voyageKey) return voyageKey;
+
+  const claudeKey = await getServiceField('claude-api', 'api_key');
+  if (claudeKey) return claudeKey;
+
+  throw new Error('Missing Voyage AI / Anthropic API key for embeddings');
 }
 
 /**
@@ -55,7 +58,7 @@ export async function generateAndSaveEmbedding(
  * Generate embedding vector from text using Voyage AI.
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
-  const apiKey = getVoyageKey();
+  const apiKey = await getVoyageKey();
 
   const res = await fetch(VOYAGE_API, {
     method: 'POST',
@@ -152,7 +155,7 @@ export async function batchGenerateEmbeddings(
     const texts = batch.map(p => buildEmbeddingText(p, brandNames.get(p.brand_id || '')));
 
     try {
-      const apiKey = getVoyageKey();
+      const apiKey = await getVoyageKey();
 
       const res = await fetch(VOYAGE_API, {
         method: 'POST',

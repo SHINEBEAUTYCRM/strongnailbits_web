@@ -80,7 +80,7 @@ async function findProductUrl(catalogUrl: string): Promise<string | null> {
     // Тот же домен
     try {
       if (new URL(href).origin !== baseUrl) return;
-    } catch { return; }
+    } catch (err) { console.error('[Enrichment:AutoDetect] URL parse error:', err); return; }
 
     // ── Скоринг ──
     let score = 0;
@@ -104,7 +104,7 @@ async function findProductUrl(catalogUrl: string): Promise<string | null> {
       const segments = new URL(href).pathname.split('/').filter(Boolean).length;
       if (segments >= 2) score += 1;
       if (segments >= 3) score += 1;
-    } catch { /* skip */ }
+    } catch (err) { console.error('[Enrichment:AutoDetect] Segment parse error:', err); }
 
     // Негативные сигналы (НЕ товар)
     if (/\/(cart|login|register|personal|order|checkout|about|contact|blog|news|faq|terms|privacy|delivery|payment|return|wishlist|compare|account)/i.test(href)) score -= 10;
@@ -167,8 +167,9 @@ async function detectWithClaude(
   html: string,
   productUrl: string,
 ): Promise<{ selectors: AutoDetectResult['selectors']; confidence: number }> {
-  const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
-  if (!apiKey) throw new Error('ANTHROPIC_API_KEY not set');
+  const { getServiceField } = await import('@/lib/integrations/config-resolver');
+  const apiKey = await getServiceField('claude-api', 'api_key');
+  if (!apiKey) throw new Error('Claude API not configured');
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',

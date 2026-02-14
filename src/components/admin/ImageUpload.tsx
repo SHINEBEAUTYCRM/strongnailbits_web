@@ -143,7 +143,8 @@ export function ImageUpload({ onUpload, currentUrl, label, compact }: Props) {
 
       onUpload(data.url);
       reset();
-    } catch {
+    } catch (err) {
+      console.error('[ImageUpload] Upload failed:', err);
       setError("Помилка мережі");
       setStage("preview");
     }

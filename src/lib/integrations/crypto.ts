@@ -120,7 +120,8 @@ export async function decryptConfig(
       );
 
       decrypted[field] = new TextDecoder().decode(plaintext);
-    } catch {
+    } catch (err) {
+      console.error('[Integrations:Crypto] Decrypt failed for field:', field, err);
       decrypted[field] = '';
     }
   }

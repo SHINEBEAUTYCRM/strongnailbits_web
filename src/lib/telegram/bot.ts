@@ -5,6 +5,8 @@
  * Supports: messages, photos, media groups, callbacks, chat actions, webhooks.
  */
 
+import { getServiceConfig, getServiceField } from '@/lib/integrations/config-resolver';
+
 const TELEGRAM_API = "https://api.telegram.org/bot";
 const REQUEST_TIMEOUT = 15_000;
 
@@ -241,14 +243,16 @@ export class TelegramBot {
 // ────── Singleton bot instance ──────
 
 let _botInstance: TelegramBot | null = null;
+let _botToken: string | null = null;
 
 /** Get or create the singleton TelegramBot instance */
-export function getBot(): TelegramBot {
+export async function getBot(): Promise<TelegramBot> {
   if (_botInstance) return _botInstance;
 
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  if (!token) throw new Error("TELEGRAM_BOT_TOKEN not configured");
+  const token = await getServiceField('telegram-bot', 'bot_token');
+  if (!token) throw new Error("Telegram bot token not configured");
 
+  _botToken = token;
   _botInstance = new TelegramBot(token);
   return _botInstance;
 }
@@ -265,9 +269,10 @@ export function escHtml(text: string): string {
 
 // ────── Legacy API (backward compatibility with old notify.ts) ──────
 
-/** Check if Telegram is configured (non-throwing) — LEGACY */
+/** Check if Telegram is configured (non-throwing) */
 export async function isTelegramConfigured(): Promise<boolean> {
-  return !!process.env.TELEGRAM_BOT_TOKEN && !!process.env.TELEGRAM_CHAT_ID;
+  const config = await getServiceConfig('telegram-bot');
+  return !!(config?.bot_token && config?.chat_id);
 }
 
 interface LegacySendResult {
@@ -277,16 +282,17 @@ interface LegacySendResult {
 }
 
 /**
- * Send a message to the admin chat ID (from env).
- * LEGACY — used by old notify.ts. New code should use TelegramBot class.
+ * Send a message to the admin chat ID.
+ * Uses config-resolver for token and chat_id.
  */
 export async function sendMessage(
   text: string,
   options?: { parseMode?: "HTML" | "MarkdownV2"; disablePreview?: boolean },
 ): Promise<LegacySendResult> {
   try {
-    const token = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.TELEGRAM_CHAT_ID;
+    const config = await getServiceConfig('telegram-bot');
+    const token = config?.bot_token;
+    const chatId = config?.chat_id;
     if (!token || !chatId) {
       return { success: false, error: "Telegram not configured" };
     }

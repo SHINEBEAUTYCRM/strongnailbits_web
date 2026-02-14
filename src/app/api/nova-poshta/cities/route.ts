@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
                   warehouses: s.Warehouses,
                 };
               }
-            } catch { /* skip */ }
+            } catch (err) { console.error('[API:NP:Cities] Settlement parse error:', err); }
             return null;
           }),
         );
@@ -60,7 +60,8 @@ export async function GET(req: NextRequest) {
         const cities = results.filter(Boolean);
         _popularCache = { data: cities, time: Date.now() };
         return NextResponse.json({ cities });
-      } catch {
+      } catch (err) {
+        console.error('[API:NP:Cities] Popular cities fetch failed:', err);
         return NextResponse.json({ cities: [] });
       }
     }
@@ -100,8 +101,8 @@ export async function GET(req: NextRequest) {
           source: "supabase",
         });
       }
-    } catch {
-      // fallback to NP API
+    } catch (err) {
+      console.error('[API:NP:Cities] Supabase search failed, fallback to NP API:', err);
     }
 
     // 2. Fallback: NP API searchSettlements

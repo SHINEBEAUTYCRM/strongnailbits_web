@@ -37,7 +37,8 @@ export async function PATCH(request: NextRequest) {
     }
 
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (err) {
+    console.error('[API:Banners] Reorder failed:', err);
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 }

@@ -34,7 +34,8 @@ export async function POST(request: NextRequest) {
     let parsedUrl: URL;
     try {
       parsedUrl = new URL(url);
-    } catch {
+    } catch (err) {
+      console.error('[API:Upload] Invalid URL:', err);
       return NextResponse.json({ error: 'Невалідний URL' }, { status: 400 });
     }
 
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. Завантажити зображення
-    console.log(`[Upload URL] ${auth.user.email} завантажує: ${url.slice(0, 100)}`);
+    console.info(`[Upload URL] ${auth.user.email} завантажує: ${url.slice(0, 100)}`);
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
@@ -148,7 +149,7 @@ export async function POST(request: NextRequest) {
 
     const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(filename);
 
-    console.log(`[Upload URL] Збережено: ${filename} (${(buffer.byteLength / 1024).toFixed(0)} KB)`);
+    console.info(`[Upload URL] Збережено: ${filename} (${(buffer.byteLength / 1024).toFixed(0)} KB)`);
 
     return NextResponse.json({
       ok: true,
@@ -171,7 +172,8 @@ function guessExtFromUrl(url: string): string | null {
     const pathname = new URL(url).pathname;
     const match = pathname.match(/\.(jpe?g|png|webp|gif)(\?|$)/i);
     return match ? match[1].toLowerCase().replace('jpeg', 'jpg') : null;
-  } catch {
+  } catch (err) {
+    console.error('[API:Upload] Extension guess failed:', err);
     return null;
   }
 }

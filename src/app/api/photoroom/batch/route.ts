@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/admin/requireAdmin';
 import { checkRateLimit } from '@/lib/api/rate-limiter';
+import { getServiceField } from '@/lib/integrations/config-resolver';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
     const rateLimitKey = `photoroom:${auth.user.id}`;
 
     // 3. API Key
-    const apiKey = process.env.PHOTOROOM_API_KEY;
+    const apiKey = await getServiceField('photoroom', 'api_key');
     if (!apiKey) {
       return NextResponse.json(
         { error: 'PhotoRoom API не налаштований' },

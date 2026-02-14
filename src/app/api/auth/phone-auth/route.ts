@@ -293,7 +293,7 @@ async function autoLinkWith1C(
         })
         .eq("id", userId);
 
-      console.log(
+      console.info(
         `[1C Link] Linked user ${userId} with 1C customer ${c1Profile.external_id}`,
       );
       return true;

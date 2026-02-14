@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/admin/requireAdmin';
 import { checkRateLimit } from '@/lib/api/rate-limiter';
+import { getServiceField } from '@/lib/integrations/config-resolver';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,9 +48,9 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. API Key
-    const apiKey = process.env.PHOTOROOM_API_KEY;
+    const apiKey = await getServiceField('photoroom', 'api_key');
     if (!apiKey) {
-      console.error('[PhotoRoom] PHOTOROOM_API_KEY не налаштований');
+      console.error('[PhotoRoom] API key не налаштований');
       return NextResponse.json(
         { error: 'PhotoRoom API не налаштований. Зверніться до адміністратора.' },
         { status: 500 }
@@ -100,7 +101,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 6. Запит до PhotoRoom API
-    console.log(`[PhotoRoom] Запит від ${auth.user.email}, дія: ${describeAction(clientFormData)}`);
+    console.info(`[PhotoRoom] Запит від ${auth.user.email}, дія: ${describeAction(clientFormData)}`);
 
     const photoRoomRes = await fetch(PHOTOROOM_API, {
       method: 'POST',
@@ -170,7 +171,7 @@ export async function POST(request: NextRequest) {
     // 10. Повернути публічний URL
     const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(fileName);
 
-    console.log(`[PhotoRoom] Успіх: ${fileName}`);
+    console.info(`[PhotoRoom] Успіх: ${fileName}`);
 
     return NextResponse.json({
       url: urlData.publicUrl,

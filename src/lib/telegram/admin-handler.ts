@@ -144,7 +144,8 @@ async function handleAdminAI(
     : undefined;
   await bot.sendChatAction(ctx.chatId, "typing");
 
-  const apiKey = (process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || "").trim();
+  const { getServiceField } = await import('@/lib/integrations/config-resolver');
+  const apiKey = (await getServiceField('claude-api', 'api_key') || "").trim();
   if (!apiKey) {
     if (waitMsgId) await bot.deleteMessage(ctx.chatId, waitMsgId);
     await bot.sendMessage(ctx.chatId, "❌ Claude API не налаштовано.", { reply_markup: ADMIN_KEYBOARD });
@@ -565,7 +566,7 @@ async function callClaude(
     if ((res.status === 429 || res.status === 529) && attempt < MAX_RETRIES) {
       const retryAfter = Number(res.headers.get("retry-after")) || 15;
       const waitMs = Math.min(retryAfter * 1000, 30_000);
-      console.log(`[Claude] Rate limited, retrying in ${waitMs}ms (attempt ${attempt + 1})`);
+      console.info(`[Claude] Rate limited, retrying in ${waitMs}ms (attempt ${attempt + 1})`);
       await new Promise((r) => setTimeout(r, waitMs));
       continue;
     }

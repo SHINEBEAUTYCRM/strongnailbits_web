@@ -215,11 +215,11 @@ export async function syncProducts(): Promise<SyncResult> {
       logId = logEntry.id;
     }
 
-    console.log("[sync:products] Starting full sync...");
+    console.info("[sync:products] Starting full sync...");
 
     /* ---- 2. Завантажити категорії → Map<cs_cart_id, uuid> ---- */
 
-    console.log("[sync:products] Loading category map...");
+    console.info("[sync:products] Loading category map...");
 
     const categoryMap = new Map<number, string>();
     let catOffset = 0;
@@ -246,7 +246,7 @@ export async function syncProducts(): Promise<SyncResult> {
       }
     }
 
-    console.log(`[sync:products] Category map loaded: ${categoryMap.size} entries`);
+    console.info(`[sync:products] Category map loaded: ${categoryMap.size} entries`);
 
     /* ---- 3. Завантажити ВСІ активні товари з CS-Cart (UK + RU) ---- */
 
@@ -271,7 +271,7 @@ export async function syncProducts(): Promise<SyncResult> {
           tp = String(Math.ceil(totalItems / ITEMS_PER_PAGE));
         }
 
-        console.log(
+        console.info(
           `[sync:products] [${langCode.toUpperCase()}] Page ${pg}/${tp}: got ${products.length} items (${Math.min(fetched, totalItems)}/${totalItems})`,
         );
 
@@ -282,14 +282,14 @@ export async function syncProducts(): Promise<SyncResult> {
       return all;
     }
 
-    console.log("[sync:products] Fetching UK and RU products in parallel...");
+    console.info("[sync:products] Fetching UK and RU products in parallel...");
 
     const [allProducts, allProductsRu] = await Promise.all([
       fetchAllProducts("uk"),
       fetchAllProducts("ru"),
     ]);
 
-    console.log(
+    console.info(
       `[sync:products] Total fetched: UK=${allProducts.length}, RU=${allProductsRu.length}`,
     );
 
@@ -315,7 +315,7 @@ export async function syncProducts(): Promise<SyncResult> {
       const batch = rows.slice(i, i + BATCH_SIZE);
       const batchNum = Math.floor(i / BATCH_SIZE) + 1;
 
-      console.log(
+      console.info(
         `[sync:products] Upserting batch ${batchNum}/${totalBatches} (${batch.length} items)...`,
       );
 
@@ -342,7 +342,7 @@ export async function syncProducts(): Promise<SyncResult> {
 
     /* ---- 6. Позначити відсутні товари як disabled ---- */
 
-    console.log("[sync:products] Hard-deleting removed/inactive products...");
+    console.info("[sync:products] Hard-deleting removed/inactive products...");
 
     const { data: deletedRows, error: deleteError } = await supabase
       .from("products")
@@ -358,9 +358,9 @@ export async function syncProducts(): Promise<SyncResult> {
     } else {
       itemsDisabled = deletedRows?.length ?? 0;
       if (itemsDisabled > 0) {
-        console.log(`[sync:products] Deleted ${itemsDisabled} products`);
+        console.info(`[sync:products] Deleted ${itemsDisabled} products`);
       } else {
-        console.log("[sync:products] No products to delete");
+        console.info("[sync:products] No products to delete");
       }
     }
 
@@ -382,7 +382,7 @@ export async function syncProducts(): Promise<SyncResult> {
         .eq("id", logId);
     }
 
-    console.log(
+    console.info(
       `[sync:products] ✓ Completed in ${duration}ms — ` +
         `processed: ${itemsProcessed}, updated: ${itemsUpdated}, ` +
         `failed: ${itemsFailed}, disabled: ${itemsDisabled}`,
@@ -463,7 +463,7 @@ export async function linkProductsBrands(): Promise<LinkBrandsResult> {
   try {
     /* ---- 1. Завантажити бренди з Supabase → Map<cs_cart_id, uuid> ---- */
 
-    console.log("[link-brands] Loading brands map from Supabase...");
+    console.info("[link-brands] Loading brands map from Supabase...");
 
     const brandMap = new Map<number, string>();
     let brandOffset = 0;
@@ -492,11 +492,11 @@ export async function linkProductsBrands(): Promise<LinkBrandsResult> {
       }
     }
 
-    console.log(`[link-brands] Brand map loaded: ${brandMap.size} entries`);
+    console.info(`[link-brands] Brand map loaded: ${brandMap.size} entries`);
 
     /* ---- 2. Завантажити товари з CS-Cart посторінково ---- */
 
-    console.log("[link-brands] Fetching products from CS-Cart...");
+    console.info("[link-brands] Fetching products from CS-Cart...");
 
     // Збираємо пари { product_cs_cart_id, brand_uuid }
     const updates: { cs_cart_id: number; brand_id: string }[] = [];
@@ -539,7 +539,7 @@ export async function linkProductsBrands(): Promise<LinkBrandsResult> {
         });
       }
 
-      console.log(
+      console.info(
         `[link-brands] Page ${page}/${totalPages}: scanned ${products.length}, ` +
           `found brands for ${updates.length} products so far`,
       );
@@ -548,7 +548,7 @@ export async function linkProductsBrands(): Promise<LinkBrandsResult> {
       page++;
     }
 
-    console.log(
+    console.info(
       `[link-brands] Total: ${productsScanned} scanned, ${updates.length} to link, ` +
         `${productsNoBrand} no brand, ${brandsNotFound} brand not in map`,
     );
@@ -561,7 +561,7 @@ export async function linkProductsBrands(): Promise<LinkBrandsResult> {
       const batch = updates.slice(i, i + BATCH_SIZE);
       const batchNum = Math.floor(i / BATCH_SIZE) + 1;
 
-      console.log(
+      console.info(
         `[link-brands] Updating batch ${batchNum}/${totalBatches} (${batch.length} items)...`,
       );
 
@@ -600,7 +600,7 @@ export async function linkProductsBrands(): Promise<LinkBrandsResult> {
 
     const duration = Date.now() - startTime;
 
-    console.log(
+    console.info(
       `[link-brands] ✓ Completed in ${duration}ms — ` +
         `linked: ${productsLinked}, no brand: ${productsNoBrand}, ` +
         `brand not found: ${brandsNotFound}, batches failed: ${batchesFailed}`,

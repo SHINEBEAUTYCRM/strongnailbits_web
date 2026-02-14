@@ -66,7 +66,9 @@ export function ProductWorkspace({ productId, onUpdate }: Props) {
         const p = data.products?.[0];
         if (p) setProduct(p);
       }
-    } catch { /* silent */ }
+    } catch (err) {
+      console.error('[ProductWorkspace] Fetch product failed:', err);
+    }
     finally { setLoading(false); }
   }
 
@@ -111,7 +113,9 @@ export function ProductWorkspace({ productId, onUpdate }: Props) {
       });
       onUpdate();
       fetchProduct();
-    } catch { /* silent */ }
+    } catch (err) {
+      console.error('[ProductWorkspace] Approve failed:', err);
+    }
     finally { setApproving(false); }
   }
 

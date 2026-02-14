@@ -56,7 +56,7 @@ export default function WebhooksPage() {
         const data = await res.json();
         setWebhooks(data.webhooks || []);
       }
-    } catch { /* */ } finally { setLoading(false); }
+    } catch (err) { console.error('[Webhooks] Fetch failed:', err); } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { fetchWebhooks(); }, [fetchWebhooks]);
@@ -77,7 +77,7 @@ export default function WebhooksPage() {
         setName(""); setUrl(""); setEvents([]);
         fetchWebhooks();
       }
-    } catch { /* */ } finally { setCreating(false); }
+    } catch (err) { console.error('[Webhooks] Create failed:', err); } finally { setCreating(false); }
   };
 
   const handleToggle = async (id: string, isActive: boolean) => {

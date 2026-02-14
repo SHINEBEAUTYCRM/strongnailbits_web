@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     // 1. Find team member by last 9 digits
     const last9 = phoneLast9(rawPhone);
-    console.log("[AuthRequest] Phone last9:", last9);
+    console.info("[AuthRequest] Phone last9:", last9);
 
     if (last9.length !== 9) {
       return NextResponse.json(
@@ -71,8 +71,8 @@ export async function POST(request: NextRequest) {
     const member = members?.find((m) => phoneLast9(m.phone) === last9) || null;
 
     if (!member) {
-      console.log("[AuthRequest] No member found for last9:", last9);
-      console.log(
+      console.info("[AuthRequest] No member found for last9:", last9);
+      console.info(
         "[AuthRequest] Available phones:",
         members?.map((m) => m.phone),
       );

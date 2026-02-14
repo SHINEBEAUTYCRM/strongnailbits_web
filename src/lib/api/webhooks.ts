@@ -78,7 +78,7 @@ async function deliverWebhook(
     clearTimeout(timeout);
     const responseMs = Date.now() - startMs;
     let responseBody: string | null = null;
-    try { responseBody = (await res.text()).slice(0, 2000); } catch { /* */ }
+    try { responseBody = (await res.text()).slice(0, 2000); } catch (err) { console.error('[Webhooks] Response read failed:', err); }
 
     return {
       success: res.ok,

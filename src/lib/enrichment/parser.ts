@@ -132,8 +132,8 @@ export async function findProductPage(
         signal: AbortSignal.timeout(10000),
       });
       if (res.ok) return fullUrl;
-    } catch {
-      // URL pattern didn't work, try search
+    } catch (err) {
+      console.error('[Enrichment:Parser] URL pattern check failed:', err);
     }
   }
 
@@ -175,8 +175,8 @@ export async function findProductPage(
       }
 
       if (links.length > 0) return links[0];
-    } catch {
-      // Search failed
+    } catch (err) {
+      console.error('[Enrichment:Parser] Search failed:', err);
     }
   }
 
@@ -252,7 +252,8 @@ function resolveUrl(href: string, baseUrl: string): string | null {
     if (href.startsWith('http')) return href;
     const base = new URL(baseUrl);
     return new URL(href, base).toString();
-  } catch {
+  } catch (err) {
+    console.error('[Enrichment:Parser] URL resolve error:', err);
     return null;
   }
 }

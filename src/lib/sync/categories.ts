@@ -140,12 +140,12 @@ export async function syncCategories(
       logId = logEntry.id;
     }
 
-    console.log("[sync:categories] Starting full sync...");
+    console.info("[sync:categories] Starting full sync...");
 
     /* ---- 1b. Force mode: mark ALL categories as disabled first ---- */
 
     if (options.force) {
-      console.log("[sync:categories] FORCE mode — disabling all existing categories...");
+      console.info("[sync:categories] FORCE mode — disabling all existing categories...");
       const { error: forceErr } = await supabase
         .from("categories")
         .update({ status: "disabled" })
@@ -154,7 +154,7 @@ export async function syncCategories(
       if (forceErr) {
         console.error("[sync:categories] Force disable error:", forceErr.message);
       } else {
-        console.log("[sync:categories] All categories marked disabled. Re-syncing...");
+        console.info("[sync:categories] All categories marked disabled. Re-syncing...");
       }
     }
 
@@ -166,7 +166,7 @@ export async function syncCategories(
       let more = true;
 
       while (more) {
-        console.log(`[sync:categories] [${langCode.toUpperCase()}] Fetching page ${pg}...`);
+        console.info(`[sync:categories] [${langCode.toUpperCase()}] Fetching page ${pg}...`);
 
         const response = await csCart.getCategories(pg, ITEMS_PER_PAGE, {
           status: "A",
@@ -178,7 +178,7 @@ export async function syncCategories(
         const totalItems = Number(response.params?.total_items ?? 0);
         const fetched = pg * ITEMS_PER_PAGE;
 
-        console.log(
+        console.info(
           `[sync:categories] [${langCode.toUpperCase()}] Page ${pg}: got ${categories.length} items (${Math.min(fetched, totalItems)}/${totalItems})`,
         );
 
@@ -189,14 +189,14 @@ export async function syncCategories(
       return all;
     }
 
-    console.log("[sync:categories] Fetching UK and RU categories in parallel...");
+    console.info("[sync:categories] Fetching UK and RU categories in parallel...");
 
     const [allCategories, allCategoriesRu] = await Promise.all([
       fetchAllCategories("uk"),
       fetchAllCategories("ru"),
     ]);
 
-    console.log(
+    console.info(
       `[sync:categories] Total fetched: UK=${allCategories.length}, RU=${allCategoriesRu.length}`,
     );
 
@@ -211,13 +211,13 @@ export async function syncCategories(
     // Filter out blacklisted categories (service/test)
     const cleanCategories = allCategories.filter((cat) => {
       if (isBlacklisted(cat.category)) {
-        console.log(`[sync:categories] Skipping blacklisted: "${cat.category}" (id: ${cat.category_id})`);
+        console.info(`[sync:categories] Skipping blacklisted: "${cat.category}" (id: ${cat.category_id})`);
         return false;
       }
       return true;
     });
 
-    console.log(
+    console.info(
       `[sync:categories] After blacklist filter: ${cleanCategories.length} (removed ${allCategories.length - cleanCategories.length})`,
     );
 
@@ -233,7 +233,7 @@ export async function syncCategories(
       const batch = rows.slice(i, i + BATCH_SIZE);
       const batchNum = Math.floor(i / BATCH_SIZE) + 1;
 
-      console.log(
+      console.info(
         `[sync:categories] Upserting batch ${batchNum} (${batch.length} items)...`,
       );
 
@@ -270,7 +270,7 @@ export async function syncCategories(
      * Використовуємо NOT IN по cs_cart_id.
      */
 
-    console.log("[sync:categories] Hard-deleting removed/inactive categories...");
+    console.info("[sync:categories] Hard-deleting removed/inactive categories...");
 
     const activeCsCartIdsArray = Array.from(activeCsCartIds);
 
@@ -289,11 +289,11 @@ export async function syncCategories(
     } else {
       itemsDisabled = deletedRows?.length ?? 0;
       if (itemsDisabled > 0) {
-        console.log(
+        console.info(
           `[sync:categories] Deleted ${itemsDisabled} categories`,
         );
       } else {
-        console.log("[sync:categories] No categories to delete");
+        console.info("[sync:categories] No categories to delete");
       }
     }
 
@@ -315,7 +315,7 @@ export async function syncCategories(
         .eq("id", logId);
     }
 
-    console.log(
+    console.info(
       `[sync:categories] ✓ Completed in ${duration}ms — ` +
         `processed: ${itemsProcessed}, updated: ${itemsUpdated}, ` +
         `failed: ${itemsFailed}, disabled: ${itemsDisabled}`,

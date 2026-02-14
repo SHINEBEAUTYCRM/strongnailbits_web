@@ -140,8 +140,8 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
       await navigator.clipboard.writeText(form.promo_code);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      /* clipboard not available */
+    } catch (err) {
+      console.error('[BannerForm] Copy failed:', err);
     }
   };
 
@@ -207,7 +207,8 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
         setTimeout(() => setSuccess(""), 3000);
         router.refresh();
       }
-    } catch {
+    } catch (err) {
+      console.error('[BannerForm] Save failed:', err);
       setError("Network error");
     }
     setSaving(false);
@@ -227,7 +228,8 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
       } else {
         setError(data.error || "Помилка видалення");
       }
-    } catch {
+    } catch (err) {
+      console.error('[BannerForm] Delete failed:', err);
       setError("Network error");
     }
     setDeleting(false);

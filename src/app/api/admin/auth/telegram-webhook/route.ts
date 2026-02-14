@@ -14,6 +14,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { normalizePhone, phoneLast9 } from "@/lib/admin/phone";
 import { sendTelegramMessage } from "@/lib/admin/telegram";
+import { getServiceField } from '@/lib/integrations/config-resolver';
 
 export const dynamic = "force-dynamic";
 
@@ -48,15 +49,13 @@ interface TgUpdate {
   };
 }
 
-const ADMIN_BOT_TOKEN = () => process.env.TELEGRAM_ADMIN_BOT_TOKEN || "";
-
 // ────── Telegram API helpers ──────
 
 async function tgApi(
   method: string,
   body: Record<string, unknown>,
 ): Promise<boolean> {
-  const token = ADMIN_BOT_TOKEN();
+  const token = await getServiceField('telegram-admin', 'bot_token');
   if (!token) return false;
   try {
     const res = await fetch(

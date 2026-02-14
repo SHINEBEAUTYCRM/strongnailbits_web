@@ -141,8 +141,8 @@ export default function ApiKeysPage() {
       const res = await fetch("/api/admin/api-tokens");
       const json = await res.json();
       setTokens(json.data || []);
-    } catch {
-      /* ignore */
+    } catch (err) {
+      console.error('[ApiKeys] Tokens fetch failed:', err);
     }
   }, []);
 
@@ -158,8 +158,8 @@ export default function ApiKeysPage() {
         const json = await res.json();
         setLogs(json.data || []);
         setLogsMeta(json.meta || { total: 0, page: 1, total_pages: 0 });
-      } catch {
-        /* ignore */
+      } catch (err) {
+        console.error('[ApiKeys] Logs fetch failed:', err);
       }
     },
     [logTokenFilter, logStatusFilter]
@@ -188,12 +188,12 @@ export default function ApiKeysPage() {
         }),
       });
       const json = await res.json();
-      if (json.data?.token) {
+        if (json.data?.token) {
         setCreatedToken(json.data.token);
         await fetchTokens();
       }
-    } catch {
-      /* ignore */
+    } catch (err) {
+      console.error('[ApiKeys] Token action failed:', err);
     } finally {
       setCreating(false);
     }

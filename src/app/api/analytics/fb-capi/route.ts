@@ -6,9 +6,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import { getServiceConfig } from "@/lib/integrations/config-resolver";
 
-const FB_PIXEL_ID = process.env.FB_PIXEL_ID || process.env.NEXT_PUBLIC_FB_PIXEL_ID;
-const FB_ACCESS_TOKEN = process.env.FB_CAPI_ACCESS_TOKEN;
 const FB_API_VERSION = "v21.0";
 
 interface CAPIEvent {
@@ -64,6 +63,10 @@ function normalizeUserData(userData: CAPIEvent["user_data"]) {
 }
 
 export async function POST(request: NextRequest) {
+  const fbConfig = await getServiceConfig('facebook-pixel');
+  const FB_PIXEL_ID = fbConfig?.pixel_id;
+  const FB_ACCESS_TOKEN = fbConfig?.access_token;
+
   if (!FB_PIXEL_ID || !FB_ACCESS_TOKEN) {
     return NextResponse.json(
       { error: "FB CAPI not configured" },

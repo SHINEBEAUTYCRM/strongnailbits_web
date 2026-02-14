@@ -62,7 +62,8 @@ function getExtension(url: string): string {
     const pathname = new URL(url).pathname;
     const match = pathname.match(/\.(jpe?g|png|webp|gif|avif|svg)$/i);
     return match ? match[0].toLowerCase() : ".jpg";
-  } catch {
+  } catch (err) {
+    console.error('[Sync:Images] Extension parse failed:', err);
     return ".jpg";
   }
 }
@@ -76,7 +77,8 @@ function getFilename(url: string): string {
     // Decode and clean the filename
     const decoded = decodeURIComponent(last).replace(/[^a-zA-Z0-9._-]/g, "_");
     return decoded || `image${getExtension(url)}`;
-  } catch {
+  } catch (err) {
+    console.error('[Sync:Images] Filename parse failed:', err);
     return `image.jpg`;
   }
 }
@@ -217,7 +219,7 @@ export async function migrateProductImages(
         errors: [`Bucket creation failed: ${createError.message}`],
       };
     }
-    console.log(`[Images] Created bucket "${BUCKET_NAME}" (public)`);
+    console.info(`[Images] Created bucket "${BUCKET_NAME}" (public)`);
   }
 
   /* ---- Fetch products in batches ---- */
@@ -270,7 +272,7 @@ export async function migrateProductImages(
 
         totalProcessed++;
         if (totalProcessed % LOG_EVERY === 0) {
-          console.log(
+          console.info(
             `[Images] ${totalProcessed}/${totalFetched}+ migrated: ${migrated}, skipped: ${skipped}, failed: ${failed}`,
           );
         }
@@ -284,7 +286,7 @@ export async function migrateProductImages(
   const duration = Date.now() - startTime;
   const status = failed > 0 && migrated === 0 ? "error" : totalFetched < limit ? "completed" : "partial";
 
-  console.log(
+  console.info(
     `[Images] Done! Total: ${totalProcessed}, Migrated: ${migrated}, Skipped: ${skipped}, Failed: ${failed}. Duration: ${(duration / 1000).toFixed(1)}s`,
   );
 

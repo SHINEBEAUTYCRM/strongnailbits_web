@@ -41,7 +41,8 @@ export default function TeamMemberPage() {
       } else {
         router.push("/admin/team");
       }
-    } catch {
+    } catch (err) {
+      console.error('[TeamMember] Load failed:', err);
       router.push("/admin/team");
     } finally {
       setLoading(false);
@@ -55,7 +56,9 @@ export default function TeamMemberPage() {
         const data = await res.json();
         setCurrentUser({ id: data.id, role: data.role });
       }
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.error('[TeamMember] Load current user failed:', err);
+    }
   };
 
   const loadTeamMembers = async () => {
@@ -65,7 +68,9 @@ export default function TeamMemberPage() {
         const data = await res.json();
         setTeamMembers(data.map((m: TeamMemberFull) => ({ id: m.id, name: m.name, avatar_url: m.avatar_url })));
       }
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.error('[TeamMember] Load team members failed:', err);
+    }
   };
 
   const handleUpdate = useCallback(
@@ -80,7 +85,9 @@ export default function TeamMemberPage() {
           const updated = await res.json();
           setMember((prev) => (prev ? { ...prev, ...updated } : prev));
         }
-      } catch { /* ignore */ }
+      } catch (err) {
+        console.error('[TeamMember] Update failed:', err);
+      }
     },
     [memberId],
   );

@@ -106,7 +106,8 @@ export async function getAdminUser(): Promise<AdminUser | null> {
       role: member.role,
       avatar_url: member.avatar_url,
     };
-  } catch {
+  } catch (err) {
+    console.error('[AdminAuth] Session check failed:', err);
     return null;
   }
 }
@@ -148,7 +149,8 @@ export async function validateSession(sessionToken: string): Promise<AdminUser |
       role: member.role,
       avatar_url: member.avatar_url,
     };
-  } catch {
+  } catch (err) {
+    console.error('[AdminAuth] Session validate failed:', err);
     return null;
   }
 }

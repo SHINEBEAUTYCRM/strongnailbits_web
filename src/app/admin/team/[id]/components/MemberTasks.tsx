@@ -22,7 +22,9 @@ export function MemberTasks({ memberId, onTaskClick }: MemberTasksProps) {
           const data = await res.json();
           setTasks(data);
         }
-      } catch { /* ignore */ } finally {
+      } catch (err) {
+        console.error('[MemberTasks] Fetch failed:', err);
+      } finally {
         setLoading(false);
       }
     })();

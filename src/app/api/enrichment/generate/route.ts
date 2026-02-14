@@ -68,7 +68,8 @@ export async function POST(req: NextRequest) {
       } else {
         sourceMatches.push({ name: hostname, found: false });
       }
-    } catch {
+    } catch (err) {
+      console.error('[API:Enrichment:Generate] Source match failed:', err);
       sourceMatches.push({ name: hostname, found: false });
     }
   }
@@ -82,8 +83,9 @@ export async function POST(req: NextRequest) {
     .limit(50);
 
   // 4. Build prompt and call Claude
-  const apiKey = process.env.CLAUDE_API_KEY;
-  if (!apiKey) return NextResponse.json({ error: 'CLAUDE_API_KEY not configured' }, { status: 500 });
+  const { getServiceField } = await import('@/lib/integrations/config-resolver');
+  const apiKey = await getServiceField('claude-api', 'api_key');
+  if (!apiKey) return NextResponse.json({ error: 'Claude API not configured' }, { status: 500 });
 
   const sourcesText = parsedSources.map(s =>
     `### ${s.name}\nОпис: ${s.data.description || '—'}\nХарактеристики: ${JSON.stringify(s.data.specs)}\nСклад: ${s.data.composition || '—'}`,

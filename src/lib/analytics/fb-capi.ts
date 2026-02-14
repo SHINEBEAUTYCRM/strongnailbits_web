@@ -52,8 +52,8 @@ export async function sendFBServerEvent(event: FBCAPIEvent) {
     }).catch(() => {
       // Silently ignore — не ломаем UX если CAPI недоступен
     });
-  } catch {
-    // Silently ignore
+  } catch (err) {
+    console.error('[FB-CAPI] Event send failed:', err);
   }
 }
 

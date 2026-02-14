@@ -14,7 +14,8 @@ function getSeenStories(): string[] {
   try {
     const raw = localStorage.getItem(SEEN_KEY);
     return raw ? (JSON.parse(raw) as string[]) : [];
-  } catch {
+  } catch (err) {
+    console.error('[StoriesRow] Read seen failed:', err);
     return [];
   }
 }
@@ -26,8 +27,8 @@ function markSeen(id: string) {
       seen.push(id);
       localStorage.setItem(SEEN_KEY, JSON.stringify(seen));
     }
-  } catch {
-    // localStorage unavailable
+  } catch (err) {
+    console.error('[StoriesRow] Save seen failed:', err);
   }
 }
 

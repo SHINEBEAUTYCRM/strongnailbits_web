@@ -60,8 +60,8 @@ export async function GET() {
         }
         dbAvailable = true;
       }
-    } catch {
-      // DB таблиці ще не створені — це ОК, використаємо env vars
+    } catch (err) {
+      console.error('[API:Integrations:Status] DB fetch failed:', err);
     }
 
     // Побудувати статуси для всіх сервісів

@@ -67,7 +67,8 @@ export function IntegrationModal({
 
       setVerifyResult({ success: true, message: "Ключі збережено" });
       onSaved();
-    } catch {
+    } catch (err) {
+      console.error('[IntegrationModal] Save failed:', err);
       setVerifyResult({ success: false, message: "Помилка мережі" });
     } finally {
       setSaving(false);
@@ -90,7 +91,8 @@ export function IntegrationModal({
       if (result.success) {
         onSaved();
       }
-    } catch {
+    } catch (err) {
+      console.error('[IntegrationModal] Verify failed:', err);
       setVerifyResult({ success: false, message: "Помилка мережі" });
     } finally {
       setVerifying(false);
@@ -108,7 +110,8 @@ export function IntegrationModal({
       });
       setVerifyResult({ success: true, message: "Інтеграцію деактивовано" });
       onSaved();
-    } catch {
+    } catch (err) {
+      console.error('[IntegrationModal] Deactivate failed:', err);
       setVerifyResult({ success: false, message: "Помилка деактивації" });
     } finally {
       setSaving(false);

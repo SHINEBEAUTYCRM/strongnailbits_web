@@ -70,7 +70,10 @@ export function OrderActions({
       setSuccess("Збережено");
       setTimeout(() => setSuccess(""), 3000);
       router.refresh();
-    } catch { setError("Помилка мережі"); }
+    } catch (err) {
+      console.error('[OrderActions] Save failed:', err);
+      setError("Помилка мережі");
+    }
     setSaving(false);
   };
 
@@ -86,7 +89,10 @@ export function OrderActions({
       const data = await res.json();
       if (!res.ok || !data.ok) { setError(data.error || "Помилка"); setStatus(currentStatus); }
       else { setSuccess("Статус оновлено"); setTimeout(() => setSuccess(""), 3000); router.refresh(); }
-    } catch { setError("Помилка мережі"); setStatus(currentStatus); }
+    } catch (err) {
+      console.error('[OrderActions] Status update failed:', err);
+      setError("Помилка мережі"); setStatus(currentStatus);
+    }
     setSaving(false);
   };
 

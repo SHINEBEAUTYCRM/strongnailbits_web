@@ -48,7 +48,8 @@ export function AdminShell({ children, adminUser }: { children: React.ReactNode;
       await fetch("/api/admin/auth/logout", { method: "POST" });
       router.push("/admin/login");
       router.refresh();
-    } catch {
+    } catch (err) {
+      console.error('[AdminShell] Logout failed:', err);
       setLoggingOut(false);
     }
   };

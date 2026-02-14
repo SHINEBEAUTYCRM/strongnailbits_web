@@ -25,7 +25,7 @@ export async function notifyClientOrderConfirmed(data: {
   orderNumber: string;
   total: number;
 }) {
-  const bot = safeGetBot();
+  const bot = await safeGetBot();
   if (!bot) return;
 
   await bot.sendMessage(
@@ -41,7 +41,7 @@ export async function notifyClientOrderShipped(data: {
   trackingNumber: string;
   estimatedDelivery?: string;
 }) {
-  const bot = safeGetBot();
+  const bot = await safeGetBot();
   if (!bot) return;
 
   const lines = [
@@ -74,7 +74,7 @@ export async function notifyClientOrderDelivered(data: {
   telegramChatId: number;
   orderNumber: string;
 }) {
-  const bot = safeGetBot();
+  const bot = await safeGetBot();
   if (!bot) return;
 
   await bot.sendMessage(
@@ -107,7 +107,7 @@ export async function notifyClientProductAvailable(data: {
   price: number;
   imageUrl?: string;
 }) {
-  const bot = safeGetBot();
+  const bot = await safeGetBot();
   if (!bot) return;
 
   if (data.imageUrl && !data.imageUrl.includes("placeholder")) {
@@ -150,7 +150,7 @@ export async function notifyClientAbandonedCart(data: {
   itemsCount: number;
   total: number;
 }) {
-  const bot = safeGetBot();
+  const bot = await safeGetBot();
   if (!bot) return;
 
   await bot.sendMessage(
@@ -178,7 +178,7 @@ async function sendToAdmins(
   text: string,
   options?: { reply_markup?: Record<string, unknown>; priority?: "critical" | "high" | "medium" | "info" },
 ): Promise<void> {
-  const bot = safeGetBot();
+  const bot = await safeGetBot();
   if (!bot) return;
 
   const supabase = createAdminClient();
@@ -485,10 +485,11 @@ export async function notifyAdminLowStock(
 //  HELPERS
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-function safeGetBot(): TelegramBot | null {
+async function safeGetBot(): Promise<TelegramBot | null> {
   try {
-    return getBot();
-  } catch {
+    return await getBot();
+  } catch (err) {
+    console.error('[Telegram:Notify] Bot init failed:', err);
     return null;
   }
 }

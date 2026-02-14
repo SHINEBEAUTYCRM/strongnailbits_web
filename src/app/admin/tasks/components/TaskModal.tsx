@@ -96,7 +96,10 @@ export function TaskModal({ task, teamMembers, currentUserId, onClose, onUpdate,
       } else {
         setChecklist([]);
       }
-    } catch { setChecklist([]); } finally { setLoadingChecklist(false); }
+    } catch (err) {
+      console.error('[TaskModal] Checklist fetch failed:', err);
+      setChecklist([]);
+    } finally { setLoadingChecklist(false); }
   };
 
   const loadComments = async () => {
@@ -109,7 +112,10 @@ export function TaskModal({ task, teamMembers, currentUserId, onClose, onUpdate,
       } else {
         setComments([]);
       }
-    } catch { setComments([]); } finally { setLoadingComments(false); }
+    } catch (err) {
+      console.error('[TaskModal] Comments fetch failed:', err);
+      setComments([]);
+    } finally { setLoadingComments(false); }
   };
 
   const loadActivity = async () => {
@@ -122,7 +128,10 @@ export function TaskModal({ task, teamMembers, currentUserId, onClose, onUpdate,
       } else {
         setActivity([]);
       }
-    } catch { setActivity([]); } finally { setLoadingActivity(false); }
+    } catch (err) {
+      console.error('[TaskModal] Activity fetch failed:', err);
+      setActivity([]);
+    } finally { setLoadingActivity(false); }
   };
 
   // ── Save field with debounce ──
@@ -176,7 +185,9 @@ export function TaskModal({ task, teamMembers, currentUserId, onClose, onUpdate,
         setChecklist((prev) => [...prev, item]);
         setNewCheckItem("");
       }
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.error('[TaskModal] Add checklist item failed:', err);
+    }
   };
 
   const handleToggleCheckItem = async (item: ChecklistItem) => {
@@ -187,7 +198,8 @@ export function TaskModal({ task, teamMembers, currentUserId, onClose, onUpdate,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ item_id: item.id, done: !item.done }),
       });
-    } catch {
+    } catch (err) {
+      console.error('[TaskModal] Toggle checklist item failed:', err);
       setChecklist((prev) => prev.map((i) => (i.id === item.id ? { ...i, done: item.done } : i)));
     }
   };
@@ -207,7 +219,9 @@ export function TaskModal({ task, teamMembers, currentUserId, onClose, onUpdate,
         setComments((prev) => [...prev, comment]);
         setNewComment("");
       }
-    } catch { /* ignore */ } finally { setSendingComment(false); }
+    } catch (err) {
+      console.error('[TaskModal] Add comment failed:', err);
+    } finally { setSendingComment(false); }
   };
 
   // ── Delete ──
@@ -246,7 +260,9 @@ export function TaskModal({ task, teamMembers, currentUserId, onClose, onUpdate,
           created_by: currentUserId,
         }),
       });
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.error('[TaskModal] Duplicate task failed:', err);
+    }
   };
 
   const checkDone = checklist.filter((c) => c.done).length;

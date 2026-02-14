@@ -13,19 +13,9 @@ import {
   apiServerError,
   truncateBody,
   getClientIP,
+  hashToken,
 } from './helpers';
 import type { ApiContext, ApiTokenRow } from './types';
-
-/**
- * SHA-256 хеш токена (Web Crypto API — Edge-compatible)
- */
-async function hashToken(token: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(token);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
 
 /**
  * Записати лог API-запиту
@@ -224,8 +214,8 @@ export function withApiAuth(
       if (['POST', 'PATCH', 'PUT'].includes(method)) {
         try {
           requestBody = await req.clone().json();
-        } catch {
-          // Body може бути не JSON — ігноруємо
+        } catch (err) {
+          console.error('[API:Middleware] Body parse failed:', err);
         }
       }
 

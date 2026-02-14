@@ -197,7 +197,7 @@ export async function GET() {
           if (host && !host.includes("shineshop")) {
             referrerMap[host] = (referrerMap[host] || 0) + 1;
           }
-        } catch { /* invalid url */ }
+        } catch (err) { console.error('[API:Analytics:Marketing] Referrer parse error:', err); }
       });
     const trafficSources = Object.entries(referrerMap)
       .sort((a, b) => b[1] - a[1])

@@ -95,7 +95,8 @@ export default function AnalyticsPage() {
       const json = await res.json();
       setData(json);
       setError(null);
-    } catch {
+    } catch (err) {
+      console.error('[Analytics] Data fetch failed:', err);
       setError("Не вдалося завантажити дані");
     } finally {
       setLoading(false);

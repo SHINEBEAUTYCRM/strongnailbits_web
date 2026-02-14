@@ -231,9 +231,9 @@ export abstract class BaseIntegration {
         metadata: metadata || {},
         duration_ms: (metadata?.duration_ms as number) || null,
       });
-    } catch {
+    } catch (err) {
       // Логування не повинно ламати основну логіку
-      console.error(`[IntegrationLog] Failed to log: ${this.slug}/${action}`);
+      console.error(`[Integrations:Base] Failed to log: ${this.slug}/${action}`, err);
     }
   }
 }

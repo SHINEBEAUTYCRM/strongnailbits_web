@@ -4,56 +4,19 @@
  * HTTP API: https://alphasms.net/api/http.php
  */
 
+import { getServiceConfig } from '@/lib/integrations/config-resolver';
+
 const API_BASE = "https://alphasms.net/api/http.php";
 
-/** Cached config to avoid DB lookups on every SMS */
-let _cachedConfig: { apiKey: string; sender: string } | null = null;
-let _cacheTime = 0;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-
 async function getConfig(): Promise<{ apiKey: string; sender: string }> {
-  // Return cached if fresh
-  if (_cachedConfig && Date.now() - _cacheTime < CACHE_TTL) {
-    return _cachedConfig;
+  const config = await getServiceConfig('alphasms');
+  if (!config?.api_key) {
+    throw new Error('AlphaSMS not configured. Set ALPHASMS_API_KEY or configure in admin.');
   }
-
-  // 1. Try ENV vars first (fastest)
-  const envKey = process.env.ALPHASMS_API_KEY;
-  const envSender = process.env.ALPHASMS_SENDER || "Shine SHOP";
-
-  if (envKey && envKey !== "YOUR_ALPHASMS_API_KEY_HERE") {
-    _cachedConfig = { apiKey: envKey, sender: envSender };
-    _cacheTime = Date.now();
-    return _cachedConfig;
-  }
-
-  // 2. Try DB (integration_keys table)
-  try {
-    const { createAdminClient } = await import("@/lib/supabase/admin");
-    const supabase = createAdminClient();
-    const { data } = await supabase
-      .from("integration_keys")
-      .select("config")
-      .eq("slug", "alphasms")
-      .eq("is_active", true)
-      .single();
-
-    if (data?.config) {
-      const config = typeof data.config === "string" ? JSON.parse(data.config) : data.config;
-      if (config.api_key) {
-        _cachedConfig = {
-          apiKey: config.api_key,
-          sender: config.sender || envSender,
-        };
-        _cacheTime = Date.now();
-        return _cachedConfig;
-      }
-    }
-  } catch {
-    // DB not available or table doesn't exist — fall through
-  }
-
-  throw new Error("AlphaSMS API key not configured. Add it in Admin → Integrations → AlphaSMS");
+  return {
+    apiKey: config.api_key,
+    sender: config.sender || 'Shine SHOP',
+  };
 }
 
 /** Normalise phone number to digits only (380XXXXXXXXX) */
@@ -189,7 +152,8 @@ export async function getBalance(): Promise<number | null> {
       return parseFloat(match[1]);
     }
     return null;
-  } catch {
+  } catch (err) {
+    console.error('[AlphaSMS] Balance check failed:', err);
     return null;
   }
 }

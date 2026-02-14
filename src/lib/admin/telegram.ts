@@ -2,6 +2,8 @@
  * Telegram Bot API utility — sends messages via the Admin Bot
  */
 
+import { getServiceField } from '@/lib/integrations/config-resolver';
+
 export async function sendTelegramMessage(
   chatId: string | number,
   text: string,
@@ -10,10 +12,10 @@ export async function sendTelegramMessage(
     reply_markup?: object;
   },
 ): Promise<{ ok: boolean; error?: string }> {
-  const token = process.env.TELEGRAM_ADMIN_BOT_TOKEN;
+  const token = await getServiceField('telegram-admin', 'bot_token');
 
   if (!token) {
-    console.error("[Telegram] TELEGRAM_ADMIN_BOT_TOKEN is not set!");
+    console.error("[Telegram] Admin bot token is not configured!");
     return { ok: false, error: "Bot token not configured" };
   }
 

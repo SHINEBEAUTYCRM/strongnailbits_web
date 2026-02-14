@@ -8,6 +8,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { getDefaultTenantId } from '@/lib/integrations/base';
 import { encryptConfig, decryptConfig, maskValue } from '@/lib/integrations/crypto';
 import { getServiceBySlug } from '@/lib/integrations/registry';
+import { invalidateServiceCache } from '@/lib/integrations/config-resolver';
 import type { IntegrationKeyRow } from '@/lib/integrations/types';
 
 /**
@@ -19,7 +20,8 @@ export async function GET() {
     let tenantId: string;
     try {
       tenantId = await getDefaultTenantId();
-    } catch {
+    } catch (err) {
+      console.error('[API:IntKeys] Tenant ID fetch failed:', err);
       return NextResponse.json({ data: [], dbAvailable: false });
     }
 
@@ -84,7 +86,8 @@ export async function PUT(request: NextRequest) {
     let tenantId: string;
     try {
       tenantId = await getDefaultTenantId();
-    } catch {
+    } catch (err) {
+      console.error('[API:IntKeys] Tenant ID fetch failed (PUT):', err);
       return NextResponse.json(
         { error: 'Таблиці інтеграцій ще не створені. Виконайте schema-integrations.sql в Supabase SQL Editor.' },
         { status: 503 }
@@ -115,6 +118,9 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Invalidate cached config so next request uses fresh DB data
+    invalidateServiceCache(slug);
+
     return NextResponse.json({ data, message: 'Ключі збережено' });
   } catch (err) {
     return NextResponse.json(
@@ -144,7 +150,8 @@ export async function DELETE(request: NextRequest) {
     let tenantId: string;
     try {
       tenantId = await getDefaultTenantId();
-    } catch {
+    } catch (err) {
+      console.error('[API:IntKeys] Tenant ID fetch failed (DELETE):', err);
       return NextResponse.json(
         { error: 'Таблиці інтеграцій ще не створені.' },
         { status: 503 }
@@ -168,6 +175,9 @@ export async function DELETE(request: NextRequest) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    // Invalidate cached config for deactivated service
+    invalidateServiceCache(slug);
 
     return NextResponse.json({ message: `Інтеграцію "${slug}" деактивовано` });
   } catch (err) {

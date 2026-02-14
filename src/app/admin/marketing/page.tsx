@@ -82,7 +82,9 @@ export default function MarketingDashboard() {
     try {
       const r = await fetch("/api/analytics/marketing");
       if (r.ok) { setData(await r.json()); }
-    } catch { /* */ } finally { setLoading(false); }
+    } catch (err) {
+      console.error('[Marketing] Data fetch failed:', err);
+    } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { fetch_(); }, [fetch_]);

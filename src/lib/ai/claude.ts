@@ -9,7 +9,7 @@
  * - Content generation
  */
 
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getServiceConfig } from '@/lib/integrations/config-resolver';
 
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
 const DEFAULT_MODEL = "claude-sonnet-4-20250514";
@@ -17,54 +17,15 @@ const FAST_MODEL = "claude-3-5-haiku-latest";
 
 // ────── Config ──────
 
-let _cachedConfig: { apiKey: string; model: string } | null = null;
-let _cacheTime = 0;
-const CACHE_TTL = 5 * 60 * 1000;
-
 async function getConfig(): Promise<{ apiKey: string; model: string }> {
-  if (_cachedConfig && Date.now() - _cacheTime < CACHE_TTL) {
-    return _cachedConfig;
+  const config = await getServiceConfig('claude-api');
+  if (!config?.api_key) {
+    throw new Error('Claude API not configured. Set CLAUDE_API_KEY or configure in admin.');
   }
-
-  // 1. ENV vars
-  const envKey = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY;
-  const envModel = process.env.CLAUDE_MODEL;
-
-  if (envKey) {
-    _cachedConfig = { apiKey: envKey, model: envModel || DEFAULT_MODEL };
-    _cacheTime = Date.now();
-    return _cachedConfig;
-  }
-
-  // 2. DB fallback (integration_keys)
-  try {
-    const supabase = createAdminClient();
-    const { data } = await supabase
-      .from("integration_keys")
-      .select("config")
-      .eq("slug", "claude-api")
-      .eq("is_active", true)
-      .single();
-
-    if (data?.config) {
-      const config =
-        typeof data.config === "string" ? JSON.parse(data.config) : data.config;
-      if (config.api_key) {
-        _cachedConfig = {
-          apiKey: config.api_key,
-          model: config.model || DEFAULT_MODEL,
-        };
-        _cacheTime = Date.now();
-        return _cachedConfig;
-      }
-    }
-  } catch {
-    // silent
-  }
-
-  throw new Error(
-    "Claude API key not configured. Add it in Admin → Integrations → Claude API",
-  );
+  return {
+    apiKey: config.api_key,
+    model: config.model || DEFAULT_MODEL,
+  };
 }
 
 /** Check if Claude AI is configured (non-throwing) */
@@ -72,7 +33,8 @@ export async function isAIConfigured(): Promise<boolean> {
   try {
     await getConfig();
     return true;
-  } catch {
+  } catch (err) {
+    console.error('[Claude] Config check failed:', err);
     return false;
   }
 }

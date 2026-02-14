@@ -24,7 +24,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
   const doSearch = useCallback(async (q: string) => {
     if (q.length < 2) { setResults(null); return; }
     setLoading(true);
-    try { const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`); if (res.ok) setResults(await res.json()); } catch {}
+    try { const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`); if (res.ok) setResults(await res.json()); } catch (err) { console.error('[SearchModal] Search failed:', err); }
     setLoading(false);
   }, []);
 

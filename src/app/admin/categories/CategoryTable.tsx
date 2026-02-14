@@ -130,7 +130,8 @@ export function CategoryTable({ categories }: { categories: Cat[] }) {
         // Refresh server data, keep override until refresh completes
         router.refresh();
       }
-    } catch {
+    } catch (err) {
+      console.error('[CategoryTable] Status toggle failed:', err);
       setStatusOverrides((prev) => { const n = { ...prev }; delete n[id]; return n; });
       setError("Помилка мережі");
     } finally {
@@ -150,7 +151,8 @@ export function CategoryTable({ categories }: { categories: Cat[] }) {
       const data = await res.json();
       if (!data.ok) setError(data.error || "Помилка");
       else router.refresh();
-    } catch {
+    } catch (err) {
+      console.error('[CategoryTable] Delete failed:', err);
       setError("Помилка мережі");
     }
     setSelected(new Set());

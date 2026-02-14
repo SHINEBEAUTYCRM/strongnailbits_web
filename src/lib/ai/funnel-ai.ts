@@ -134,7 +134,8 @@ ${input.template}
     }
 
     return input.template;
-  } catch {
+  } catch (err) {
+    console.error('[FunnelAI] Personalization failed:', err);
     return input.template;
   }
 }
@@ -193,7 +194,8 @@ ${JSON.stringify(data, null, 2)}`;
     }
 
     return ruleBasedScore(data);
-  } catch {
+  } catch (err) {
+    console.error('[FunnelAI] AI scoring failed:', err);
     return ruleBasedScore(data);
   }
 }
@@ -312,7 +314,7 @@ export async function smartBotReply(
   chatId: number,
 ): Promise<string | null> {
   const configured = await isAIConfigured();
-  console.log("[SmartBot] isAIConfigured:", configured, "chatId:", chatId);
+  console.info("[SmartBot] isAIConfigured:", configured, "chatId:", chatId);
 
   if (!configured) {
     return null; // AI not available, let the bot handle it with fallback
@@ -330,7 +332,7 @@ export async function smartBotReply(
       .eq("telegram_chat_id", chatId)
       .maybeSingle(); // Use maybeSingle to avoid throwing on no results
 
-    console.log("[SmartBot] Profile found:", !!profile, "error:", profileError?.message);
+    console.info("[SmartBot] Profile found:", !!profile, "error:", profileError?.message);
 
     // Get recent orders
     let ordersContext = "";
@@ -358,7 +360,7 @@ ${customerContext}
 Повідомлення клієнта:
 ${userMessage}`;
 
-    console.log("[SmartBot] Calling Claude with context length:", customerContext.length);
+    console.info("[SmartBot] Calling Claude with context length:", customerContext.length);
 
     const result = await askClaude(prompt, {
       system: SYSTEM_CHATBOT,
@@ -367,7 +369,7 @@ ${userMessage}`;
       temperature: 0.5,
     });
 
-    console.log("[SmartBot] Claude result:", result ? `${result.length} chars` : "empty");
+    console.info("[SmartBot] Claude result:", result ? `${result.length} chars` : "empty");
 
     if (result && result.length > 5) {
       return result.trim();

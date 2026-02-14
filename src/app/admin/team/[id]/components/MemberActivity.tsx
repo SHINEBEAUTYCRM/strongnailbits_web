@@ -35,7 +35,9 @@ export function MemberActivity({ memberId }: MemberActivityProps) {
           const data = await res.json();
           setActivity(data);
         }
-      } catch { /* ignore */ } finally {
+      } catch (err) {
+        console.error('[MemberActivity] Fetch failed:', err);
+      } finally {
         setLoading(false);
       }
     })();

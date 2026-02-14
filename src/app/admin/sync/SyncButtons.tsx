@@ -32,7 +32,8 @@ export function SyncButtons() {
       } else {
         setResults((p) => ({ ...p, [key]: { ok: false, message: d.error || "Помилка" } }));
       }
-    } catch {
+    } catch (err) {
+      console.error('[Sync] Request failed:', err);
       setResults((p) => ({ ...p, [key]: { ok: false, message: "Network error" } }));
     } finally {
       setLoading((p) => ({ ...p, [key]: false }));

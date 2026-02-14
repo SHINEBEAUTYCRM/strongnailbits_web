@@ -47,7 +47,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate URL
-    try { new URL(url); } catch {
+    try { new URL(url); } catch (err) {
+      console.error('[API:Webhooks] Invalid URL:', err);
       return NextResponse.json({ error: 'Невалідний URL' }, { status: 400 });
     }
 
@@ -96,7 +97,8 @@ export async function PATCH(req: NextRequest) {
     delete updates.tenant_id;
 
     if (updates.url) {
-      try { new URL(updates.url); } catch {
+      try { new URL(updates.url); } catch (err) {
+        console.error('[API:Webhooks] Invalid URL on update:', err);
         return NextResponse.json({ error: 'Невалідний URL' }, { status: 400 });
       }
     }

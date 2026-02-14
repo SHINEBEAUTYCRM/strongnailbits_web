@@ -88,7 +88,8 @@ export function NPCitySearch({ value, cityRef, onSelect, onClear, error }: Props
       const res = await fetch(`/api/nova-poshta/cities?q=${encodeURIComponent(q)}`);
       const data = await res.json();
       setResults(data.cities || []);
-    } catch {
+    } catch (err) {
+      console.error('[NPCitySearch] Search failed:', err);
       setResults([]);
     } finally {
       setLoading(false);

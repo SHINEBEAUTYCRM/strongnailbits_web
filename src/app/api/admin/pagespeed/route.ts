@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin/requireAdmin";
+import { getServiceField } from '@/lib/integrations/config-resolver';
 
 // Google PSI API takes 20-120s to respond — need extended timeout
 export const maxDuration = 120; // seconds (Hobby: max 60, Pro: max 300)
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing url parameter" }, { status: 400 });
   }
 
-  const apiKey = process.env.GOOGLE_PSI_KEY || "";
+  const apiKey = await getServiceField('google-psi', 'api_key') ?? "";
 
   // Build URL string manually — URLSearchParams encodes "category" duplicates
   // and "best-practices" inconsistently across runtimes
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
   if (apiKey) params.push(`key=${apiKey}`);
   const psiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?${params.join("&")}`;
 
-  console.log("[PSI Proxy] url:", url, "strategy:", strategy, "hasKey:", !!apiKey);
+  console.info("[PSI Proxy] url:", url, "strategy:", strategy, "hasKey:", !!apiKey);
 
   try {
     const controller = new AbortController();
@@ -55,8 +56,8 @@ export async function GET(request: NextRequest) {
     let data: Record<string, unknown>;
     try {
       data = JSON.parse(text);
-    } catch {
-      console.error("[PSI Proxy] Invalid JSON:", text.slice(0, 500));
+    } catch (err) {
+      console.error("[PSI Proxy] Invalid JSON:", text.slice(0, 500), err);
       return NextResponse.json({ error: `Invalid response from Google: ${text.slice(0, 200)}` }, { status: 502 });
     }
 

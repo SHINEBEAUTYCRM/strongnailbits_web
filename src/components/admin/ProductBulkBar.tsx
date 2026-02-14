@@ -42,8 +42,8 @@ export function ProductBulkBar({ productIds }: ProductBulkBarProps) {
           setSelected(new Set());
           router.refresh();
         }
-      } catch {
-        // silent
+      } catch (err) {
+        console.error('[ProductBulkBar] Action failed:', err);
       }
       setLoading(false);
     },

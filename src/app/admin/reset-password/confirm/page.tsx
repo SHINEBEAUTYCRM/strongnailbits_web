@@ -52,7 +52,8 @@ export default function ConfirmResetPage() {
       setTimeout(() => {
         router.push("/admin");
       }, 2000);
-    } catch {
+    } catch (err) {
+      console.error('[ResetPassword] Confirm failed:', err);
       setError("Помилка мережі");
     }
     setLoading(false);

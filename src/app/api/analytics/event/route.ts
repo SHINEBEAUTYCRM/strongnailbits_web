@@ -66,7 +66,8 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (err) {
+    console.error('[API:Analytics:Event] Event track failed:', err);
     return NextResponse.json({ ok: false }, { status: 500 });
   }
 }

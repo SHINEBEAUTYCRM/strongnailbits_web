@@ -123,8 +123,8 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
         setResults(data);
         trackSearch(q, data.products.length + data.categories.length + data.brands.length);
       }
-    } catch {
-      // silently ignore
+    } catch (err) {
+      console.error('[SearchModal] Search failed:', err);
     } finally {
       setLoading(false);
     }

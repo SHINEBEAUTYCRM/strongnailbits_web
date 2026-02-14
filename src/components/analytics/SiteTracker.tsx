@@ -31,8 +31,8 @@ function sendEvent(data: Record<string, unknown>) {
       body: JSON.stringify(payload),
       keepalive: true,
     }).catch(() => {});
-  } catch {
-    // Не ламаємо UX
+  } catch (err) {
+    console.error('[SiteTracker] Send event failed:', err);
   }
 }
 

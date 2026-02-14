@@ -54,7 +54,8 @@ export default function AdminLoginPage() {
         setStatus("error");
         setError(data.error || "Помилка створення сесії");
       }
-    } catch {
+    } catch (err) {
+      console.error('[AdminLogin] Session confirm failed:', err);
       setStatus("error");
       setError("Помилка мережі");
     }
@@ -80,7 +81,8 @@ export default function AdminLoginPage() {
             setStatus("error");
             setError("Вхід відхилено.");
           }
-        } catch {
+        } catch (err) {
+          console.error('[AdminLogin] Polling check failed:', err);
           // Ignore network errors in polling — will retry
         }
       }, 3000);
@@ -200,7 +202,8 @@ export default function AdminLoginPage() {
       setCountdown(300);
       startRealtime(data.token);
       startPolling(data.token);
-    } catch {
+    } catch (err) {
+      console.error('[AdminLogin] Auth request failed:', err);
       setStatus("error");
       setError("Помилка мережі");
     }

@@ -26,8 +26,8 @@ export async function requireAdmin(): Promise<
               cookiesToSet.forEach(({ name, value, options }) =>
                 cookieStore.set(name, value, options),
               );
-            } catch {
-              // ignore in read-only context
+            } catch (err) {
+              console.error('[AdminAuth:Require] Cookie set failed:', err);
             }
           },
         },
@@ -60,7 +60,8 @@ export async function requireAdmin(): Promise<
       user: { id: user.id, email: user.email || "", role: profile.role },
       error: null,
     };
-  } catch {
+  } catch (err) {
+    console.error('[AdminAuth:Require] Auth error:', err);
     return {
       user: null,
       error: NextResponse.json({ error: "Auth error" }, { status: 500 }),

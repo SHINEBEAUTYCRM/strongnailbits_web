@@ -167,7 +167,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         if (cp?.price) b2bPrice = Number(cp.price);
       }
     }
-  } catch { /* no b2b price */ }
+  } catch (err) { console.error('[Product] B2B price fetch failed:', err); }
 
   const jsonLd = {
     "@context": "https://schema.org",

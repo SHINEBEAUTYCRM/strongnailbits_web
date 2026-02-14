@@ -24,7 +24,8 @@ export async function POST(req: NextRequest) {
       },
       signal: AbortSignal.timeout(10000),
     });
-  } catch {
+  } catch (err) {
+    console.error('[API:Enrichment:Upload] Fetch failed:', err);
     return NextResponse.json({ error: 'Таймаут або мережева помилка' }, { status: 400 });
   }
 

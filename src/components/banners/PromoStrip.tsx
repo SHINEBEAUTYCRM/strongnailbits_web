@@ -12,7 +12,8 @@ function getDismissed(): string[] {
   try {
     const raw = localStorage.getItem(DISMISSED_KEY);
     return raw ? (JSON.parse(raw) as string[]) : [];
-  } catch {
+  } catch (err) {
+    console.error('[PromoStrip] Read dismissed failed:', err);
     return [];
   }
 }
@@ -24,8 +25,8 @@ function addDismissed(id: string) {
       dismissed.push(id);
       localStorage.setItem(DISMISSED_KEY, JSON.stringify(dismissed));
     }
-  } catch {
-    // localStorage unavailable
+  } catch (err) {
+    console.error('[PromoStrip] Save dismissed failed:', err);
   }
 }
 
@@ -61,8 +62,8 @@ export function PromoStrip({ banners }: PromoStripProps) {
       await navigator.clipboard.writeText(code);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // clipboard unavailable
+    } catch (err) {
+      console.error('[PromoStrip] Copy failed:', err);
     }
   };
 

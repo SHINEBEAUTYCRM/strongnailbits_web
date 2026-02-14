@@ -165,7 +165,8 @@ async function handleAIMessage(
   const waitMsgId = waitResult?.message_id as number | undefined;
   await bot.sendChatAction(ctx.chatId, "typing");
 
-  const apiKey = (process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY || "").trim();
+  const { getServiceField } = await import('@/lib/integrations/config-resolver');
+  const apiKey = (await getServiceField('claude-api', 'api_key') || "").trim();
   if (!apiKey) {
     if (waitMsgId) await bot.deleteMessage(ctx.chatId, waitMsgId);
     await bot.sendMessage(
@@ -363,8 +364,8 @@ async function sendFormattedResponse(
           });
         }
       }
-    } catch {
-      /* ignore parse errors */
+    } catch (err) {
+      console.error('[Telegram:ClientHandler] Parse error:', err);
     }
   }
 
@@ -377,8 +378,8 @@ async function sendFormattedResponse(
         parse_mode: "HTML",
         reply_markup: buildOrderKeyboard(order),
       });
-    } catch {
-      /* ignore */
+    } catch (err) {
+      console.error('[Telegram:ClientHandler] Order send error:', err);
     }
   }
 
@@ -406,8 +407,8 @@ async function sendProductPhoto(
         reply_markup: keyboard,
       });
       return;
-    } catch {
-      // Photo failed, fall back to text
+    } catch (err) {
+      console.error('[Telegram:ClientHandler] Photo send failed:', err);
     }
   }
 
@@ -444,7 +445,8 @@ function parseActions(
 
     if (row.length > 0) buttons.push(row);
     return buttons.length > 0 ? { inline_keyboard: buttons } : undefined;
-  } catch {
+  } catch (err) {
+    console.error('[Telegram:ClientHandler] Actions parse error:', err);
     return undefined;
   }
 }
@@ -881,7 +883,7 @@ async function callClaude(
     if ((res.status === 429 || res.status === 529) && attempt < MAX_RETRIES) {
       const retryAfter = Number(res.headers.get("retry-after")) || 15;
       const waitMs = Math.min(retryAfter * 1000, 30_000);
-      console.log(`[Claude] Rate limited, retrying in ${waitMs}ms (attempt ${attempt + 1})`);
+      console.info(`[Claude] Rate limited, retrying in ${waitMs}ms (attempt ${attempt + 1})`);
       await new Promise((r) => setTimeout(r, waitMs));
       continue;
     }

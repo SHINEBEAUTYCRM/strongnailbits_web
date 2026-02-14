@@ -32,7 +32,9 @@ export function MemberKPI({ memberId, memberRole, isCeo }: MemberKPIProps) {
         const data = await res.json();
         setKpis(data);
       }
-    } catch { /* ignore */ } finally {
+    } catch (err) {
+      console.error('[MemberKPI] Fetch failed:', err);
+    } finally {
       setLoading(false);
     }
   };
@@ -57,7 +59,9 @@ export function MemberKPI({ memberId, memberRole, isCeo }: MemberKPIProps) {
         setNewTarget("");
         setShowAdd(false);
       }
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.error('[MemberKPI] Add failed:', err);
+    }
   };
 
   const handleUpdateActual = async (kpi: TeamKPI, actual: number) => {
@@ -68,7 +72,9 @@ export function MemberKPI({ memberId, memberRole, isCeo }: MemberKPIProps) {
         body: JSON.stringify({ kpi_id: kpi.id, actual }),
       });
       setKpis((prev) => prev.map((k) => (k.id === kpi.id ? { ...k, actual } : k)));
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.error('[MemberKPI] Update failed:', err);
+    }
   };
 
   if (loading) {

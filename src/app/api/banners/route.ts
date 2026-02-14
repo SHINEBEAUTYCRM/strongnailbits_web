@@ -64,7 +64,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ ok: true, banner: data }, { status: 201 });
-  } catch {
+  } catch (err) {
+    console.error('[API:Banners] Create failed:', err);
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 }

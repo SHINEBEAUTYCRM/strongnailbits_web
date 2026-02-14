@@ -49,7 +49,9 @@ export function ProductList({
         setProducts(data.products || []);
         setTotal(data.total || 0);
       }
-    } catch { /* silent */ }
+    } catch (err) {
+      console.error('[ProductList] Fetch products failed:', err);
+    }
     finally { setLoading(false); }
   }, [page, brandFilter, categoryFilter, statusFilter, searchQuery]);
 

@@ -11,7 +11,7 @@
  * Use v1.0 /divisions for warehouses instead.
  */
 
-import { createAdminClient } from "@/lib/supabase/admin";
+import { getServiceConfig } from '@/lib/integrations/config-resolver';
 import type {
   NPConfig,
   NPResponse,
@@ -34,56 +34,18 @@ const API_V1_URL = "https://api.novaposhta.ua/v.1.0";
 /** Odesa city ref — our sender city */
 export const SENDER_CITY_REF = "8d5a980d-391c-11dd-90d9-001a92567626";
 
-let _cachedConfig: NPConfig | null = null;
-let _cacheTime = 0;
-const CACHE_TTL = 5 * 60 * 1000;
-
 export async function getConfig(): Promise<NPConfig> {
-  if (_cachedConfig && Date.now() - _cacheTime < CACHE_TTL) {
-    return _cachedConfig;
+  const config = await getServiceConfig('nova-poshta');
+  if (!config?.api_key) {
+    throw new Error('Nova Poshta API key not configured. Set NOVAPOSHTA_API_KEY or configure in admin.');
   }
-
-  const envKey = process.env.NOVA_POSHTA_API_KEY || process.env.NOVAPOSHTA_API_KEY;
-  if (envKey) {
-    _cachedConfig = {
-      apiKey: envKey,
-      senderRef: process.env.NOVAPOSHTA_SENDER_REF,
-      senderAddress: process.env.NOVAPOSHTA_SENDER_ADDRESS,
-      senderContact: process.env.NOVAPOSHTA_SENDER_CONTACT,
-      senderPhone: process.env.NOVAPOSHTA_SENDER_PHONE,
-    };
-    _cacheTime = Date.now();
-    return _cachedConfig;
-  }
-
-  try {
-    const supabase = createAdminClient();
-    const { data } = await supabase
-      .from("integration_keys")
-      .select("config")
-      .eq("slug", "nova-poshta")
-      .eq("is_active", true)
-      .single();
-
-    if (data?.config) {
-      const cfg = typeof data.config === "string" ? JSON.parse(data.config) : data.config;
-      if (cfg.api_key) {
-        _cachedConfig = {
-          apiKey: cfg.api_key,
-          senderRef: cfg.sender_ref,
-          senderAddress: cfg.sender_address,
-          senderContact: cfg.sender_contact,
-          senderPhone: cfg.sender_phone,
-        };
-        _cacheTime = Date.now();
-        return _cachedConfig;
-      }
-    }
-  } catch {
-    // silent
-  }
-
-  throw new Error("Nova Poshta API key not configured. Set NOVA_POSHTA_API_KEY env.");
+  return {
+    apiKey: config.api_key,
+    senderRef: config.sender_ref,
+    senderAddress: config.sender_address,
+    senderContact: config.sender_contact,
+    senderPhone: config.sender_phone,
+  };
 }
 
 export async function isNPConfigured(): Promise<boolean> {

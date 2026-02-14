@@ -48,9 +48,9 @@ export default function TasksPage() {
         }
         // If response is not ok (401, 500) — keep existing cached data
       }
-    } catch {
+    } catch (err) {
       // Network error — keep existing cached data, don't clear
-      console.warn("[Tasks] fetch failed, keeping cached data");
+      console.warn("[Tasks] fetch failed, keeping cached data", err);
     } finally {
       setLoading(false);
     }
@@ -65,7 +65,7 @@ export default function TasksPage() {
         .eq("is_active", true)
         .order("name");
       if (data) setTeamMembers(data);
-    } catch { /* ignore */ }
+    } catch (err) { console.error('[Tasks] Team members fetch failed:', err); }
   };
 
   const loadCurrentUser = async () => {
@@ -77,7 +77,7 @@ export default function TasksPage() {
         const data = await res.json();
         if (data.id) setCurrentUserId(data.id);
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.error('[Tasks] Current user fetch failed:', err); }
   };
 
   // ── Realtime ──
@@ -116,7 +116,7 @@ export default function TasksPage() {
 
     return () => {
       if (channel) {
-        try { createAdminBrowserClient().removeChannel(channel); } catch { /* ignore */ }
+        try { createAdminBrowserClient().removeChannel(channel); } catch (err) { console.error('[Tasks] Realtime channel remove failed:', err); }
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -190,8 +190,8 @@ export default function TasksPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ column_id: toColumn, position, actor_id: currentUserId }),
         });
-      } catch {
-        // Reload on error
+      } catch (err) {
+        console.error('[Tasks] Move task failed:', err);
         loadTasks();
       }
     },
@@ -212,7 +212,7 @@ export default function TasksPage() {
           const task = await res.json();
           setTasks((prev) => [...prev, task]);
         }
-      } catch { /* ignore */ }
+      } catch (err) { console.error('[Tasks] Quick create failed:', err); }
     },
     [currentUserId],
   );
@@ -230,7 +230,7 @@ export default function TasksPage() {
           setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, ...updated } : t)));
           setSelectedTask((prev) => (prev?.id === taskId ? { ...prev, ...updated } : prev));
         }
-      } catch { /* ignore */ }
+      } catch (err) { console.error('[Tasks] Update task failed:', err); }
     },
     [currentUserId],
   );
@@ -240,7 +240,7 @@ export default function TasksPage() {
       try {
         await fetch(`/api/admin/tasks/${taskId}`, { method: "DELETE" });
         setTasks((prev) => prev.filter((t) => t.id !== taskId));
-      } catch { /* ignore */ }
+      } catch (err) { console.error('[Tasks] Delete task failed:', err); }
     },
     [],
   );

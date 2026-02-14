@@ -5,19 +5,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { getClientIP } from '@/lib/api/helpers';
+import { getClientIP, hashToken } from '@/lib/api/helpers';
 import { checkRateLimit } from '@/lib/api/rate-limiter';
 import type { ApiTokenRow } from '@/lib/api/types';
-
-export const dynamic = 'force-dynamic';
-
-async function hashToken(token: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(token);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
 
 export async function GET(req: NextRequest) {
   try {

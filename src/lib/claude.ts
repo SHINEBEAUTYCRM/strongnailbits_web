@@ -7,15 +7,16 @@
 
 import type { AIMetadata, VisionAnalysisResult } from './enrichment/types';
 import { parseClaudeJSON } from './parse-claude-json';
+import { getServiceField } from '@/lib/integrations/config-resolver';
 
 const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
 const ENRICHMENT_MODEL = 'claude-haiku-4-5-20251001';
 // SMART_MODEL used in auto-detect.ts directly
 
-function getApiKey(): string {
-  const key = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
+async function getApiKey(): Promise<string> {
+  const key = await getServiceField('claude-api', 'api_key');
   if (!key) {
-    throw new Error('Missing ANTHROPIC_API_KEY environment variable');
+    throw new Error('Claude API not configured');
   }
   return key;
 }
@@ -49,7 +50,7 @@ interface ClaudeApiResponse {
 }
 
 async function callClaude(options: ClaudeRequestOptions): Promise<ClaudeApiResponse> {
-  const apiKey = getApiKey();
+  const apiKey = await getApiKey();
   const model = options.model || ENRICHMENT_MODEL;
 
   const body: Record<string, unknown> = {
@@ -220,7 +221,8 @@ ${rawParsedData ? `Дані з сайту бренду:
       metadata,
       tokens: { input: result.inputTokens, output: result.outputTokens },
     };
-  } catch {
+  } catch (err) {
+    console.error('[Claude] Enrichment parse failed:', err);
     throw new Error(`Failed to parse Claude enrichment response: ${result.text.slice(0, 200)}`);
   }
 }
@@ -287,7 +289,8 @@ export async function analyzeProductPhoto(
       },
       tokens: { input: result.inputTokens, output: result.outputTokens },
     };
-  } catch {
+  } catch (err) {
+    console.error('[Claude] Vision parse failed:', err);
     throw new Error(`Failed to parse Claude Vision response: ${result.text.slice(0, 200)}`);
   }
 }

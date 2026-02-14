@@ -103,11 +103,11 @@ export async function syncBrands(): Promise<SyncResult> {
       logId = logEntry.id;
     }
 
-    console.log("[sync:brands] Starting full sync...");
+    console.info("[sync:brands] Starting full sync...");
 
     /* ---- 2. Завантажити feature "Бренд" (id=18) з варіантами ---- */
 
-    console.log(`[sync:brands] Fetching feature ${BRAND_FEATURE_ID}...`);
+    console.info(`[sync:brands] Fetching feature ${BRAND_FEATURE_ID}...`);
     const feature = await csCart.getFeature(BRAND_FEATURE_ID);
 
     const rawVariants = feature.variants ?? {};
@@ -115,7 +115,7 @@ export async function syncBrands(): Promise<SyncResult> {
       ? rawVariants
       : Object.values(rawVariants);
 
-    console.log(`[sync:brands] Got ${allVariants.length} brand variants`);
+    console.info(`[sync:brands] Got ${allVariants.length} brand variants`);
 
     /* ---- 3. Маппінг та підготовка рядків ---- */
 
@@ -131,7 +131,7 @@ export async function syncBrands(): Promise<SyncResult> {
       const batch = rows.slice(i, i + BATCH_SIZE);
       const batchNum = Math.floor(i / BATCH_SIZE) + 1;
 
-      console.log(
+      console.info(
         `[sync:brands] Upserting batch ${batchNum}/${totalBatches} (${batch.length} items)...`,
       );
 
@@ -159,7 +159,7 @@ export async function syncBrands(): Promise<SyncResult> {
     /* ---- 5. Позначити відсутні бренди (видалити зі списку активних) ---- */
 
     if (activeCsCartIds.length > 0) {
-      console.log("[sync:brands] Removing unlisted brands...");
+      console.info("[sync:brands] Removing unlisted brands...");
 
       const { data: deletedRows, error: deleteError } = await supabase
         .from("brands")
@@ -175,9 +175,9 @@ export async function syncBrands(): Promise<SyncResult> {
       } else {
         itemsDisabled = deletedRows?.length ?? 0;
         if (itemsDisabled > 0) {
-          console.log(`[sync:brands] Removed ${itemsDisabled} brands`);
+          console.info(`[sync:brands] Removed ${itemsDisabled} brands`);
         } else {
-          console.log("[sync:brands] No brands to remove");
+          console.info("[sync:brands] No brands to remove");
         }
       }
     }
@@ -200,7 +200,7 @@ export async function syncBrands(): Promise<SyncResult> {
         .eq("id", logId);
     }
 
-    console.log(
+    console.info(
       `[sync:brands] ✓ Completed in ${duration}ms — ` +
         `processed: ${itemsProcessed}, updated: ${itemsUpdated}, ` +
         `failed: ${itemsFailed}, removed: ${itemsDisabled}`,

@@ -35,7 +35,8 @@ export async function POST(
     }
 
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (err) {
+    console.error('[API:Banners:Analytics] Track failed:', err);
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 }

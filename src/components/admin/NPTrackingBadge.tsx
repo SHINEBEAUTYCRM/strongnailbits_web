@@ -40,8 +40,8 @@ export function NPTrackingBadge({ ttn }: Props) {
         const data = await res.json();
         setInfo(data);
       }
-    } catch {
-      // silent
+    } catch (err) {
+      console.error('[NPTracking] Fetch failed:', err);
     } finally {
       setLoading(false);
     }

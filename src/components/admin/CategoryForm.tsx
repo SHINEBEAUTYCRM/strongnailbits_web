@@ -63,7 +63,10 @@ export function CategoryForm({
         setTimeout(() => setSuccess(""), 3000);
         router.refresh();
       }
-    } catch { setError("Network error"); }
+    } catch (err) {
+      console.error('[CategoryForm] Save failed:', err);
+      setError("Network error");
+    }
     setSaving(false);
   };
 
@@ -78,7 +81,10 @@ export function CategoryForm({
       });
       const data = await res.json();
       if (res.ok && data.ok) { router.push("/admin/categories"); } else { setError(data.error || "Помилка видалення"); }
-    } catch { setError("Network error"); }
+    } catch (err) {
+      console.error('[CategoryForm] Delete failed:', err);
+      setError("Network error");
+    }
     setDeleting(false);
   };
 

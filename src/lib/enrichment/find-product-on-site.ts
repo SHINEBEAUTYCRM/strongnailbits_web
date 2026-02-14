@@ -72,7 +72,8 @@ async function trySearchOnSite(
       const html = await res.text();
       const candidates = extractCandidates(html, origin);
       if (candidates.length > 0) return { candidates };
-    } catch {
+    } catch (err) {
+      console.error('[Enrichment:FindProduct] Search attempt failed:', err);
       continue;
     }
   }
@@ -89,7 +90,7 @@ async function trySearchOnSite(
       const candidates = extractCandidates(html, origin);
       if (candidates.length > 0) return { candidates };
     }
-  } catch { /* skip */ }
+  } catch (err) { console.error('[Enrichment:FindProduct] Fallback search failed:', err); }
 
   return null;
 }
@@ -113,7 +114,8 @@ async function tryCatalogScan(
       const html = await res.text();
       const candidates = extractCandidates(html, origin);
       if (candidates.length > 0) return { candidates };
-    } catch {
+    } catch (err) {
+      console.error('[Enrichment:FindProduct] Catalog scan failed:', err);
       continue;
     }
   }

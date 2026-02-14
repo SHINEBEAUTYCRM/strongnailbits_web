@@ -22,7 +22,8 @@ export function IntegrationLogs({ slug }: IntegrationLogsProps) {
         const res = await fetch(`/api/integrations/logs?slug=${slug}&limit=20`);
         const json = await res.json();
         setLogs(json.data || []);
-      } catch {
+      } catch (err) {
+        console.error('[IntegrationLogs] Fetch failed:', err);
         setLogs([]);
       }
       setLoading(false);
@@ -107,7 +108,8 @@ function formatTime(isoString: string): string {
       hour: "2-digit",
       minute: "2-digit",
     });
-  } catch {
+  } catch (err) {
+    console.error('[IntegrationLogs] Date format failed:', err);
     return isoString;
   }
 }

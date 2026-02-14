@@ -10,8 +10,6 @@ import Script from "next/script";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 interface AnalyticsProviderProps {
   ga4Id?: string | null;
   gtmId?: string | null;
@@ -40,21 +38,21 @@ export function AnalyticsProvider({
     const url = window.location.href;
 
     // GA4 pageview
-    if (ga4Id && (window as any).gtag) {
-      (window as any).gtag("event", "page_view", {
+    if (ga4Id && window.gtag) {
+      window.gtag("event", "page_view", {
         page_location: url,
         page_path: pathname,
       });
     }
 
     // FB Pixel pageview
-    if (fbPixelId && (window as any).fbq) {
-      (window as any).fbq("track", "PageView");
+    if (fbPixelId && window.fbq) {
+      window.fbq("track", "PageView");
     }
 
     // PostHog pageview
-    if (posthogKey && (window as any).posthog) {
-      (window as any).posthog.capture("$pageview", {
+    if (posthogKey && window.posthog) {
+      window.posthog.capture("$pageview", {
         $current_url: url,
       });
     }

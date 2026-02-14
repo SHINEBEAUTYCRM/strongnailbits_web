@@ -64,9 +64,10 @@ export async function POST(request: NextRequest) {
 // ────── Update Router ──────
 
 async function handleUpdate(update: TgUpdate): Promise<void> {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const { getServiceField } = await import('@/lib/integrations/config-resolver');
+  const token = await getServiceField('telegram-bot', 'bot_token');
   if (!token) {
-    console.error("[TgWebhook] TELEGRAM_BOT_TOKEN not set");
+    console.error("[TgWebhook] Telegram bot token not configured");
     return;
   }
 

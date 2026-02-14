@@ -110,8 +110,8 @@ export async function deliverMessage(
     if (personalized && personalized.length > 10) {
       renderedText = personalized;
     }
-  } catch {
-    // AI not available — use rendered template as-is
+  } catch (err) {
+    console.error('[Messaging] AI personalization failed:', err);
   }
 
   const results: DeliveryResult[] = [];
@@ -125,8 +125,8 @@ export async function deliverMessage(
     try {
       const raw = renderTemplate(options.buttonsJson, variables);
       renderedButtons = JSON.parse(raw) as InlineButton[][];
-    } catch {
-      // Invalid buttons JSON — skip
+    } catch (err) {
+      console.error('[Messaging] Invalid buttons JSON:', err);
     }
   }
 
@@ -261,8 +261,8 @@ async function sendTelegram(
           };
         }
         // Photo failed, fall through to text message
-      } catch {
-        // Photo failed, fall through to text message
+      } catch (err) {
+        console.error('[Messaging] Photo send failed:', err);
       }
     }
 
@@ -361,46 +361,11 @@ async function sendSmsMessage(
   }
 }
 
-// ────── Bot Token Cache ──────
-
-let _botToken: string | null = null;
-let _botTokenTime = 0;
+// ────── Bot Token ──────
 
 async function getBotToken(): Promise<string | null> {
-  if (_botToken && Date.now() - _botTokenTime < 5 * 60 * 1000) {
-    return _botToken;
-  }
-
-  const envToken = process.env.TELEGRAM_BOT_TOKEN;
-  if (envToken) {
-    _botToken = envToken;
-    _botTokenTime = Date.now();
-    return _botToken;
-  }
-
-  try {
-    const supabase = createAdminClient();
-    const { data } = await supabase
-      .from("integration_keys")
-      .select("config")
-      .eq("slug", "telegram-bot")
-      .eq("is_active", true)
-      .single();
-
-    if (data?.config) {
-      const config =
-        typeof data.config === "string" ? JSON.parse(data.config) : data.config;
-      if (config.bot_token) {
-        _botToken = config.bot_token;
-        _botTokenTime = Date.now();
-        return _botToken;
-      }
-    }
-  } catch {
-    // silent
-  }
-
-  return null;
+  const { getServiceField } = await import('@/lib/integrations/config-resolver');
+  return getServiceField('telegram-bot', 'bot_token');
 }
 
 // ────── Delivery Logging ──────
@@ -463,8 +428,8 @@ export async function resolveTarget(
         target.telegramChatId = profile.telegram_chat_id;
         target.notificationChannel = profile.notification_channel || "auto";
       }
-    } catch {
-      // silent
+    } catch (err) {
+      console.error('[Messaging] Profile resolve failed:', err);
     }
   }
 
@@ -497,8 +462,8 @@ export async function buildVariables(
         vars.company = profile.company || undefined;
         vars.email = profile.email || undefined;
       }
-    } catch {
-      // silent
+    } catch (err) {
+      console.error('[Messaging] Variable build failed:', err);
     }
   }
 

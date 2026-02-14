@@ -5,20 +5,19 @@
 
 import { NextResponse } from "next/server";
 import { isAIConfigured, askClaude } from "@/lib/ai/claude";
+import { getServiceField } from "@/lib/integrations/config-resolver";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 export async function GET() {
-  const hasKey = !!process.env.CLAUDE_API_KEY;
-  const hasAltKey = !!process.env.ANTHROPIC_API_KEY;
+  const apiKey = await getServiceField('claude-api', 'api_key');
   const configured = await isAIConfigured();
 
   const result: Record<string, unknown> = {
-    hasEnvKey: hasKey,
-    hasAltKey: hasAltKey,
+    hasKey: !!apiKey,
     isConfigured: configured,
-    keyPrefix: process.env.CLAUDE_API_KEY?.slice(0, 12) || "not set",
+    keyPrefix: apiKey?.slice(0, 12) || "not set",
   };
 
   if (configured) {

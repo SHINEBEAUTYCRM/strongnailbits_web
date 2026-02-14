@@ -56,7 +56,8 @@ export async function PATCH(
     }
 
     return NextResponse.json({ ok: true, banner: data });
-  } catch {
+  } catch (err) {
+    console.error('[API:Banners] Update failed:', err);
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 }

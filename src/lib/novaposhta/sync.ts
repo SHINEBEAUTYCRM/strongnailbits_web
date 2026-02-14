@@ -66,7 +66,7 @@ export async function syncCities(): Promise<SyncResult> {
       }
     }
 
-    console.log(`[NP Sync] Cities: ${result.upserted}/${result.totalCount}`);
+    console.info(`[NP Sync] Cities: ${result.upserted}/${result.totalCount}`);
   } catch (err) {
     result.status = "failed";
     result.error = err instanceof Error ? err.message : String(err);
@@ -140,11 +140,11 @@ export async function syncWarehouses(): Promise<SyncResult> {
 
     // Try archive first
     try {
-      console.log("[NP Sync] Trying archive download...");
+      console.info("[NP Sync] Trying archive download...");
       const archiveUrl = await getDivisionsArchiveUrl();
       if (archiveUrl) {
         allDivisions = await downloadAndParseArchive(archiveUrl);
-        console.log(`[NP Sync] Archive: ${allDivisions.length} total divisions (all countries)`);
+        console.info(`[NP Sync] Archive: ${allDivisions.length} total divisions (all countries)`);
       }
     } catch (err) {
       console.warn("[NP Sync] Archive failed, falling back to API:", err instanceof Error ? err.message : err);
@@ -159,7 +159,7 @@ export async function syncWarehouses(): Promise<SyncResult> {
       d.countryCode === "UA",
     );
     result.totalCount = uaDivisions.length;
-    console.log(`[NP Sync] UA divisions: ${uaDivisions.length}`);
+    console.info(`[NP Sync] UA divisions: ${uaDivisions.length}`);
 
     // Transform to DB rows
     const rows = uaDivisions.map(divisionToRow);
@@ -201,11 +201,11 @@ export async function syncWarehouses(): Promise<SyncResult> {
             .in("np_id", batch);
         }
         result.deleted = toDeactivate.length;
-        console.log(`[NP Sync] Deactivated ${toDeactivate.length} warehouses`);
+        console.info(`[NP Sync] Deactivated ${toDeactivate.length} warehouses`);
       }
     }
 
-    console.log(`[NP Sync] Warehouses: ${result.upserted} synced, ${result.deleted} deactivated`);
+    console.info(`[NP Sync] Warehouses: ${result.upserted} synced, ${result.deleted} deactivated`);
   } catch (err) {
     result.status = "failed";
     result.error = err instanceof Error ? err.message : String(err);
@@ -258,7 +258,7 @@ async function downloadAndParseArchive(url: string): Promise<Record<string, unkn
   });
 
   const jsonStr = Buffer.concat(chunks).toString("utf-8");
-  console.log(`[NP Sync] Archive decompressed: ${(jsonStr.length / 1024 / 1024).toFixed(1)} MB`);
+  console.info(`[NP Sync] Archive decompressed: ${(jsonStr.length / 1024 / 1024).toFixed(1)} MB`);
 
   // Free chunks
   chunks.length = 0;
@@ -280,13 +280,13 @@ export interface SyncAllResult {
 
 export async function syncAll(): Promise<SyncAllResult> {
   const start = Date.now();
-  console.log("[NP Sync] Starting full sync...");
+  console.info("[NP Sync] Starting full sync...");
 
   const cities = await syncCities();
   const warehouses = await syncWarehouses();
 
   const totalDurationMs = Date.now() - start;
-  console.log(
+  console.info(
     `[NP Sync] Done in ${(totalDurationMs / 1000).toFixed(1)}s — ` +
     `${cities.upserted} cities, ${warehouses.upserted} warehouses`,
   );
@@ -308,5 +308,5 @@ async function logSync(result: SyncResult & { status: string }): Promise<void> {
       duration_ms: result.durationMs,
       error: result.error || null,
     });
-  } catch { /* silent */ }
+  } catch (err) { console.error('[NovaPoshta:Sync] Log write failed:', err); }
 }

@@ -118,8 +118,8 @@ export default function FunnelsPage() {
       const res = await fetch("/api/admin/funnels");
       const json = await res.json();
       if (json.data) setFunnels(json.data);
-    } catch {
-      // silent
+    } catch (err) {
+      console.error('[Funnels] Funnels fetch failed:', err);
     }
     setLoading(false);
   }, []);
@@ -129,8 +129,8 @@ export default function FunnelsPage() {
       const res = await fetch("/api/admin/messaging/stats");
       const json = await res.json();
       if (json.data) setMsgStats(json.data);
-    } catch {
-      // silent
+    } catch (err) {
+      console.error('[Funnels] Messaging stats fetch failed:', err);
     }
   }, []);
 
@@ -717,7 +717,8 @@ function AITab({ funnels }: { funnels: Funnel[] }) {
           },
         ]);
       }
-    } catch {
+    } catch (err) {
+      console.error('[Funnels] AI chat failed:', err);
       setMessages([
         ...newMessages,
         { role: "assistant", content: "❌ Помилка з'єднання з AI" },
@@ -744,8 +745,8 @@ function AITab({ funnels }: { funnels: Funnel[] }) {
           { role: "assistant", content: json.data.analysis },
         ]);
       }
-    } catch {
-      // silent
+    } catch (err) {
+      console.error('[Funnels] AI analysis failed:', err);
     }
     setAnalysisLoading(false);
   };

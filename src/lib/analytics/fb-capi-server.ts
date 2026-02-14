@@ -5,13 +5,20 @@
 // ================================================================
 
 import crypto from "crypto";
+import { getServiceConfig } from '@/lib/integrations/config-resolver';
 
-const FB_PIXEL_ID = process.env.FB_PIXEL_ID || process.env.NEXT_PUBLIC_FB_PIXEL_ID;
-const FB_ACCESS_TOKEN = process.env.FB_CAPI_ACCESS_TOKEN;
 const FB_API_VERSION = "v21.0";
 
 function hashSHA256(value: string): string {
   return crypto.createHash("sha256").update(value.trim().toLowerCase()).digest("hex");
+}
+
+async function getFBConfig(): Promise<{ pixelId: string; accessToken: string } | null> {
+  const config = await getServiceConfig('facebook-pixel');
+  const pixelId = config?.pixel_id;
+  const accessToken = config?.access_token;
+  if (!pixelId || !accessToken) return null;
+  return { pixelId, accessToken };
 }
 
 interface PurchaseEventData {
@@ -30,8 +37,9 @@ interface PurchaseEventData {
  * Отправляет серверное событие покупки в FB Conversions API
  * Non-blocking — ошибки логируются, но не блокируют основной поток
  */
-export function sendFBServerPurchaseEvent(data: PurchaseEventData) {
-  if (!FB_PIXEL_ID || !FB_ACCESS_TOKEN) return;
+export async function sendFBServerPurchaseEvent(data: PurchaseEventData) {
+  const fb = await getFBConfig();
+  if (!fb) return;
 
   const userData: Record<string, unknown> = {};
   if (data.email) userData.em = [hashSHA256(data.email)];
@@ -56,7 +64,7 @@ export function sendFBServerPurchaseEvent(data: PurchaseEventData) {
     },
   };
 
-  const url = `https://graph.facebook.com/${FB_API_VERSION}/${FB_PIXEL_ID}/events`;
+  const url = `https://graph.facebook.com/${FB_API_VERSION}/${fb.pixelId}/events`;
 
   // Fire and forget
   fetch(url, {
@@ -64,7 +72,7 @@ export function sendFBServerPurchaseEvent(data: PurchaseEventData) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       data: [event],
-      access_token: FB_ACCESS_TOKEN,
+      access_token: fb.accessToken,
     }),
   })
     .then((res) => {

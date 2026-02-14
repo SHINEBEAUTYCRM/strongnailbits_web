@@ -4,8 +4,6 @@
 //  Отправляет события в GA4, FB Pixel, PostHog, TikTok одновременно
 // ================================================================
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 // -----------------------------------------------------------------
 //  Внутрішній трекер (Supabase site_events)
 // -----------------------------------------------------------------
@@ -20,7 +18,7 @@ function sendSiteEvent(eventType: string, data?: Record<string, unknown>) {
       body: JSON.stringify({ event_type: eventType, session_id: sid, ...data }),
       keepalive: true,
     }).catch(() => {});
-  } catch { /* noop */ }
+  } catch (err) { console.error('[Analytics:Tracker] sendSiteEvent failed:', err); }
 }
 
 // -----------------------------------------------------------------
@@ -50,23 +48,24 @@ export interface PurchaseData {
 
 // -----------------------------------------------------------------
 //  Хелпери доступу до window объектов
+//  Типи window.gtag / window.fbq / window.posthog — див. src/types/globals.d.ts
 // -----------------------------------------------------------------
 
-function gtag(...args: any[]) {
-  if (typeof window !== 'undefined' && (window as any).gtag) {
-    (window as any).gtag(...args);
+function gtag(...args: [string, ...unknown[]]) {
+  if (typeof window !== 'undefined' && window.gtag) {
+    window.gtag(...args);
   }
 }
 
-function fbq(...args: any[]) {
-  if (typeof window !== 'undefined' && (window as any).fbq) {
-    (window as any).fbq(...args);
+function fbq(...args: [string, ...unknown[]]) {
+  if (typeof window !== 'undefined' && window.fbq) {
+    window.fbq(...args);
   }
 }
 
 function posthog() {
-  if (typeof window !== 'undefined' && (window as any).posthog) {
-    return (window as any).posthog;
+  if (typeof window !== 'undefined' && window.posthog) {
+    return window.posthog;
   }
   return null;
 }
@@ -307,7 +306,7 @@ export function trackViewItemList(listName: string, items: ProductItem[]) {
 //  Кастомное событие
 // -----------------------------------------------------------------
 
-export function trackCustomEvent(name: string, params?: Record<string, any>) {
+export function trackCustomEvent(name: string, params?: Record<string, unknown>) {
   gtag('event', name, params);
   posthog()?.capture(name, params);
 }

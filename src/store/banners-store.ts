@@ -38,7 +38,7 @@ export const useBannersStore = create<BannersState>()((set, get) => ({
       const res = await fetch(`/api/banners?${params}`);
       const data = await res.json();
       if (res.ok) set({ banners: data.banners ?? data ?? [] });
-    } catch { /* ignore */ }
+    } catch (err) { console.error('[BannersStore] Fetch failed:', err); }
     set({ isLoading: false });
   },
   

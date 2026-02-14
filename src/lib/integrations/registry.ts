@@ -23,6 +23,10 @@ const analytics: ServiceDefinition[] = [
       { key: 'measurement_id', label: 'Measurement ID', type: 'text', placeholder: 'G-XXXXXXXXXX', required: true, helpText: 'GA4 Measurement ID з налаштувань потоку даних' },
       { key: 'api_secret', label: 'API Secret', type: 'password', placeholder: 'Measurement Protocol API Secret', required: false, helpText: 'Для серверного трекінгу (Measurement Protocol)' },
     ],
+    envMapping: {
+      measurement_id: 'NEXT_PUBLIC_GA_MEASUREMENT_ID',
+      api_secret: 'GA_API_SECRET',
+    },
   },
   {
     slug: 'google-tag-manager',
@@ -36,6 +40,9 @@ const analytics: ServiceDefinition[] = [
     requiredFields: [
       { key: 'container_id', label: 'Container ID', type: 'text', placeholder: 'GTM-XXXXXXX', required: true },
     ],
+    envMapping: {
+      container_id: 'NEXT_PUBLIC_GTM_CONTAINER_ID',
+    },
   },
   {
     slug: 'microsoft-clarity',
@@ -49,6 +56,9 @@ const analytics: ServiceDefinition[] = [
     requiredFields: [
       { key: 'project_id', label: 'Project ID', type: 'text', placeholder: 'Clarity Project ID', required: true },
     ],
+    envMapping: {
+      project_id: 'NEXT_PUBLIC_CLARITY_PROJECT_ID',
+    },
   },
   {
     slug: 'facebook-pixel',
@@ -63,6 +73,10 @@ const analytics: ServiceDefinition[] = [
       { key: 'pixel_id', label: 'Pixel ID', type: 'text', placeholder: 'Facebook Pixel ID', required: true },
       { key: 'access_token', label: 'Access Token (CAPI)', type: 'password', placeholder: 'Conversions API Token', required: false, helpText: 'Для серверного трекінгу' },
     ],
+    envMapping: {
+      pixel_id: 'NEXT_PUBLIC_FB_PIXEL_ID',
+      access_token: 'FB_CAPI_ACCESS_TOKEN',
+    },
   },
   {
     slug: 'posthog',
@@ -77,6 +91,10 @@ const analytics: ServiceDefinition[] = [
       { key: 'api_key', label: 'Project API Key', type: 'text', placeholder: 'phc_...', required: true },
       { key: 'host', label: 'Host', type: 'url', placeholder: 'https://app.posthog.com', required: false, helpText: 'За замовчуванням: https://app.posthog.com' },
     ],
+    envMapping: {
+      api_key: 'NEXT_PUBLIC_POSTHOG_KEY',
+      host: 'NEXT_PUBLIC_POSTHOG_HOST',
+    },
   },
   {
     slug: 'meta-ad-library',
@@ -158,6 +176,10 @@ const freeUtilities: ServiceDefinition[] = [
       { key: 'bot_token', label: 'Bot Token', type: 'password', placeholder: '123456:ABC-DEF...', required: true },
       { key: 'chat_id', label: 'Chat ID', type: 'text', placeholder: '-100123456789', required: true, helpText: 'ID чату або групи для сповіщень' },
     ],
+    envMapping: {
+      bot_token: 'TELEGRAM_BOT_TOKEN',
+      chat_id: 'TELEGRAM_CHAT_ID',
+    },
   },
   {
     slug: 'onesignal',
@@ -373,6 +395,9 @@ const paidMarketing: ServiceDefinition[] = [
     requiredFields: [
       { key: 'api_key', label: 'API Key', type: 'password', required: true },
     ],
+    envMapping: {
+      api_key: 'PHOTOROOM_API_KEY',
+    },
   },
 ];
 
@@ -759,8 +784,55 @@ const seoServices: ServiceDefinition[] = [
   },
 ];
 
+// -----------------------------------------------------------------
+//  M. Додаткові сервіси
+// -----------------------------------------------------------------
+
+const additionalServices: ServiceDefinition[] = [
+  {
+    slug: 'voyage-ai',
+    name: 'Voyage AI (Embeddings)',
+    category: 'ai',
+    module: 'Enrichment',
+    icon: 'Compass',
+    description: 'Векторні ембедінги для семантичного пошуку товарів.',
+    isRequired: false,
+    docsUrl: 'https://docs.voyageai.com',
+    requiredFields: [
+      { key: 'api_key', label: 'API Key', type: 'password', required: true },
+    ],
+    envMapping: { api_key: 'VOYAGE_API_KEY' },
+  },
+  {
+    slug: 'google-psi',
+    name: 'Google PageSpeed Insights',
+    category: 'analytics',
+    module: 'Дашборд',
+    icon: 'Gauge',
+    description: 'Аналіз швидкості сайту.',
+    isRequired: false,
+    requiredFields: [
+      { key: 'api_key', label: 'API Key', type: 'password', required: false },
+    ],
+    envMapping: { api_key: 'GOOGLE_PSI_KEY' },
+  },
+  {
+    slug: 'telegram-admin',
+    name: 'Telegram Admin Bot',
+    category: 'comms',
+    module: 'Адмінка',
+    icon: 'Shield',
+    description: 'Окремий бот для адмін-сповіщень і OTP автентифікації.',
+    isRequired: false,
+    requiredFields: [
+      { key: 'bot_token', label: 'Bot Token', type: 'password', required: true },
+    ],
+    envMapping: { bot_token: 'TELEGRAM_ADMIN_BOT_TOKEN' },
+  },
+];
+
 // ================================================================
-//  ПОВНИЙ РЕЄСТР (47 сервісів)
+//  ПОВНИЙ РЕЄСТР
 // ================================================================
 
 export const SERVICE_REGISTRY: ServiceDefinition[] = [
@@ -777,6 +849,7 @@ export const SERVICE_REGISTRY: ServiceDefinition[] = [
   ...international,
   ...builtinFeatures,
   ...marketplace,
+  ...additionalServices,
 ];
 
 // ================================================================

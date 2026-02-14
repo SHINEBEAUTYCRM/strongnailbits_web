@@ -30,7 +30,8 @@ export default function ResetPasswordPage() {
       }
 
       setSent(true);
-    } catch {
+    } catch (err) {
+      console.error('[ResetPassword] Request failed:', err);
       setError("Помилка мережі");
     }
     setLoading(false);

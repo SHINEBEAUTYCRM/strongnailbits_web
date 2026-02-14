@@ -82,7 +82,10 @@ export function ProductForm({
         setTimeout(() => setSuccess(""), 3000);
         router.refresh();
       }
-    } catch { setError("Network error"); }
+    } catch (err) {
+      console.error('[ProductForm] Save failed:', err);
+      setError("Network error");
+    }
     setSaving(false);
   };
 
@@ -97,7 +100,10 @@ export function ProductForm({
       });
       const data = await res.json();
       if (res.ok && data.ok) { router.push("/admin/products"); } else { setError(data.error || "Помилка видалення"); }
-    } catch { setError("Network error"); }
+    } catch (err) {
+      console.error('[ProductForm] Delete failed:', err);
+      setError("Network error");
+    }
     setDeleting(false);
   };
 
