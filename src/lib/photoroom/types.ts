@@ -99,7 +99,7 @@ export interface BatchQueueItem {
 }
 
 /** Контекст використання Image Studio */
-export type StudioContext = 'category' | 'product' | 'banner' | 'landing';
+export type StudioContext = 'category' | 'product' | 'banner' | 'landing' | 'brand-logo' | 'brand-banner';
 
 /** Помилка PhotoRoom API */
 export interface PhotoRoomError {

@@ -125,13 +125,15 @@ export function getTemplateById(id: string): TemplateSize | undefined {
 
 /** Отримати рекомендований пресет для контексту */
 export function getSuggestedTemplate(
-  context: 'category' | 'product' | 'banner' | 'landing'
+  context: 'category' | 'product' | 'banner' | 'landing' | 'brand-logo' | 'brand-banner'
 ): TemplateSize {
   const map: Record<string, string> = {
     category: 'category-hero',
     product: 'product-main',
     banner: 'banner-full',
     landing: 'banner-full',
+    'brand-logo': 'product-main',
+    'brand-banner': 'banner-full',
   };
   return getTemplateById(map[context]) ?? templateSizes[1];
 }

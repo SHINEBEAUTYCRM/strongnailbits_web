@@ -128,8 +128,23 @@ export async function getCategoryProductCount(categoryId: string) {
 /* ─── Brands ─── */
 export async function getBrands() {
   const supabase = createAdminClient();
-  const { data } = await supabase.from("brands").select("id, cs_cart_id, name, slug, logo_url, is_featured, position, country").order("position", { ascending: true });
+  const { data } = await supabase
+    .from("brands")
+    .select("id, cs_cart_id, name, slug, logo_url, banner_url, description_uk, is_featured, position, country, website_url, status")
+    .order("position", { ascending: true });
   return data ?? [];
+}
+
+export async function getBrandById(id: string) {
+  const supabase = createAdminClient();
+  const { data } = await supabase.from("brands").select("*").eq("id", id).single();
+  return data;
+}
+
+export async function getBrandProductCount(brandId: string): Promise<number> {
+  const supabase = createAdminClient();
+  const { count } = await supabase.from("products").select("id", { count: "exact", head: true }).eq("brand_id", brandId);
+  return count ?? 0;
 }
 
 export async function getBrandList() {

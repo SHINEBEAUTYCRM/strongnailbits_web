@@ -6,83 +6,88 @@ import { Save, Loader2, Trash2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { ImageUploadWithStudio } from "./image-studio/ImageUploadWithStudio";
 
-interface ParentOption { cs_cart_id: number; name_uk: string; depth: number; }
-
-interface CategoryData {
+interface BrandData {
   id?: string;
-  name_uk: string;
-  name_ru: string;
+  name: string;
   slug: string;
   description_uk: string;
   description_ru: string;
-  image_url: string;
+  logo_url: string;
+  banner_url: string;
+  country: string;
+  website_url: string;
+  is_featured: boolean;
   position: string;
   status: string;
-  parent_cs_cart_id: string;
+  meta_title: string;
+  meta_description: string;
 }
 
-const EMPTY: CategoryData = {
-  name_uk: "", name_ru: "", slug: "", description_uk: "", description_ru: "",
-  image_url: "", position: "0", status: "active", parent_cs_cart_id: "",
+const EMPTY: BrandData = {
+  name: "", slug: "", description_uk: "", description_ru: "",
+  logo_url: "", banner_url: "", country: "", website_url: "",
+  is_featured: false, position: "0", status: "active",
+  meta_title: "", meta_description: "",
 };
 
-export function CategoryForm({
+export function BrandForm({
   initial,
-  parents,
   productCount,
 }: {
-  initial?: CategoryData;
-  parents: ParentOption[];
+  initial?: BrandData;
   productCount?: number;
 }) {
   const router = useRouter();
   const isEdit = !!initial?.id;
-  const [form, setForm] = useState<CategoryData>(initial ?? EMPTY);
+  const [form, setForm] = useState<BrandData>(initial ?? EMPTY);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const set = (key: keyof CategoryData, val: string) => setForm((f) => ({ ...f, [key]: val }));
+  const set = (key: keyof BrandData, val: string | boolean) => setForm((f) => ({ ...f, [key]: val }));
 
   const handleSave = async () => {
-    if (!form.name_uk) { setError("Назва обов'язкова"); return; }
+    if (!form.name) { setError("Назва обов'язкова"); return; }
     setSaving(true); setError(""); setSuccess("");
     try {
-      const res = await fetch("/api/admin/categories", {
+      const res = await fetch("/api/admin/brands", {
         method: isEdit ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, id: initial?.id }),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) { setError(data.error || "Помилка збереження"); setSaving(false); return; }
-      if (!isEdit && data.category?.id) {
-        router.push(`/admin/categories/${data.category.id}`);
+      if (!isEdit && data.brand?.id) {
+        router.push(`/admin/brands/${data.brand.id}`);
       } else {
         setSuccess("Збережено");
         setTimeout(() => setSuccess(""), 3000);
         router.refresh();
       }
     } catch (err) {
-      console.error('[CategoryForm] Save failed:', err);
+      console.error('[BrandForm] Save failed:', err);
       setError("Network error");
     }
     setSaving(false);
   };
 
   const handleDelete = async () => {
-    if (!confirm("Видалити категорію? Цю дію не можна відмінити.")) return;
+    const msg = productCount
+      ? `Бренд має ${productCount} товарів. Видалити бренд?`
+      : "Видалити бренд? Цю дію не можна відмінити.";
+    if (!confirm(msg)) return;
     setDeleting(true); setError("");
     try {
-      const res = await fetch("/api/admin/categories", {
+      const res = await fetch("/api/admin/brands", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: initial?.id }),
       });
       const data = await res.json();
-      if (res.ok && data.ok) { router.push("/admin/categories"); } else { setError(data.error || "Помилка видалення"); }
+      if (res.ok && data.ok) { router.push("/admin/brands"); } else { setError(data.error || "Помилка видалення"); }
     } catch (err) {
-      console.error('[CategoryForm] Delete failed:', err);
+      console.error('[BrandForm] Delete failed:', err);
       setError("Network error");
     }
     setDeleting(false);
@@ -93,10 +98,10 @@ export function CategoryForm({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Link href="/admin/categories" className="p-2 rounded-lg" style={{ color: "var(--a-text-3)" }}><ArrowLeft className="w-5 h-5" /></Link>
+          <Link href="/admin/brands" className="p-2 rounded-lg" style={{ color: "var(--a-text-3)" }}><ArrowLeft className="w-5 h-5" /></Link>
           <div>
-            <h1 className="text-xl font-semibold" style={{ color: "var(--a-text)" }}>{isEdit ? "Редагувати категорію" : "Нова категорія"}</h1>
-            {isEdit && productCount !== undefined && <p className="text-xs mt-0.5" style={{ color: "var(--a-text-4)" }}>{productCount} товарів у категорії</p>}
+            <h1 className="text-xl font-semibold" style={{ color: "var(--a-text)" }}>{isEdit ? "Редагувати бренд" : "Новий бренд"}</h1>
+            {isEdit && productCount !== undefined && <p className="text-xs mt-0.5" style={{ color: "var(--a-text-4)" }}>{productCount} товарів</p>}
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -119,50 +124,70 @@ export function CategoryForm({
         <div className="lg:col-span-2 space-y-6">
           {/* Basic */}
           <Section title="Основне">
-            <Field label="Назва (UK) *" value={form.name_uk} onChange={(v) => set("name_uk", v)} />
-            <Field label="Назва (RU)" value={form.name_ru} onChange={(v) => set("name_ru", v)} />
+            <Field label="Назва *" value={form.name} onChange={(v) => set("name", v)} />
             <Field label="Slug" value={form.slug} onChange={(v) => set("slug", v)} placeholder="Авто-генерація з назви" />
+            <Field label="Країна" value={form.country} onChange={(v) => set("country", v)} />
+            <Field label="Вебсайт" value={form.website_url} onChange={(v) => set("website_url", v)} placeholder="https://" />
           </Section>
 
           {/* Description */}
           <Section title="Опис">
-            <TextArea label="Опис (UK)" value={form.description_uk} onChange={(v) => set("description_uk", v)} rows={6} />
+            <TextArea label="Опис (UK)" value={form.description_uk} onChange={(v) => set("description_uk", v)} rows={4} />
             <TextArea label="Опис (RU)" value={form.description_ru} onChange={(v) => set("description_ru", v)} rows={4} />
           </Section>
 
-          {/* Image */}
-          <Section title="Зображення">
-            <ImageUploadWithStudio
-              value={form.image_url}
-              onChange={(url) => set("image_url", url)}
-              context="category"
-              entityId={initial?.id || "new"}
-              suggestedSize={{ width: 1200, height: 400 }}
-              label="Зображення категорії"
-            />
-            <p className="text-[11px] mt-1.5" style={{ color: "var(--a-text-5)" }}>Рекомендовано: 400×400 px · PNG · Прозорий фон</p>
+          {/* SEO */}
+          <Section title="SEO">
+            <Field label="Meta Title" value={form.meta_title} onChange={(v) => set("meta_title", v)} />
+            <TextArea label="Meta Description" value={form.meta_description} onChange={(v) => set("meta_description", v)} rows={2} />
           </Section>
         </div>
 
         {/* Right — sidebar */}
         <div className="space-y-6">
-          {/* Status */}
-          <Section title="Статус">
-            <Select label="Статус" value={form.status} onChange={(v) => set("status", v)} options={[{ v: "active", l: "Активна" }, { v: "disabled", l: "Вимкнена" }]} />
-            <p className="text-[11px] mt-2" style={{ color: "var(--a-text-5)" }}>Вимкнена категорія не відображається на сайті та в каталозі</p>
+          {/* Logo */}
+          <Section title="Логотип">
+            <ImageUploadWithStudio
+              value={form.logo_url}
+              onChange={(url) => set("logo_url", url)}
+              context="brand-logo"
+              entityId={initial?.id || "new"}
+              suggestedSize={{ width: 400, height: 200 }}
+              label="Логотип бренду"
+            />
+            <p className="text-[11px] mt-1.5" style={{ color: "var(--a-text-5)" }}>400×200 px · PNG · Прозорий фон</p>
           </Section>
 
-          {/* Hierarchy */}
-          <Section title="Ієрархія">
-            <Select label="Батьківська категорія" value={form.parent_cs_cart_id} onChange={(v) => set("parent_cs_cart_id", v)}
-              options={[{ v: "", l: "— Кореневий рівень —" }, ...parents.map((p) => ({ v: String(p.cs_cart_id), l: "—".repeat(p.depth) + " " + p.name_uk }))]} />
-            <p className="text-[11px] mt-2" style={{ color: "var(--a-text-5)" }}>Визначає місце категорії в дереві навігації</p>
+          {/* Banner */}
+          <Section title="Банер бренду">
+            <ImageUploadWithStudio
+              value={form.banner_url}
+              onChange={(url) => set("banner_url", url)}
+              context="brand-banner"
+              entityId={initial?.id || "new"}
+              suggestedSize={{ width: 1200, height: 300 }}
+              label="Банер бренду"
+            />
+            <p className="text-[11px] mt-1.5" style={{ color: "var(--a-text-5)" }}>1200×300 px · JPG/WebP</p>
           </Section>
 
-          {/* Sort */}
-          <Section title="Сортування">
+          {/* Settings */}
+          <Section title="Налаштування">
+            <Select label="Статус" value={form.status} onChange={(v) => set("status", v)} options={[{ v: "active", l: "Активний" }, { v: "disabled", l: "Вимкнений" }]} />
+            <div>
+              <label className="flex items-center gap-3 cursor-pointer py-1">
+                <input
+                  type="checkbox"
+                  checked={form.is_featured}
+                  onChange={(e) => set("is_featured", e.target.checked)}
+                  className="w-4 h-4 rounded accent-purple-500"
+                />
+                <span className="text-sm" style={{ color: "var(--a-text-2)" }}>Featured бренд</span>
+              </label>
+              <p className="text-[11px] mt-1" style={{ color: "var(--a-text-5)" }}>Відображається на головній сторінці</p>
+            </div>
             <Field label="Позиція" value={form.position} onChange={(v) => set("position", v)} type="number" />
-            <p className="text-[11px] mt-2" style={{ color: "var(--a-text-5)" }}>Менше число = вище в списку</p>
+            <p className="text-[11px] mt-1" style={{ color: "var(--a-text-5)" }}>Менше число = вище в списку</p>
           </Section>
         </div>
       </div>

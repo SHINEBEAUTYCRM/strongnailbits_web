@@ -172,6 +172,7 @@ export function ProductForm({
                 suggestedSize={{ width: 1000, height: 1000 }}
                 label=""
               />
+              <p className="text-[11px] mt-1.5" style={{ color: "var(--a-text-5)" }}>Рекомендовано: 800×800 px · JPG/WebP · Білий фон</p>
             </div>
 
             <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--a-border)" }}>
@@ -185,6 +186,7 @@ export function ProductForm({
                 ))}
                 <ImageUpload onUpload={(url) => set("images", [...form.images, url])} compact />
               </div>
+              <p className="text-[11px] mt-1.5" style={{ color: "var(--a-text-5)" }}>800×800 px · до 10 фото · JPG/WebP</p>
 
               {/* Manual URL fallback */}
               <details className="mt-2">
