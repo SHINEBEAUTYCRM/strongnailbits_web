@@ -1,4 +1,4 @@
-import { HeroBannerClient } from "./HeroBannerClient";
+import { HeroBannerClient, type SlideData } from "./HeroBannerClient";
 
 /**
  * HeroBanner — server component wrapper.
@@ -6,7 +6,7 @@ import { HeroBannerClient } from "./HeroBannerClient";
  * then hydrates the interactive slider on the client.
  */
 
-const SLIDES = [
+const SLIDES: readonly SlideData[] = [
   {
     title: "Все для манікюру\nта педикюру",
     subtitle:
@@ -34,9 +34,9 @@ const SLIDES = [
     bg: "bg-gradient-to-br from-[#1a1a2e] to-[#16213e]",
     accent: "text-[#1a1a2e]",
   },
-] as const;
+];
 
-export type HeroSlide = (typeof SLIDES)[number];
+export type HeroSlide = SlideData;
 
 export function HeroBanner() {
   return <HeroBannerClient slides={SLIDES} />;
