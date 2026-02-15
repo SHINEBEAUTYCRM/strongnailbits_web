@@ -5,7 +5,6 @@ import { getLanguage } from "@/lib/language";
 /* Components */
 import { HomeSidebar } from "@/components/home/HomeSidebar";
 import { HeroBannerDynamic } from "@/components/home/HeroBannerDynamic";
-import { TopBar } from "@/components/home/TopBar";
 import { QuickCategoriesDynamic } from "@/components/home/QuickCategoriesDynamic";
 import { ProductSection } from "@/components/home/ProductSection";
 import { DealOfDayDynamic } from "@/components/home/DealOfDayDynamic";
@@ -13,6 +12,7 @@ import { FeaturesDynamic } from "@/components/home/FeaturesDynamic";
 import { B2BCtaDynamic } from "@/components/home/B2BCtaDynamic";
 import { CatalogButton } from "@/components/home/CatalogButton";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import { TrackSection } from "@/components/analytics/TrackSection";
 
 /** ISR: revalidate homepage every 2 minutes */
 export const revalidate = 120;
@@ -158,9 +158,8 @@ export default async function HomePage() {
   const renderSection = (section: any) => {
     switch (section.code) {
       case "top_bar":
-        return topBarLinks.length > 0 ? (
-          <TopBar key={section.id} links={topBarLinks} lang={lang} />
-        ) : null;
+        // TopBar is now rendered in layout.tsx via TopBarWrapper
+        return null;
 
       case "hero_slider":
         return <HeroBannerDynamic key={section.id} />;
@@ -210,14 +209,16 @@ export default async function HomePage() {
 
           return (
             <ScrollReveal key={section.id}>
-              <ProductSection
-                title={title}
-                products={products}
-                lang={lang}
-                linkHref={sc.cta_url || undefined}
-                linkText={ctaText || undefined}
-                priorityCount={showcaseCode === "hits" ? 4 : 0}
-              />
+              <TrackSection code={showcaseCode} title={title}>
+                <ProductSection
+                  title={title}
+                  products={products}
+                  lang={lang}
+                  linkHref={sc.cta_url || undefined}
+                  linkText={ctaText || undefined}
+                  priorityCount={showcaseCode === "hits" ? 4 : 0}
+                />
+              </TrackSection>
             </ScrollReveal>
           );
         }

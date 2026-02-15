@@ -312,6 +312,56 @@ export function trackCustomEvent(name: string, params?: Record<string, unknown>)
 }
 
 // -----------------------------------------------------------------
+//  Промо-блоки
+// -----------------------------------------------------------------
+
+export function trackPromoView(promoId: string, promoName: string, position?: string) {
+  sendSiteEvent('promo_view', { promo_id: promoId, promo_name: promoName, position });
+  gtag('event', 'view_promotion', {
+    creative_name: promoName,
+    creative_slot: position,
+    promotion_id: promoId,
+  });
+}
+
+export function trackPromoClick(promoId: string, promoName: string, position?: string) {
+  sendSiteEvent('promo_click', { promo_id: promoId, promo_name: promoName, position });
+  gtag('event', 'select_promotion', {
+    creative_name: promoName,
+    creative_slot: position,
+    promotion_id: promoId,
+  });
+}
+
+// -----------------------------------------------------------------
+//  Акція дня
+// -----------------------------------------------------------------
+
+export function trackDealView(dealId: string, dealTitle: string) {
+  sendSiteEvent('deal_view', { deal_id: dealId, deal_title: dealTitle });
+}
+
+export function trackDealClick(dealId: string, dealTitle: string) {
+  sendSiteEvent('deal_click', { deal_id: dealId, deal_title: dealTitle });
+}
+
+// -----------------------------------------------------------------
+//  Вітрина товарів
+// -----------------------------------------------------------------
+
+export function trackCollectionView(collectionCode: string, collectionTitle: string) {
+  sendSiteEvent('collection_view', { collection_code: collectionCode, collection_title: collectionTitle });
+}
+
+// -----------------------------------------------------------------
+//  Додавання з головної
+// -----------------------------------------------------------------
+
+export function trackAddToCartFromHome(productId: string, productName: string, section: string) {
+  sendSiteEvent('add_to_cart_from_home', { product_id: productId, product_name: productName, section });
+}
+
+// -----------------------------------------------------------------
 //  GA4 item formatter
 // -----------------------------------------------------------------
 

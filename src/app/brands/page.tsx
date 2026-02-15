@@ -71,7 +71,7 @@ export default async function BrandsPage() {
               {grouped.get(letter)!.map((brand) => (
                 <Link
                   key={brand.id}
-                  href={`/catalog?brands=${brand.slug}`}
+                  href={`/brands/${brand.slug}`}
                   className="group flex flex-col items-center gap-3 rounded-2xl border border-[var(--border)] bg-white p-4 transition-all hover:-translate-y-1 hover:shadow-md"
                 >
                   {brand.logo_url ? (

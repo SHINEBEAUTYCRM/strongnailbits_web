@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { trackPromoView, trackPromoClick } from "@/lib/analytics/tracker";
 
 const AUTO_MS = 5000;
 
@@ -43,6 +44,15 @@ export function HeroBannerClient({ slides }: Props) {
     const t = setInterval(next, AUTO_MS);
     return () => clearInterval(t);
   }, [next, paused]);
+
+  const trackedSlides = useRef<Set<number>>(new Set());
+
+  useEffect(() => {
+    if (!trackedSlides.current.has(cur)) {
+      trackedSlides.current.add(cur);
+      trackPromoView(`slide-${cur}`, slides[cur].title, `hero_slider_${cur}`);
+    }
+  }, [cur, slides]);
 
   const slide = slides[cur];
   const hasImage = !!slide.imageDesktop;
@@ -106,6 +116,7 @@ export function HeroBannerClient({ slides }: Props) {
           </p>
           <Link
             href={slide.href}
+            onClick={() => trackPromoClick(`slide-${cur}`, slide.title, `hero_slider_${cur}`)}
             className="mt-6 inline-flex h-11 items-center rounded-full bg-white px-6 text-[14px] font-bold text-[#1a1a1a] transition-all hover:shadow-lg active:scale-[.97]"
           >
             {slide.cta}

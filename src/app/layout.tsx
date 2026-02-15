@@ -7,6 +7,7 @@ import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import { ValentineHearts } from "@/components/ui/ValentineHearts";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
 import { SiteTracker } from "@/components/analytics/SiteTracker";
+import { TopBarWrapper } from "@/components/layout/TopBarWrapper";
 import { getAnalyticsConfig } from "@/lib/analytics/config";
 import "./globals.css";
 
@@ -122,6 +123,7 @@ export default function RootLayout({
           fbPixelId={analytics.fbPixelId}
         />
         <SiteTracker />
+        <TopBarWrapper />
         <Header />
         <main className="min-h-[calc(100dvh-80px)]">{children}</main>
         <Footer />

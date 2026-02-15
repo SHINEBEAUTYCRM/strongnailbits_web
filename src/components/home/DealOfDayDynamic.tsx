@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { ProductCard } from "@/components/product/ProductCard";
 import { Clock } from "lucide-react";
 import { localizedName, type Lang } from "@/hooks/useLanguage";
+import { trackDealView, trackDealClick } from "@/lib/analytics/tracker";
 
 interface DealProps {
   deal: {
@@ -62,10 +63,18 @@ function useCountdown(endAt: string) {
 
 export function DealOfDayDynamic({ deal, products, lang }: DealProps) {
   const countdown = useCountdown(deal.end_at);
-
-  if (!countdown) return null;
+  const dealTracked = useRef(false);
 
   const title = lang === "ru" ? (deal.title_ru || deal.title_uk) : deal.title_uk;
+
+  useEffect(() => {
+    if (!dealTracked.current && countdown) {
+      dealTracked.current = true;
+      trackDealView(deal.id, deal.title_uk);
+    }
+  }, [countdown, deal.id, deal.title_uk]);
+
+  if (!countdown) return null;
   const subtitle = lang === "ru" ? (deal.subtitle_ru || deal.subtitle_uk) : deal.subtitle_uk;
 
   return (
@@ -132,6 +141,7 @@ export function DealOfDayDynamic({ deal, products, lang }: DealProps) {
         <div className="mt-6 text-center">
           <Link
             href={deal.cta_url}
+            onClick={() => trackDealClick(deal.id, deal.title_uk)}
             className="inline-flex items-center gap-2 rounded-full bg-coral px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#c41e3a]"
           >
             {deal.cta_text_uk || "Всі акції"} →
