@@ -65,10 +65,9 @@ export async function PUT(request: NextRequest) {
       const results = [];
       for (const item of body) {
         if (!item.id) continue;
-        const updates: Record<string, unknown> = {
-          updated_at: new Date().toISOString(),
-        };
+        const updates: Record<string, unknown> = {};
         if (item.sort_order !== undefined) updates.sort_order = item.sort_order;
+        if (item.is_enabled !== undefined) updates.is_enabled = item.is_enabled;
 
         const { data, error } = await supabase
           .from('quick_categories')
@@ -102,7 +101,6 @@ export async function PUT(request: NextRequest) {
         updates[key] = body[key];
       }
     }
-    updates.updated_at = new Date().toISOString();
 
     const { data, error } = await supabase
       .from('quick_categories')
