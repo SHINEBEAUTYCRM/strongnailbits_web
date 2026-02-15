@@ -45,6 +45,35 @@ const sectionLink: Record<string, string | null> = {
   help_contacts:    null,
 };
 
+/* ─── Static descriptions for team (not stored in DB) ─── */
+const SECTION_DESCRIPTIONS: Record<string, string> = {
+  top_bar: "Сервісна панель над шапкою: посилання на акції, доставку, контакти, телефон і графік роботи. Видно тільки на десктопі.",
+  hero_slider: "Головний банер-слайдер на всю ширину. Керується через Контент → Банери (тип hero_slider). Рекомендований розмір: 1920×600 px.",
+  promo_strip: "Тонка промо-стрічка під банером. Керується через Контент → Банери (тип promo_strip). Розмір: 1920×80 px.",
+  quick_categories: "8-12 кнопок швидких категорій під банером. Налаштуйте які категорії показувати і в якому порядку.",
+  deal_of_day: "Блок «Акція дня» з таймером зворотного відліку. Після закінчення таймера блок автоматично ховається.",
+  showcase_hits: "Вітрина «Хіти продажів» — товари відсортовані за популярністю. Можна змінити правило або вибрати товари вручну.",
+  showcase_new: "Вітрина «Новинки» — нещодавно додані товари з позначкою NEW.",
+  showcase_sale: "Вітрина «Розпродаж» — товари зі знижкою (де є стара ціна).",
+  features: "Блок «Сервіс і довіра» — 4 іконки з перевагами (доставка, оптові ціни, оригінал, підтримка).",
+  b2b_cta: "Промо-блок для оптових клієнтів з кнопкою реєстрації. Текст і теги редагуються.",
+  help_contacts: "Блок з контактами і кнопками месенджерів внизу сторінки. Поки що в розробці.",
+};
+
+/* ─── Button hint by code ─── */
+const SECTION_LINK_HINT: Record<string, string> = {
+  hero_slider: "(Банери)",
+  promo_strip: "(Банери)",
+  showcase_hits: "(Вітрини)",
+  showcase_new: "(Вітрини)",
+  showcase_sale: "(Вітрини)",
+  quick_categories: "(Категорії)",
+  deal_of_day: "(Акція дня)",
+  features: "(Сервіс)",
+  b2b_cta: "(Контент)",
+  top_bar: "(Top Bar)",
+};
+
 /* ─── Component ─── */
 export function HomepageSectionsClient({ initialSections }: { initialSections: Section[] }) {
   const [sections, setSections] = useState<Section[]>(
@@ -166,7 +195,7 @@ export function HomepageSectionsClient({ initialSections }: { initialSections: S
               />
             </button>
 
-            {/* Title + badge */}
+            {/* Title + badge + description */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span
@@ -180,6 +209,14 @@ export function HomepageSectionsClient({ initialSections }: { initialSections: S
               <span className="text-[11px]" style={{ color: "var(--a-text-3)" }}>
                 {section.code}
               </span>
+              {SECTION_DESCRIPTIONS[section.code] && (
+                <p
+                  className="text-[11px] mt-0.5 leading-snug"
+                  style={{ color: "var(--a-text-4)" }}
+                >
+                  {SECTION_DESCRIPTIONS[section.code]}
+                </p>
+              )}
             </div>
 
             {/* Arrow buttons */}
@@ -225,6 +262,9 @@ export function HomepageSectionsClient({ initialSections }: { initialSections: S
               >
                 <Settings className="w-3.5 h-3.5" />
                 Налаштувати
+                {SECTION_LINK_HINT[section.code] && (
+                  <span className="opacity-50 font-normal">{SECTION_LINK_HINT[section.code]}</span>
+                )}
                 <ExternalLink className="w-3 h-3 opacity-50" />
               </Link>
             ) : (
