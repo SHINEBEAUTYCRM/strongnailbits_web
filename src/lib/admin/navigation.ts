@@ -44,6 +44,7 @@ import {
   Store,
   ShieldCheck,
   Wallet,
+  Home,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -110,7 +111,6 @@ export const adminNavigation: NavSection[] = [
     children: [
       { label: "Marketing Hub", href: "/admin/marketing", icon: BarChart3 },
       { label: "SmartЛійки", href: "/admin/funnels", icon: Target },
-      { label: "Банери", href: "/admin/banners", icon: ImageIcon },
       { label: "Знижки / Промо", href: "/admin/discounts", icon: Percent, badge: "скоро" },
       { label: "Реклама", href: "/admin/marketing/ads", icon: Rss, badge: "скоро" },
       { label: "Комунікації", href: "/admin/marketing/comms", icon: Mail, badge: "скоро" },
@@ -122,6 +122,8 @@ export const adminNavigation: NavSection[] = [
     label: "Контент",
     icon: FileText,
     children: [
+      { label: "Головна сторінка", href: "/admin/homepage", icon: Home },
+      { label: "Банери", href: "/admin/banners", icon: ImageIcon },
       { label: "Сторінки", href: "/admin/pages", icon: FileText, badge: "скоро" },
       { label: "Блог", href: "/admin/blog", icon: BookOpen, badge: "скоро" },
     ],

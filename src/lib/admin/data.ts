@@ -173,6 +173,95 @@ export async function getSyncLogs(limit = 20) {
   return data ?? [];
 }
 
+/* ─── Homepage Sections ─── */
+export async function getHomepageSections() {
+  const supabase = createAdminClient();
+  const { data } = await supabase.from("homepage_sections").select("*").order("sort_order");
+  return data ?? [];
+}
+
+/* ─── Product Showcases ─── */
+export async function getShowcases() {
+  const supabase = createAdminClient();
+  const { data } = await supabase.from("product_showcases").select("*").order("sort_order");
+  return data ?? [];
+}
+
+export async function getShowcaseByCode(code: string) {
+  const supabase = createAdminClient();
+  const { data } = await supabase.from("product_showcases").select("*").eq("code", code).single();
+  return data;
+}
+
+export async function getShowcaseById(id: string) {
+  const supabase = createAdminClient();
+  const { data } = await supabase.from("product_showcases").select("*").eq("id", id).single();
+  return data;
+}
+
+/* ─── Deal of Day ─── */
+export async function getDeals() {
+  const supabase = createAdminClient();
+  const { data } = await supabase.from("deal_of_day").select("*").order("created_at", { ascending: false });
+  return data ?? [];
+}
+
+export async function getActiveDeal() {
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("deal_of_day")
+    .select("*")
+    .eq("is_enabled", true)
+    .gt("end_at", new Date().toISOString())
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
+  return data;
+}
+
+/* ─── Quick Categories ─── */
+export async function getQuickCategories() {
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("quick_categories")
+    .select("*, categories(id, name_uk, name_ru, slug, image_url)")
+    .order("sort_order");
+  return data ?? [];
+}
+
+/* ─── Service Features ─── */
+export async function getServiceFeatures() {
+  const supabase = createAdminClient();
+  const { data } = await supabase.from("service_features").select("*").eq("is_enabled", true).order("sort_order");
+  return data ?? [];
+}
+
+export async function getAllServiceFeatures() {
+  const supabase = createAdminClient();
+  const { data } = await supabase.from("service_features").select("*").order("sort_order");
+  return data ?? [];
+}
+
+/* ─── Content Blocks ─── */
+export async function getContentBlock(code: string) {
+  const supabase = createAdminClient();
+  const { data } = await supabase.from("content_blocks").select("*").eq("code", code).single();
+  return data;
+}
+
+/* ─── Top Bar Links ─── */
+export async function getTopBarLinks() {
+  const supabase = createAdminClient();
+  const { data } = await supabase.from("top_bar_links").select("*").eq("is_enabled", true).order("sort_order");
+  return data ?? [];
+}
+
+export async function getAllTopBarLinks() {
+  const supabase = createAdminClient();
+  const { data } = await supabase.from("top_bar_links").select("*").order("sort_order");
+  return data ?? [];
+}
+
 /* ─── Banners ─── */
 export async function getBanners(params?: { type?: string; status?: string }) {
   const supabase = createAdminClient();
