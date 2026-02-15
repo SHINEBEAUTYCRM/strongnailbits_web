@@ -198,7 +198,7 @@ const freeUtilities: ServiceDefinition[] = [
   {
     slug: 'nova-poshta',
     name: 'Нова Пошта API',
-    category: 'comms',
+    category: 'operations',
     module: 'Замовлення / Доставка',
     icon: 'Truck',
     description: 'Пошук відділень, розрахунок вартості, створення ТТН, трекінг посилок. Основний перевізник.',
@@ -222,7 +222,7 @@ const freeUtilities: ServiceDefinition[] = [
   {
     slug: 'privatbank',
     name: 'PrivatBank API',
-    category: 'international',
+    category: 'operations',
     module: 'International',
     icon: 'Landmark',
     description: 'Курси валют щодня (USD, EUR, PLN, CZK, RON).',
@@ -333,7 +333,7 @@ const paidMarketing: ServiceDefinition[] = [
   {
     slug: 'alphasms',
     name: 'AlphaSMS',
-    category: 'comms',
+    category: 'operations',
     module: 'Авторизація / Комунікації',
     icon: 'Smartphone',
     description: 'SMS OTP для входу клієнтів, Viber-розсилки. Основний SMS-гейтвей.',
@@ -351,7 +351,7 @@ const paidMarketing: ServiceDefinition[] = [
   {
     slug: 'turbosms',
     name: 'TurboSMS',
-    category: 'comms',
+    category: 'operations',
     module: 'Комунікації',
     icon: 'MessageSquare',
     description: 'SMS-гейтвей для України. Alpha-name відправника.',
@@ -595,8 +595,8 @@ const international: ServiceDefinition[] = [
   {
     slug: 'liqpay',
     name: 'LiqPay',
-    category: 'international',
-    module: 'International',
+    category: 'operations',
+    module: 'Замовлення / Оплата',
     icon: 'CreditCard',
     description: 'Оплата в Україні (UAH). Інтернет-еквайринг від ПриватБанку.',
     isRequired: false,
@@ -788,6 +788,46 @@ const seoServices: ServiceDefinition[] = [
 //  M. Додаткові сервіси
 // -----------------------------------------------------------------
 
+// -----------------------------------------------------------------
+//  N. Операційні додаткові (Checkbox, monobank)
+// -----------------------------------------------------------------
+
+const operationsExtra: ServiceDefinition[] = [
+  {
+    slug: 'checkbox',
+    name: 'Checkbox ПРРО',
+    category: 'operations',
+    module: 'Замовлення / Фіскалізація',
+    icon: 'Receipt',
+    description: 'Фіскальні чеки (ПРРО). Автоматичне створення чека після оплати. Sandbox для тестування.',
+    isRequired: true,
+    docsUrl: 'https://docs.checkbox.ua',
+    requiredFields: [
+      { key: 'api_key', label: 'API Key (X-Token)', type: 'password', required: true, helpText: 'Токен з кабінету Checkbox → API' },
+      { key: 'cashier_login', label: 'Логін касира', type: 'text', required: true },
+      { key: 'cashier_password', label: 'Пароль касира', type: 'password', required: true },
+      { key: 'license_key', label: 'Ліцензійний ключ', type: 'password', required: false, helpText: 'Ключ каси (для prod)' },
+      { key: 'is_sandbox', label: 'Режим', type: 'select', required: true, options: [
+        { value: 'true', label: 'Тестовий (Sandbox)' },
+        { value: 'false', label: 'Бойовий (Production)' },
+      ]},
+    ],
+  },
+  {
+    slug: 'mono-acquiring',
+    name: 'monobank Acquiring',
+    category: 'operations',
+    module: 'Замовлення / Оплата',
+    icon: 'CreditCard',
+    description: 'Прийом онлайн-оплати через monobank. Invoice-based payment links.',
+    isRequired: false,
+    docsUrl: 'https://api.monobank.ua/docs/acquiring.html',
+    requiredFields: [
+      { key: 'token', label: 'X-Token', type: 'password', required: true, helpText: 'Токен з кабінету мерчанта monobank' },
+    ],
+  },
+];
+
 const additionalServices: ServiceDefinition[] = [
   {
     slug: 'voyage-ai',
@@ -849,6 +889,7 @@ export const SERVICE_REGISTRY: ServiceDefinition[] = [
   ...international,
   ...builtinFeatures,
   ...marketplace,
+  ...operationsExtra,
   ...additionalServices,
 ];
 

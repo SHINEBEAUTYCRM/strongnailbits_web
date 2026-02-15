@@ -14,6 +14,7 @@ import {
   Radar, Bug, Link, PenTool, Brush, CreditCard, Banknote, Wallet,
   Truck, ExternalLink, Heart, Star, Building2, ShieldCheck, Split,
   ArrowLeftRight, BarChart, Route, FlaskConical, Search, Facebook,
+  Receipt, Compass, Gauge, Shield, Smartphone,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -26,6 +27,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Radar, Bug, Link, PenTool, Brush, CreditCard, Banknote, Wallet,
   Truck, ExternalLink, Heart, Star, Building2, ShieldCheck, Split,
   ArrowLeftRight, BarChart, Route, FlaskConical, Search, Facebook,
+  Receipt, Compass, Gauge, Shield, Smartphone,
 };
 
 interface IntegrationCardProps {

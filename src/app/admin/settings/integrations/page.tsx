@@ -1,5 +1,5 @@
-import { IntegrationsPageClient } from "./IntegrationsPageClient";
+import { redirect } from 'next/navigation';
 
-export default function IntegrationsPage() {
-  return <IntegrationsPageClient />;
+export default function OldIntegrationsPage() {
+  redirect('/admin/integrations');
 }

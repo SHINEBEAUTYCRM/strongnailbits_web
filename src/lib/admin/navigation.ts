@@ -45,6 +45,7 @@ import {
   ShieldCheck,
   Wallet,
   Home,
+  LayoutGrid,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -150,12 +151,22 @@ export const adminNavigation: NavSection[] = [
     ],
   },
   {
+    id: "integrations",
+    label: "Інтеграції",
+    icon: Plug,
+    href: "/admin/integrations",
+    children: [
+      { label: "Дашборд", href: "/admin/integrations", icon: LayoutGrid },
+      { label: "Журнал подій", href: "/admin/integrations/events", icon: Activity },
+      { label: "API ключі", href: "/admin/api-keys", icon: Key },
+    ],
+  },
+  {
     id: "system",
     label: "Система",
     icon: Settings,
     children: [
       { label: "Синхронізація", href: "/admin/sync", icon: RefreshCw },
-      { label: "Інтеграції", href: "/admin/settings/integrations", icon: Plug },
       { label: "Огляд API", href: "/admin/api", icon: Code2 },
       { label: "Документація", href: "/admin/api-docs", icon: BookOpen },
       { label: "API ключі", href: "/admin/api-keys", icon: Key },

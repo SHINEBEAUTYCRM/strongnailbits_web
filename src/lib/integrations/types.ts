@@ -8,19 +8,21 @@
 // -----------------------------------------------------------------
 
 export type ServiceCategory =
+  | 'operations'      // Нова Пошта, LiqPay, Checkbox, TurboSMS, AlphaSMS
   | 'analytics'       // GA4, GTM, Clarity, PostHog, FB Pixel, Looker
   | 'seo'             // GSC, Serpstat, GBP
   | 'ads'             // Google Ads, FB/IG Ads, TikTok Ads
-  | 'comms'           // eSputnik, TurboSMS, OneSignal, Telegram
+  | 'comms'           // eSputnik, OneSignal, Telegram
   | 'ai'              // Claude, PhotoRoom, FLUX, Banuba
   | 'marketplace-ext' // Prom, Rozetka, Hotline, Admitad
   | 'competitors'     // SearchApi, Apify, Meta Ad Library, Ahrefs, Price Parser
   | 'design'          // Polotno, Fabric.js
-  | 'international'   // LiqPay, Przelewy24, Stripe, Meest, WhitePress
+  | 'international'   // Przelewy24, Stripe, Meest, WhitePress
   | 'marketplace'     // Seller Portal, Moderation, Split Payment, etc.
   | 'builtin';        // Loyalty, UGC/Reviews
 
 export const SERVICE_CATEGORY_LABELS: Record<ServiceCategory, string> = {
+  operations: 'Операційні (доставка, оплата, чеки, SMS)',
   analytics: 'Аналітика та трекінг',
   seo: 'SEO',
   ads: 'Рекламні платформи',
@@ -35,10 +37,11 @@ export const SERVICE_CATEGORY_LABELS: Record<ServiceCategory, string> = {
 };
 
 export const SERVICE_CATEGORY_ORDER: ServiceCategory[] = [
+  'operations',
+  'comms',
   'analytics',
   'seo',
   'ads',
-  'comms',
   'ai',
   'competitors',
   'marketplace-ext',
