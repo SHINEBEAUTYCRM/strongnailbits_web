@@ -109,8 +109,22 @@ export async function getCategories() {
 
 export async function getCategoryList() {
   const supabase = createAdminClient();
-  const { data } = await supabase.from("categories").select("id, name_uk").eq("status", "active").order("name_uk", { ascending: true });
-  return data ?? [];
+  const { data } = await supabase
+    .from("categories")
+    .select("id, name_uk")
+    .eq("status", "active")
+    .order("name_uk", { ascending: true });
+
+  if (!data) return [];
+
+  // Deduplicate by name_uk (case-insensitive) — keep first occurrence
+  const seen = new Set<string>();
+  return data.filter((cat) => {
+    const key = (cat.name_uk || "").trim().toLowerCase();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 export async function getCategoryById(id: string) {
