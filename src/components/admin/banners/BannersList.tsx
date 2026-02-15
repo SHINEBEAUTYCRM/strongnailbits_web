@@ -38,7 +38,11 @@ const STATUS_TABS: { value: StatusFilterValue; label: string }[] = [
 //  Component
 // ----------------------------------------------------------------
 
-export function BannersList() {
+interface BannersListProps {
+  initialType?: string;
+}
+
+export function BannersList({ initialType }: BannersListProps) {
   const banners = useBannersStore((s) => s.banners);
   const isLoading = useBannersStore((s) => s.isLoading);
   const filter = useBannersStore((s) => s.filter);
@@ -49,9 +53,13 @@ export function BannersList() {
   const duplicateBanner = useBannersStore((s) => s.duplicateBanner);
   const toggleActive = useBannersStore((s) => s.toggleActive);
 
-  // Fetch on mount
+  // Apply initialType filter from URL on mount, then fetch
   useEffect(() => {
-    fetchBanners();
+    if (initialType && BANNER_TYPE_OPTIONS.some((o) => o.value === initialType)) {
+      setTypeFilter(initialType as BannerType);
+    } else {
+      fetchBanners();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

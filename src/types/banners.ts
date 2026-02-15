@@ -62,6 +62,16 @@ export const BANNER_TYPE_OPTIONS: { value: BannerType; label: string; icon: stri
   { value: 'stories',         label: 'Stories',          icon: 'smartphone' },
 ];
 
+/** Описи типів банерів для менеджерів */
+export const BANNER_TYPE_DESCRIPTIONS: Record<BannerType, string> = {
+  hero_slider: 'Головний слайдер на всю ширину сторінки. Показується першим на головній. Рекомендовано 3-5 слайдів.',
+  promo_strip: 'Тонка стрічка з акцією/промокодом. Показується під хедером або під слайдером. Можна закрити (×).',
+  category_banner: 'Широкий банер на сторінці категорії. Показується між заголовком і товарами.',
+  side_banner: 'Вертикальний банер в сайдбарі каталогу. Показується збоку від товарів (тільки десктоп).',
+  popup: 'Спливаюче вікно. Показується 1 раз за сесію (або за період). Для акцій, збору email, промокодів.',
+  stories: 'Круглі «сторіс» під хедером (як в Instagram). Клік відкриває повноекранний перегляд.',
+};
+
 /** Placement options */
 export const PLACEMENT_OPTIONS = [
   { value: 'home',     label: 'Головна сторінка' },

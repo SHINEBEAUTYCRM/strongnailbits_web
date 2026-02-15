@@ -32,8 +32,8 @@ const typeBadgeColors: Record<string, { bg: string; text: string }> = {
 
 /* ─── Section code → settings link ─── */
 const sectionLink: Record<string, string | null> = {
-  hero_slider:      "/admin/banners",
-  promo_strip:      "/admin/banners",
+  hero_slider:      "/admin/banners?type=hero_slider",
+  promo_strip:      "/admin/banners?type=promo_strip",
   showcase_hits:    "/admin/homepage/showcases",
   showcase_new:     "/admin/homepage/showcases",
   showcase_sale:    "/admin/homepage/showcases",

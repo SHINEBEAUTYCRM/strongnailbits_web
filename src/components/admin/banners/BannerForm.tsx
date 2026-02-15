@@ -19,7 +19,7 @@ import { ImageUploadWithStudio } from "../image-studio/ImageUploadWithStudio";
 import { BannerTypeSelector } from "./BannerTypeSelector";
 import { BannerStatusBadge } from "./BannerStatusBadge";
 import type { Banner, BannerType } from "@/types/banners";
-import { BANNER_SIZES, PLACEMENT_OPTIONS } from "@/types/banners";
+import { BANNER_SIZES } from "@/types/banners";
 
 /* ─── Types ─── */
 
@@ -160,6 +160,12 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
     setError("");
     setSuccess("");
 
+    // Auto-set placement for types that always go to home
+    const autoPlacement =
+      form.type === 'hero_slider' || form.type === 'stories'
+        ? ['home']
+        : form.placement;
+
     const payload = {
       title: form.title,
       heading: form.heading || null,
@@ -172,7 +178,7 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
       image_mobile: form.image_mobile || null,
       image_alt: form.image_alt || null,
       type: form.type,
-      placement: form.placement,
+      placement: autoPlacement,
       starts_at: form.starts_at ? new Date(form.starts_at).toISOString() : null,
       ends_at: form.ends_at ? new Date(form.ends_at).toISOString() : null,
       is_active: form.is_active,
@@ -265,9 +271,9 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
               disabled={deleting}
               className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors"
               style={{
-                color: "#f87171",
-                background: "#1c1017",
-                border: "1px solid #7f1d1d",
+                color: "var(--a-danger, #f87171)",
+                background: "var(--a-danger-bg, #1c1017)",
+                border: "1px solid var(--a-danger-border, #7f1d1d)",
               }}
             >
               {deleting ? (
@@ -299,9 +305,9 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
         <div
           className="mb-4 px-4 py-2.5 rounded-lg text-sm"
           style={{
-            color: "#f87171",
-            background: "#450a0a",
-            border: "1px solid #7f1d1d",
+            color: "var(--a-danger, #f87171)",
+            background: "var(--a-danger-bg, #450a0a)",
+            border: "1px solid var(--a-danger-border, #7f1d1d)",
           }}
         >
           {error}
@@ -311,9 +317,9 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
         <div
           className="mb-4 px-4 py-2.5 rounded-lg text-sm"
           style={{
-            color: "#4ade80",
-            background: "#052e16",
-            border: "1px solid #166534",
+            color: "var(--a-success, #4ade80)",
+            background: "var(--a-success-bg, #052e16)",
+            border: "1px solid var(--a-success-border, #166534)",
           }}
         >
           {success}
@@ -361,6 +367,18 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
                   height: BANNER_SIZES[form.type].height,
                 }}
               />
+            </div>
+            <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-lg text-[11px]"
+              style={{ backgroundColor: 'var(--a-bg-hover)', color: 'var(--a-text-4)' }}>
+              <span>💡</span>
+              <span>
+                {form.type === 'hero_slider' && 'Завантажте зображення 1920×600 px (або ширше). JPG/WebP, до 2MB. Текст краще розміщувати ліворуч — праву частину може обрізати на мобільних.'}
+                {form.type === 'promo_strip' && 'Зображення необов\'язкове. Стрічка працює з текстом + кольором фону. Якщо потрібне зображення: 1920×80 px.'}
+                {form.type === 'category_banner' && 'Зображення 1200×400 px. Текст на банері опційний — може бути просто картинка.'}
+                {form.type === 'side_banner' && 'Вертикальне зображення 300×600 px. Показується в сайдбарі на десктопі.'}
+                {form.type === 'popup' && 'Зображення 600×800 px (вертикальне). Або без зображення — тільки текст з кнопкою.'}
+                {form.type === 'stories' && 'Квадратне або вертикальне зображення 1080×1920 px. Обрізається в коло у списку, повний розмір при відкритті.'}
+              </span>
             </div>
 
             {form.type === "hero_slider" && (
@@ -747,67 +765,97 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
             </div>
           </Section>
 
-          {/* Placement */}
+          {/* Placement — context-based */}
           <Section title="Розташування">
-            <div className="space-y-2">
-              {PLACEMENT_OPTIONS.map((opt) => (
-                <PlacementCheckbox
-                  key={opt.value}
-                  label={opt.label}
-                  checked={form.placement.includes(opt.value)}
-                  onChange={() => togglePlacement(opt.value)}
-                />
-              ))}
-            </div>
-
-            {/* Category placement */}
-            <div
-              className="mt-3 pt-3"
-              style={{ borderTop: "1px solid var(--a-border)" }}
-            >
-              <p
-                className="text-xs font-medium mb-2"
-                style={{ color: "var(--a-text-3)" }}
-              >
-                Категорії
-              </p>
-              <input
-                type="text"
-                value={catSearch}
-                onChange={(e) => setCatSearch(e.target.value)}
-                placeholder="Пошук категорії..."
-                className="w-full px-3 py-2 rounded-lg text-sm outline-none transition-colors mb-2"
-                style={{
-                  background: "var(--a-bg-card)",
-                  border: "1px solid var(--a-border)",
-                  color: "var(--a-text-body)",
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "var(--a-accent-btn)";
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "var(--a-border)";
-                }}
-              />
-              <div className="max-h-40 overflow-y-auto space-y-1 custom-scrollbar">
-                {filteredCategories.length === 0 && (
-                  <p
-                    className="text-xs py-2 text-center"
-                    style={{ color: "var(--a-text-5)" }}
-                  >
-                    Категорії не знайдено
-                  </p>
-                )}
-                {filteredCategories.map((cat) => (
-                  <PlacementCheckbox
-                    key={cat.id}
-                    label={cat.name_uk}
-                    checked={form.placement.includes(`category:${cat.id}`)}
-                    onChange={() => togglePlacement(`category:${cat.id}`)}
-                  />
-                ))}
+            {(form.type === 'hero_slider' || form.type === 'stories') && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: 'var(--a-bg-hover)', color: 'var(--a-text-3)' }}>
+                <span>ℹ️</span>
+                <span>Цей тип завжди показується тільки на головній сторінці.</span>
               </div>
-            </div>
+            )}
+
+            {form.type === 'promo_strip' && (
+              <div className="space-y-2">
+                <PlacementCheckbox
+                  label="Головна сторінка"
+                  checked={form.placement.includes('home')}
+                  onChange={() => togglePlacement('home')}
+                />
+                <PlacementCheckbox
+                  label="Показувати на всіх сторінках"
+                  checked={form.placement.includes('all')}
+                  onChange={() => togglePlacement('all')}
+                />
+              </div>
+            )}
+
+            {form.type === 'category_banner' && (
+              <div>
+                <p className="text-xs font-medium mb-2" style={{ color: 'var(--a-text-3)' }}>
+                  Оберіть категорії для банера
+                </p>
+                <input
+                  type="text"
+                  value={catSearch}
+                  onChange={(e) => setCatSearch(e.target.value)}
+                  placeholder="Пошук категорії..."
+                  className="w-full px-3 py-2 rounded-lg text-sm outline-none transition-colors mb-2"
+                  style={{ background: 'var(--a-bg-card)', border: '1px solid var(--a-border)', color: 'var(--a-text-body)' }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--a-accent-btn)'; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--a-border)'; }}
+                />
+                <div className="max-h-40 overflow-y-auto space-y-1 custom-scrollbar">
+                  {filteredCategories.length === 0 && (
+                    <p className="text-xs py-2 text-center" style={{ color: 'var(--a-text-5)' }}>
+                      Категорії не знайдено
+                    </p>
+                  )}
+                  {filteredCategories.map((cat) => (
+                    <PlacementCheckbox
+                      key={cat.id}
+                      label={cat.name_uk}
+                      checked={form.placement.includes(`category:${cat.id}`)}
+                      onChange={() => togglePlacement(`category:${cat.id}`)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {form.type === 'side_banner' && (
+              <div className="space-y-2">
+                <PlacementCheckbox
+                  label="В каталозі"
+                  checked={form.placement.includes('catalog')}
+                  onChange={() => togglePlacement('catalog')}
+                />
+                <PlacementCheckbox
+                  label="В категоріях"
+                  checked={form.placement.includes('categories')}
+                  onChange={() => togglePlacement('categories')}
+                />
+              </div>
+            )}
+
+            {form.type === 'popup' && (
+              <div className="space-y-2">
+                <PlacementCheckbox
+                  label="Головна сторінка"
+                  checked={form.placement.includes('home')}
+                  onChange={() => togglePlacement('home')}
+                />
+                <PlacementCheckbox
+                  label="Каталог"
+                  checked={form.placement.includes('catalog')}
+                  onChange={() => togglePlacement('catalog')}
+                />
+                <PlacementCheckbox
+                  label="Всі сторінки"
+                  checked={form.placement.includes('all')}
+                  onChange={() => togglePlacement('all')}
+                />
+              </div>
+            )}
           </Section>
 
           {/* Ordering */}
@@ -881,6 +929,11 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
               </div>
             </Section>
           )}
+
+          {/* Preview */}
+          <Section title="Попередній перегляд">
+            <BannerPreview form={form} />
+          </Section>
 
           {/* Service info */}
           <Section title="Службове">
@@ -1154,6 +1207,77 @@ function AnalyticCard({
       <p className="text-[10px] mt-0.5" style={{ color: "var(--a-text-4)" }}>
         {label}
       </p>
+    </div>
+  );
+}
+
+function BannerPreview({ form }: { form: FormData }) {
+  const size = BANNER_SIZES[form.type];
+  const aspectRatio = size.width / size.height;
+
+  if (form.type === 'hero_slider') {
+    return (
+      <div className="rounded-xl overflow-hidden" style={{ aspectRatio: `${aspectRatio}` }}>
+        <div
+          className="relative w-full h-full flex items-center"
+          style={{
+            backgroundColor: form.bg_color || '#0e0e14',
+            backgroundImage: form.image_desktop ? `url(${form.image_desktop})` : undefined,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        >
+          {form.image_desktop && (
+            <div className="absolute inset-0" style={{ backgroundColor: `rgba(0,0,0,${Number(form.overlay_opacity) / 100})` }} />
+          )}
+          <div className="relative z-10 p-6 max-w-[60%]">
+            {form.heading && <h3 className="text-lg font-bold leading-tight" style={{ color: form.text_color }}>{form.heading}</h3>}
+            {form.subheading && <p className="text-xs mt-1 opacity-80" style={{ color: form.text_color }}>{form.subheading}</p>}
+            {form.button_text && (
+              <span className="inline-block mt-3 px-3 py-1 rounded-full text-[10px] font-semibold bg-white/20 backdrop-blur-sm" style={{ color: form.text_color }}>{form.button_text}</span>
+            )}
+            {form.discount_text && (
+              <span className="absolute top-4 right-4 px-2 py-1 rounded-lg text-xs font-bold bg-red-500 text-white">{form.discount_text}</span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (form.type === 'promo_strip') {
+    return (
+      <div className="rounded-lg px-4 py-2 flex items-center justify-center gap-2 text-xs" style={{ backgroundColor: form.bg_color || '#7c3aed', color: form.text_color || '#fff' }}>
+        {form.heading && <span className="font-medium">{form.heading}</span>}
+        {form.promo_code && <span className="px-2 py-0.5 rounded bg-white/20 font-mono text-[10px]">{form.promo_code}</span>}
+      </div>
+    );
+  }
+
+  if (form.type === 'stories') {
+    return (
+      <div className="flex items-center gap-3">
+        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-purple-500 p-0.5">
+          {form.image_desktop ? (
+            <img src={form.image_desktop} alt="" className="w-full h-full object-cover rounded-full" />
+          ) : (
+            <div className="w-full h-full rounded-full" style={{ background: "var(--a-bg-hover)" }} />
+          )}
+        </div>
+        <span className="text-xs" style={{ color: 'var(--a-text-3)' }}>{form.title || 'Stories'}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl overflow-hidden" style={{ aspectRatio: `${aspectRatio}`, maxHeight: 200 }}>
+      {form.image_desktop ? (
+        <img src={form.image_desktop} alt="" className="w-full h-full object-cover" />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center text-xs" style={{ backgroundColor: form.bg_color || 'var(--a-bg-hover)', color: 'var(--a-text-4)' }}>
+          {size.width}×{size.height}
+        </div>
+      )}
     </div>
   );
 }
