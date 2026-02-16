@@ -626,7 +626,7 @@ export default function SiteSettingsPage() {
                 color: s.enabled ? "#fff" : "var(--a-text-4)",
               }}
             >
-              {s.enabled && <Check className="w-3 h-3" />}
+              {Boolean(s.enabled) && <Check className="w-3 h-3" />}
             </button>
             <span
               className="flex-1 text-sm font-medium"
