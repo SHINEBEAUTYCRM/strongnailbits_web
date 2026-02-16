@@ -55,13 +55,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const { token: _removeToken, ...cleanParams } = params || {};
     const payload = {
       id: "1",
       method,
-      params: { ...params, token },
+      params: cleanParams,
     };
 
-    const res = await fetch(SERPSTAT_API, {
+    const res = await fetch(`${SERPSTAT_API}?token=${encodeURIComponent(token)}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

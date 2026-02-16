@@ -41,14 +41,13 @@ export async function POST(
     try {
       console.log("[Serpstat verify] api_key length:", apiKey.length);
 
-      const serpRes = await fetch("https://api.serpstat.com/v4", {
+      const serpRes = await fetch(`https://api.serpstat.com/v4?token=${encodeURIComponent(apiKey)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: "1",
           method: "SerpstatDomainProcedure.getDomainsInfo",
           params: {
-            token: apiKey,
             domains: ["google.com"],
             se: "g_ua",
           },
