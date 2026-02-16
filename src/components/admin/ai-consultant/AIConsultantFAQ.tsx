@@ -10,7 +10,46 @@ import {
   Loader2,
   HelpCircle,
   Save,
+  ShoppingCart,
+  Truck,
+  CreditCard,
+  Undo2,
+  Package,
+  Star,
+  Sparkles,
+  Tag,
+  BarChart2,
+  MessageCircle,
+  FolderOpen,
+  type LucideIcon,
 } from "lucide-react";
+
+/* ------------------------------------------------------------------ */
+/*  Icon resolver: DB icon string → Lucide component                   */
+/* ------------------------------------------------------------------ */
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  ShoppingCart,
+  Truck,
+  CreditCard,
+  Undo2,
+  Package,
+  Star,
+  Sparkles,
+  Tag,
+  BarChart2,
+  MessageCircle,
+  BookOpen,
+  FolderOpen,
+  HelpCircle,
+};
+
+function CategoryIcon({ name, className, style }: { name: string | null; className?: string; style?: React.CSSProperties }) {
+  if (!name) return null;
+  const Icon = ICON_MAP[name];
+  if (Icon) return <Icon className={className || "w-3.5 h-3.5"} style={style} />;
+  return <FolderOpen className={className || "w-3.5 h-3.5"} style={style} />;
+}
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -310,7 +349,7 @@ export function AIConsultantFAQ() {
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.slug)}
-                className="text-xs font-medium transition-colors"
+                className="flex items-center gap-1.5 text-xs font-medium transition-colors"
                 style={{
                   padding: "6px 14px",
                   borderRadius: 20,
@@ -320,7 +359,8 @@ export function AIConsultantFAQ() {
                   cursor: "pointer",
                 }}
               >
-                {cat.icon ? `${cat.icon} ` : ""}{cat.name} ({countBySlug(cat.slug)})
+                <CategoryIcon name={cat.icon} className="w-3.5 h-3.5" style={{ color: active ? "var(--a-accent)" : "var(--a-text-4)" }} />
+                {cat.name} ({countBySlug(cat.slug)})
               </button>
             );
           })}
@@ -402,7 +442,7 @@ export function AIConsultantFAQ() {
                             background: "var(--a-bg-hover)", color: "var(--a-text-4)",
                           }}
                         >
-                          {entry.ai_faq_categories.icon ? `${entry.ai_faq_categories.icon} ` : ""}{entry.ai_faq_categories.name}
+                          <CategoryIcon name={entry.ai_faq_categories.icon} className="w-3 h-3 inline-block mr-1" style={{ color: "var(--a-text-4)" }} />{entry.ai_faq_categories.name}
                         </span>
                       )}
                     </div>
@@ -492,7 +532,7 @@ export function AIConsultantFAQ() {
                 >
                   <option value="">Без категорії</option>
                   {categories.map((c) => (
-                    <option key={c.id} value={c.id}>{c.icon ? `${c.icon} ` : ""}{c.name}</option>
+                    <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
               </div>
@@ -607,7 +647,7 @@ function InlineForm({
         >
           <option value="">Без категорії</option>
           {categories.map((c) => (
-            <option key={c.id} value={c.id}>{c.icon ? `${c.icon} ` : ""}{c.name}</option>
+            <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
       </div>
