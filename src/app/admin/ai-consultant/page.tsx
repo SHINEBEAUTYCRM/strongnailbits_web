@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { AIConsultantDashboard } from "@/components/admin/ai-consultant/AIConsultantDashboard";
 
 export default function AIConsultantPage() {
-  redirect("/admin/ai-consultant/settings");
+  return <AIConsultantDashboard />;
 }
