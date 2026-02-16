@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { normalizePhone, sendOtpSms } from "@/lib/sms/alphasms";
+import { rateLimit, tooManyRequests } from '@/lib/api/rate-limit';
 import { notifySmsError } from "@/lib/telegram/notify";
 import { trackFunnelEvent } from "@/lib/funnels/tracker";
 
@@ -41,6 +42,9 @@ export async function POST(request: NextRequest) {
 
     const phone = normalizePhone(rawPhone);
 
+    const { allowed } = rateLimit(`otp:${phone}`, 3, 600);
+    if (!allowed) return tooManyRequests();
+
     // Validate Ukrainian phone (must be 12 digits starting with 380)
     if (!phone.match(/^380\d{9}$/)) {
       console.error("[OTP] Invalid phone:", rawPhone, "→ normalized:", phone);
@@ -53,15 +57,6 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createAdminClient();
-
-    // Rate limit check
-    const allowed = await checkRateLimit(supabase, phone);
-    if (!allowed) {
-      return NextResponse.json(
-        { error: "Забагато спроб. Спробуйте через 10 хвилин" },
-        { status: 429 },
-      );
-    }
 
     // Generate OTP
     const code = generateOtp();
