@@ -46,6 +46,7 @@ import {
   Wallet,
   Home,
   LayoutGrid,
+  Globe,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -177,6 +178,7 @@ export const adminNavigation: NavSection[] = [
       { label: "Cron Jobs", href: "/admin/settings/cron", icon: Clock, badge: "скоро" },
       { label: "Тригери", href: "/admin/settings/triggers", icon: Zap, badge: "скоро" },
       { label: "Логи", href: "/admin/settings/logs", icon: ScrollText, badge: "скоро" },
+      { label: "Сайт", href: "/admin/settings/site", icon: Globe },
       { label: "Налаштування", href: "/admin/settings", icon: Settings },
     ],
   },

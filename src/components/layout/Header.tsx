@@ -22,6 +22,7 @@ import { formatPrice } from "@/utils/format";
 import { useCategoryTree, type CatNode } from "@/hooks/useCategoryTree";
 import { useLanguage, localizedName } from "@/hooks/useLanguage";
 import { LanguageSwitcher, LanguageSwitcherMini } from "@/components/ui/LanguageSwitcher";
+import type { SiteContacts } from "@/lib/site-settings";
 
 const CartDrawer = dynamic(
   () => import("@/components/cart/CartDrawer").then((m) => m.CartDrawer),
@@ -32,7 +33,16 @@ const SearchModal = dynamic(
   { ssr: false },
 );
 
-export function Header() {
+interface HeaderProps {
+  contacts?: SiteContacts | null;
+}
+
+export function Header({ contacts }: HeaderProps) {
+  const phoneDisplay = contacts?.phone ?? "+38 (093) 744-38-89";
+  const phoneRaw = contacts?.phone_raw ?? "+380937443889";
+  const scheduleWeekdays = contacts?.schedule?.weekdays ?? "Пн-Пт: 9:00 — 18:00";
+  const telegramUrl = "https://t.me/shineshop_ua";
+  const instagramUrl = "https://www.instagram.com/shineshop.com.ua/";
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
@@ -536,15 +546,15 @@ export function Header() {
                 <div className="mx-4 mt-4 rounded-2xl bg-[#f8f8f8] p-4">
                   <div className="flex flex-col gap-3 text-sm text-[#6b6b7b]">
                     <a
-                      href="tel:+380937443889"
+                      href={`tel:${phoneRaw}`}
                       className="flex items-center gap-2 font-medium text-[#1a1a1a]"
                     >
                       <Phone size={14} />
-                      +38 (093) 744-38-89
+                      {phoneDisplay}
                     </a>
                     <div className="flex items-center gap-2">
                       <Clock size={14} />
-                      Пн-Пт: 9:00 — 18:00
+                      {scheduleWeekdays}
                     </div>
                     <div className="flex items-center gap-3 pt-1">
                       <a
