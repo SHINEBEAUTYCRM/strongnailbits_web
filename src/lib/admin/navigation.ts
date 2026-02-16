@@ -47,6 +47,10 @@ import {
   Home,
   LayoutGrid,
   Globe,
+  Bot,
+  Brain,
+  AlertTriangle,
+  Info,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -160,6 +164,20 @@ export const adminNavigation: NavSection[] = [
       { label: "Дашборд", href: "/admin/integrations", icon: LayoutGrid },
       { label: "Журнал подій", href: "/admin/integrations/events", icon: Activity },
       { label: "API ключі", href: "/admin/api-keys", icon: Key },
+    ],
+  },
+  {
+    id: "ai-consultant",
+    label: "AI Консультант",
+    icon: Bot,
+    children: [
+      { label: "Налаштування", href: "/admin/ai-consultant/settings", icon: Settings },
+      { label: "FAQ база знань", href: "/admin/ai-consultant/faq", icon: BookOpen },
+      { label: "Дизайн віджета", href: "/admin/ai-consultant/widget", icon: Palette },
+      { label: "Менеджери", href: "/admin/ai-consultant/managers", icon: UsersRound },
+      { label: "Робочі години", href: "/admin/ai-consultant/schedule", icon: Clock },
+      { label: "Логи чатів", href: "/admin/ai-consultant/chats", icon: MessageCircle },
+      { label: "Бюджет", href: "/admin/ai-consultant/budget", icon: BarChart2 },
     ],
   },
   {

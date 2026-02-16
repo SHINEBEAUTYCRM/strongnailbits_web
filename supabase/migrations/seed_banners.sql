@@ -21,7 +21,7 @@ INSERT INTO banners (
   2,
   '#1a0533',
   '#FFFFFF',
-  20
+  0.20
 ),
 (
   'Hero: New Brands',
@@ -36,7 +36,7 @@ INSERT INTO banners (
   1,
   '#0a1628',
   '#FFFFFF',
-  25
+  0.25
 ),
 (
   'Hero: B2B Registration',
@@ -51,5 +51,5 @@ INSERT INTO banners (
   1,
   '#14210a',
   '#FFFFFF',
-  15
+  0.15
 );
