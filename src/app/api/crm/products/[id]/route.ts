@@ -45,8 +45,10 @@ export async function GET(
       return crmJson({ error: 'Product not found' }, { status: 404 });
     }
 
-    const brandData = p.brands as Record<string, unknown> | null;
-    const categoryData = p.categories as Record<string, unknown> | null;
+    const brandsRaw = p.brands as unknown;
+    const brandData = Array.isArray(brandsRaw) ? brandsRaw[0] as Record<string, unknown> | undefined : brandsRaw as Record<string, unknown> | null;
+    const categoriesRaw = p.categories as unknown;
+    const categoryData = Array.isArray(categoriesRaw) ? categoriesRaw[0] as Record<string, unknown> | undefined : categoriesRaw as Record<string, unknown> | null;
 
     const product = {
       id: p.id,
