@@ -17,11 +17,13 @@ import {
 } from './helpers';
 import type { ApiContext, ApiTokenRow } from './types';
 
-const SENSITIVE_KEYS = new Set([
+const SENSITIVE_FIELDS = new Set([
   'password', 'tempPassword', 'verificationToken',
   'token', 'secret', 'apiKey', 'api_key',
+  'cardNumber', 'cvv', 'expiry',
 ]);
-const PII_KEYS = new Set(['phone', 'email']);
+
+const PII_FIELDS = new Set(['phone', 'email', 'firstName', 'lastName', 'first_name', 'last_name']);
 
 function maskPII(data: unknown): unknown {
   if (!data || typeof data !== 'object') return data;
@@ -29,10 +31,17 @@ function maskPII(data: unknown): unknown {
 
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(data as Record<string, unknown>)) {
-    if (SENSITIVE_KEYS.has(k)) {
+    if (SENSITIVE_FIELDS.has(k)) {
       out[k] = '[REDACTED]';
-    } else if (PII_KEYS.has(k) && typeof v === 'string' && v.length > 4) {
-      out[k] = v.slice(0, 3) + '***' + v.slice(-2);
+    } else if (PII_FIELDS.has(k) && typeof v === 'string') {
+      if (k === 'phone' && v.length > 6) {
+        out[k] = v.slice(0, 3) + '***' + v.slice(-4);
+      } else if (k === 'email' && v.includes('@')) {
+        const [local, domain] = v.split('@');
+        out[k] = local.slice(0, 2) + '***@' + domain;
+      } else {
+        out[k] = '***';
+      }
     } else if (typeof v === 'object') {
       out[k] = maskPII(v);
     } else {

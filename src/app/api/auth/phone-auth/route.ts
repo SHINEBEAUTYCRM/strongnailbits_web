@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     const phone = normalizePhone(rawPhone);
 
     const { allowed } = rateLimit(`auth:${phone}`, 5, 300);
-    if (!allowed) return tooManyRequests();
+    if (!allowed) return tooManyRequests(300);
 
     const supabase = createAdminClient();
 

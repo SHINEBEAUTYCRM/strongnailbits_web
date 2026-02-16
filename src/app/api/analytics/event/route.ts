@@ -21,8 +21,8 @@ function getDeviceType(ua: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const { allowed } = rateLimit(`event:${getIP(request)}`, 100, 60);
-    if (!allowed) return tooManyRequests();
+    const { allowed } = rateLimit(`event:${getIP(request)}`, 60, 60);
+    if (!allowed) return tooManyRequests(60);
 
     const body = await request.json();
     const {
@@ -41,10 +41,11 @@ export async function POST(request: NextRequest) {
 
     // Білий список event types
     const VALID_EVENTS = new Set([
-      'page_view', 'product_view', 'add_to_cart', 'remove_from_cart',
+      'page_view', 'product_view', 'view_item', 'add_to_cart', 'remove_from_cart',
       'checkout_start', 'purchase', 'search', 'category_view',
       'brand_view', 'wishlist_add', 'wishlist_remove', 'click',
       'scroll', 'session_start', 'filter_apply', 'banner_click',
+      'banner_view', 'phone_click', 'telegram_click',
       'promo_view', 'promo_click', 'deal_view', 'deal_click',
       'collection_view', 'add_to_cart_from_home',
     ]);
@@ -56,6 +57,11 @@ export async function POST(request: NextRequest) {
     // Ліміт розміру payload
     if (JSON.stringify(body).length > 10240) {
       return NextResponse.json({ error: 'Payload too large' }, { status: 413 });
+    }
+
+    // Валідація metadata
+    if (metadata && JSON.stringify(metadata).length > 4096) {
+      return NextResponse.json({ error: 'Metadata too large' }, { status: 413 });
     }
 
     const clientIP =
