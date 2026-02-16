@@ -44,7 +44,7 @@ export function TaskCreateModal({ open, onClose, defaultColumn }: TaskCreateModa
       .select("id, name, avatar_url")
       .eq("is_active", true)
       .order("name")
-      .then(({ data }) => {
+      .then(({ data }: { data: TeamMemberShort[] | null }) => {
         if (data) setTeamMembers(data);
       });
   }, [open, defaultColumn]);
