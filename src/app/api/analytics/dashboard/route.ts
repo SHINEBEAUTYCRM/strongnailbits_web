@@ -5,9 +5,12 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getAdminUser } from "@/lib/admin/auth";
 
 export async function GET(request: NextRequest) {
   try {
+    const admin = await getAdminUser();
+    if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const supabase = createAdminClient();
     const now = new Date();
 

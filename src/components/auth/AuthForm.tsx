@@ -43,6 +43,7 @@ export function AuthForm({ mode, redirect }: AuthFormProps) {
   // OTP timer
   const [otpTimer, setOtpTimer] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const verificationTokenRef = useRef<string | null>(null);
 
   // OTP input refs
   const otpRefs = [
@@ -199,6 +200,11 @@ export function AuthForm({ mode, redirect }: AuthFormProps) {
         throw new Error(data.error || "Невірний код");
       }
 
+      // Зберігаємо verification token для наступних дій
+      if (data.verificationToken) {
+        verificationTokenRef.current = data.verificationToken;
+      }
+
       if (isResetFlow) {
         // After OTP verification in reset flow, go to set new password
         setStep("reset-password");
@@ -237,6 +243,7 @@ export function AuthForm({ mode, redirect }: AuthFormProps) {
           firstName,
           lastName,
           company,
+          verificationToken: verificationTokenRef.current,
         }),
       });
 
@@ -323,7 +330,11 @@ export function AuthForm({ mode, redirect }: AuthFormProps) {
       const res = await fetch("/api/auth/phone-auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, action: "otp-login" }),
+        body: JSON.stringify({
+          phone,
+          action: "otp-login",
+          verificationToken: verificationTokenRef.current,
+        }),
       });
 
       const data = await res.json();
@@ -360,7 +371,12 @@ export function AuthForm({ mode, redirect }: AuthFormProps) {
       const res = await fetch("/api/auth/phone-auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, action: "reset-password", password }),
+        body: JSON.stringify({
+          phone,
+          action: "reset-password",
+          password,
+          verificationToken: verificationTokenRef.current,
+        }),
       });
 
       const data = await res.json();

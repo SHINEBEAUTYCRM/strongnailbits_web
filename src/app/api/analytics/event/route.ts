@@ -6,9 +6,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import crypto from "crypto";
+import { rateLimit, getIP, tooManyRequests } from "@/lib/api/rate-limit";
 
 function hashIP(ip: string): string {
-  return crypto.createHash("sha256").update(ip + "shineshop-salt").digest("hex").slice(0, 16);
+  const salt = process.env.IP_HASH_SALT || 'shineshop-default-salt';
+  return crypto.createHash("sha256").update(ip + salt).digest("hex").slice(0, 16);
 }
 
 function getDeviceType(ua: string): string {
@@ -19,6 +21,9 @@ function getDeviceType(ua: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    const { allowed } = rateLimit(`event:${getIP(request)}`, 100, 60);
+    if (!allowed) return tooManyRequests();
+
     const body = await request.json();
     const {
       event_type,
@@ -34,8 +39,23 @@ export async function POST(request: NextRequest) {
       metadata,
     } = body;
 
-    if (!event_type) {
-      return NextResponse.json({ error: "event_type required" }, { status: 400 });
+    // Білий список event types
+    const VALID_EVENTS = new Set([
+      'page_view', 'product_view', 'add_to_cart', 'remove_from_cart',
+      'checkout_start', 'purchase', 'search', 'category_view',
+      'brand_view', 'wishlist_add', 'wishlist_remove', 'click',
+      'scroll', 'session_start', 'filter_apply', 'banner_click',
+      'promo_view', 'promo_click', 'deal_view', 'deal_click',
+      'collection_view', 'add_to_cart_from_home',
+    ]);
+
+    if (!event_type || typeof event_type !== 'string' || !VALID_EVENTS.has(event_type)) {
+      return NextResponse.json({ error: 'Invalid event_type' }, { status: 400 });
+    }
+
+    // Ліміт розміру payload
+    if (JSON.stringify(body).length > 10240) {
+      return NextResponse.json({ error: 'Payload too large' }, { status: 413 });
     }
 
     const clientIP =

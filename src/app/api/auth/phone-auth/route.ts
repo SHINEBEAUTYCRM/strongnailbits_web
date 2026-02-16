@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { rateLimit, tooManyRequests } from '@/lib/api/rate-limit';
+import { verifyAndConsumeToken } from "@/lib/auth/verification-token";
 import { normalizePhone, phoneVariants } from "@/lib/sms/alphasms";
 import { notifyNewCustomer } from "@/lib/telegram/notify";
 import { trackFunnelEvent } from "@/lib/funnels/tracker";
@@ -33,7 +35,34 @@ export async function POST(request: NextRequest) {
     }
 
     const phone = normalizePhone(rawPhone);
+
+    const { allowed } = rateLimit(`auth:${phone}`, 5, 300);
+    if (!allowed) return tooManyRequests();
+
     const supabase = createAdminClient();
+
+    // ======= ФАЗА A: verification_token — ОПЦІОНАЛЬНИЙ =======
+    const PROTECTED_ACTIONS = ['otp-login', 'reset-password', 'register'];
+
+    if (PROTECTED_ACTIONS.includes(action)) {
+      const { verificationToken } = body;
+
+      if (verificationToken) {
+        const isValid = await verifyAndConsumeToken(phone, verificationToken);
+        if (!isValid) {
+          console.warn(`[Phone Auth] ⚠️ INVALID verification token for ${action}, phone ends: ...${phone.slice(-4)}`);
+          // ФАЗА A: дозволяємо пройти (для зворотної сумісності)
+          // ФАЗА B: return NextResponse.json({ error: 'Токен верифікації невалідний' }, { status: 403 });
+        } else {
+          console.info(`[Phone Auth] ✅ Valid verification token for ${action}`);
+        }
+      } else {
+        console.warn(`[Phone Auth] ⚠️ NO verification token for ${action}, phone ends: ...${phone.slice(-4)}`);
+        // ФАЗА A: дозволяємо пройти
+        // ФАЗА B: return NextResponse.json({ error: 'Необхідна верифікація телефону' }, { status: 403 });
+      }
+    }
+    // ======= END verification token check =======
 
     // ACTION: register — create new user with phone
     if (action === "register") {

@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import BoardCanvas from "./BoardCanvas";
+import BoardLoader from "./BoardLoader";
 
 export default async function BoardPage() {
   const supabase = await createClient();
@@ -80,7 +80,7 @@ export default async function BoardPage() {
 
       {/* Canvas — fills remaining space */}
       <div style={{ flex: 1, minHeight: 0, position: "relative" }}>
-        <BoardCanvas boardId={board.id} />
+        <BoardLoader boardId={board.id} />
       </div>
     </div>
   );

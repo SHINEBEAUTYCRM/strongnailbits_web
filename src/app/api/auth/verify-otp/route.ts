@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { rateLimit, tooManyRequests } from '@/lib/api/rate-limit';
+import { createVerificationToken } from "@/lib/auth/verification-token";
 import { normalizePhone, phoneVariants } from "@/lib/sms/alphasms";
 import { trackFunnelEvent } from "@/lib/funnels/tracker";
 
@@ -18,6 +20,10 @@ export async function POST(request: NextRequest) {
     }
 
     const phone = normalizePhone(rawPhone);
+
+    const { allowed } = rateLimit(`verify:${phone}`, 5, 300);
+    if (!allowed) return tooManyRequests();
+
     const supabase = createAdminClient();
 
     // Find valid OTP
@@ -106,9 +112,21 @@ export async function POST(request: NextRequest) {
       name: existingProfile?.first_name || undefined,
     });
 
+    // === Generate verification token for subsequent actions ===
+    let verificationToken: string | null = null;
+    try {
+      const clientIP = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+      const ua = request.headers.get('user-agent') || '';
+      verificationToken = await createVerificationToken(phone, clientIP, ua);
+    } catch (err) {
+      console.error('[Verify OTP] Token generation failed:', err);
+      // Не блокуємо — токен опціональний у фазі A
+    }
+
     return NextResponse.json({
       success: true,
       verified: true,
+      verificationToken,
       existingUser: !!existingProfile,
       profile: existingProfile
         ? {

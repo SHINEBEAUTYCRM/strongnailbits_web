@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ColumnId, Priority } from "@/types/tasks";
+import { getAdminUser } from "@/lib/admin/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,8 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
+    const admin = await getAdminUser();
+    if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const supabase = createAdminClient();
     const url = new URL(request.url);
 
@@ -103,6 +106,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const admin = await getAdminUser();
+    if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const supabase = createAdminClient();
     const body = await request.json();
 

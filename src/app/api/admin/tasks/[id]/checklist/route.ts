@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getAdminUser } from "@/lib/admin/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,8 @@ interface RouteContext {
 
 export async function GET(_request: NextRequest, context: RouteContext) {
   try {
+    const admin = await getAdminUser();
+    if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { id: taskId } = await context.params;
     const supabase = createAdminClient();
 
@@ -42,6 +45,8 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
+    const admin = await getAdminUser();
+    if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { id: taskId } = await context.params;
     const supabase = createAdminClient();
     const body = await request.json();
@@ -97,6 +102,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
+    const admin = await getAdminUser();
+    if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { id: taskId } = await context.params;
     const supabase = createAdminClient();
     const body = await request.json();

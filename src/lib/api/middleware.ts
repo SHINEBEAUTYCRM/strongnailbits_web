@@ -17,6 +17,31 @@ import {
 } from './helpers';
 import type { ApiContext, ApiTokenRow } from './types';
 
+const SENSITIVE_KEYS = new Set([
+  'password', 'tempPassword', 'verificationToken',
+  'token', 'secret', 'apiKey', 'api_key',
+]);
+const PII_KEYS = new Set(['phone', 'email']);
+
+function maskPII(data: unknown): unknown {
+  if (!data || typeof data !== 'object') return data;
+  if (Array.isArray(data)) return data.map(maskPII);
+
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(data as Record<string, unknown>)) {
+    if (SENSITIVE_KEYS.has(k)) {
+      out[k] = '[REDACTED]';
+    } else if (PII_KEYS.has(k) && typeof v === 'string' && v.length > 4) {
+      out[k] = v.slice(0, 3) + '***' + v.slice(-2);
+    } else if (typeof v === 'object') {
+      out[k] = maskPII(v);
+    } else {
+      out[k] = v;
+    }
+  }
+  return out;
+}
+
 /**
  * Записати лог API-запиту
  */
@@ -39,7 +64,7 @@ async function logApiRequest(params: {
       method: params.method,
       endpoint: params.endpoint,
       status_code: params.statusCode,
-      request_body: truncateBody(params.requestBody),
+      request_body: truncateBody(maskPII(params.requestBody)),
       response_time_ms: params.responseTimeMs,
       error_message: params.errorMessage,
       ip_address: params.ipAddress,
