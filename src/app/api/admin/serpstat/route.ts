@@ -7,25 +7,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin/requireAdmin";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getDefaultTenantId } from "@/lib/integrations/base";
+import { decryptConfig } from "@/lib/integrations/crypto";
 
 export const maxDuration = 30;
 export const dynamic = "force-dynamic";
 
 const SERPSTAT_API = "https://api.serpstat.com/v4";
 
-/** Дістати API-ключ Serpstat з integrations */
 async function getSerpstatToken(): Promise<string | null> {
-  const supabase = createAdminClient();
-  const { data } = await supabase
-    .from("integrations")
-    .select("config")
-    .eq("slug", "serpstat")
-    .eq("is_active", true)
-    .maybeSingle();
+  try {
+    const tenantId = await getDefaultTenantId();
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from("integration_keys")
+      .select("config, is_active")
+      .eq("tenant_id", tenantId)
+      .eq("service_slug", "serpstat")
+      .eq("is_active", true)
+      .maybeSingle();
 
-  if (!data?.config) return null;
-  const cfg = data.config as Record<string, string>;
-  return cfg.api_key || null;
+    if (!data?.config) return null;
+    const decrypted = await decryptConfig(data.config as Record<string, string>);
+    return decrypted.api_key || null;
+  } catch {
+    return null;
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -51,10 +58,7 @@ export async function POST(request: NextRequest) {
     const payload = {
       id: "1",
       method,
-      params: {
-        ...params,
-        token,
-      },
+      params: { ...params, token },
     };
 
     const res = await fetch(SERPSTAT_API, {
