@@ -28,8 +28,19 @@ export async function POST(
   const requiredKeys = Object.keys(config).filter((k) => config[k]);
 
   // —— Serpstat: перевірка токена через API v4 ——
-  if (slug === "serpstat" && config.api_key) {
+  if (slug === "serpstat") {
+    const apiKey = config.api_key || config.apiKey || config.token || "";
+
+    if (!apiKey) {
+      return NextResponse.json({
+        success: false,
+        message: "API ключ Serpstat не вказано. Введіть ключ і спробуйте знову.",
+      });
+    }
+
     try {
+      console.log("[Serpstat verify] api_key length:", apiKey.length);
+
       const serpRes = await fetch("https://api.serpstat.com/v4", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -37,7 +48,7 @@ export async function POST(
           id: "1",
           method: "SerpstatDomainProcedure.getDomainsInfo",
           params: {
-            token: config.api_key,
+            token: apiKey,
             domains: ["google.com"],
             se: "g_ua",
           },
@@ -46,6 +57,7 @@ export async function POST(
       });
 
       const serpData = await serpRes.json();
+      console.log("[Serpstat verify] response:", JSON.stringify(serpData).substring(0, 200));
 
       if (serpData.error) {
         const integration = new SimpleKeyIntegration(slug, requiredKeys);

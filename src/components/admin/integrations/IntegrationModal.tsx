@@ -154,6 +154,7 @@ export function IntegrationModal({
     setVerifying(true);
     setVerifyResult(null);
     try {
+      console.log("[IntegrationModal] verify slug:", service.slug, "config keys:", Object.keys(config), "values exist:", Object.entries(config).map(([k,v]) => `${k}:${v ? v.length : 0}`));
       const res = await fetch(`/api/integrations/${service.slug}/verify`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
