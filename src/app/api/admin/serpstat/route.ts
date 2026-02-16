@@ -1,0 +1,82 @@
+// ================================================================
+//  API: /api/admin/serpstat
+//  Proxy для Serpstat API v4 — всі запити через сервер
+//  POST { method, params }
+// ================================================================
+
+import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin/requireAdmin";
+import { createAdminClient } from "@/lib/supabase/admin";
+
+export const maxDuration = 30;
+export const dynamic = "force-dynamic";
+
+const SERPSTAT_API = "https://api.serpstat.com/v4";
+
+/** Дістати API-ключ Serpstat з integrations */
+async function getSerpstatToken(): Promise<string | null> {
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("integrations")
+    .select("config")
+    .eq("slug", "serpstat")
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (!data?.config) return null;
+  const cfg = data.config as Record<string, string>;
+  return cfg.api_key || null;
+}
+
+export async function POST(request: NextRequest) {
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
+
+  try {
+    const body = await request.json();
+    const { method, params } = body;
+
+    if (!method) {
+      return NextResponse.json({ error: "Missing method" }, { status: 400 });
+    }
+
+    const token = await getSerpstatToken();
+    if (!token) {
+      return NextResponse.json(
+        { error: "Serpstat API ключ не налаштовано. Перейдіть до Інтеграцій → Serpstat." },
+        { status: 400 },
+      );
+    }
+
+    const payload = {
+      id: "1",
+      method,
+      params: {
+        ...params,
+        token,
+      },
+    };
+
+    const res = await fetch(SERPSTAT_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+
+    if (data.error) {
+      return NextResponse.json(
+        { error: data.error.message || "Serpstat API error" },
+        { status: 400 },
+      );
+    }
+
+    return NextResponse.json(data);
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal error" },
+      { status: 500 },
+    );
+  }
+}

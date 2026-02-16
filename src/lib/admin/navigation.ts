@@ -151,7 +151,7 @@ export const adminNavigation: NavSection[] = [
     icon: BarChart2,
     children: [
       { label: "Дашборд", href: "/admin/analytics", icon: BarChart2 },
-      { label: "SEO", href: "/admin/seo", icon: Search, badge: "скоро" },
+      { label: "SEO", href: "/admin/seo", icon: Search },
       { label: "A/B тести", href: "/admin/analytics/ab-tests", icon: FlaskConical, badge: "скоро" },
     ],
   },
