@@ -17,13 +17,14 @@ export default async function ShowcaseEditPage({ params }: Props) {
       .from("categories")
       .select("id, name_uk, cs_cart_id, slug, product_count")
       .eq("status", "active")
-      .is("parent_cs_cart_id", null)
+      .or("parent_cs_cart_id.is.null,parent_cs_cart_id.eq.0")
       .order("position"),
     supabase
       .from("categories")
       .select("id, name_uk, cs_cart_id, parent_cs_cart_id, slug, product_count")
       .eq("status", "active")
       .not("parent_cs_cart_id", "is", null)
+      .neq("parent_cs_cart_id", 0)
       .gt("product_count", 0)
       .order("name_uk"),
     supabase
@@ -31,21 +32,6 @@ export default async function ShowcaseEditPage({ params }: Props) {
       .select("id, name, slug, logo_url")
       .order("name"),
   ]);
-
-  // DEBUG: check what comes back
-  console.log("[ShowcaseEdit] rootCats:", rootCatsRes.data?.length, "error:", rootCatsRes.error?.message);
-  console.log("[ShowcaseEdit] subCats:", subCatsRes.data?.length);
-  console.log("[ShowcaseEdit] brands:", brandsRes.data?.length);
-  if (rootCatsRes.data?.length === 0) {
-    // Check if root categories have parent_cs_cart_id = 0 instead of null
-    const { data: debugCats } = await supabase
-      .from("categories")
-      .select("id, name_uk, parent_cs_cart_id, status")
-      .eq("status", "active")
-      .order("position")
-      .limit(10);
-    console.log("[ShowcaseEdit] DEBUG first 10 active cats:", JSON.stringify(debugCats?.map(c => ({ name: c.name_uk, parent: c.parent_cs_cart_id }))));
-  }
 
   const catalogData = {
     rootCategories: rootCatsRes.data || [],
