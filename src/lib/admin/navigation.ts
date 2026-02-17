@@ -51,6 +51,9 @@ import {
   Brain,
   AlertTriangle,
   Info,
+  FileSpreadsheet,
+  Upload,
+  Download,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -99,6 +102,7 @@ export const adminNavigation: NavSection[] = [
       { label: "Бренди", href: "/admin/brands", icon: Award },
       { label: "Колекції", href: "/admin/collections", icon: Layers, badge: "скоро" },
       { label: "Інвентар", href: "/admin/inventory", icon: Warehouse, badge: "скоро" },
+      { label: "Імпорт / Експорт", href: "/admin/import", icon: FileSpreadsheet },
     ],
   },
   {
