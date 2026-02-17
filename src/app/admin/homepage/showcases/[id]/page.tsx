@@ -17,6 +17,8 @@ export default async function ShowcaseEditPage({ params }: Props) {
     .eq("status", "active")
     .order("name_uk");
 
+  console.log("[ShowcaseEdit] categories loaded:", categories?.length, "first:", categories?.[0]);
+
   if (id === "new") {
     return <ShowcaseForm categories={categories || []} />;
   }
