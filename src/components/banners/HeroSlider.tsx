@@ -81,7 +81,7 @@ export function HeroSlider({ banners }: HeroSliderProps) {
     >
       {/* Slide container */}
       <div
-        className="relative w-full overflow-hidden rounded-none sm:rounded-2xl"
+        className="relative w-full overflow-hidden rounded-xl md:rounded-2xl"
         style={{ backgroundColor: bgColor }}
         onTouchStart={(e) => setTouchStartX(e.touches[0].clientX)}
         onTouchEnd={(e) => {
