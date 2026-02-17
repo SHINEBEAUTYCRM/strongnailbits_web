@@ -103,7 +103,9 @@ async function getShowcases() {
     }),
   );
 
-  return results.filter((s: any) => s._products.length > 0);
+  const final = results.filter((s: any) => s._products.length > 0);
+  console.log("[Homepage] getShowcases returning:", final.length, "showcases with products");
+  return final;
 }
 
 /* ─── Other homepage data (sections, deal, quick-cats, features, etc.) ─── */
@@ -243,6 +245,8 @@ export default async function HomePage() {
       s.code !== "quick_categories",
   );
 
+  console.log("[Homepage] RENDER showcases count:", showcases?.length, "items:", showcases?.map((s: any) => ({ code: s.code, products: s._products?.length })));
+
   return (
     <div className="pb-12 md:pb-16">
       {/* Top Bar */}
@@ -274,11 +278,11 @@ export default async function HomePage() {
       <div className="mx-auto max-w-[1400px] px-4 md:px-6">
         <div className="mt-8 space-y-10 md:mt-12 md:space-y-14">
           {/* Динамічні вітрини з адмінки */}
-          {showcases.map((showcase: any) => {
+          {showcases && showcases.length > 0 && showcases.map((showcase: any) => {
             const title =
               lang === "ru"
-                ? showcase.title_ru || showcase.title_uk
-                : showcase.title_uk;
+                ? showcase.title_ru || showcase.title_uk || showcase.name_ru || showcase.name_uk || "Вітрина"
+                : showcase.title_uk || showcase.name_uk || "Вітрина";
             const ctaText =
               lang === "ru"
                 ? showcase.cta_text_ru || showcase.cta_text_uk || "Дивитись все"
@@ -288,7 +292,7 @@ export default async function HomePage() {
                 <TrackSection code={showcase.code} title={title}>
                   <ProductSection
                     title={title}
-                    products={showcase._products}
+                    products={showcase._products || []}
                     lang={lang}
                     linkHref={showcase.cta_url || "/catalog"}
                     linkText={ctaText}
