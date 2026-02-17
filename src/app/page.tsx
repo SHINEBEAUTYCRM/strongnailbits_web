@@ -250,6 +250,16 @@ export default async function HomePage() {
       s.code !== "quick_categories",
   );
 
+  /* Showcases NOT linked to any homepage_section — render them separately */
+  const linkedShowcaseCodes = new Set(
+    mainSections
+      .filter((s: any) => s.section_type === "product_showcase")
+      .map((s: any) => s.config?.showcase_code),
+  );
+  const unlinkedShowcases = showcases.filter(
+    (sc: any) => !linkedShowcaseCodes.has(sc.code) && showcaseProducts[sc.code]?.length > 0,
+  );
+
   return (
     <div className="pb-12 md:pb-16">
       {/* Top Bar */}
@@ -280,6 +290,30 @@ export default async function HomePage() {
       {/* ── Main sections (full width) ── */}
       <div className="mx-auto max-w-[1400px] px-4 md:px-6">
         <div className="mt-8 space-y-10 md:mt-12 md:space-y-14">
+          {/* Динамічні вітрини з адмінки (не прив'язані до homepage_sections) */}
+          {unlinkedShowcases.map((sc: any) => {
+            const title =
+              lang === "ru" ? sc.title_ru || sc.title_uk : sc.title_uk;
+            const ctaText =
+              lang === "ru"
+                ? sc.cta_text_ru || sc.cta_text_uk
+                : sc.cta_text_uk;
+            return (
+              <ScrollReveal key={sc.id}>
+                <TrackSection code={sc.code} title={title}>
+                  <ProductSection
+                    title={title}
+                    products={showcaseProducts[sc.code]}
+                    lang={lang}
+                    linkHref={sc.cta_url || undefined}
+                    linkText={ctaText || undefined}
+                  />
+                </TrackSection>
+              </ScrollReveal>
+            );
+          })}
+
+          {/* Існуючі секції з homepage_sections */}
           {mainSections.map(renderSection)}
         </div>
       </div>
