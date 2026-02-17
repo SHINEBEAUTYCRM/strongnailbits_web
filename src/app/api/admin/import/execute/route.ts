@@ -154,8 +154,8 @@ export async function POST(request: NextRequest) {
             .select("id")
             .single();
           if (newBrand) {
-            brandId = newBrand.id;
-            brandMap.set(brandLower, brandId);
+            brandId = newBrand.id as string;
+            brandMap.set(brandLower, brandId!);
             newBrands.push(String(productData.brand_name));
           }
         }
