@@ -13,7 +13,7 @@ export default async function ShowcaseEditPage({ params }: Props) {
   const supabase = createAdminClient();
   const { data: categories } = await supabase
     .from("categories")
-    .select("id, name_uk, parent_id, slug")
+    .select("id, name_uk, parent_cs_cart_id, slug")
     .eq("status", "active")
     .order("name_uk");
 

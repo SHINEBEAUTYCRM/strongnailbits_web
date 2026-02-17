@@ -17,7 +17,7 @@ interface RuleData {
 interface CategoryOption {
   id: string;
   name_uk: string;
-  parent_id: string | null;
+  parent_cs_cart_id: string | null;
   slug: string;
 }
 
@@ -301,7 +301,7 @@ export function ShowcaseForm({ initial, categories = [] }: { initial?: ShowcaseD
                     { v: "", l: "— Всі товари —" },
                     ...categories.map((c) => ({
                       v: c.id,
-                      l: c.name_uk + (c.parent_id ? "" : " (розділ)"),
+                      l: c.name_uk + (c.parent_cs_cart_id ? "" : " (розділ)"),
                     })),
                   ]}
                 />
