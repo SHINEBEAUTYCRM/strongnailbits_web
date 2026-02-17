@@ -277,30 +277,33 @@ export default async function HomePage() {
       {/* ── Main sections (full width) ── */}
       <div className="mx-auto max-w-[1400px] px-4 md:px-6">
         <div className="mt-8 space-y-10 md:mt-12 md:space-y-14">
-          {/* Динамічні вітрини з адмінки */}
-          {showcases && showcases.length > 0 && showcases.map((showcase: any) => {
-            const title =
-              lang === "ru"
-                ? showcase.title_ru || showcase.title_uk || showcase.name_ru || showcase.name_uk || "Вітрина"
-                : showcase.title_uk || showcase.name_uk || "Вітрина";
-            const ctaText =
-              lang === "ru"
-                ? showcase.cta_text_ru || showcase.cta_text_uk || "Дивитись все"
-                : showcase.cta_text_uk || "Дивитись все";
-            return (
-              <ScrollReveal key={showcase.id}>
-                <TrackSection code={showcase.code} title={title}>
+          {/* Динамічні вітрини */}
+          {(!showcases || showcases.length === 0) && (
+            <div style={{ background: "red", color: "white", padding: "20px", margin: "20px 0" }}>
+              [DEBUG] Витрин нет: {JSON.stringify(showcases?.length)}
+            </div>
+          )}
+          {showcases && showcases.length > 0 && (
+            <>
+              <div style={{ background: "green", color: "white", padding: "10px", margin: "20px 0" }}>
+                [DEBUG] Витрин: {showcases.length}
+              </div>
+              {showcases.map((showcase: any) => {
+                const title = showcase.title_uk || showcase.name_uk || "Вітрина";
+                const products = showcase._products || [];
+                return (
                   <ProductSection
+                    key={showcase.id}
                     title={title}
-                    products={showcase._products || []}
+                    products={products}
                     lang={lang}
                     linkHref={showcase.cta_url || "/catalog"}
-                    linkText={ctaText}
+                    linkText={showcase.cta_text_uk || "Дивитись все"}
                   />
-                </TrackSection>
-              </ScrollReveal>
-            );
-          })}
+                );
+              })}
+            </>
+          )}
 
           {/* Існуючі секції з homepage_sections */}
           {mainSections.map(renderSection)}
