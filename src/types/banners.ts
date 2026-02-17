@@ -44,7 +44,7 @@ export type BannerUpdate = Partial<BannerInsert>;
 
 /** Розміри за типом банера */
 export const BANNER_SIZES: Record<BannerType, { width: number; height: number; label: string }> = {
-  hero_slider:     { width: 1920, height: 600, label: 'Слайдер головної' },
+  hero_slider:     { width: 1300, height: 400, label: 'Слайдер головної' },
   promo_strip:     { width: 1920, height: 80,  label: 'Промо-стрічка' },
   category_banner: { width: 1200, height: 400, label: 'Банер категорії' },
   side_banner:     { width: 300,  height: 600, label: 'Бічний банер' },
@@ -64,7 +64,7 @@ export const BANNER_TYPE_OPTIONS: { value: BannerType; label: string; icon: stri
 
 /** Описи типів банерів для менеджерів */
 export const BANNER_TYPE_DESCRIPTIONS: Record<BannerType, string> = {
-  hero_slider: 'Головний слайдер на всю ширину сторінки. Показується першим на головній. Рекомендовано 3-5 слайдів.',
+  hero_slider: 'Головний слайдер. Десктоп: 1300×400 px, мобайл: 640×640 px. Рекомендовано 3-5 слайдів.',
   promo_strip: 'Тонка стрічка з акцією/промокодом. Показується під хедером або під слайдером. Можна закрити (×).',
   category_banner: 'Широкий банер на сторінці категорії. Показується між заголовком і товарами.',
   side_banner: 'Вертикальний банер в сайдбарі каталогу. Показується збоку від товарів (тільки десктоп).',

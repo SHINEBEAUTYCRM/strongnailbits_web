@@ -372,7 +372,7 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
               style={{ backgroundColor: 'var(--a-bg-hover)', color: 'var(--a-text-4)' }}>
               <span>💡</span>
               <span>
-                {form.type === 'hero_slider' && 'Завантажте зображення 1920×600 px (або ширше). JPG/WebP, до 2MB. Текст краще розміщувати ліворуч — праву частину може обрізати на мобільних.'}
+                {form.type === 'hero_slider' && 'Рекомендований розмір: 1300×400 px (десктоп), 640×640 px (мобайл). JPG/WebP, до 2MB. Текст краще розміщувати ліворуч.'}
                 {form.type === 'promo_strip' && 'Зображення необов\'язкове. Стрічка працює з текстом + кольором фону. Якщо потрібне зображення: 1920×80 px.'}
                 {form.type === 'category_banner' && 'Зображення 1200×400 px. Текст на банері опційний — може бути просто картинка.'}
                 {form.type === 'side_banner' && 'Вертикальне зображення 300×600 px. Показується в сайдбарі на десктопі.'}
@@ -397,7 +397,7 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
                   onChange={(url) => set("image_mobile", url)}
                   context="banner"
                   entityId={initial?.id || "new-mobile"}
-                  suggestedSize={{ width: 768, height: 600 }}
+                  suggestedSize={{ width: 640, height: 640 }}
                 />
               </div>
             )}

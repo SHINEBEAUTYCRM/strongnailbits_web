@@ -45,10 +45,24 @@ const sectionLink: Record<string, string | null> = {
   help_contacts:    null,
 };
 
+/* Resolve settings link — for showcase sections, try to build direct link */
+function getSectionLink(section: Section): string | null {
+  if (sectionLink[section.code] !== undefined) return sectionLink[section.code];
+  if (section.section_type === "product_showcase") return "/admin/homepage/showcases";
+  return null;
+}
+
+/* Resolve settings hint — for showcase sections */
+function getSectionLinkHint(section: Section): string | undefined {
+  if (SECTION_LINK_HINT[section.code]) return SECTION_LINK_HINT[section.code];
+  if (section.section_type === "product_showcase") return "(Вітрини)";
+  return undefined;
+}
+
 /* ─── Static descriptions for team (not stored in DB) ─── */
 const SECTION_DESCRIPTIONS: Record<string, string> = {
   top_bar: "Сервісна панель над шапкою: посилання на акції, доставку, контакти, телефон і графік роботи. Видно тільки на десктопі.",
-  hero_slider: "Головний банер-слайдер на всю ширину. Керується через Контент → Банери (тип hero_slider). Рекомендований розмір: 1920×600 px.",
+  hero_slider: "Головний банер-слайдер. Керується через Контент → Банери (тип hero_slider). Розмір: 1300×400 px (десктоп), 640×640 px (мобайл).",
   promo_strip: "Тонка промо-стрічка під банером. Керується через Контент → Банери (тип promo_strip). Розмір: 1920×80 px.",
   quick_categories: "8-12 кнопок швидких категорій під банером. Налаштуйте які категорії показувати і в якому порядку.",
   deal_of_day: "Блок «Акція дня» з таймером зворотного відліку. Після закінчення таймера блок автоматично ховається.",
@@ -260,7 +274,7 @@ export function HomepageSectionsClient({
 
       <div className="space-y-2">
       {sections.map((section, idx) => {
-        const link = sectionLink[section.code];
+        const link = getSectionLink(section);
         return (
           <div
             key={section.id}
@@ -366,8 +380,8 @@ export function HomepageSectionsClient({
               >
                 <Settings className="w-3.5 h-3.5" />
                 Налаштувати
-                {SECTION_LINK_HINT[section.code] && (
-                  <span className="opacity-50 font-normal">{SECTION_LINK_HINT[section.code]}</span>
+                {getSectionLinkHint(section) && (
+                  <span className="opacity-50 font-normal">{getSectionLinkHint(section)}</span>
                 )}
                 <ExternalLink className="w-3 h-3 opacity-50" />
               </Link>

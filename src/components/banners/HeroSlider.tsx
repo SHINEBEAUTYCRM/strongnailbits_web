@@ -94,7 +94,7 @@ export function HeroSlider({ banners }: HeroSliderProps) {
         }}
       >
         {/* Image */}
-        <div className="relative aspect-[16/6] w-full sm:aspect-[16/5]">
+        <div className="relative aspect-square w-full sm:aspect-[13/4]">
           {/* Desktop image */}
           {banner.image_desktop && (
             <Image

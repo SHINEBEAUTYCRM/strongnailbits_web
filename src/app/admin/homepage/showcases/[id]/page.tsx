@@ -33,9 +33,23 @@ export default async function ShowcaseEditPage({ params }: Props) {
       .order("name"),
   ]);
 
+  const rawRoots = rootCatsRes.data || [];
+  const subs = subCatsRes.data || [];
+
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const enrichedRoots = rawRoots
+    .map((root: any) => {
+      const children = subs.filter((c: any) => c.parent_cs_cart_id === root.cs_cart_id);
+      const totalProducts =
+        children.reduce((sum: number, c: any) => sum + (c.product_count || 0), 0) +
+        (root.product_count || 0);
+      return { ...root, product_count: totalProducts, childCount: children.length };
+    })
+    .filter((r: any) => r.product_count > 0);
+
   const catalogData = {
-    rootCategories: rootCatsRes.data || [],
-    subCategories: subCatsRes.data || [],
+    rootCategories: enrichedRoots,
+    subCategories: subs,
     brands: brandsRes.data || [],
   };
 

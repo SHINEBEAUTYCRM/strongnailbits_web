@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Save, Loader2, Trash2, ArrowLeft, Search } from "lucide-react";
+import { Save, Loader2, Trash2, ArrowLeft, Search, Eye } from "lucide-react";
+import { createAdminBrowserClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
 /* ─── Types ─── */
@@ -208,6 +209,86 @@ export function ShowcaseForm({
   const rootSubTotal = useMemo(() => {
     return visibleSubs.reduce((sum, s) => sum + (s.product_count || 0), 0);
   }, [visibleSubs]);
+
+  /* ─── Product Preview ─── */
+  const [previewProducts, setPreviewProducts] = useState<
+    { id: string; name_uk: string; price: number; main_image_url: string | null }[]
+  >([]);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewTotal, setPreviewTotal] = useState(0);
+  const previewTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const loadPreview = useCallback(async () => {
+    if (form.source_type !== "rule") {
+      setPreviewProducts([]);
+      setPreviewTotal(0);
+      return;
+    }
+
+    setPreviewLoading(true);
+    try {
+      const sb = createAdminBrowserClient();
+      let query = sb
+        .from("products")
+        .select("id, name_uk, price, main_image_url", { count: "exact" })
+        .eq("status", "active")
+        .gt("quantity", 0);
+
+      const rule = parseRule(form.rule);
+
+      if (rule.filter_mode === "category" && selectedCategoryIds.length > 0) {
+        const { data: parentCats } = await sb
+          .from("categories")
+          .select("cs_cart_id")
+          .in("id", selectedCategoryIds);
+        const parentCsCartIds = parentCats?.map((c: { cs_cart_id: string }) => c.cs_cart_id).filter(Boolean) || [];
+
+        let childIds: string[] = [];
+        if (parentCsCartIds.length > 0) {
+          const { data: childCats } = await sb
+            .from("categories")
+            .select("id")
+            .in("parent_cs_cart_id", parentCsCartIds)
+            .eq("status", "active");
+          childIds = childCats?.map((c: { id: string }) => c.id) || [];
+        }
+        const allCatIds = [...selectedCategoryIds, ...childIds];
+        query = query.in("category_id", allCatIds);
+      } else if (rule.filter_mode === "category" && selectedRoot) {
+        const { data: childCats } = await sb
+          .from("categories")
+          .select("id")
+          .eq("parent_cs_cart_id", selectedRoot.cs_cart_id)
+          .eq("status", "active");
+        const childIds = childCats?.map((c: { id: string }) => c.id) || [];
+        if (childIds.length > 0) query = query.in("category_id", childIds);
+      }
+
+      if (rule.filter_mode === "brand" && selectedBrandIds.length > 0) {
+        query = query.in("brand_id", selectedBrandIds);
+      }
+
+      if (rule.has_discount) query = query.gt("old_price", 0);
+      if (rule.is_new) query = query.eq("is_new", true);
+
+      query = query.order("quantity", { ascending: false }).limit(8);
+      const { data, count } = await query;
+      setPreviewProducts(data || []);
+      setPreviewTotal(count ?? data?.length ?? 0);
+    } catch {
+      setPreviewProducts([]);
+      setPreviewTotal(0);
+    }
+    setPreviewLoading(false);
+  }, [form.source_type, form.rule, selectedCategoryIds, selectedBrandIds, selectedRoot]);
+
+  useEffect(() => {
+    if (previewTimer.current) clearTimeout(previewTimer.current);
+    previewTimer.current = setTimeout(loadPreview, 600);
+    return () => {
+      if (previewTimer.current) clearTimeout(previewTimer.current);
+    };
+  }, [loadPreview]);
 
   /* ─── Save ─── */
   const handleSave = async () => {
@@ -652,7 +733,7 @@ export function ShowcaseForm({
           {/* Summary */}
           {form.source_type === "rule" && (
             <Section title="Підсумок фільтрів">
-              <div className="text-xs space-y-1" style={{ color: "var(--a-text-3)" }}>
+              <div className="text-xs space-y-1.5" style={{ color: "var(--a-text-3)" }}>
                 <p>Сортування: <b>{currentRule.sort || "popular"}</b></p>
                 <p>
                   Фільтр:{" "}
@@ -672,10 +753,102 @@ export function ShowcaseForm({
                     )}
                   </b>
                 </p>
+                {filterMode === "category" && selectedCategoryIds.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {selectedCategoryIds.map((cid) => {
+                      const cat = catalogData.subCategories.find((s) => s.id === cid);
+                      if (!cat) return null;
+                      return (
+                        <span
+                          key={cid}
+                          className="text-[10px] px-1.5 py-0.5 rounded"
+                          style={{ background: "var(--a-accent-btn)15", color: "var(--a-accent-btn)" }}
+                        >
+                          {cat.name_uk} ({cat.product_count})
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
                 {currentRule.has_discount && <p>+ Зі знижкою</p>}
                 {currentRule.is_new && <p>+ Новинки</p>}
-                <p>Ліміт: {form.product_limit} товарів</p>
+                <p>Ліміт: <b>{form.product_limit}</b> товарів</p>
+                <div
+                  className="mt-2 pt-2 flex items-center justify-between"
+                  style={{ borderTop: "1px solid var(--a-border)" }}
+                >
+                  <span>Знайдено товарів:</span>
+                  <span
+                    className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                    style={{
+                      background: previewTotal > 0 ? "var(--a-accent-btn)15" : "#f59e0b20",
+                      color: previewTotal > 0 ? "var(--a-accent-btn)" : "#f59e0b",
+                    }}
+                  >
+                    {previewLoading ? "..." : previewTotal}
+                  </span>
+                </div>
+                {!previewLoading && previewTotal === 0 && (
+                  <div
+                    className="mt-2 px-3 py-2 rounded-lg text-[11px] leading-relaxed"
+                    style={{ background: "#f59e0b15", color: "#f59e0b", border: "1px solid #f59e0b30" }}
+                  >
+                    ⚠️ За поточними фільтрами товарів не знайдено. Вітрина не відображатиметься на сайті.
+                  </div>
+                )}
               </div>
+            </Section>
+          )}
+
+          {/* Product Preview */}
+          {form.source_type === "rule" && (
+            <Section title="Попередній перегляд">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-1.5">
+                  <Eye className="w-3.5 h-3.5" style={{ color: "var(--a-text-4)" }} />
+                  <span className="text-[11px]" style={{ color: "var(--a-text-4)" }}>
+                    Перші {Math.min(8, form.product_limit)} товарів
+                  </span>
+                </div>
+                {previewLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "var(--a-text-5)" }} />}
+              </div>
+
+              {!previewLoading && previewProducts.length === 0 ? (
+                <p className="text-[11px] py-4 text-center" style={{ color: "var(--a-text-5)" }}>
+                  Немає товарів для показу
+                </p>
+              ) : (
+                <div className="grid grid-cols-4 gap-1.5">
+                  {previewProducts.slice(0, 8).map((p) => (
+                    <div
+                      key={p.id}
+                      className="rounded-lg overflow-hidden"
+                      style={{ border: "1px solid var(--a-border)" }}
+                    >
+                      {p.main_image_url ? (
+                        <img
+                          src={p.main_image_url}
+                          alt=""
+                          className="w-full h-14 object-contain"
+                          style={{ background: "#fff" }}
+                        />
+                      ) : (
+                        <div className="w-full h-14 flex items-center justify-center" style={{ background: "var(--a-bg)" }}>
+                          <span className="text-[10px]" style={{ color: "var(--a-text-5)" }}>—</span>
+                        </div>
+                      )}
+                      <div className="px-1.5 py-1" style={{ background: "var(--a-bg)" }}>
+                        <p className="text-[9px] truncate" style={{ color: "var(--a-text-3)" }}>
+                          {p.name_uk}
+                        </p>
+                        <p className="text-[10px] font-medium" style={{ color: "var(--a-text)" }}>
+                          {p.price} ₴
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </Section>
           )}
         </div>

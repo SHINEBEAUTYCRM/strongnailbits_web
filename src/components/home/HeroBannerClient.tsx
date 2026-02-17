@@ -64,7 +64,7 @@ export function HeroBannerClient({ slides }: Props) {
       onMouseLeave={() => setPaused(false)}
     >
       <div
-        className={`relative overflow-hidden rounded-2xl ${hasImage ? "" : slide.bg} px-6 py-10 text-white transition-all duration-500 sm:px-10 sm:py-14 lg:px-12 lg:py-16`}
+        className={`relative overflow-hidden rounded-2xl ${hasImage ? "" : slide.bg} px-6 text-white transition-all duration-500 sm:px-10 lg:px-12 aspect-square sm:aspect-[13/4] flex items-center`}
         style={hasImage ? { backgroundColor: "#0e0e14" } : undefined}
         onTouchStart={(e) => setTouchX(e.touches[0].clientX)}
         onTouchEnd={(e) => {
