@@ -13,8 +13,9 @@ export default async function ShowcaseEditPage({ params }: Props) {
   const supabase = createAdminClient();
   const { data: categories } = await supabase
     .from("categories")
-    .select("id, name_uk, parent_cs_cart_id, slug")
+    .select("id, name_uk, parent_cs_cart_id, slug, product_count")
     .eq("status", "active")
+    .gt("product_count", 0)
     .order("name_uk");
 
   console.log("[ShowcaseEdit] categories loaded:", categories?.length, "first:", categories?.[0]);
