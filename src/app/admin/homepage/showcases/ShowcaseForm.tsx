@@ -11,6 +11,14 @@ interface RuleData {
   sort?: string;
   has_discount?: boolean;
   is_new?: boolean;
+  category_id?: string;
+}
+
+interface CategoryOption {
+  id: string;
+  name_uk: string;
+  parent_id: string | null;
+  slug: string;
 }
 
 interface ShowcaseData {
@@ -70,7 +78,7 @@ function textToSkuList(text: string): string[] | null {
 
 /* ─── Component ─── */
 
-export function ShowcaseForm({ initial }: { initial?: ShowcaseData }) {
+export function ShowcaseForm({ initial, categories = [] }: { initial?: ShowcaseData; categories?: CategoryOption[] }) {
   const router = useRouter();
   const isEdit = !!initial?.id;
 
@@ -283,6 +291,18 @@ export function ShowcaseForm({ initial }: { initial?: ShowcaseData }) {
                     { v: "discount", l: "Зі знижкою" },
                     { v: "featured", l: "Рекомендовані" },
                     { v: "random", l: "Випадкові" },
+                  ]}
+                />
+                <Select
+                  label="Категорія (фільтр)"
+                  value={currentRule.category_id || ""}
+                  onChange={(v) => setRule("category_id", v || "")}
+                  options={[
+                    { v: "", l: "— Всі товари —" },
+                    ...categories.map((c) => ({
+                      v: c.id,
+                      l: c.name_uk + (c.parent_id ? "" : " (розділ)"),
+                    })),
                   ]}
                 />
                 <div className="flex gap-6">
