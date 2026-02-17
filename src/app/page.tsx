@@ -37,6 +37,13 @@ async function getShowcases() {
   }
   if (!showcases?.length) return [];
 
+  console.log("[Homepage] ALL showcases:", showcases.map((s: any) => ({
+    code: s.code,
+    is_enabled: s.is_enabled,
+    rule: JSON.stringify(s.rule),
+    product_limit: s.product_limit,
+  })));
+
   const results = await Promise.all(
     showcases.map(async (showcase: any) => {
       const sb = createAdminClient();
@@ -47,6 +54,8 @@ async function getShowcases() {
         .gt("quantity", 0);
 
       const rule = (showcase.rule as Record<string, any>) || {};
+
+      console.log("[Homepage] showcase", showcase.code, "rule keys:", Object.keys(rule), "category_ids:", rule.category_ids, "has_discount:", rule.has_discount);
 
       if (rule.category_ids?.length > 0) {
         query = query.in("category_id", rule.category_ids);
@@ -87,6 +96,8 @@ async function getShowcases() {
 
       query = query.limit(showcase.product_limit || 14);
       const { data, error: prodError } = await query;
+
+      console.log("[Homepage] showcase", showcase.code, "found products:", data?.length || 0, "error:", prodError?.message || "none");
 
       if (prodError) {
         console.error("[Homepage] products error for", showcase.code, prodError.message);
