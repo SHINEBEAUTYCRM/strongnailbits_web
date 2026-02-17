@@ -1,9 +1,12 @@
 import { Home } from "lucide-react";
-import { getHomepageSections } from "@/lib/admin/data";
+import { getHomepageSections, getShowcases } from "@/lib/admin/data";
 import { HomepageSectionsClient } from "./HomepageSectionsClient";
 
 export default async function HomepagePage() {
-  const sections = await getHomepageSections();
+  const [sections, showcases] = await Promise.all([
+    getHomepageSections(),
+    getShowcases(),
+  ]);
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
@@ -13,7 +16,7 @@ export default async function HomepagePage() {
           <p className="text-xs mt-0.5" style={{ color: "var(--a-text-4)" }}>Порядок і видимість секцій. Стрілками змінюйте порядок.</p>
         </div>
       </div>
-      <HomepageSectionsClient initialSections={sections} />
+      <HomepageSectionsClient initialSections={sections} showcases={showcases || []} />
     </div>
   );
 }

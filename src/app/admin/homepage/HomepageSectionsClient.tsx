@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
-import { ArrowUp, ArrowDown, Settings, ExternalLink } from "lucide-react";
+import { ArrowUp, ArrowDown, Settings, ExternalLink, Trash2 } from "lucide-react";
 
 /* ─── Types ─── */
 interface Section {
@@ -74,13 +74,30 @@ const SECTION_LINK_HINT: Record<string, string> = {
   top_bar: "(Top Bar)",
 };
 
+/* ─── Showcase type for modal ─── */
+interface Showcase {
+  id: string;
+  code: string;
+  title_uk: string;
+  is_enabled: boolean;
+}
+
 /* ─── Component ─── */
-export function HomepageSectionsClient({ initialSections }: { initialSections: Section[] }) {
+export function HomepageSectionsClient({
+  initialSections,
+  showcases = [],
+}: {
+  initialSections: Section[];
+  showcases?: Showcase[];
+}) {
   const [sections, setSections] = useState<Section[]>(
     () => [...initialSections].sort((a, b) => a.sort_order - b.sort_order)
   );
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newShowcaseCode, setNewShowcaseCode] = useState("");
+  const [adding, setAdding] = useState(false);
 
   /* Persist changes to API */
   const save = useCallback(async (updated: Section[]) => {
@@ -138,6 +155,70 @@ export function HomepageSectionsClient({ initialSections }: { initialSections: S
     });
   };
 
+  /* Add section */
+  const addSection = async () => {
+    if (!newShowcaseCode) return;
+    setAdding(true);
+    try {
+      const showcase = showcases.find(s => s.code === newShowcaseCode);
+      const code = `showcase_${newShowcaseCode}`;
+
+      if (sections.find(s => s.code === code)) {
+        setToast("Ця вітрина вже додана");
+        setTimeout(() => setToast(null), 3000);
+        setAdding(false);
+        return;
+      }
+
+      const res = await fetch("/api/admin/homepage/sections", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code,
+          title: showcase?.title_uk || newShowcaseCode,
+          section_type: "product_showcase",
+          is_enabled: true,
+          config: { showcase_code: newShowcaseCode },
+        }),
+      });
+
+      if (!res.ok) throw new Error("create failed");
+      const data = await res.json();
+
+      if (data.ok && data.section) {
+        setSections(prev => [...prev, data.section].sort((a, b) => a.sort_order - b.sort_order));
+        setShowAddModal(false);
+        setNewShowcaseCode("");
+        setToast("Секцію додано");
+        setTimeout(() => setToast(null), 2000);
+      }
+    } catch {
+      setToast("Помилка створення");
+      setTimeout(() => setToast(null), 3000);
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  /* Delete section */
+  const deleteSection = async (id: string, code: string) => {
+    if (!confirm(`Видалити секцію "${code}"?`)) return;
+    try {
+      const res = await fetch("/api/admin/homepage/sections", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) throw new Error("delete failed");
+      setSections(prev => prev.filter(s => s.id !== id));
+      setToast("Секцію видалено");
+      setTimeout(() => setToast(null), 2000);
+    } catch {
+      setToast("Помилка видалення");
+      setTimeout(() => setToast(null), 3000);
+    }
+  };
+
   const badge = (type: string) => {
     const c = typeBadgeColors[type] ?? { bg: "#6b728020", text: "#9ca3af" };
     return (
@@ -151,7 +232,19 @@ export function HomepageSectionsClient({ initialSections }: { initialSections: S
   };
 
   return (
-    <div className="space-y-2 relative">
+    <div className="relative">
+      {/* Add section button */}
+      <div className="flex items-center justify-between mb-4">
+        <div />
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white"
+          style={{ background: "var(--a-accent-btn)" }}
+        >
+          + Додати секцію
+        </button>
+      </div>
+
       {/* Toast */}
       {toast && (
         <div
@@ -165,6 +258,7 @@ export function HomepageSectionsClient({ initialSections }: { initialSections: S
         </div>
       )}
 
+      <div className="space-y-2">
       {sections.map((section, idx) => {
         const link = sectionLink[section.code];
         return (
@@ -248,6 +342,16 @@ export function HomepageSectionsClient({ initialSections }: { initialSections: S
               </button>
             </div>
 
+            {/* Delete button */}
+            <button
+              onClick={() => deleteSection(section.id, section.code)}
+              className="p-1.5 rounded-lg hover:opacity-80 transition-opacity flex-shrink-0"
+              style={{ color: "#f87171" }}
+              title="Видалити секцію"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+
             {/* Settings link */}
             {link !== null && link !== undefined ? (
               <Link
@@ -292,6 +396,71 @@ export function HomepageSectionsClient({ initialSections }: { initialSections: S
           <p className="text-sm" style={{ color: "var(--a-text-4)" }}>
             Секції не знайдено. Перевірте таблицю homepage_sections.
           </p>
+        </div>
+      )}
+      </div>
+
+      {/* Add Section Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.6)" }}>
+          <div
+            className="w-full max-w-md rounded-xl p-6"
+            style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}
+          >
+            <h3 className="text-lg font-semibold mb-4" style={{ color: "var(--a-text)" }}>
+              Додати секцію на головну
+            </h3>
+
+            <div className="mb-4">
+              <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--a-text-3)" }}>
+                Вітрина товарів
+              </label>
+              <select
+                value={newShowcaseCode}
+                onChange={(e) => setNewShowcaseCode(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
+                style={{
+                  background: "var(--a-bg-input, var(--a-bg-card))",
+                  border: "1px solid var(--a-border)",
+                  color: "var(--a-text-body)",
+                }}
+              >
+                <option value="">— Оберіть вітрину —</option>
+                {showcases
+                  .filter(sc => !sections.find(s => s.config?.showcase_code === sc.code))
+                  .map((sc) => (
+                    <option key={sc.code} value={sc.code}>
+                      {sc.title_uk} {!sc.is_enabled ? "(вимкнено)" : ""}
+                    </option>
+                  ))}
+              </select>
+              <p className="text-[11px] mt-1.5" style={{ color: "var(--a-text-5)" }}>
+                Спочатку створіть вітрину в{" "}
+                <a href="/admin/homepage/showcases/new" className="underline" style={{ color: "var(--a-accent-btn)" }}>
+                  Вітрини товарів
+                </a>
+                , потім додайте її сюди.
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => { setShowAddModal(false); setNewShowcaseCode(""); }}
+                className="px-4 py-2 rounded-lg text-sm"
+                style={{ color: "var(--a-text-3)", border: "1px solid var(--a-border)" }}
+              >
+                Скасувати
+              </button>
+              <button
+                onClick={addSection}
+                disabled={!newShowcaseCode || adding}
+                className="px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50"
+                style={{ background: "var(--a-accent-btn)" }}
+              >
+                {adding ? "Додаю..." : "Додати"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

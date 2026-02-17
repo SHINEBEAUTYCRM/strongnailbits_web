@@ -86,3 +86,76 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
+
+/* POST — create new homepage section */
+export async function POST(request: NextRequest) {
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
+
+  try {
+    const body = await request.json();
+    const supabase = createAdminClient();
+
+    const { data: last } = await supabase
+      .from('homepage_sections')
+      .select('sort_order')
+      .order('sort_order', { ascending: false })
+      .limit(1)
+      .single();
+
+    const nextOrder = (last?.sort_order ?? 0) + 10;
+
+    const insert = {
+      code: body.code,
+      title: body.title || body.code,
+      section_type: body.section_type || 'product_showcase',
+      sort_order: body.sort_order ?? nextOrder,
+      is_enabled: body.is_enabled ?? true,
+      config: body.config || {},
+    };
+
+    const { data, error } = await supabase
+      .from('homepage_sections')
+      .insert(insert)
+      .select('*')
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ ok: true, section: data }, { status: 201 });
+  } catch (err) {
+    console.error('[API:Sections] Create failed:', err);
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+  }
+}
+
+/* DELETE — remove homepage section */
+export async function DELETE(request: NextRequest) {
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
+
+  try {
+    const body = await request.json();
+    if (!body.id) {
+      return NextResponse.json({ error: 'id is required' }, { status: 400 });
+    }
+
+    const supabase = createAdminClient();
+
+    const { error } = await supabase
+      .from('homepage_sections')
+      .delete()
+      .eq('id', body.id);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error('[API:Sections] Delete failed:', err);
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+  }
+}
