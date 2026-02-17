@@ -27,6 +27,17 @@ function trackClick(bannerId: string) {
   }).catch(() => {});
 }
 
+// ─── URL helper ──────────────────────────────────────────
+function cleanBannerUrl(url?: string | null): string | null {
+  if (!url || url === "#") return null;
+  try {
+    const parsed = new URL(url, "https://placeholder.com");
+    return parsed.pathname + parsed.search;
+  } catch {
+    return url.startsWith("/") ? url : `/${url}`;
+  }
+}
+
 // ─── Props ────────────────────────────────────────────────
 interface HeroSliderProps {
   banners: Banner[];
@@ -72,6 +83,81 @@ export function HeroSlider({ banners }: HeroSliderProps) {
   const overlayOpacity = banner.overlay_opacity ?? 0;
   const textColor = banner.text_color || "#ffffff";
   const bgColor = banner.bg_color || "#1a1a2e";
+  const slideHref = cleanBannerUrl(banner.button_url);
+
+  /* Slide inner content (shared between Link and div wrappers) */
+  const slideContent = (
+    <>
+      {/* Desktop image */}
+      {banner.image_desktop && (
+        <Image
+          src={banner.image_desktop}
+          alt={banner.image_alt || banner.title}
+          fill
+          priority={current === 0}
+          sizes="100vw"
+          className={`object-cover transition-opacity duration-700 ${
+            banner.image_mobile ? "hidden sm:block" : "block"
+          }`}
+        />
+      )}
+
+      {/* Mobile image (fallback to desktop) */}
+      {banner.image_mobile && (
+        <Image
+          src={banner.image_mobile}
+          alt={banner.image_alt || banner.title}
+          fill
+          priority={current === 0}
+          sizes="100vw"
+          className="block object-cover transition-opacity duration-700 sm:hidden"
+        />
+      )}
+
+      {/* Overlay */}
+      {overlayOpacity > 0 && (
+        <div
+          className="absolute inset-0 z-[1]"
+          style={{
+            backgroundColor: `rgba(0, 0, 0, ${overlayOpacity / 100})`,
+          }}
+        />
+      )}
+
+      {/* Text content */}
+      <div
+        className="absolute inset-0 z-[2] flex flex-col justify-center px-6 sm:px-10 lg:px-14"
+        style={{ color: textColor }}
+      >
+        {banner.discount_text && (
+          <span
+            className="mb-2 inline-block w-fit rounded-full bg-white/20 px-3 py-1 text-xs font-bold uppercase tracking-wide backdrop-blur-sm sm:text-sm"
+            style={{ color: textColor }}
+          >
+            {banner.discount_text}
+          </span>
+        )}
+
+        {banner.heading && (
+          <h2 className="max-w-lg whitespace-pre-line text-xl font-black leading-tight sm:text-3xl lg:text-4xl">
+            {banner.heading}
+          </h2>
+        )}
+
+        {banner.subheading && (
+          <p className="mt-2 max-w-md whitespace-pre-line text-sm leading-relaxed opacity-80 sm:text-base">
+            {banner.subheading}
+          </p>
+        )}
+
+        {banner.button_text && (
+          <span className="mt-5 inline-flex h-10 w-fit items-center rounded-full bg-white px-6 text-sm font-bold text-[#1a1a1a] transition-all hover:shadow-lg active:scale-[.97] sm:h-11 sm:text-[14px]">
+            {banner.button_text}
+          </span>
+        )}
+      </div>
+    </>
+  );
 
   return (
     <div
@@ -93,81 +179,19 @@ export function HeroSlider({ banners }: HeroSliderProps) {
           setTouchStartX(null);
         }}
       >
-        {/* Image */}
-        <div className="relative aspect-square w-full sm:aspect-[13/4]">
-          {/* Desktop image */}
-          {banner.image_desktop && (
-            <Image
-              src={banner.image_desktop}
-              alt={banner.image_alt || banner.title}
-              fill
-              priority={current === 0}
-              sizes="100vw"
-              className={`object-cover transition-opacity duration-700 ${
-                banner.image_mobile ? "hidden sm:block" : "block"
-              }`}
-            />
-          )}
-
-          {/* Mobile image (fallback to desktop) */}
-          {banner.image_mobile && (
-            <Image
-              src={banner.image_mobile}
-              alt={banner.image_alt || banner.title}
-              fill
-              priority={current === 0}
-              sizes="100vw"
-              className="block object-cover transition-opacity duration-700 sm:hidden"
-            />
-          )}
-
-          {/* Overlay */}
-          {overlayOpacity > 0 && (
-            <div
-              className="absolute inset-0 z-[1]"
-              style={{
-                backgroundColor: `rgba(0, 0, 0, ${overlayOpacity / 100})`,
-              }}
-            />
-          )}
-
-          {/* Text content */}
-          <div
-            className="absolute inset-0 z-[2] flex flex-col justify-center px-6 sm:px-10 lg:px-14"
-            style={{ color: textColor }}
+        {slideHref ? (
+          <Link
+            href={slideHref}
+            onClick={() => trackClick(banner.id)}
+            className="relative block aspect-square w-full cursor-pointer sm:aspect-[13/4]"
           >
-            {banner.discount_text && (
-              <span
-                className="mb-2 inline-block w-fit rounded-full bg-white/20 px-3 py-1 text-xs font-bold uppercase tracking-wide backdrop-blur-sm sm:text-sm"
-                style={{ color: textColor }}
-              >
-                {banner.discount_text}
-              </span>
-            )}
-
-            {banner.heading && (
-              <h2 className="max-w-lg whitespace-pre-line text-xl font-black leading-tight sm:text-3xl lg:text-4xl">
-                {banner.heading}
-              </h2>
-            )}
-
-            {banner.subheading && (
-              <p className="mt-2 max-w-md whitespace-pre-line text-sm leading-relaxed opacity-80 sm:text-base">
-                {banner.subheading}
-              </p>
-            )}
-
-            {banner.button_text && banner.button_url && (
-              <Link
-                href={banner.button_url}
-                onClick={() => trackClick(banner.id)}
-                className="mt-5 inline-flex h-10 w-fit items-center rounded-full bg-white px-6 text-sm font-bold text-[#1a1a1a] transition-all hover:shadow-lg active:scale-[.97] sm:h-11 sm:text-[14px]"
-              >
-                {banner.button_text}
-              </Link>
-            )}
+            {slideContent}
+          </Link>
+        ) : (
+          <div className="relative aspect-square w-full sm:aspect-[13/4]">
+            {slideContent}
           </div>
-        </div>
+        )}
       </div>
 
       {/* Arrow — Previous */}
