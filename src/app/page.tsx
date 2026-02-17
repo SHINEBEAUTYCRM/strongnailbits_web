@@ -51,8 +51,19 @@ async function getHomepageData() {
     if (rule.has_discount) query = query.gt("old_price", 0);
     if (rule.is_new) query = query.eq("is_new", true);
     if (rule.is_featured) query = query.eq("is_featured", true);
-    if (rule.category_id) query = query.eq("category_id", rule.category_id);
-    if (rule.brand_id) query = query.eq("brand_id", rule.brand_id);
+
+    // Multi-category/brand filter (new) with single-value fallback (legacy)
+    if (rule.category_ids?.length) {
+      query = query.in("category_id", rule.category_ids);
+    } else if (rule.category_id) {
+      query = query.eq("category_id", rule.category_id);
+    }
+
+    if (rule.brand_ids?.length) {
+      query = query.in("brand_id", rule.brand_ids);
+    } else if (rule.brand_id) {
+      query = query.eq("brand_id", rule.brand_id);
+    }
 
     switch (rule.sort) {
       case "newest":
