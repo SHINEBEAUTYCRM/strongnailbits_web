@@ -14,7 +14,7 @@ export default async function ShowcaseEditPage({ params }: Props) {
   const { data: categories } = await supabase
     .from("categories")
     .select("id, name_uk, parent_id, slug")
-    .eq("status", "A")
+    .eq("status", "active")
     .order("name_uk");
 
   if (id === "new") {
