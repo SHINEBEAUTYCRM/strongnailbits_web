@@ -56,6 +56,7 @@ export function Header({ contacts }: HeaderProps) {
 
   /* Desktop catalog hover */
   const [hoveredCatId, setHoveredCatId] = useState<number | null>(null);
+  const [expandedCats, setExpandedCats] = useState<Record<string, boolean>>({});
   const catalogRef = useRef<HTMLDivElement>(null);
 
   const { lang } = useLanguage();
@@ -163,6 +164,7 @@ export function Header({ contacts }: HeaderProps) {
               onClick={() => {
                 setCatalogOpen(!catalogOpen);
                 setHoveredCatId(null);
+                setExpandedCats({});
               }}
               className={`flex h-11 items-center gap-2.5 rounded-2xl px-5 text-[14px] font-bold text-white transition-all ${
                 catalogOpen
@@ -345,22 +347,29 @@ export function Header({ contacts }: HeaderProps) {
                     key={cat.id}
                     href={`/catalog/${cat.slug}`}
                     onClick={() => setCatalogOpen(false)}
-                    className={`flex items-center justify-between rounded-xl px-4 py-3 text-[14px] transition-colors ${
+                    className={`group flex items-center justify-between rounded-xl px-4 py-2.5 text-[14px] transition-all duration-200 ${
                       hoveredCatId === cat.cs_cart_id
                         ? "bg-[#fff5f6] font-medium text-coral"
                         : "text-[#1a1a1a] hover:bg-[#f8f8f8]"
                     }`}
-                    onMouseEnter={() =>
-                      cat.children.length > 0
-                        ? setHoveredCatId(cat.cs_cart_id)
-                        : setHoveredCatId(null)
-                    }
+                    onMouseEnter={() => {
+                      if (cat.children.length > 0) {
+                        if (hoveredCatId !== cat.cs_cart_id) setExpandedCats({});
+                        setHoveredCatId(cat.cs_cart_id);
+                      } else {
+                        setHoveredCatId(null);
+                      }
+                    }}
                   >
                     <span>{localizedName(cat, lang)}</span>
                     {cat.children.length > 0 && (
                       <ChevronRight
                         size={14}
-                        className="text-[#c4c4cc]"
+                        className={`transition-all duration-200 ${
+                          hoveredCatId === cat.cs_cart_id
+                            ? "translate-x-0.5 text-coral"
+                            : "text-[#c4c4cc] group-hover:translate-x-0.5 group-hover:text-[#999]"
+                        }`}
                       />
                     )}
                   </Link>
@@ -377,44 +386,60 @@ export function Header({ contacts }: HeaderProps) {
                   >
                     {localizedName(hoveredCat, lang)} →
                   </Link>
-                  <div className="grid grid-cols-3 gap-x-8 gap-y-5 xl:grid-cols-4">
-                    {hoveredCat.children.map((child) => (
-                      <div key={child.id}>
-                        <Link
-                          href={`/catalog/${child.slug}`}
-                          onClick={() => setCatalogOpen(false)}
-                          className="text-[13px] font-semibold text-[#1a1a1a] transition-colors hover:text-coral"
+                  <div className="grid grid-cols-3 gap-x-6 gap-y-6 xl:grid-cols-4">
+                    {hoveredCat.children.map((child) => {
+                      const isExpanded = expandedCats[child.id] ?? false;
+                      const VISIBLE = 6;
+                      const visibleChildren = isExpanded
+                        ? child.children
+                        : child.children.slice(0, VISIBLE);
+                      const hiddenCount = child.children.length - VISIBLE;
+
+                      return (
+                        <div
+                          key={child.id}
+                          className="border-r border-[#f0f0f0] pr-5 last:border-r-0"
                         >
-                          {localizedName(child, lang)}
-                        </Link>
-                        {child.children.length > 0 && (
-                          <ul className="mt-1.5 space-y-1">
-                            {child.children.slice(0, 6).map((gc) => (
-                              <li key={gc.id}>
-                                <Link
-                                  href={`/catalog/${gc.slug}`}
-                                  onClick={() => setCatalogOpen(false)}
-                                  className="text-[12px] text-[#888] transition-colors hover:text-coral"
-                                >
-                                  {localizedName(gc, lang)}
-                                </Link>
-                              </li>
-                            ))}
-                            {child.children.length > 6 && (
-                              <li>
-                                <Link
-                                  href={`/catalog/${child.slug}`}
-                                  onClick={() => setCatalogOpen(false)}
-                                  className="text-[12px] font-medium text-coral"
-                                >
-                                  ще {child.children.length - 6}...
-                                </Link>
-                              </li>
-                            )}
-                          </ul>
-                        )}
-                      </div>
-                    ))}
+                          <Link
+                            href={`/catalog/${child.slug}`}
+                            onClick={() => setCatalogOpen(false)}
+                            className="mb-2 block border-b border-[#f0f0f0] pb-1.5 text-[13px] font-semibold text-[#1a1a1a] transition-colors hover:text-coral"
+                          >
+                            {localizedName(child, lang)}
+                          </Link>
+                          {child.children.length > 0 && (
+                            <ul className="flex flex-col gap-0.5">
+                              {visibleChildren.map((gc) => (
+                                <li key={gc.id}>
+                                  <Link
+                                    href={`/catalog/${gc.slug}`}
+                                    onClick={() => setCatalogOpen(false)}
+                                    className="block py-0.5 text-[13px] leading-snug text-[#666] transition-colors hover:text-coral"
+                                  >
+                                    {localizedName(gc, lang)}
+                                  </Link>
+                                </li>
+                              ))}
+                              {hiddenCount > 0 && (
+                                <li>
+                                  <button
+                                    onClick={() =>
+                                      setExpandedCats((prev) => ({
+                                        ...prev,
+                                        [child.id]: !prev[child.id],
+                                      }))
+                                    }
+                                    className="mt-1 cursor-pointer text-[12px] text-coral transition-colors hover:underline"
+                                  >
+                                    {isExpanded ? "згорнути" : `ще ${hiddenCount}...`}
+                                  </button>
+                                </li>
+                              )}
+                            </ul>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
