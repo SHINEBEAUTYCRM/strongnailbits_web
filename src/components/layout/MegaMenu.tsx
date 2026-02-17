@@ -199,18 +199,20 @@ export function MegaMenu({ categories }: MegaMenuProps) {
                     href={resolved.href}
                     onMouseEnter={() => handleSidebarHover(resolved)}
                     onClick={closeNow}
-                    className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-all duration-200 ${
+                    className={`group flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition-all duration-200 ${
                       isActive
-                        ? "bg-zinc-800 font-semibold text-white"
-                        : "text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200"
+                        ? "bg-purple-500/10 font-semibold text-purple-400"
+                        : "text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100"
                     }`}
                   >
                     <span className="line-clamp-1">{resolved.item.label}</span>
                     {hasChildren && (
                       <ChevronRight
                         size={14}
-                        className={`shrink-0 transition-colors ${
-                          isActive ? "text-purple-400" : "text-zinc-700"
+                        className={`shrink-0 transition-all duration-200 ${
+                          isActive
+                            ? "translate-x-0.5 text-purple-400"
+                            : "text-zinc-700 group-hover:translate-x-0.5 group-hover:text-zinc-400"
                         }`}
                       />
                     )}
@@ -408,46 +410,63 @@ function ChildrenGrid({
   onClose: () => void;
 }) {
   const { lang } = useLanguage();
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const VISIBLE_COUNT = 6;
 
   return (
-    <div className="grid grid-cols-3 gap-x-8 gap-y-6 xl:grid-cols-4">
-      {items.map((child) => (
-        <div key={child.id}>
-          <Link
-            href={`/catalog/${child.slug}`}
-            onClick={onClose}
-            className="mb-2 block text-sm font-semibold text-white transition-colors hover:text-purple-400"
+    <div className="grid grid-cols-3 gap-x-6 gap-y-6 xl:grid-cols-4">
+      {items.map((child) => {
+        const isExpanded = expanded[child.id] ?? false;
+        const visibleChildren = isExpanded
+          ? child.children
+          : child.children.slice(0, VISIBLE_COUNT);
+        const hiddenCount = child.children.length - VISIBLE_COUNT;
+
+        return (
+          <div
+            key={child.id}
+            className="border-r border-zinc-800/50 pr-5 last:border-r-0"
           >
-            {localizedName(child, lang)}
-          </Link>
-          {child.children.length > 0 && (
-            <ul className="flex flex-col gap-1.5">
-              {child.children.slice(0, 8).map((gc) => (
-                <li key={gc.id}>
-                  <Link
-                    href={`/catalog/${gc.slug}`}
-                    onClick={onClose}
-                    className="block text-sm text-zinc-400 transition-colors hover:text-white"
-                  >
-                    {localizedName(gc, lang)}
-                  </Link>
-                </li>
-              ))}
-              {child.children.length > 8 && (
-                <li>
-                  <Link
-                    href={`/catalog/${child.slug}`}
-                    onClick={onClose}
-                    className="text-xs font-medium text-purple-400 transition-colors hover:text-pink-400"
-                  >
-                    Дивитися все ({child.children.length})
-                  </Link>
-                </li>
-              )}
-            </ul>
-          )}
-        </div>
-      ))}
+            <Link
+              href={`/catalog/${child.slug}`}
+              onClick={onClose}
+              className="mb-2 block border-b border-zinc-800/40 pb-1.5 text-sm font-semibold text-white transition-colors hover:text-purple-400"
+            >
+              {localizedName(child, lang)}
+            </Link>
+            {child.children.length > 0 && (
+              <ul className="flex flex-col gap-0.5">
+                {visibleChildren.map((gc) => (
+                  <li key={gc.id}>
+                    <Link
+                      href={`/catalog/${gc.slug}`}
+                      onClick={onClose}
+                      className="block py-0.5 text-[13px] leading-snug text-zinc-400 transition-colors hover:text-purple-400"
+                    >
+                      {localizedName(gc, lang)}
+                    </Link>
+                  </li>
+                ))}
+                {hiddenCount > 0 && (
+                  <li>
+                    <button
+                      onClick={() =>
+                        setExpanded((prev) => ({
+                          ...prev,
+                          [child.id]: !prev[child.id],
+                        }))
+                      }
+                      className="mt-1 cursor-pointer text-[12px] text-purple-400 transition-colors hover:text-pink-400 hover:underline"
+                    >
+                      {isExpanded ? "згорнути" : `ще ${hiddenCount}...`}
+                    </button>
+                  </li>
+                )}
+              </ul>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
