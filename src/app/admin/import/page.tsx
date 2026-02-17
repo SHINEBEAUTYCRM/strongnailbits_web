@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Link from "next/link";
 import {
   Upload,
   Brain,
@@ -15,6 +16,8 @@ import {
   ChevronDown,
   Download,
   Sparkles,
+  Undo2,
+  History,
 } from "lucide-react";
 import type {
   ImportStep,
@@ -64,6 +67,7 @@ export default function ImportPage() {
   const [validationIssues, setValidationIssues] = useState<ValidationIssue[]>([]);
   const [enrichments, setEnrichments] = useState<EnrichmentSuggestion[]>([]);
   const [report, setReport] = useState<PostImportReport | null>(null);
+  const [batchId, setBatchId] = useState<string | null>(null);
 
   // Import settings
   const [importMode, setImportMode] = useState<"create" | "update" | "create_or_update">("create_or_update");
@@ -207,11 +211,13 @@ export default function ImportPage() {
           import_mode: importMode,
           duplicate_strategy: duplicateStrategy,
           match_field: matchField,
+          filename: parsedFile.filename,
         }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
       setReport(json.report);
+      setBatchId(json.batch_id ?? null);
       setStep("report");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Помилка імпорту");
@@ -237,8 +243,14 @@ export default function ImportPage() {
           </p>
         </div>
 
-        {/* AI Toggle */}
+        {/* AI Toggle + History link */}
         <div className="flex items-center gap-3">
+          <Link href="/admin/import/history"
+            className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium"
+            style={{ background: "var(--a-bg-input)", color: "var(--a-text-3)", border: "1px solid var(--a-border)" }}>
+            <History className="w-4 h-4" />
+            Історія
+          </Link>
           <button
             onClick={() => setAiEnabled(!aiEnabled)}
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all"
@@ -370,7 +382,7 @@ export default function ImportPage() {
           />
         )}
         {step === "importing" && <ImportingStep />}
-        {step === "report" && report && <ReportStep report={report} onNewImport={() => {
+        {step === "report" && report && <ReportStep report={report} batchId={batchId} onNewImport={() => {
           setStep("upload");
           setParsedFile(null);
           setStructure(null);
@@ -378,6 +390,7 @@ export default function ImportPage() {
           setValidationIssues([]);
           setEnrichments([]);
           setReport(null);
+          setBatchId(null);
         }} />}
       </div>
     </div>
@@ -965,7 +978,28 @@ function ImportingStep() {
 /*  Report step                                                        */
 /* ------------------------------------------------------------------ */
 
-function ReportStep({ report, onNewImport }: { report: PostImportReport; onNewImport: () => void }) {
+function ReportStep({ report, batchId, onNewImport }: { report: PostImportReport; batchId: string | null; onNewImport: () => void }) {
+  const [rollbackLoading, setRollbackLoading] = useState(false);
+  const [rollbackResult, setRollbackResult] = useState<{ deleted: number; restored: number } | null>(null);
+  const [rollbackError, setRollbackError] = useState<string | null>(null);
+
+  const handleRollback = async () => {
+    if (!batchId) return;
+    if (!confirm("Ви впевнені? Всі створені товари будуть видалені, а оновлені — повернуті до попередніх значень.")) return;
+
+    setRollbackLoading(true);
+    setRollbackError(null);
+    try {
+      const res = await fetch(`/api/admin/import/rollback/${batchId}`, { method: "POST" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Rollback failed");
+      setRollbackResult(json.rolled_back);
+    } catch (err) {
+      setRollbackError(err instanceof Error ? err.message : "Помилка відкату");
+    }
+    setRollbackLoading(false);
+  };
+
   return (
     <div className="p-6">
       <div className="flex items-center gap-2 mb-6">
@@ -1030,6 +1064,43 @@ function ReportStep({ report, onNewImport }: { report: PostImportReport; onNewIm
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Rollback section */}
+      {batchId && !rollbackResult && (
+        <div className="rounded-xl p-4 mb-6" style={{ background: "#450a0a20", border: "1px solid #f8717130" }}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium" style={{ color: "var(--a-text-2)" }}>Відкат імпорту</p>
+              <p className="text-xs mt-0.5" style={{ color: "var(--a-text-4)" }}>Відкат можливий протягом 24 годин</p>
+            </div>
+            <button
+              onClick={handleRollback}
+              disabled={rollbackLoading}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 shrink-0"
+              style={{ background: "#450a0a", color: "#f87171", border: "1px solid #f8717140" }}
+            >
+              {rollbackLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Undo2 className="w-4 h-4" />}
+              Відкатити імпорт
+            </button>
+          </div>
+          {rollbackError && (
+            <p className="text-xs mt-2" style={{ color: "#f87171" }}>{rollbackError}</p>
+          )}
+        </div>
+      )}
+
+      {/* Rollback result */}
+      {rollbackResult && (
+        <div className="rounded-xl p-4 mb-6" style={{ background: "#052e1640", border: "1px solid #4ade8030" }}>
+          <div className="flex items-center gap-2 mb-1">
+            <Undo2 className="w-4 h-4" style={{ color: "#4ade80" }} />
+            <p className="text-sm font-medium" style={{ color: "#4ade80" }}>Імпорт відкачено</p>
+          </div>
+          <p className="text-xs" style={{ color: "var(--a-text-3)" }}>
+            Видалено: {rollbackResult.deleted} товарів, відновлено: {rollbackResult.restored} товарів
+          </p>
         </div>
       )}
 
