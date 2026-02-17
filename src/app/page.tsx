@@ -95,6 +95,17 @@ async function getShowcases() {
       }
 
       query = query.limit(showcase.product_limit || 14);
+
+      if (showcase.code === "tekhnika" || showcase.title_uk?.includes("Техн")) {
+        console.log("[Homepage] TEKHNIKA DEBUG:", {
+          code: showcase.code,
+          rule: JSON.stringify(rule),
+          category_ids: rule.category_ids,
+          has_discount: rule.has_discount,
+          is_new: rule.is_new,
+        });
+      }
+
       const { data, error: prodError } = await query;
 
       console.log("[Homepage] showcase", showcase.code, "found products:", data?.length || 0, "error:", prodError?.message || "none");
