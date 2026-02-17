@@ -21,69 +21,101 @@ const PRODUCT_FIELDS =
   "id, name_uk, name_ru, slug, price, old_price, main_image_url, status, quantity, is_new, is_featured, brands(name)";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+/* ─── Showcases: load all active → fetch products for each ─── */
+async function getShowcases() {
+  const supabase = createAdminClient();
+
+  const { data: showcases, error } = await supabase
+    .from("product_showcases")
+    .select("*")
+    .eq("is_enabled", true)
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    console.error("[Homepage] showcases error:", error.message);
+    return [];
+  }
+  if (!showcases?.length) {
+    console.log("[Homepage] no active showcases found");
+    return [];
+  }
+
+  console.log("[Homepage] found showcases:", showcases.length, showcases.map((s: any) => s.code));
+
+  const results = await Promise.all(
+    showcases.map(async (showcase: any) => {
+      const sb = createAdminClient();
+      let query = sb
+        .from("products")
+        .select(PRODUCT_FIELDS)
+        .eq("status", "active")
+        .gt("quantity", 0);
+
+      const rule = (showcase.rule as Record<string, any>) || {};
+
+      if (rule.category_ids?.length > 0) {
+        query = query.in("category_id", rule.category_ids);
+      } else if (rule.category_id) {
+        query = query.eq("category_id", rule.category_id);
+      }
+
+      if (rule.brand_ids?.length > 0) {
+        query = query.in("brand_id", rule.brand_ids);
+      } else if (rule.brand_id) {
+        query = query.eq("brand_id", rule.brand_id);
+      }
+
+      if (rule.has_discount) query = query.gt("old_price", 0);
+      if (rule.is_new) query = query.eq("is_new", true);
+      if (rule.is_featured) query = query.eq("is_featured", true);
+
+      const sort = rule.sort || "popular";
+      switch (sort) {
+        case "newest":
+          query = query.order("created_at", { ascending: false });
+          break;
+        case "price_asc":
+          query = query.order("price", { ascending: true });
+          break;
+        case "price_desc":
+          query = query.order("price", { ascending: false });
+          break;
+        case "discount":
+          query = query.order("old_price", { ascending: false });
+          break;
+        case "featured":
+          query = query.order("is_featured", { ascending: false });
+          break;
+        default:
+          query = query.order("quantity", { ascending: false });
+      }
+
+      query = query.limit(showcase.product_limit || 14);
+      const { data, error: prodError } = await query;
+
+      if (prodError) {
+        console.error("[Homepage] products error for", showcase.code, prodError.message);
+      }
+      console.log("[Homepage] showcase", showcase.code, "products:", data?.length || 0);
+
+      return { ...showcase, _products: data ?? [] };
+    }),
+  );
+
+  return results.filter((s: any) => s._products.length > 0);
+}
+
+/* ─── Other homepage data (sections, deal, quick-cats, features, etc.) ─── */
 async function getHomepageData() {
   const supabase = createAdminClient();
 
-  // 1. Sections — ordering
   const { data: sections } = await supabase
     .from("homepage_sections")
     .select("*")
     .eq("is_enabled", true)
     .order("sort_order");
 
-  // 2. Product showcases
-  const { data: showcases } = await supabase
-    .from("product_showcases")
-    .select("*")
-    .eq("is_enabled", true)
-    .order("sort_order");
-
-  // 3. Fetch products for each showcase
-  const showcaseProducts: Record<string, any[]> = {};
-  for (const sc of showcases || []) {
-    const rule = (sc.rule as Record<string, any>) || {};
-    let query = supabase
-      .from("products")
-      .select(PRODUCT_FIELDS)
-      .eq("status", "active")
-      .gt("quantity", 0);
-
-    if (rule.has_discount) query = query.gt("old_price", 0);
-    if (rule.is_new) query = query.eq("is_new", true);
-    if (rule.is_featured) query = query.eq("is_featured", true);
-
-    // Multi-category/brand filter (new) with single-value fallback (legacy)
-    if (rule.category_ids?.length) {
-      query = query.in("category_id", rule.category_ids);
-    } else if (rule.category_id) {
-      query = query.eq("category_id", rule.category_id);
-    }
-
-    if (rule.brand_ids?.length) {
-      query = query.in("brand_id", rule.brand_ids);
-    } else if (rule.brand_id) {
-      query = query.eq("brand_id", rule.brand_id);
-    }
-
-    switch (rule.sort) {
-      case "newest":
-        query = query.order("created_at", { ascending: false });
-        break;
-      case "discount":
-        query = query.order("old_price", { ascending: false });
-        break;
-      case "featured":
-        query = query.order("is_featured", { ascending: false });
-        break;
-      default: // popular
-        query = query.order("quantity", { ascending: false });
-    }
-
-    const { data: products } = await query.limit(sc.product_limit || 14);
-    showcaseProducts[sc.code] = products || [];
-  }
-
-  // 4. Deal of the Day
   const { data: deal } = await supabase
     .from("deal_of_day")
     .select("*")
@@ -93,7 +125,6 @@ async function getHomepageData() {
     .limit(1)
     .single();
 
-  // Deal products
   let dealProducts: any[] = [];
   if (deal?.product_ids?.length) {
     const { data } = await supabase
@@ -104,21 +135,18 @@ async function getHomepageData() {
     dealProducts = data || [];
   }
 
-  // 5. Quick categories
   const { data: quickCats } = await supabase
     .from("quick_categories")
     .select("*, categories(id, name_uk, name_ru, slug, image_url)")
     .eq("is_enabled", true)
     .order("sort_order");
 
-  // 6. Features
   const { data: features } = await supabase
     .from("service_features")
     .select("*")
     .eq("is_enabled", true)
     .order("sort_order");
 
-  // 7. Content blocks
   const { data: b2bBlock } = await supabase
     .from("content_blocks")
     .select("*")
@@ -126,7 +154,6 @@ async function getHomepageData() {
     .eq("is_enabled", true)
     .single();
 
-  // 8. Top bar
   const { data: topBarLinks } = await supabase
     .from("top_bar_links")
     .select("*")
@@ -135,8 +162,6 @@ async function getHomepageData() {
 
   return {
     sections: sections || [],
-    showcases: showcases || [],
-    showcaseProducts,
     deal,
     dealProducts,
     quickCats: quickCats || [],
@@ -147,29 +172,26 @@ async function getHomepageData() {
 }
 
 export default async function HomePage() {
-  const [homeData, categories, lang] = await Promise.all([
+  const [homeData, showcases, categories, lang] = await Promise.all([
     getHomepageData(),
+    getShowcases(),
     getCategoryTree(),
     getLanguage(),
   ]);
 
   const {
     sections,
-    showcases,
-    showcaseProducts,
     deal,
     dealProducts,
     quickCats,
     features,
     b2bBlock,
-    topBarLinks,
   } = homeData;
 
   /* Render a section by its code */
   const renderSection = (section: any) => {
     switch (section.code) {
       case "top_bar":
-        // TopBar is now rendered in layout.tsx via TopBarWrapper
         return null;
 
       case "hero_slider":
@@ -204,40 +226,11 @@ export default async function HomePage() {
         ) : null;
 
       default:
-        // Product showcases: showcase_hits, showcase_new, showcase_sale, etc.
-        if (section.section_type === "product_showcase") {
-          const showcaseCode = section.config?.showcase_code;
-          const sc = showcases.find((s: any) => s.code === showcaseCode);
-          const products = showcaseProducts[showcaseCode];
-          if (!sc || !products?.length) return null;
-
-          const title =
-            lang === "ru" ? sc.title_ru || sc.title_uk : sc.title_uk;
-          const ctaText =
-            lang === "ru"
-              ? sc.cta_text_ru || sc.cta_text_uk
-              : sc.cta_text_uk;
-
-          return (
-            <ScrollReveal key={section.id}>
-              <TrackSection code={showcaseCode} title={title}>
-                <ProductSection
-                  title={title}
-                  products={products}
-                  lang={lang}
-                  linkHref={sc.cta_url || undefined}
-                  linkText={ctaText || undefined}
-                  priorityCount={showcaseCode === "hits" ? 4 : 0}
-                />
-              </TrackSection>
-            </ScrollReveal>
-          );
-        }
         return null;
     }
   };
 
-  /* Split sections: top_bar separate, hero separate, rest in main flow */
+  /* Split sections */
   const topBarSection = sections.find((s: any) => s.code === "top_bar");
   const heroSection = sections.find((s: any) => s.code === "hero_slider");
   const quickCatSection = sections.find(
@@ -248,16 +241,6 @@ export default async function HomePage() {
       s.code !== "top_bar" &&
       s.code !== "hero_slider" &&
       s.code !== "quick_categories",
-  );
-
-  /* Showcases NOT linked to any homepage_section — render them separately */
-  const linkedShowcaseCodes = new Set(
-    mainSections
-      .filter((s: any) => s.section_type === "product_showcase")
-      .map((s: any) => s.config?.showcase_code),
-  );
-  const unlinkedShowcases = showcases.filter(
-    (sc: any) => !linkedShowcaseCodes.has(sc.code) && showcaseProducts[sc.code]?.length > 0,
   );
 
   return (
@@ -290,23 +273,25 @@ export default async function HomePage() {
       {/* ── Main sections (full width) ── */}
       <div className="mx-auto max-w-[1400px] px-4 md:px-6">
         <div className="mt-8 space-y-10 md:mt-12 md:space-y-14">
-          {/* Динамічні вітрини з адмінки (не прив'язані до homepage_sections) */}
-          {unlinkedShowcases.map((sc: any) => {
+          {/* Динамічні вітрини з адмінки */}
+          {showcases.map((showcase: any) => {
             const title =
-              lang === "ru" ? sc.title_ru || sc.title_uk : sc.title_uk;
+              lang === "ru"
+                ? showcase.title_ru || showcase.title_uk
+                : showcase.title_uk;
             const ctaText =
               lang === "ru"
-                ? sc.cta_text_ru || sc.cta_text_uk
-                : sc.cta_text_uk;
+                ? showcase.cta_text_ru || showcase.cta_text_uk || "Дивитись все"
+                : showcase.cta_text_uk || "Дивитись все";
             return (
-              <ScrollReveal key={sc.id}>
-                <TrackSection code={sc.code} title={title}>
+              <ScrollReveal key={showcase.id}>
+                <TrackSection code={showcase.code} title={title}>
                   <ProductSection
                     title={title}
-                    products={showcaseProducts[sc.code]}
+                    products={showcase._products}
                     lang={lang}
-                    linkHref={sc.cta_url || undefined}
-                    linkText={ctaText || undefined}
+                    linkHref={showcase.cta_url || "/catalog"}
+                    linkText={ctaText}
                   />
                 </TrackSection>
               </ScrollReveal>
