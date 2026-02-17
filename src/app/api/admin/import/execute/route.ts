@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
       let existingProduct: Record<string, unknown> | null = null;
 
       if (import_mode !== "create") {
-        const matchColumn = match_field === "brand_name" ? "name_uk" : match_field;
+        const matchColumn = match_field === "name" ? "name_uk" : match_field;
         const { data: found } = await supabase
           .from("products")
           .select("id, name_uk, price, quantity")
