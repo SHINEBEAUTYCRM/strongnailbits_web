@@ -14,7 +14,7 @@ import { CatalogButton } from "@/components/home/CatalogButton";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 
 /** ISR: revalidate homepage every 2 minutes */
-export const revalidate = 0;
+export const revalidate = 120;
 
 const PRODUCT_FIELDS =
   "id, name_uk, name_ru, slug, price, old_price, main_image_url, status, quantity, is_new, is_featured, brands(name)";
@@ -37,13 +37,6 @@ async function getShowcases() {
   }
   if (!showcases?.length) return [];
 
-  console.log("[Homepage] ALL showcases:", showcases.map((s: any) => ({
-    code: s.code,
-    is_enabled: s.is_enabled,
-    rule: JSON.stringify(s.rule),
-    product_limit: s.product_limit,
-  })));
-
   const results = await Promise.all(
     showcases.map(async (showcase: any) => {
       const sb = createAdminClient();
@@ -55,10 +48,26 @@ async function getShowcases() {
 
       const rule = (showcase.rule as Record<string, any>) || {};
 
-      console.log("[Homepage] showcase", showcase.code, "rule keys:", Object.keys(rule), "category_ids:", rule.category_ids, "has_discount:", rule.has_discount);
-
       if (rule.category_ids?.length > 0) {
-        query = query.in("category_id", rule.category_ids);
+        const sb2 = createAdminClient();
+        const { data: parentCats } = await sb2
+          .from("categories")
+          .select("cs_cart_id")
+          .in("id", rule.category_ids);
+        const parentCsCartIds = parentCats?.map((c: any) => c.cs_cart_id).filter(Boolean) || [];
+
+        let childIds: string[] = [];
+        if (parentCsCartIds.length > 0) {
+          const { data: childCats } = await sb2
+            .from("categories")
+            .select("id")
+            .in("parent_cs_cart_id", parentCsCartIds)
+            .eq("status", "active");
+          childIds = childCats?.map((c: any) => c.id) || [];
+        }
+
+        const allCatIds = [...rule.category_ids, ...childIds];
+        query = query.in("category_id", allCatIds);
       } else if (rule.category_id) {
         query = query.eq("category_id", rule.category_id);
       }
@@ -95,20 +104,7 @@ async function getShowcases() {
       }
 
       query = query.limit(showcase.product_limit || 14);
-
-      if (showcase.code === "tekhnika" || showcase.title_uk?.includes("Техн")) {
-        console.log("[Homepage] TEKHNIKA DEBUG:", {
-          code: showcase.code,
-          rule: JSON.stringify(rule),
-          category_ids: rule.category_ids,
-          has_discount: rule.has_discount,
-          is_new: rule.is_new,
-        });
-      }
-
       const { data, error: prodError } = await query;
-
-      console.log("[Homepage] showcase", showcase.code, "found products:", data?.length || 0, "error:", prodError?.message || "none");
 
       if (prodError) {
         console.error("[Homepage] products error for", showcase.code, prodError.message);
