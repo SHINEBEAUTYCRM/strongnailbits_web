@@ -12,7 +12,6 @@ import { FeaturesDynamic } from "@/components/home/FeaturesDynamic";
 import { B2BCtaDynamic } from "@/components/home/B2BCtaDynamic";
 import { CatalogButton } from "@/components/home/CatalogButton";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
-import { TrackSection } from "@/components/analytics/TrackSection";
 
 /** ISR: revalidate homepage every 2 minutes */
 export const revalidate = 120;
@@ -36,12 +35,7 @@ async function getShowcases() {
     console.error("[Homepage] showcases error:", error.message);
     return [];
   }
-  if (!showcases?.length) {
-    console.log("[Homepage] no active showcases found");
-    return [];
-  }
-
-  console.log("[Homepage] found showcases:", showcases.length, showcases.map((s: any) => s.code));
+  if (!showcases?.length) return [];
 
   const results = await Promise.all(
     showcases.map(async (showcase: any) => {
@@ -97,15 +91,11 @@ async function getShowcases() {
       if (prodError) {
         console.error("[Homepage] products error for", showcase.code, prodError.message);
       }
-      console.log("[Homepage] showcase", showcase.code, "products:", data?.length || 0);
-
       return { ...showcase, _products: data ?? [] };
     }),
   );
 
-  const final = results.filter((s: any) => s._products.length > 0);
-  console.log("[Homepage] getShowcases returning:", final.length, "showcases with products");
-  return final;
+  return results.filter((s: any) => s._products.length > 0);
 }
 
 /* ─── Other homepage data (sections, deal, quick-cats, features, etc.) ─── */
@@ -245,8 +235,6 @@ export default async function HomePage() {
       s.code !== "quick_categories",
   );
 
-  console.log("[Homepage] RENDER showcases count:", showcases?.length, "items:", showcases?.map((s: any) => ({ code: s.code, products: s._products?.length })));
-
   return (
     <div className="pb-12 md:pb-16">
       {/* Top Bar */}
@@ -278,32 +266,16 @@ export default async function HomePage() {
       <div className="mx-auto max-w-[1400px] px-4 md:px-6">
         <div className="mt-8 space-y-10 md:mt-12 md:space-y-14">
           {/* Динамічні вітрини */}
-          {(!showcases || showcases.length === 0) && (
-            <div style={{ background: "red", color: "white", padding: "20px", margin: "20px 0" }}>
-              [DEBUG] Витрин нет: {JSON.stringify(showcases?.length)}
-            </div>
-          )}
-          {showcases && showcases.length > 0 && (
-            <>
-              <div style={{ background: "green", color: "white", padding: "10px", margin: "20px 0" }}>
-                [DEBUG] Витрин: {showcases.length}
-              </div>
-              {showcases.map((showcase: any) => {
-                const title = showcase.title_uk || showcase.name_uk || "Вітрина";
-                const products = showcase._products || [];
-                return (
-                  <ProductSection
-                    key={showcase.id}
-                    title={title}
-                    products={products}
-                    lang={lang}
-                    linkHref={showcase.cta_url || "/catalog"}
-                    linkText={showcase.cta_text_uk || "Дивитись все"}
-                  />
-                );
-              })}
-            </>
-          )}
+          {showcases && showcases.length > 0 && showcases.map((showcase: any) => (
+            <ProductSection
+              key={showcase.id}
+              title={lang === "ru" ? (showcase.title_ru || showcase.name_ru || showcase.title_uk || showcase.name_uk || "") : (showcase.title_uk || showcase.name_uk || "")}
+              products={showcase._products || []}
+              lang={lang}
+              linkHref={showcase.cta_url || "/catalog"}
+              linkText={lang === "ru" ? (showcase.cta_text_ru || "Смотреть все") : (showcase.cta_text_uk || "Дивитись все")}
+            />
+          ))}
 
           {/* Існуючі секції з homepage_sections */}
           {mainSections.map(renderSection)}
