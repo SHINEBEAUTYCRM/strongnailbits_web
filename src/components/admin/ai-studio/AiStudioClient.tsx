@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import { ProductFilters } from "./ProductFilters";
@@ -41,6 +41,7 @@ export function AiStudioClient({ brands, categories }: AiStudioClientProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  const [brandSourceUrls, setBrandSourceUrls] = useState<string[]>([]);
   const [useBrandSources, setUseBrandSources] = useState(true);
   const [bulkAction, setBulkAction] = useState("");
   const [bulkRunning, setBulkRunning] = useState(false);
@@ -80,6 +81,14 @@ export function AiStudioClient({ brands, categories }: AiStudioClientProps) {
 
   // Initial load
   useState(() => { loadProducts(); });
+
+  useEffect(() => {
+    if (!brandId) { setBrandSourceUrls([]); return; }
+    fetch(`/api/admin/brands?id=${brandId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => setBrandSourceUrls(Array.isArray(d?.source_urls) ? d.source_urls.filter(Boolean) : []))
+      .catch(() => setBrandSourceUrls([]));
+  }, [brandId]);
 
   const changeBrand = (v: string) => { setBrandId(v); setPage(1); loadProducts(1, v, categoryId, status, sort); };
   const changeCategory = (v: string) => { setCategoryId(v); setPage(1); loadProducts(1, brandId, v, status, sort); };
@@ -251,7 +260,7 @@ export function AiStudioClient({ brands, categories }: AiStudioClientProps) {
         ) : (
           products.map(p =>
             expandedId === p.id ? (
-              <ProductCardExpanded key={p.id} product={p} onSave={handleSave} onCollapse={() => setExpandedId(null)} />
+              <ProductCardExpanded key={p.id} product={p} brandSourceUrls={brandSourceUrls} onSave={handleSave} onCollapse={() => setExpandedId(null)} />
             ) : (
               <ProductCard key={p.id} product={p} selected={selected.has(p.id)} expanded={false} onSelect={toggleSelect} onToggleExpand={toggleExpand} onAction={handleCardAction} />
             )

@@ -1,0 +1,1019 @@
+@import "tailwindcss";
+
+/* ================================================================ */
+/*  SHINE SHOP — Comfy-inspired Clean Theme                         */
+/* ================================================================ */
+
+@theme inline {
+  /* Brand colors (WCAG AA compliant — 4.5:1+ contrast on white) */
+  --color-coral: #D6264A;       /* was #FF2D55 — contrast 4.71:1 on white */
+  --color-coral-2: #B8203F;     /* hover state — darker than coral */
+  --color-coral-light: rgba(214, 38, 74, 0.06);
+  --color-violet: #8B5CF6;
+  --color-dark: #1a1a1a;
+  --color-pearl: #FAFAF8;
+  --color-sand: #F3F1EE;
+  --color-green: #008040;       /* was #00C853 — contrast 4.71:1 on white */
+  --color-amber: #C27400;       /* was #FF9500 — contrast 4.51:1 on white */
+  --color-red: #E0352B;         /* was #FF3B30 — slightly adjusted */
+
+  /* Semantic */
+  --color-background: #f5f5f7;
+  --color-foreground: #1a1a1a;
+
+  /* Fonts */
+  --font-sans: var(--font-inter), "Inter", system-ui, sans-serif;
+  --font-heading: var(--font-unbounded), "Unbounded", cursive;
+  --font-mono: var(--font-jetbrains), "JetBrains Mono", monospace;
+
+  /* Radii */
+  --radius-card: 16px;
+  --radius-pill: 50px;
+}
+
+/* ================================================================ */
+/*  CSS Variables                                                     */
+/* ================================================================ */
+
+:root {
+  --bg: #f5f5f7;
+  --bg2: #e8e8e8;
+  --card: #FFFFFF;
+  --coral: #D6264A;
+  --coral2: #B8203F;
+  --violet: #8B5CF6;
+  --dark: #1a1a1a;
+  --t: #1a1a1a;
+  --t2: #6b6b7b;
+  --t3: #6e6e7a;              /* was #b0b0be — improved contrast */
+  --green: #008040;
+  --amber: #C27400;
+  --red: #E0352B;
+  --border: #f0f0f0;
+}
+
+/* ================================================================ */
+/*  Base                                                              */
+/* ================================================================ */
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: var(--bg);
+  color: var(--t);
+  font-family: var(--font-inter), "Inter", system-ui, sans-serif;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+/* ================================================================ */
+/*  Selection                                                         */
+/* ================================================================ */
+
+::selection {
+  background: rgba(214, 38, 74, 0.15);
+  color: var(--dark);
+}
+
+/* ================================================================ */
+/*  Focus                                                             */
+/* ================================================================ */
+
+*:focus-visible {
+  outline: 2px solid rgba(214, 38, 74, 0.4);
+  outline-offset: 2px;
+}
+
+/* ================================================================ */
+/*  Scrollbar                                                         */
+/* ================================================================ */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ================================================================ */
+/*  Font utilities                                                    */
+/* ================================================================ */
+
+.font-unbounded {
+  font-family: var(--font-unbounded), "Unbounded", cursive;
+}
+
+.font-price {
+  font-family: var(--font-jetbrains), "JetBrains Mono", monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ================================================================ */
+/*  Gradient text                                                     */
+/* ================================================================ */
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--coral), var(--violet));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ================================================================ */
+/*  Valentine's Day hearts explosion                                  */
+/* ================================================================ */
+
+@keyframes heart-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(0) translateX(0) rotate(0deg) scale(0.2);
+  }
+  8% {
+    opacity: 1;
+    transform: translateY(-8vh) translateX(calc(var(--sway, 30px) * -0.3)) rotate(calc(var(--rotate, 20deg) * 0.3)) scale(0.8);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-30vh) translateX(var(--sway, 30px)) rotate(var(--rotate, 20deg)) scale(1);
+  }
+  60% {
+    opacity: 0.8;
+    transform: translateY(-60vh) translateX(calc(var(--sway, 30px) * -0.5)) rotate(calc(var(--rotate, 20deg) * 1.5)) scale(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-115vh) translateX(calc(var(--sway, 30px) * 0.7)) rotate(calc(var(--rotate, 20deg) * 2.5)) scale(0.4);
+  }
+}
+
+@keyframes sparkle-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(-15vh) scale(1);
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-110vh) scale(0);
+  }
+}
+
+@keyframes valentine-msg {
+  0% { opacity: 0; transform: scale(0.5) translateY(20px); }
+  12% { opacity: 1; transform: scale(1.06) translateY(0); }
+  20% { transform: scale(1) translateY(0); }
+  70% { opacity: 1; transform: scale(1) translateY(0); }
+  100% { opacity: 0; transform: scale(0.9) translateY(-10px); }
+}
+
+.valentine-heart {
+  animation: heart-rise ease-out forwards;
+  will-change: transform, opacity;
+}
+
+.valentine-sparkle {
+  animation: sparkle-rise ease-out forwards;
+  will-change: transform, opacity;
+}
+
+.valentine-message {
+  animation: valentine-msg 4.5s ease-in-out forwards;
+  animation-delay: 0.6s;
+  opacity: 0;
+}
+
+/* ================================================================ */
+/*  Sale pulse dot                                                    */
+/* ================================================================ */
+
+@keyframes sale-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.sale-dot {
+  animation: sale-pulse 2s ease-in-out infinite;
+}
+
+/* ================================================================ */
+/*  Scroll reveal                                                     */
+/* ================================================================ */
+
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+.reveal.revealed {
+  animation: reveal-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ================================================================ */
+/*  CTA glow                                                          */
+/* ================================================================ */
+
+.glow-coral {
+  box-shadow: 0 8px 24px rgba(214, 38, 74, 0.25);
+}
+
+.glow-violet {
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.25);
+}
+
+/* ================================================================ */
+/*  Toast slide-in animation                                         */
+/* ================================================================ */
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(80px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.25s ease-out forwards;
+}
+
+/* ================================================================ */
+/*  MegaMenu animations                                              */
+/* ================================================================ */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dropdownIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fadeScaleIn {
+  from { opacity: 0; transform: scale(0.96) translateY(4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ================================================================ */
+/*  Safe area for mobile bottom nav                                  */
+/* ================================================================ */
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ================================================================ */
+/*  Admin panel theme system                                         */
+/* ================================================================ */
+
+/* Dark theme (default) */
+[data-admin-theme="dark"] {
+  --a-bg:          #08080c;
+  --a-bg-sidebar:  #0c0c12;
+  --a-bg-header:   #0a0a10;
+  --a-bg-card:     #0e0e14;
+  --a-bg-input:    #111116;
+  --a-bg-hover:    #0f0f1a;
+  --a-bg-active:   #18182a;
+  --a-bg-muted:    #1a1a24;
+  --a-border:      #1e1e2a;
+  --a-border-sub:  #141420;
+  --a-text:        #f4f4f5;
+  --a-text-name:   #d4d4d8;
+  --a-text-body:   #e4e4e7;
+  --a-text-2:      #a1a1aa;
+  --a-text-3:      #71717a;
+  --a-text-4:      #52525b;
+  --a-text-5:      #3f3f46;
+  --a-text-6:      #27272a;
+  --a-accent:      #a855f7;
+  --a-accent-bg:   #1e1030;
+  --a-accent-btn:  #7c3aed;
+  --a-shadow:      rgba(0,0,0,0.3);
+  --a-card-shadow: none;
+  /* Status badges — dark */
+  --a-st-new-c:        #60a5fa; --a-st-new-bg:        #172554;
+  --a-st-processing-c: #fbbf24; --a-st-processing-bg: #422006;
+  --a-st-shipped-c:    #a78bfa; --a-st-shipped-bg:    #2e1065;
+  --a-st-delivered-c:  #4ade80; --a-st-delivered-bg:  #052e16;
+  --a-st-cancelled-c:  #f87171; --a-st-cancelled-bg:  #450a0a;
+}
+
+/* Light theme — WCAG AA contrast on white (#fff) checked */
+[data-admin-theme="light"] {
+  --a-bg:          #f5f5f7;           /* Apple-like light gray, NOT white */
+  --a-bg-sidebar:  #ffffff;
+  --a-bg-header:   #ffffff;
+  --a-bg-card:     #ffffff;           /* White cards ON gray bg = contrast */
+  --a-bg-input:    #f1f5f9;
+  --a-bg-hover:    #f0f0f4;
+  --a-bg-active:   #ede9fe;
+  --a-bg-muted:    #f1f5f9;
+  --a-bg-surface:  #f9f9fb;
+  --a-border:      rgba(0, 0, 0, 0.08);
+  --a-border-sub:  rgba(0, 0, 0, 0.04);
+  --a-border-hover: rgba(0, 0, 0, 0.14);
+  --a-text:        #0f172a;
+  --a-text-name:   #1e293b;
+  --a-text-body:   #334155;
+  --a-text-2:      #475569;
+  --a-text-3:      #64748b;
+  --a-text-4:      #64748b;
+  --a-text-5:      #94a3b8;
+  --a-text-6:      #cbd5e1;
+  --a-accent:      #7c3aed;
+  --a-accent-bg:   #f5f3ff;
+  --a-accent-btn:  #7c3aed;
+  --a-shadow:      0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+  --a-shadow-lg:   0 4px 12px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
+  --a-card-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  /* Status badges — light pastel */
+  --a-st-new-c:        #2563eb; --a-st-new-bg:        #dbeafe;
+  --a-st-processing-c: #b45309; --a-st-processing-bg: #fef3c7;
+  --a-st-shipped-c:    #7c3aed; --a-st-shipped-bg:    #ede9fe;
+  --a-st-delivered-c:  #16a34a; --a-st-delivered-bg:  #dcfce7;
+  --a-st-cancelled-c:  #dc2626; --a-st-cancelled-bg:  #fef2f2;
+}
+
+/* ── Light-theme global overrides for pages with inline dark styles ── */
+
+/* Sidebar & header get subtle bottom shadow */
+[data-admin-theme="light"] aside {
+  box-shadow: 1px 0 0 var(--a-border);
+}
+[data-admin-theme="light"] header {
+  box-shadow: 0 1px 0 var(--a-border);
+}
+
+/* ── ALL admin elements with dark inline backgrounds ── */
+[data-admin-theme="light"] .admin-content [style*="0e0e14"],
+[data-admin-theme="light"] .admin-content [style*="0c0c12"],
+[data-admin-theme="light"] .admin-content [style*="08080c"],
+[data-admin-theme="light"] .admin-content [style*="0a0a10"],
+[data-admin-theme="light"] .admin-content [style*="0a0a0f"] {
+  background: var(--a-bg-card) !important;
+  border-color: var(--a-border) !important;
+  box-shadow: var(--a-card-shadow);
+}
+
+[data-admin-theme="light"] .admin-content [style*="111116"],
+[data-admin-theme="light"] .admin-content [style*="111118"] {
+  background: var(--a-bg-input) !important;
+  border-color: var(--a-border) !important;
+}
+
+/* Borders inside tables/cards */
+[data-admin-theme="light"] .admin-content tr[style*="141420"],
+[data-admin-theme="light"] .admin-content tr[style*="0e0e14"] {
+  border-color: var(--a-border-sub) !important;
+}
+/* Generic border override — target dark borders on any element */
+[data-admin-theme="light"] .admin-content [style*="1e1e2a"] {
+  border-color: var(--a-border) !important;
+}
+
+/* Table headers */
+[data-admin-theme="light"] .admin-content th[style*="3f3f46"],
+[data-admin-theme="light"] .admin-content th[style*="27272a"] {
+  color: var(--a-text-4) !important;
+}
+
+/* Primary text (headings, bold values) */
+[data-admin-theme="light"] .admin-content [style*="color: #f4f4f5"],
+[data-admin-theme="light"] .admin-content [style*="color:#f4f4f5"],
+[data-admin-theme="light"] .admin-content [style*="color: #e4e4e7"],
+[data-admin-theme="light"] .admin-content [style*="color:#e4e4e7"],
+[data-admin-theme="light"] .admin-content [style*="color: #d4d4d8"],
+[data-admin-theme="light"] .admin-content [style*="color:#d4d4d8"],
+[data-admin-theme="light"] .admin-content [style*="color: #fff"],
+[data-admin-theme="light"] .admin-content [style*="color:#fff"],
+[data-admin-theme="light"] .admin-content [style*="color: white"],
+[data-admin-theme="light"] .admin-content [style*="color:white"] {
+  color: var(--a-text) !important;
+}
+
+/* Secondary text */
+[data-admin-theme="light"] .admin-content [style*="color: #a1a1aa"],
+[data-admin-theme="light"] .admin-content [style*="color:#a1a1aa"],
+[data-admin-theme="light"] .admin-content [style*="color: #ccc"],
+[data-admin-theme="light"] .admin-content [style*="color:#ccc"],
+[data-admin-theme="light"] .admin-content [style*="color: #ddd"],
+[data-admin-theme="light"] .admin-content [style*="color:#ddd"],
+[data-admin-theme="light"] .admin-content [style*="color: #aaa"],
+[data-admin-theme="light"] .admin-content [style*="color:#aaa"] {
+  color: var(--a-text-2) !important;
+}
+
+/* Muted text */
+[data-admin-theme="light"] .admin-content [style*="color: #71717a"],
+[data-admin-theme="light"] .admin-content [style*="color:#71717a"],
+[data-admin-theme="light"] .admin-content [style*="color: #999"],
+[data-admin-theme="light"] .admin-content [style*="color:#999"] {
+  color: var(--a-text-3) !important;
+}
+
+/* Very muted text */
+[data-admin-theme="light"] .admin-content [style*="color: #52525b"],
+[data-admin-theme="light"] .admin-content [style*="color:#52525b"],
+[data-admin-theme="light"] .admin-content [style*="color: #888"],
+[data-admin-theme="light"] .admin-content [style*="color:#888"],
+[data-admin-theme="light"] .admin-content [style*="color: #777"],
+[data-admin-theme="light"] .admin-content [style*="color:#777"] {
+  color: var(--a-text-4) !important;
+}
+
+/* Near-invisible text → make visible */
+[data-admin-theme="light"] .admin-content [style*="color: #3f3f46"],
+[data-admin-theme="light"] .admin-content [style*="color:#3f3f46"],
+[data-admin-theme="light"] .admin-content [style*="color: #666"],
+[data-admin-theme="light"] .admin-content [style*="color:#666"],
+[data-admin-theme="light"] .admin-content [style*="color: #555"],
+[data-admin-theme="light"] .admin-content [style*="color:#555"],
+[data-admin-theme="light"] .admin-content [style*="color: #444"],
+[data-admin-theme="light"] .admin-content [style*="color:#444"] {
+  color: var(--a-text-5) !important;
+}
+
+/* Invisible in dark → visible in light */
+[data-admin-theme="light"] .admin-content [style*="color: #27272a"],
+[data-admin-theme="light"] .admin-content [style*="color:#27272a"] {
+  color: var(--a-text-5) !important;
+}
+
+/* Filter pills & buttons with dark bg — ANY element (button, a, div, span) */
+[data-admin-theme="light"] .admin-content button[style*="111116"],
+[data-admin-theme="light"] .admin-content a[style*="111116"] {
+  background: var(--a-bg-input) !important;
+  border-color: var(--a-border) !important;
+  color: var(--a-text-3) !important;
+}
+
+/* Active filter pill — purple (button or a) */
+[data-admin-theme="light"] .admin-content button[style*="1e1030"],
+[data-admin-theme="light"] .admin-content a[style*="1e1030"] {
+  background: var(--a-accent-bg) !important;
+  border-color: var(--a-accent) !important;
+  color: var(--a-accent) !important;
+}
+[data-admin-theme="light"] .admin-content button[style*="581c87"],
+[data-admin-theme="light"] .admin-content a[style*="581c87"] {
+  border-color: var(--a-accent) !important;
+}
+
+/* Status badges — override dark bg with theme-aware pastels (any element) */
+[data-admin-theme="light"] .admin-content [style*="172554"] {
+  background: var(--a-st-new-bg) !important;
+  color: var(--a-st-new-c) !important;
+}
+[data-admin-theme="light"] .admin-content [style*="422006"] {
+  background: var(--a-st-processing-bg) !important;
+  color: var(--a-st-processing-c) !important;
+}
+[data-admin-theme="light"] .admin-content [style*="2e1065"] {
+  background: var(--a-st-shipped-bg) !important;
+  color: var(--a-st-shipped-c) !important;
+}
+[data-admin-theme="light"] .admin-content [style*="052e16"] {
+  background: var(--a-st-delivered-bg) !important;
+  color: var(--a-st-delivered-c) !important;
+}
+[data-admin-theme="light"] .admin-content [style*="14532d"] {
+  border-color: var(--a-st-delivered-c) !important;
+}
+[data-admin-theme="light"] .admin-content [style*="450a0a"] {
+  background: var(--a-st-cancelled-bg) !important;
+  color: var(--a-st-cancelled-c) !important;
+}
+[data-admin-theme="light"] .admin-content [style*="7f1d1d"] {
+  border-color: var(--a-st-cancelled-c) !important;
+}
+
+/* Admin table row hover — works in both themes */
+.admin-row:hover {
+  background: var(--a-bg-hover);
+}
+
+/* Input/search backgrounds */
+[data-admin-theme="light"] .admin-content [style*="background: #111116"],
+[data-admin-theme="light"] .admin-content [style*="background:#111116"],
+[data-admin-theme="light"] .admin-content input[style*="111116"],
+[data-admin-theme="light"] .admin-content select[style*="111116"],
+[data-admin-theme="light"] .admin-content textarea[style*="111116"] {
+  background: var(--a-bg-input) !important;
+  border-color: var(--a-border) !important;
+  color: var(--a-text) !important;
+}
+
+/* Image/icon placeholder dark backgrounds */
+[data-admin-theme="light"] .admin-content [style*="141420"] {
+  background: var(--a-bg-input) !important;
+}
+[data-admin-theme="light"] .admin-content [style*="1a1a24"] {
+  background: var(--a-bg-input) !important;
+}
+
+/* Disabled/inactive element dark bg */
+[data-admin-theme="light"] .admin-content [style*="18181b"] {
+  background: var(--a-bg-input) !important;
+  border-color: var(--a-border) !important;
+}
+
+/* Bulk action & error box dark backgrounds */
+[data-admin-theme="light"] .admin-content [style*="1c1017"] {
+  background: var(--a-st-cancelled-bg) !important;
+}
+
+/* Accent hover interaction edit icons */
+[data-admin-theme="light"] .admin-content a[style*="3f3f46"],
+[data-admin-theme="light"] .admin-content button[style*="3f3f46"] {
+  color: var(--a-text-5) !important;
+}
+
+/* ================================================================ */
+/*  Tailwind-class overrides for admin light theme                   */
+/*  Targets pages using Tailwind arbitrary dark colors (bg-[#xxx])   */
+/* ================================================================ */
+
+/* ── Dark backgrounds → white cards ── */
+[data-admin-theme="light"] .admin-content .bg-\[\#13131a\],
+[data-admin-theme="light"] .admin-content .bg-\[\#0e0e14\],
+[data-admin-theme="light"] .admin-content .bg-\[\#111116\],
+[data-admin-theme="light"] .admin-content .bg-\[\#111118\],
+[data-admin-theme="light"] .admin-content .bg-\[\#0c0c12\],
+[data-admin-theme="light"] .admin-content .bg-\[\#0a0a10\],
+[data-admin-theme="light"] .admin-content .bg-\[\#0a0a0f\],
+[data-admin-theme="light"] .admin-content .bg-\[\#141420\],
+[data-admin-theme="light"] .admin-content .bg-\[\#1a1a24\],
+[data-admin-theme="light"] .admin-content .bg-\[\#1e1e2a\],
+[data-admin-theme="light"] .admin-content .bg-\[\#08080c\] {
+  background-color: var(--a-bg-card) !important;
+  box-shadow: var(--a-card-shadow);
+}
+
+/* Sticky header with opacity (api-docs) */
+[data-admin-theme="light"] .admin-content .bg-\[\#0c0c12\]\/95 {
+  background-color: rgba(255,255,255,0.95) !important;
+  backdrop-filter: blur(8px);
+}
+
+/* ── White/transparent borders → visible gray ── */
+[data-admin-theme="light"] .admin-content .border-white\/5,
+[data-admin-theme="light"] .admin-content .border-white\/10,
+[data-admin-theme="light"] .admin-content .border-white\/15,
+[data-admin-theme="light"] .admin-content .border-white\/20,
+[data-admin-theme="light"] .admin-content .border-white\/30 {
+  border-color: var(--a-border) !important;
+}
+
+/* ── Dark hex borders → gray ── */
+[data-admin-theme="light"] .admin-content .border-\[\#1e1e2a\],
+[data-admin-theme="light"] .admin-content .border-\[\#27272a\],
+[data-admin-theme="light"] .admin-content .border-\[\#141420\] {
+  border-color: var(--a-border) !important;
+}
+
+/* ── Semi-transparent white backgrounds → subtle fills ── */
+[data-admin-theme="light"] .admin-content .bg-white\/5,
+[data-admin-theme="light"] .admin-content .bg-white\/\[0\.02\],
+[data-admin-theme="light"] .admin-content .bg-white\/\[0\.03\] {
+  background-color: var(--a-bg-hover) !important;
+}
+[data-admin-theme="light"] .admin-content .bg-white\/10 {
+  background-color: var(--a-bg-input) !important;
+}
+[data-admin-theme="light"] .admin-content .bg-white\/20 {
+  background-color: var(--a-bg-muted) !important;
+}
+
+/* ── Text colors ── */
+[data-admin-theme="light"] .admin-content .text-white {
+  color: var(--a-text) !important;
+}
+[data-admin-theme="light"] .admin-content .text-white\/80 {
+  color: var(--a-text-body) !important;
+}
+[data-admin-theme="light"] .admin-content .text-gray-200 {
+  color: var(--a-text) !important;
+}
+[data-admin-theme="light"] .admin-content .text-gray-300 {
+  color: var(--a-text-body) !important;
+}
+[data-admin-theme="light"] .admin-content .text-gray-400 {
+  color: var(--a-text-2) !important;
+}
+[data-admin-theme="light"] .admin-content .text-gray-500 {
+  color: var(--a-text-3) !important;
+}
+[data-admin-theme="light"] .admin-content .text-gray-600 {
+  color: var(--a-text-4) !important;
+}
+/* zinc palette used in some admin pages */
+[data-admin-theme="light"] .admin-content .text-zinc-300 {
+  color: var(--a-text-body) !important;
+}
+[data-admin-theme="light"] .admin-content .text-zinc-400 {
+  color: var(--a-text-2) !important;
+}
+[data-admin-theme="light"] .admin-content .text-zinc-500 {
+  color: var(--a-text-3) !important;
+}
+[data-admin-theme="light"] .admin-content .text-zinc-600 {
+  color: var(--a-text-4) !important;
+}
+[data-admin-theme="light"] .admin-content .text-zinc-700 {
+  color: var(--a-text-5) !important;
+}
+/* zinc hover */
+[data-admin-theme="light"] .admin-content .hover\:text-zinc-300:hover {
+  color: var(--a-text) !important;
+}
+/* placeholder in inputs */
+[data-admin-theme="light"] .admin-content .placeholder\:text-zinc-600::placeholder {
+  color: var(--a-text-4) !important;
+}
+/* bg-zinc */
+[data-admin-theme="light"] .admin-content .bg-zinc-800 {
+  background-color: var(--a-bg-card) !important;
+  border: 1px solid var(--a-border);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+[data-admin-theme="light"] .admin-content .bg-zinc-500\/20 {
+  background-color: #e5e7eb !important;
+}
+
+/* ── Hover states → adapt ── */
+[data-admin-theme="light"] .admin-content .hover\:text-white:hover {
+  color: var(--a-text) !important;
+}
+[data-admin-theme="light"] .admin-content .hover\:text-gray-300:hover {
+  color: var(--a-text-body) !important;
+}
+[data-admin-theme="light"] .admin-content .hover\:border-white\/10:hover,
+[data-admin-theme="light"] .admin-content .hover\:border-white\/20:hover {
+  border-color: var(--a-accent) !important;
+}
+[data-admin-theme="light"] .admin-content .hover\:border-purple-500\/30:hover {
+  border-color: var(--a-accent) !important;
+}
+[data-admin-theme="light"] .admin-content .hover\:border-\[\#27272a\]:hover {
+  border-color: var(--a-accent) !important;
+}
+[data-admin-theme="light"] .admin-content .hover\:bg-white\/5:hover,
+[data-admin-theme="light"] .admin-content .hover\:bg-white\/10:hover {
+  background-color: var(--a-bg-hover) !important;
+}
+[data-admin-theme="light"] .admin-content .hover\:bg-\[\#1a1a24\]:hover,
+[data-admin-theme="light"] .admin-content .hover\:bg-\[\#1e1e2a\]:hover,
+[data-admin-theme="light"] .admin-content .hover\:bg-\[\#111118\]:hover {
+  background-color: var(--a-bg-hover) !important;
+}
+
+/* ── Divide (table, list dividers) ── */
+[data-admin-theme="light"] .admin-content .divide-white\/5 > * + *,
+[data-admin-theme="light"] .admin-content .divide-\[\#1e1e2a\] > * + * {
+  border-color: var(--a-border) !important;
+}
+
+/* ── Funnel stage pills — keep their colors but ensure readability ── */
+[data-admin-theme="light"] .admin-content [style*="1e1e2e"],
+[data-admin-theme="light"] .admin-content [style*="1e1e2a"] {
+  background: var(--a-bg-input) !important;
+  border-color: var(--a-border) !important;
+}
+
+/* ── Extra inline dark bg patterns (for pages not yet on CSS vars) ── */
+[data-admin-theme="light"] .admin-content [style*="18181b"],
+[data-admin-theme="light"] .admin-content [style*="141420"],
+[data-admin-theme="light"] .admin-content [style*="0a0a10"] {
+  background: var(--a-bg-card) !important;
+  border-color: var(--a-border) !important;
+  box-shadow: var(--a-card-shadow);
+}
+
+/* ================================================================ */
+/*  Light theme: Card depth & button visibility                      */
+/* ================================================================ */
+
+/* Every card/panel gets shadow + border in light theme */
+[data-admin-theme="light"] .admin-content .rounded-xl[style*="var(--a-bg-card)"],
+[data-admin-theme="light"] .admin-content .rounded-2xl[style*="var(--a-bg-card)"] {
+  box-shadow: var(--a-card-shadow) !important;
+  border: 1px solid var(--a-border) !important;
+}
+
+/* Rounded containers with dark Tailwind bg get card treatment */
+[data-admin-theme="light"] .admin-content .bg-\[\#13131a\] {
+  background-color: var(--a-bg-card) !important;
+  box-shadow: var(--a-card-shadow);
+  border: 1px solid var(--a-border) !important;
+}
+
+/* Semi-transparent white bg → subtle fill */
+[data-admin-theme="light"] .admin-content .bg-white\/5,
+[data-admin-theme="light"] .admin-content .bg-white\/\[0\.02\],
+[data-admin-theme="light"] .admin-content .bg-white\/\[0\.03\] {
+  background-color: var(--a-bg-hover) !important;
+}
+[data-admin-theme="light"] .admin-content .bg-white\/10 {
+  background-color: var(--a-bg-input) !important;
+}
+
+/* Gradient overlays — soften for light */
+[data-admin-theme="light"] .admin-content .from-purple-500\/5 {
+  --tw-gradient-from: rgba(168,85,247,0.04) !important;
+}
+[data-admin-theme="light"] .admin-content .to-indigo-500\/5 {
+  --tw-gradient-to: rgba(99,102,241,0.04) !important;
+}
+
+/* Purple accent overlays */
+[data-admin-theme="light"] .admin-content .bg-purple-500\/10,
+[data-admin-theme="light"] .admin-content .bg-purple-500\/15 {
+  background-color: rgba(168,85,247,0.08) !important;
+}
+[data-admin-theme="light"] .admin-content .bg-purple-600\/20 {
+  background-color: rgba(124,58,237,0.08) !important;
+}
+[data-admin-theme="light"] .admin-content .bg-indigo-500\/10 {
+  background-color: rgba(99,102,241,0.08) !important;
+}
+
+/* Text color overrides for Tailwind classes on funnels & other pages */
+[data-admin-theme="light"] .admin-content .text-gray-300 {
+  color: var(--a-text-body) !important;
+}
+[data-admin-theme="light"] .admin-content .text-gray-400 {
+  color: var(--a-text-2) !important;
+}
+[data-admin-theme="light"] .admin-content .text-gray-500 {
+  color: var(--a-text-3) !important;
+}
+[data-admin-theme="light"] .admin-content .text-gray-600 {
+  color: var(--a-text-4) !important;
+}
+[data-admin-theme="light"] .admin-content .text-purple-200 {
+  color: var(--a-accent) !important;
+}
+[data-admin-theme="light"] .admin-content .text-purple-400 {
+  color: var(--a-accent) !important;
+}
+
+/* Input fields */
+[data-admin-theme="light"] .admin-content input.bg-white\/5,
+[data-admin-theme="light"] .admin-content input.border-white\/10 {
+  background: var(--a-bg-input) !important;
+  border-color: var(--a-border) !important;
+  color: var(--a-text) !important;
+}
+[data-admin-theme="light"] .admin-content .placeholder\:text-gray-600::placeholder {
+  color: var(--a-text-4) !important;
+}
+[data-admin-theme="light"] .admin-content .focus\:border-purple-500\/50:focus {
+  border-color: var(--a-accent) !important;
+}
+
+/* Hover overrides */
+[data-admin-theme="light"] .admin-content .hover\:text-white:hover {
+  color: var(--a-text) !important;
+}
+[data-admin-theme="light"] .admin-content .hover\:text-gray-300:hover {
+  color: var(--a-text-body) !important;
+}
+[data-admin-theme="light"] .admin-content .hover\:border-white\/10:hover {
+  border-color: var(--a-border-hover) !important;
+}
+[data-admin-theme="light"] .admin-content .hover\:border-purple-500\/30:hover {
+  border-color: var(--a-accent) !important;
+}
+[data-admin-theme="light"] .admin-content .hover\:bg-white\/5:hover {
+  background-color: var(--a-bg-hover) !important;
+}
+
+/* Borders */
+[data-admin-theme="light"] .admin-content .border-purple-500\/20 {
+  border-color: rgba(124,58,237,0.15) !important;
+}
+
+/* Admin page body background */
+[data-admin-theme="light"] .admin-content {
+  background: var(--a-bg) !important;
+}
+
+/* ── AI Advisor markdown prose ── */
+.prose-ai {
+  line-height: 1.65;
+  word-break: break-word;
+}
+.prose-ai h2, .prose-ai h3, .prose-ai h4 {
+  color: var(--a-text);
+}
+.prose-ai strong {
+  color: var(--a-text);
+  font-weight: 600;
+}
+.prose-ai li {
+  padding-left: 4px;
+}
+.prose-ai code {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+.prose-ai pre {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+.prose-ai hr {
+  opacity: 0.5;
+}
+
+/* ── Board page — fills admin-content, no scroll ── */
+.admin-content:has(.board-page) {
+  overflow: hidden !important;
+  padding: 0 !important;
+}
+.admin-content:has(.board-page) > div {
+  max-width: none !important;
+  margin: 0 !important;
+  height: 100% !important;
+}
+
+.board-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── tldraw isolation — prevent CSS transitions/animations from killing canvas ── */
+.tl-container,
+.tl-container *,
+[data-tldraw] * {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* ── Scrollbar — subtle for light theme ── */
+[data-admin-theme="light"] .admin-content::-webkit-scrollbar-track {
+  background: var(--a-bg);
+}
+[data-admin-theme="light"] .admin-content::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+[data-admin-theme="light"] .admin-content::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* ================================================================ */
+/*  Mobile Bottom Navigation (client site only)                      */
+/* ================================================================ */
+
+.mobile-bottom-nav {
+  display: none;
+}
+.mobile-nav-spacer {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    height: 72px;
+    padding-bottom: env(safe-area-inset-bottom);
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.04);
+    justify-content: space-around;
+    align-items: center;
+  }
+
+  .mobile-nav-spacer {
+    display: block;
+    height: calc(72px + env(safe-area-inset-bottom));
+  }
+
+  .mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    flex: 1;
+    min-width: 64px;
+    min-height: 48px;
+    padding: 8px 16px;
+    text-decoration: none;
+    color: var(--t3, #888);
+    border: none;
+    background: none;
+    cursor: pointer;
+    transition: color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-nav-item.active {
+    color: #a855f7;
+  }
+
+  .mobile-nav-icon-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+  }
+
+  .mobile-nav-label {
+    font-size: 10px;
+    font-family: "Outfit", var(--font-inter), sans-serif;
+    font-weight: 400;
+    line-height: 1;
+  }
+
+  .mobile-nav-item.active .mobile-nav-label {
+    font-weight: 600;
+  }
+
+  .mobile-nav-badge {
+    position: absolute;
+    top: -5px;
+    right: -10px;
+    background: #a855f7;
+    color: #fff;
+    font-size: 9px;
+    font-family: var(--font-jetbrains, "JetBrains Mono", monospace);
+    font-weight: 600;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    line-height: 1;
+  }
+}

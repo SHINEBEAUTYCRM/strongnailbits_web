@@ -1,0 +1,1283 @@
+"use client";
+
+import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import {
+  Save,
+  Loader2,
+  Trash2,
+  ArrowLeft,
+  Copy,
+  Eye,
+  Link as LinkIcon,
+  Calendar,
+  ToggleLeft,
+  ToggleRight,
+} from "lucide-react";
+import Link from "next/link";
+import { ImageUploadWithStudio } from "../image-studio/ImageUploadWithStudio";
+import { BannerTypeSelector } from "./BannerTypeSelector";
+import { BannerStatusBadge } from "./BannerStatusBadge";
+import type { Banner, BannerType } from "@/types/banners";
+import { BANNER_SIZES } from "@/types/banners";
+
+/* ─── Types ─── */
+
+interface BannerFormProps {
+  initial?: Banner;
+  categories: { id: string; name_uk: string }[];
+}
+
+interface FormData {
+  title: string;
+  heading: string;
+  subheading: string;
+  button_text: string;
+  button_url: string;
+  promo_code: string;
+  discount_text: string;
+  image_desktop: string;
+  image_mobile: string;
+  image_alt: string;
+  type: BannerType;
+  placement: string[];
+  starts_at: string;
+  ends_at: string;
+  is_active: boolean;
+  sort_order: string;
+  priority: string;
+  bg_color: string;
+  text_color: string;
+  overlay_opacity: string;
+}
+
+const EMPTY: FormData = {
+  title: "",
+  heading: "",
+  subheading: "",
+  button_text: "",
+  button_url: "",
+  promo_code: "",
+  discount_text: "",
+  image_desktop: "",
+  image_mobile: "",
+  image_alt: "",
+  type: "hero_slider",
+  placement: [],
+  starts_at: "",
+  ends_at: "",
+  is_active: true,
+  sort_order: "0",
+  priority: "1",
+  bg_color: "#0e0e14",
+  text_color: "#FFFFFF",
+  overlay_opacity: "30",
+};
+
+function bannerToFormData(b: Banner): FormData {
+  return {
+    title: b.title ?? "",
+    heading: b.heading ?? "",
+    subheading: b.subheading ?? "",
+    button_text: b.button_text ?? "",
+    button_url: b.button_url ?? "",
+    promo_code: b.promo_code ?? "",
+    discount_text: b.discount_text ?? "",
+    image_desktop: b.image_desktop ?? "",
+    image_mobile: b.image_mobile ?? "",
+    image_alt: b.image_alt ?? "",
+    type: b.type,
+    placement: b.placement ?? [],
+    starts_at: b.starts_at ? b.starts_at.slice(0, 16) : "",
+    ends_at: b.ends_at ? b.ends_at.slice(0, 16) : "",
+    is_active: b.is_active,
+    sort_order: String(b.sort_order),
+    priority: String(b.priority),
+    bg_color: b.bg_color ?? "#0e0e14",
+    text_color: b.text_color ?? "#FFFFFF",
+    overlay_opacity: String(b.overlay_opacity),
+  };
+}
+
+/* ─── Main Component ─── */
+
+export function BannerForm({ initial, categories }: BannerFormProps) {
+  const router = useRouter();
+  const isEdit = !!initial?.id;
+
+  const [form, setForm] = useState<FormData>(
+    initial ? bannerToFormData(initial) : EMPTY,
+  );
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [catSearch, setCatSearch] = useState("");
+
+  /* helpers */
+  const set = <K extends keyof FormData>(key: K, val: FormData[K]) =>
+    setForm((f) => ({ ...f, [key]: val }));
+
+  const togglePlacement = (val: string) => {
+    setForm((f) => ({
+      ...f,
+      placement: f.placement.includes(val)
+        ? f.placement.filter((p) => p !== val)
+        : [...f.placement, val],
+    }));
+  };
+
+  const filteredCategories = useMemo(() => {
+    if (!catSearch.trim()) return categories;
+    const q = catSearch.toLowerCase();
+    return categories.filter((c) => c.name_uk.toLowerCase().includes(q));
+  }, [categories, catSearch]);
+
+  const copyPromoCode = async () => {
+    if (!form.promo_code) return;
+    try {
+      await navigator.clipboard.writeText(form.promo_code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('[BannerForm] Copy failed:', err);
+    }
+  };
+
+  const ctr =
+    initial && initial.views_count > 0
+      ? ((initial.clicks_count / initial.views_count) * 100).toFixed(2)
+      : "0.00";
+
+  /* ─── Save ─── */
+  const handleSave = async () => {
+    if (!form.title.trim()) {
+      setError("Внутрішня назва обов'язкова");
+      return;
+    }
+    setSaving(true);
+    setError("");
+    setSuccess("");
+
+    // Auto-set placement for types that always go to home
+    const autoPlacement =
+      form.type === 'hero_slider' || form.type === 'stories'
+        ? ['home']
+        : form.placement;
+
+    const payload = {
+      title: form.title,
+      heading: form.heading || null,
+      subheading: form.subheading || null,
+      button_text: form.button_text || null,
+      button_url: form.button_url || null,
+      promo_code: form.promo_code || null,
+      discount_text: form.discount_text || null,
+      image_desktop: form.image_desktop || null,
+      image_mobile: form.image_mobile || null,
+      image_alt: form.image_alt || null,
+      type: form.type,
+      placement: autoPlacement,
+      starts_at: form.starts_at ? new Date(form.starts_at).toISOString() : null,
+      ends_at: form.ends_at ? new Date(form.ends_at).toISOString() : null,
+      is_active: form.is_active,
+      sort_order: Number(form.sort_order) || 0,
+      priority: Number(form.priority) || 1,
+      bg_color: form.bg_color || null,
+      text_color: form.text_color,
+      overlay_opacity: Number(form.overlay_opacity) || 0,
+    };
+
+    try {
+      const url = isEdit ? `/api/banners/${initial!.id}` : "/api/banners";
+      const method = isEdit ? "PATCH" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        setError(data.error || "Помилка збереження");
+        setSaving(false);
+        return;
+      }
+
+      if (!isEdit && data.banner?.id) {
+        router.push(`/admin/banners/${data.banner.id}`);
+      } else {
+        setSuccess("Збережено");
+        setTimeout(() => setSuccess(""), 3000);
+        router.refresh();
+      }
+    } catch (err) {
+      console.error('[BannerForm] Save failed:', err);
+      setError("Network error");
+    }
+    setSaving(false);
+  };
+
+  /* ─── Delete ─── */
+  const handleDelete = async () => {
+    if (!confirm("Видалити банер? Цю дію не можна відмінити.")) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/banners/${initial!.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        router.push("/admin/banners");
+      } else {
+        setError(data.error || "Помилка видалення");
+      }
+    } catch (err) {
+      console.error('[BannerForm] Delete failed:', err);
+      setError("Network error");
+    }
+    setDeleting(false);
+  };
+
+  /* ─── Render ─── */
+  return (
+    <div>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/admin/banners"
+            className="p-2 rounded-lg transition-colors hover:bg-[var(--a-bg-hover)]"
+            style={{ color: "var(--a-text-3)" }}
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <div className="flex items-center gap-3">
+            <h1
+              className="text-xl font-semibold"
+              style={{ color: "var(--a-text)" }}
+            >
+              {isEdit ? "Редагувати банер" : "Новий банер"}
+            </h1>
+            {initial && <BannerStatusBadge banner={initial} />}
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          {isEdit && (
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors"
+              style={{
+                color: "var(--a-danger, #f87171)",
+                background: "var(--a-danger-bg, #1c1017)",
+                border: "1px solid var(--a-danger-border, #7f1d1d)",
+              }}
+            >
+              {deleting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4" />
+              )}
+              Видалити
+            </button>
+          )}
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50 transition-colors"
+            style={{ background: "var(--a-accent-btn)" }}
+          >
+            {saving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            Зберегти
+          </button>
+        </div>
+      </div>
+
+      {/* Messages */}
+      {error && (
+        <div
+          className="mb-4 px-4 py-2.5 rounded-lg text-sm"
+          style={{
+            color: "var(--a-danger, #f87171)",
+            background: "var(--a-danger-bg, #450a0a)",
+            border: "1px solid var(--a-danger-border, #7f1d1d)",
+          }}
+        >
+          {error}
+        </div>
+      )}
+      {success && (
+        <div
+          className="mb-4 px-4 py-2.5 rounded-lg text-sm"
+          style={{
+            color: "var(--a-success, #4ade80)",
+            background: "var(--a-success-bg, #052e16)",
+            border: "1px solid var(--a-success-border, #166534)",
+          }}
+        >
+          {success}
+        </div>
+      )}
+
+      {/* Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* ═══════════ LEFT COLUMN ═══════════ */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Banner Type */}
+          <Section title="Тип банера">
+            <BannerTypeSelector
+              value={form.type}
+              onChange={(t) => set("type", t)}
+            />
+            <p
+              className="text-[11px] mt-2"
+              style={{
+                color: "var(--a-text-4)",
+                fontFamily: "JetBrains Mono, monospace",
+              }}
+            >
+              Рекомендований розмір: {BANNER_SIZES[form.type].width}×
+              {BANNER_SIZES[form.type].height}px
+            </p>
+          </Section>
+
+          {/* Images */}
+          <Section title="Зображення">
+            <div>
+              <p
+                className="text-xs font-medium mb-3"
+                style={{ color: "var(--a-text-3)" }}
+              >
+                Десктоп зображення
+              </p>
+              <ImageUploadWithStudio
+                value={form.image_desktop}
+                onChange={(url) => set("image_desktop", url)}
+                context="banner"
+                entityId={initial?.id || "new"}
+                suggestedSize={{
+                  width: BANNER_SIZES[form.type].width,
+                  height: BANNER_SIZES[form.type].height,
+                }}
+              />
+            </div>
+            <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-lg text-[11px]"
+              style={{ backgroundColor: 'var(--a-bg-hover)', color: 'var(--a-text-4)' }}>
+              <span>💡</span>
+              <span>
+                {form.type === 'hero_slider' && 'Рекомендований розмір: 1300×400 px (десктоп), 640×640 px (мобайл). JPG/WebP, до 2MB. Текст краще розміщувати ліворуч.'}
+                {form.type === 'promo_strip' && 'Зображення необов\'язкове. Стрічка працює з текстом + кольором фону. Якщо потрібне зображення: 1920×80 px.'}
+                {form.type === 'category_banner' && 'Зображення 1200×400 px. Текст на банері опційний — може бути просто картинка.'}
+                {form.type === 'side_banner' && 'Вертикальне зображення 300×600 px. Показується в сайдбарі на десктопі.'}
+                {form.type === 'popup' && 'Зображення 600×800 px (вертикальне). Або без зображення — тільки текст з кнопкою.'}
+                {form.type === 'stories' && 'Квадратне або вертикальне зображення 1080×1920 px. Обрізається в коло у списку, повний розмір при відкритті.'}
+              </span>
+            </div>
+
+            {form.type === "hero_slider" && (
+              <div
+                className="mt-4 pt-4"
+                style={{ borderTop: "1px solid var(--a-border)" }}
+              >
+                <p
+                  className="text-xs font-medium mb-3"
+                  style={{ color: "var(--a-text-3)" }}
+                >
+                  Мобільне зображення
+                </p>
+                <ImageUploadWithStudio
+                  value={form.image_mobile}
+                  onChange={(url) => set("image_mobile", url)}
+                  context="banner"
+                  entityId={initial?.id || "new-mobile"}
+                  suggestedSize={{ width: 640, height: 640 }}
+                />
+              </div>
+            )}
+
+            <Field
+              label="Alt-текст зображення"
+              value={form.image_alt}
+              onChange={(v) => set("image_alt", v)}
+              placeholder="Опис зображення для SEO"
+            />
+          </Section>
+
+          {/* Content */}
+          <Section title="Контент банера">
+            <div>
+              <label
+                className="block text-xs font-medium mb-1.5"
+                style={{ color: "var(--a-text-3)" }}
+              >
+                Заголовок
+              </label>
+              <input
+                type="text"
+                value={form.heading}
+                onChange={(e) => set("heading", e.target.value)}
+                placeholder="Заголовок на банері"
+                className="w-full px-3 py-3 rounded-lg text-lg font-semibold outline-none transition-colors"
+                style={{
+                  background: "var(--a-bg-card)",
+                  border: "1px solid var(--a-border)",
+                  color: "var(--a-text-body)",
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "var(--a-accent-btn)";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "var(--a-border)";
+                }}
+              />
+            </div>
+
+            <TextArea
+              label="Підзаголовок / текст акції"
+              value={form.subheading}
+              onChange={(v) => set("subheading", v)}
+              placeholder="Текст акції / підзаголовок"
+              rows={3}
+            />
+
+            <Field
+              label="Текст знижки"
+              value={form.discount_text}
+              onChange={(v) => set("discount_text", v)}
+              placeholder="-30%"
+            />
+
+            {/* Promo code with copy */}
+            <div>
+              <label
+                className="block text-xs font-medium mb-1.5"
+                style={{ color: "var(--a-text-3)" }}
+              >
+                Промокод
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={form.promo_code}
+                  onChange={(e) =>
+                    set("promo_code", e.target.value.toUpperCase())
+                  }
+                  placeholder="SHINE30"
+                  className="flex-1 px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
+                  style={{
+                    background: "var(--a-bg-card)",
+                    border: "1px solid var(--a-border)",
+                    color: "var(--a-text-body)",
+                    fontFamily: "JetBrains Mono, monospace",
+                    letterSpacing: "1px",
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "var(--a-accent-btn)";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "var(--a-border)";
+                  }}
+                />
+                <button
+                  onClick={copyPromoCode}
+                  className="px-3 py-2.5 rounded-lg transition-colors"
+                  style={{
+                    background: "var(--a-bg-card)",
+                    border: "1px solid var(--a-border)",
+                    color: copied ? "#4ade80" : "var(--a-text-3)",
+                  }}
+                  title="Копіювати"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <Field
+              label="Текст кнопки"
+              value={form.button_text}
+              onChange={(v) => set("button_text", v)}
+              placeholder="Детальніше"
+            />
+
+            {/* Button URL with icon */}
+            <div>
+              <label
+                className="block text-xs font-medium mb-1.5"
+                style={{ color: "var(--a-text-3)" }}
+              >
+                Посилання кнопки
+              </label>
+              <div className="relative">
+                <LinkIcon
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+                  style={{ color: "var(--a-text-4)" }}
+                />
+                <input
+                  type="text"
+                  value={form.button_url}
+                  onChange={(e) => set("button_url", e.target.value)}
+                  placeholder="https://..."
+                  className="w-full pl-9 pr-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
+                  style={{
+                    background: "var(--a-bg-card)",
+                    border: "1px solid var(--a-border)",
+                    color: "var(--a-text-body)",
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "var(--a-accent-btn)";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "var(--a-border)";
+                  }}
+                />
+              </div>
+            </div>
+          </Section>
+
+          {/* Styling */}
+          <Section title="Стилізація">
+            {/* Background color */}
+            <div>
+              <label
+                className="block text-xs font-medium mb-1.5"
+                style={{ color: "var(--a-text-3)" }}
+              >
+                Фоновий колір
+              </label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={form.bg_color}
+                  onChange={(e) => set("bg_color", e.target.value)}
+                  className="w-10 h-10 rounded-lg cursor-pointer border-0 p-0.5"
+                  style={{
+                    background: "var(--a-bg-card)",
+                    border: "1px solid var(--a-border)",
+                  }}
+                />
+                <input
+                  type="text"
+                  value={form.bg_color}
+                  onChange={(e) => set("bg_color", e.target.value)}
+                  className="w-28 px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
+                  style={{
+                    background: "var(--a-bg-card)",
+                    border: "1px solid var(--a-border)",
+                    color: "var(--a-text-body)",
+                    fontFamily: "JetBrains Mono, monospace",
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "var(--a-accent-btn)";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "var(--a-border)";
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Text color */}
+            <div>
+              <label
+                className="block text-xs font-medium mb-1.5"
+                style={{ color: "var(--a-text-3)" }}
+              >
+                Колір тексту
+              </label>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => set("text_color", "#FFFFFF")}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm transition-all"
+                  style={{
+                    background:
+                      form.text_color === "#FFFFFF"
+                        ? "rgba(124, 58, 237, 0.1)"
+                        : "var(--a-bg-card)",
+                    border: `1px solid ${form.text_color === "#FFFFFF" ? "var(--a-accent-btn)" : "var(--a-border)"}`,
+                    color: "var(--a-text-body)",
+                  }}
+                >
+                  <span
+                    className="w-4 h-4 rounded-full border"
+                    style={{
+                      background: "#FFFFFF",
+                      borderColor: "var(--a-text-5)",
+                    }}
+                  />
+                  Білий
+                </button>
+                <button
+                  onClick={() => set("text_color", "#18181b")}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm transition-all"
+                  style={{
+                    background:
+                      form.text_color === "#18181b"
+                        ? "rgba(124, 58, 237, 0.1)"
+                        : "var(--a-bg-card)",
+                    border: `1px solid ${form.text_color === "#18181b" ? "var(--a-accent-btn)" : "var(--a-border)"}`,
+                    color: "var(--a-text-body)",
+                  }}
+                >
+                  <span
+                    className="w-4 h-4 rounded-full border"
+                    style={{
+                      background: "#18181b",
+                      borderColor: "var(--a-text-5)",
+                    }}
+                  />
+                  Темний
+                </button>
+              </div>
+            </div>
+
+            {/* Overlay opacity */}
+            <div>
+              <label
+                className="block text-xs font-medium mb-1.5"
+                style={{ color: "var(--a-text-3)" }}
+              >
+                Затемнення оверлею:{" "}
+                <span
+                  style={{
+                    color: "var(--a-text-2)",
+                    fontFamily: "JetBrains Mono, monospace",
+                  }}
+                >
+                  {form.overlay_opacity}%
+                </span>
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={form.overlay_opacity}
+                onChange={(e) => set("overlay_opacity", e.target.value)}
+                className="w-full accent-purple-600"
+                style={{ accentColor: "var(--a-accent-btn)" }}
+              />
+              <div
+                className="flex justify-between text-[10px] mt-1"
+                style={{ color: "var(--a-text-4)" }}
+              >
+                <span>0%</span>
+                <span>50%</span>
+                <span>100%</span>
+              </div>
+            </div>
+          </Section>
+        </div>
+
+        {/* ═══════════ RIGHT COLUMN ═══════════ */}
+        <div className="space-y-6">
+          {/* Publication */}
+          <Section title="Публікація">
+            {/* Active toggle */}
+            <div
+              className="flex items-center justify-between p-3 rounded-lg"
+              style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}
+            >
+              <div>
+                <p className="text-sm font-medium" style={{ color: "var(--a-text-body)" }}>
+                  {form.is_active ? "Активний" : "Неактивний"}
+                </p>
+                <p className="text-[11px]" style={{ color: "var(--a-text-4)" }}>
+                  {form.is_active
+                    ? "Банер відображається"
+                    : "Банер приховано"}
+                </p>
+              </div>
+              <button
+                onClick={() => set("is_active", !form.is_active)}
+                className="transition-colors"
+                style={{ color: form.is_active ? "var(--a-accent-btn)" : "var(--a-text-5)" }}
+              >
+                {form.is_active ? (
+                  <ToggleRight className="w-8 h-8" />
+                ) : (
+                  <ToggleLeft className="w-8 h-8" />
+                )}
+              </button>
+            </div>
+
+            {/* Schedule */}
+            <div>
+              <label
+                className="flex items-center gap-1.5 text-xs font-medium mb-1.5"
+                style={{ color: "var(--a-text-3)" }}
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                Початок показу
+              </label>
+              <input
+                type="datetime-local"
+                value={form.starts_at}
+                onChange={(e) => set("starts_at", e.target.value)}
+                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
+                style={{
+                  background: "var(--a-bg-card)",
+                  border: "1px solid var(--a-border)",
+                  color: "var(--a-text-body)",
+                  colorScheme: "dark",
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "var(--a-accent-btn)";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "var(--a-border)";
+                }}
+              />
+            </div>
+
+            <div>
+              <label
+                className="flex items-center gap-1.5 text-xs font-medium mb-1.5"
+                style={{ color: "var(--a-text-3)" }}
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                Кінець показу
+              </label>
+              <input
+                type="datetime-local"
+                value={form.ends_at}
+                onChange={(e) => set("ends_at", e.target.value)}
+                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
+                style={{
+                  background: "var(--a-bg-card)",
+                  border: "1px solid var(--a-border)",
+                  color: "var(--a-text-body)",
+                  colorScheme: "dark",
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "var(--a-accent-btn)";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "var(--a-border)";
+                }}
+              />
+            </div>
+          </Section>
+
+          {/* Placement — context-based */}
+          <Section title="Розташування">
+            {(form.type === 'hero_slider' || form.type === 'stories') && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: 'var(--a-bg-hover)', color: 'var(--a-text-3)' }}>
+                <span>ℹ️</span>
+                <span>Цей тип завжди показується тільки на головній сторінці.</span>
+              </div>
+            )}
+
+            {form.type === 'promo_strip' && (
+              <div className="space-y-2">
+                <PlacementCheckbox
+                  label="Головна сторінка"
+                  checked={form.placement.includes('home')}
+                  onChange={() => togglePlacement('home')}
+                />
+                <PlacementCheckbox
+                  label="Показувати на всіх сторінках"
+                  checked={form.placement.includes('all')}
+                  onChange={() => togglePlacement('all')}
+                />
+              </div>
+            )}
+
+            {form.type === 'category_banner' && (
+              <div>
+                <p className="text-xs font-medium mb-2" style={{ color: 'var(--a-text-3)' }}>
+                  Оберіть категорії для банера
+                </p>
+                <input
+                  type="text"
+                  value={catSearch}
+                  onChange={(e) => setCatSearch(e.target.value)}
+                  placeholder="Пошук категорії..."
+                  className="w-full px-3 py-2 rounded-lg text-sm outline-none transition-colors mb-2"
+                  style={{ background: 'var(--a-bg-card)', border: '1px solid var(--a-border)', color: 'var(--a-text-body)' }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--a-accent-btn)'; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--a-border)'; }}
+                />
+                <div className="max-h-40 overflow-y-auto space-y-1 custom-scrollbar">
+                  {filteredCategories.length === 0 && (
+                    <p className="text-xs py-2 text-center" style={{ color: 'var(--a-text-5)' }}>
+                      Категорії не знайдено
+                    </p>
+                  )}
+                  {filteredCategories.map((cat) => (
+                    <PlacementCheckbox
+                      key={cat.id}
+                      label={cat.name_uk}
+                      checked={form.placement.includes(`category:${cat.id}`)}
+                      onChange={() => togglePlacement(`category:${cat.id}`)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {form.type === 'side_banner' && (
+              <div className="space-y-2">
+                <PlacementCheckbox
+                  label="В каталозі"
+                  checked={form.placement.includes('catalog')}
+                  onChange={() => togglePlacement('catalog')}
+                />
+                <PlacementCheckbox
+                  label="В категоріях"
+                  checked={form.placement.includes('categories')}
+                  onChange={() => togglePlacement('categories')}
+                />
+              </div>
+            )}
+
+            {form.type === 'popup' && (
+              <div className="space-y-2">
+                <PlacementCheckbox
+                  label="Головна сторінка"
+                  checked={form.placement.includes('home')}
+                  onChange={() => togglePlacement('home')}
+                />
+                <PlacementCheckbox
+                  label="Каталог"
+                  checked={form.placement.includes('catalog')}
+                  onChange={() => togglePlacement('catalog')}
+                />
+                <PlacementCheckbox
+                  label="Всі сторінки"
+                  checked={form.placement.includes('all')}
+                  onChange={() => togglePlacement('all')}
+                />
+              </div>
+            )}
+          </Section>
+
+          {/* Ordering */}
+          <Section title="Порядок">
+            <Field
+              label="Порядок сортування"
+              value={form.sort_order}
+              onChange={(v) => set("sort_order", v)}
+              type="number"
+              placeholder="0"
+            />
+            <div>
+              <label
+                className="block text-xs font-medium mb-1.5"
+                style={{ color: "var(--a-text-3)" }}
+              >
+                Пріоритет
+              </label>
+              <select
+                value={form.priority}
+                onChange={(e) => set("priority", e.target.value)}
+                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors cursor-pointer"
+                style={{
+                  background: "var(--a-bg-card)",
+                  border: "1px solid var(--a-border)",
+                  color: "var(--a-text-body)",
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "var(--a-accent-btn)";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "var(--a-border)";
+                }}
+              >
+                <option value="0">Низький</option>
+                <option value="1">Звичайний</option>
+                <option value="2">Високий</option>
+                <option value="3">Критичний</option>
+              </select>
+            </div>
+          </Section>
+
+          {/* Analytics (only in edit mode) */}
+          {initial && (
+            <Section title="Аналітика">
+              <div className="grid grid-cols-3 gap-3">
+                <AnalyticCard
+                  label="Перегляди"
+                  value={initial.views_count.toLocaleString("uk-UA")}
+                  icon={<Eye className="w-3.5 h-3.5" />}
+                />
+                <AnalyticCard
+                  label="Кліки"
+                  value={initial.clicks_count.toLocaleString("uk-UA")}
+                  icon={<LinkIcon className="w-3.5 h-3.5" />}
+                />
+                <AnalyticCard
+                  label="CTR"
+                  value={`${ctr}%`}
+                  icon={
+                    <span
+                      className="text-[10px] font-bold"
+                      style={{
+                        fontFamily: "JetBrains Mono, monospace",
+                      }}
+                    >
+                      %
+                    </span>
+                  }
+                />
+              </div>
+            </Section>
+          )}
+
+          {/* Preview */}
+          <Section title="Попередній перегляд">
+            <BannerPreview form={form} />
+          </Section>
+
+          {/* Service info */}
+          <Section title="Службове">
+            <Field
+              label="Внутрішня назва *"
+              value={form.title}
+              onChange={(v) => set("title", v)}
+              placeholder="Назва для адмін-панелі"
+            />
+
+            {isEdit && initial && (
+              <>
+                <div>
+                  <label
+                    className="block text-xs font-medium mb-1.5"
+                    style={{ color: "var(--a-text-3)" }}
+                  >
+                    ID
+                  </label>
+                  <div
+                    className="px-3 py-2.5 rounded-lg text-xs select-all"
+                    style={{
+                      background: "var(--a-bg-card)",
+                      border: "1px solid var(--a-border)",
+                      color: "var(--a-text-4)",
+                      fontFamily: "JetBrains Mono, monospace",
+                    }}
+                  >
+                    {initial.id}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label
+                      className="block text-[10px] font-medium mb-1"
+                      style={{ color: "var(--a-text-5)" }}
+                    >
+                      Створено
+                    </label>
+                    <p
+                      className="text-xs"
+                      style={{
+                        color: "var(--a-text-4)",
+                        fontFamily: "JetBrains Mono, monospace",
+                      }}
+                    >
+                      {new Date(initial.created_at).toLocaleString("uk-UA", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
+                  <div>
+                    <label
+                      className="block text-[10px] font-medium mb-1"
+                      style={{ color: "var(--a-text-5)" }}
+                    >
+                      Оновлено
+                    </label>
+                    <p
+                      className="text-xs"
+                      style={{
+                        color: "var(--a-text-4)",
+                        fontFamily: "JetBrains Mono, monospace",
+                      }}
+                    >
+                      {new Date(initial.updated_at).toLocaleString("uk-UA", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
+          </Section>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Reusable form parts ─── */
+
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className="rounded-xl p-5"
+      style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}
+    >
+      <h3
+        className="text-sm font-medium mb-4"
+        style={{ color: "var(--a-text-2)" }}
+      >
+        {title}
+      </h3>
+      <div className="space-y-3">{children}</div>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  type = "text",
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  placeholder?: string;
+}) {
+  return (
+    <div>
+      <label
+        className="block text-xs font-medium mb-1.5"
+        style={{ color: "var(--a-text-3)" }}
+      >
+        {label}
+      </label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
+        style={{
+          background: "var(--a-bg-card)",
+          border: "1px solid var(--a-border)",
+          color: "var(--a-text-body)",
+        }}
+        onFocus={(e) => {
+          e.currentTarget.style.borderColor = "var(--a-accent-btn)";
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.borderColor = "var(--a-border)";
+        }}
+      />
+    </div>
+  );
+}
+
+function TextArea({
+  label,
+  value,
+  onChange,
+  rows = 4,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  rows?: number;
+  placeholder?: string;
+}) {
+  return (
+    <div>
+      <label
+        className="block text-xs font-medium mb-1.5"
+        style={{ color: "var(--a-text-3)" }}
+      >
+        {label}
+      </label>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={rows}
+        placeholder={placeholder}
+        className="w-full px-3 py-2.5 rounded-lg text-sm outline-none resize-y transition-colors"
+        style={{
+          background: "var(--a-bg-card)",
+          border: "1px solid var(--a-border)",
+          color: "var(--a-text-body)",
+        }}
+        onFocus={(e) => {
+          e.currentTarget.style.borderColor = "var(--a-accent-btn)";
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.borderColor = "var(--a-border)";
+        }}
+      />
+    </div>
+  );
+}
+
+function PlacementCheckbox({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <label
+      className="flex items-center gap-2.5 cursor-pointer py-1 group"
+      onClick={onChange}
+    >
+      <div
+        className="w-5 h-5 rounded-md flex items-center justify-center transition-colors shrink-0"
+        style={{
+          background: checked ? "var(--a-accent-btn)" : "var(--a-bg-card)",
+          border: `1px solid ${checked ? "var(--a-accent-btn)" : "var(--a-border)"}`,
+        }}
+      >
+        {checked && (
+          <svg viewBox="0 0 12 12" className="w-3 h-3">
+            <path
+              d="M2 6l3 3 5-5"
+              stroke="white"
+              strokeWidth="2"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        )}
+      </div>
+      <span className="text-sm" style={{ color: "var(--a-text-2)" }}>
+        {label}
+      </span>
+    </label>
+  );
+}
+
+function AnalyticCard({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div
+      className="rounded-lg p-3 text-center"
+      style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}
+    >
+      <div
+        className="flex items-center justify-center mb-1.5"
+        style={{ color: "var(--a-text-4)" }}
+      >
+        {icon}
+      </div>
+      <p
+        className="text-base font-semibold"
+        style={{
+          color: "var(--a-text-body)",
+          fontFamily: "JetBrains Mono, monospace",
+        }}
+      >
+        {value}
+      </p>
+      <p className="text-[10px] mt-0.5" style={{ color: "var(--a-text-4)" }}>
+        {label}
+      </p>
+    </div>
+  );
+}
+
+function BannerPreview({ form }: { form: FormData }) {
+  const size = BANNER_SIZES[form.type];
+  const aspectRatio = size.width / size.height;
+
+  if (form.type === 'hero_slider') {
+    return (
+      <div className="rounded-xl overflow-hidden" style={{ aspectRatio: `${aspectRatio}` }}>
+        <div
+          className="relative w-full h-full flex items-center"
+          style={{
+            backgroundColor: form.bg_color || '#0e0e14',
+            backgroundImage: form.image_desktop ? `url(${form.image_desktop})` : undefined,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        >
+          {form.image_desktop && (
+            <div className="absolute inset-0" style={{ backgroundColor: `rgba(0,0,0,${Number(form.overlay_opacity) / 100})` }} />
+          )}
+          <div className="relative z-10 p-6 max-w-[60%]">
+            {form.heading && <h3 className="text-lg font-bold leading-tight" style={{ color: form.text_color }}>{form.heading}</h3>}
+            {form.subheading && <p className="text-xs mt-1 opacity-80" style={{ color: form.text_color }}>{form.subheading}</p>}
+            {form.button_text && (
+              <span className="inline-block mt-3 px-3 py-1 rounded-full text-[10px] font-semibold bg-white/20 backdrop-blur-sm" style={{ color: form.text_color }}>{form.button_text}</span>
+            )}
+            {form.discount_text && (
+              <span className="absolute top-4 right-4 px-2 py-1 rounded-lg text-xs font-bold bg-red-500 text-white">{form.discount_text}</span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (form.type === 'promo_strip') {
+    return (
+      <div className="rounded-lg px-4 py-2 flex items-center justify-center gap-2 text-xs" style={{ backgroundColor: form.bg_color || '#7c3aed', color: form.text_color || '#fff' }}>
+        {form.heading && <span className="font-medium">{form.heading}</span>}
+        {form.promo_code && <span className="px-2 py-0.5 rounded bg-white/20 font-mono text-[10px]">{form.promo_code}</span>}
+      </div>
+    );
+  }
+
+  if (form.type === 'stories') {
+    return (
+      <div className="flex items-center gap-3">
+        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-purple-500 p-0.5">
+          {form.image_desktop ? (
+            <img src={form.image_desktop} alt="" className="w-full h-full object-cover rounded-full" />
+          ) : (
+            <div className="w-full h-full rounded-full" style={{ background: "var(--a-bg-hover)" }} />
+          )}
+        </div>
+        <span className="text-xs" style={{ color: 'var(--a-text-3)' }}>{form.title || 'Stories'}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl overflow-hidden" style={{ aspectRatio: `${aspectRatio}`, maxHeight: 200 }}>
+      {form.image_desktop ? (
+        <img src={form.image_desktop} alt="" className="w-full h-full object-cover" />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center text-xs" style={{ backgroundColor: form.bg_color || 'var(--a-bg-hover)', color: 'var(--a-text-4)' }}>
+          {size.width}×{size.height}
+        </div>
+      )}
+    </div>
+  );
+}

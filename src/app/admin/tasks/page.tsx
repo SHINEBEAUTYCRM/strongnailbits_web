@@ -1,0 +1,458 @@
+"use client";
+
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { LayoutGrid, Calendar, BarChart3, Loader2 } from "lucide-react";
+import { createAdminBrowserClient } from "@/lib/supabase/client";
+import type { Task, ColumnId, Priority, TaskView, TeamMemberShort } from "@/types/tasks";
+import { COLUMNS } from "@/types/tasks";
+import { TaskBoard } from "./components/TaskBoard";
+import { TaskFilters } from "./components/TaskFilters";
+import { TaskCalendar } from "./components/TaskCalendar";
+import { TaskDashboard } from "./components/TaskDashboard";
+import { TaskModal } from "./components/TaskModal";
+
+export default function TasksPage() {
+  // ── State ──
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMemberShort[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<TaskView>("board");
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
+  // Filters
+  const [search, setSearch] = useState("");
+  const [assigneeFilter, setAssigneeFilter] = useState<string | null>(null);
+  const [priorityFilter, setPriorityFilter] = useState<Priority | null>(null);
+
+  // Mobile
+  const [mobileColumn, setMobileColumn] = useState<ColumnId>("new");
+  const [isMobile, setIsMobile] = useState(false);
+
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // ── Load data ──
+  useEffect(() => {
+    loadTasks();
+    loadTeamMembers();
+    loadCurrentUser();
+  }, []);
+
+  const loadTasks = async () => {
+    try {
+      const res = await fetch("/api/admin/tasks");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setTasks(data);
+        }
+        // If response is not ok (401, 500) — keep existing cached data
+      }
+    } catch (err) {
+      // Network error — keep existing cached data, don't clear
+      console.warn("[Tasks] fetch failed, keeping cached data", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadTeamMembers = async () => {
+    try {
+      const supabase = createAdminBrowserClient();
+      const { data } = await supabase
+        .from("team_members")
+        .select("id, name, avatar_url")
+        .eq("is_active", true)
+        .order("name");
+      if (data) setTeamMembers(data);
+    } catch (err) { console.error('[Tasks] Team members fetch failed:', err); }
+  };
+
+  const loadCurrentUser = async () => {
+    try {
+      // Get from the admin session cookie — we'll extract from the page context
+      // For simplicity, fetch from the auth API
+      const res = await fetch("/api/admin/auth/me");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.id) setCurrentUserId(data.id);
+      }
+    } catch (err) { console.error('[Tasks] Current user fetch failed:', err); }
+  };
+
+  // ── Realtime ──
+  useEffect(() => {
+    let channel: ReturnType<ReturnType<typeof createAdminBrowserClient>["channel"]> | null = null;
+
+    try {
+      const supabase = createAdminBrowserClient();
+      channel = supabase
+        .channel("tasks-realtime")
+        .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, (payload: { eventType: string; new: unknown; old: unknown }) => {
+          try {
+            if (payload.eventType === "INSERT") {
+              loadTasks();
+            } else if (payload.eventType === "UPDATE") {
+              const updated = payload.new as Task;
+              setTasks((prev) =>
+                prev.map((t) => (t.id === updated.id ? { ...t, ...updated } : t)),
+              );
+            } else if (payload.eventType === "DELETE") {
+              const deleted = payload.old as { id: string };
+              setTasks((prev) => prev.filter((t) => t.id !== deleted.id));
+            }
+          } catch (err) {
+            console.warn("[Tasks Realtime] handler error, keeping cached data:", err);
+          }
+        })
+        .subscribe((status: string) => {
+          if (status === "CHANNEL_ERROR") {
+            console.warn("[Tasks Realtime] channel error — keeping cached data");
+          }
+        });
+    } catch (err) {
+      console.warn("[Tasks Realtime] subscription setup failed:", err);
+    }
+
+    return () => {
+      if (channel) {
+        try { createAdminBrowserClient().removeChannel(channel); } catch (err) { console.error('[Tasks] Realtime channel remove failed:', err); }
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Mobile detection ──
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  // ── Keyboard shortcuts ──
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
+      if (isInput) return;
+
+      if (e.key === "/") { e.preventDefault(); searchInputRef.current?.focus(); }
+      // Priority filters
+      if (e.key === "1") { e.preventDefault(); setPriorityFilter((p) => p === "urgent" ? null : "urgent"); }
+      if (e.key === "2") { e.preventDefault(); setPriorityFilter((p) => p === "high" ? null : "high"); }
+      if (e.key === "3") { e.preventDefault(); setPriorityFilter((p) => p === "medium" ? null : "medium"); }
+      if (e.key === "4") { e.preventDefault(); setPriorityFilter((p) => p === "low" ? null : "low"); }
+      if (e.key === "Escape") { e.preventDefault(); setPriorityFilter(null); setSearch(""); }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
+
+  // ── Filter tasks ──
+  const filteredTasks = useMemo(() => {
+    let result = tasks;
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter((t) => t.title.toLowerCase().includes(q));
+    }
+    if (assigneeFilter) {
+      result = result.filter((t) => t.assignee_id === assigneeFilter);
+    }
+    if (priorityFilter) {
+      result = result.filter((t) => t.priority === priorityFilter);
+    }
+    return result;
+  }, [tasks, search, assigneeFilter, priorityFilter]);
+
+  // ── Stats ──
+  const totalTasks = tasks.length;
+  const doneTasks = tasks.filter((t) => t.column_id === "done").length;
+  const progressPct = totalTasks > 0 ? (doneTasks / totalTasks) * 100 : 0;
+
+  // ── Handlers ──
+  const handleTaskClick = useCallback((task: Task) => {
+    setSelectedTask(task);
+  }, []);
+
+  const handleMoveTask = useCallback(
+    async (taskId: string, toColumn: ColumnId, position: number) => {
+      // Optimistic update
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === taskId ? { ...t, column_id: toColumn, position } : t,
+        ),
+      );
+
+      try {
+        await fetch(`/api/admin/tasks/${taskId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ column_id: toColumn, position, actor_id: currentUserId }),
+        });
+      } catch (err) {
+        console.error('[Tasks] Move task failed:', err);
+        loadTasks();
+      }
+    },
+    [currentUserId],
+  );
+
+  const handleQuickCreate = useCallback(
+    async (title: string, columnId: ColumnId, priority?: Priority) => {
+      try {
+        const body: Record<string, unknown> = { title, column_id: columnId, created_by: currentUserId };
+        if (priority) body.priority = priority;
+        const res = await fetch("/api/admin/tasks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (res.ok) {
+          const task = await res.json();
+          setTasks((prev) => [...prev, task]);
+        }
+      } catch (err) { console.error('[Tasks] Quick create failed:', err); }
+    },
+    [currentUserId],
+  );
+
+  const handleUpdateTask = useCallback(
+    async (taskId: string, data: Record<string, unknown>) => {
+      try {
+        const res = await fetch(`/api/admin/tasks/${taskId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...data, actor_id: currentUserId }),
+        });
+        if (res.ok) {
+          const updated = await res.json();
+          setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, ...updated } : t)));
+          setSelectedTask((prev) => (prev?.id === taskId ? { ...prev, ...updated } : prev));
+        }
+      } catch (err) { console.error('[Tasks] Update task failed:', err); }
+    },
+    [currentUserId],
+  );
+
+  const handleDeleteTask = useCallback(
+    async (taskId: string) => {
+      try {
+        await fetch(`/api/admin/tasks/${taskId}`, { method: "DELETE" });
+        setTasks((prev) => prev.filter((t) => t.id !== taskId));
+      } catch (err) { console.error('[Tasks] Delete task failed:', err); }
+    },
+    [],
+  );
+
+  // ── View tabs config ──
+  const views: { id: TaskView; label: string; icon: React.ReactNode }[] = [
+    { id: "board", label: "Дошка", icon: <LayoutGrid className="w-3.5 h-3.5" /> },
+    { id: "calendar", label: "Календар", icon: <Calendar className="w-3.5 h-3.5" /> },
+    { id: "dashboard", label: "Дашборд", icon: <BarChart3 className="w-3.5 h-3.5" /> },
+  ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#a855f7" }} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 md:p-6">
+      {/* ── Header ── */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-5">
+        <div className="flex items-center gap-4">
+          <h1 className="text-xl font-bold" style={{ color: "var(--a-text)" }}>
+            Задачі
+          </h1>
+
+          {/* View switcher */}
+          <div
+            className="flex items-center rounded-lg overflow-hidden"
+            style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)" }}
+          >
+            {views.map((v) => (
+              <button
+                key={v.id}
+                onClick={() => setView(v.id)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors"
+                style={{
+                  background: view === v.id ? "rgba(168,85,247,0.12)" : "transparent",
+                  color: view === v.id ? "#a855f7" : "var(--a-text-3)",
+                }}
+              >
+                {v.icon}
+                <span className="hidden sm:inline">{v.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs" style={{ color: "var(--a-text-3)" }}>
+            Всього{" "}
+            <span style={{ color: "var(--a-text-body)", fontFamily: "var(--font-jetbrains-mono, monospace)" }}>
+              {totalTasks}
+            </span>
+          </span>
+          <span className="text-xs" style={{ color: "var(--a-text-3)" }}>
+            Готово{" "}
+            <span style={{ color: "#22c55e", fontFamily: "var(--font-jetbrains-mono, monospace)" }}>
+              {doneTasks}
+            </span>
+          </span>
+          <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--a-bg-hover)" }}>
+            <div
+              className="h-full rounded-full transition-all"
+              style={{ width: `${progressPct}%`, background: "#22c55e", opacity: 0.6 }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Filters ── */}
+      <div className="mb-5">
+        <TaskFilters
+          search={search}
+          onSearchChange={setSearch}
+          assigneeFilter={assigneeFilter}
+          onAssigneeChange={setAssigneeFilter}
+          priorityFilter={priorityFilter}
+          onPriorityChange={setPriorityFilter}
+          teamMembers={teamMembers}
+          searchInputRef={searchInputRef}
+        />
+      </div>
+
+      {/* ── Mobile column tabs (board view) ── */}
+      {isMobile && view === "board" && (
+        <div
+          className="flex gap-1 mb-4 overflow-x-auto pb-1"
+        >
+          {COLUMNS.map((col) => {
+            const count = filteredTasks.filter((t) => t.column_id === col.id).length;
+            return (
+              <button
+                key={col.id}
+                onClick={() => setMobileColumn(col.id)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all"
+                style={{
+                  background: mobileColumn === col.id ? `${col.color}15` : "transparent",
+                  color: mobileColumn === col.id ? col.color : "var(--a-text-3)",
+                  border: `1px solid ${mobileColumn === col.id ? `${col.color}30` : "transparent"}`,
+                }}
+              >
+                <span>{col.icon}</span>
+                {col.label}
+                <span
+                  className="text-[10px] font-mono"
+                  style={{ fontFamily: "var(--font-jetbrains-mono, monospace)" }}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── Content ── */}
+      {view === "board" && (
+        <TaskBoard
+          tasks={filteredTasks}
+          onTaskClick={handleTaskClick}
+          onMoveTask={handleMoveTask}
+          onQuickCreate={handleQuickCreate}
+          mobileColumn={isMobile ? mobileColumn : undefined}
+        />
+      )}
+      {view === "calendar" && (
+        <TaskCalendar tasks={filteredTasks} onTaskClick={handleTaskClick} />
+      )}
+      {view === "dashboard" && (
+        <TaskDashboard tasks={filteredTasks} teamMembers={teamMembers} onTaskClick={handleTaskClick} />
+      )}
+
+      {/* ── Modal ── */}
+      {selectedTask && (
+        <TaskModal
+          task={selectedTask}
+          teamMembers={teamMembers}
+          currentUserId={currentUserId}
+          onClose={() => setSelectedTask(null)}
+          onUpdate={handleUpdateTask}
+          onDelete={handleDeleteTask}
+        />
+      )}
+
+      {/* ── Keyboard shortcuts tooltip ── */}
+      <KeyboardShortcutsTooltip />
+    </div>
+  );
+}
+
+/* ─── Shortcuts tooltip ─── */
+function KeyboardShortcutsTooltip() {
+  const [show, setShow] = useState(false);
+
+  const shortcuts = [
+    { key: "C", desc: "Нова задача" },
+    { key: "/", desc: "Пошук" },
+    { key: "1-4", desc: "Фільтр пріоритету" },
+    { key: "Esc", desc: "Скинути фільтри" },
+  ];
+
+  return (
+    <div className="fixed bottom-4 right-4 z-40">
+      <div
+        className="relative"
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+      >
+        <button
+          className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+          style={{
+            background: "var(--a-bg-card)",
+            border: "1px solid var(--a-border)",
+            color: "var(--a-text-4)",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+          }}
+        >
+          ?
+        </button>
+        {show && (
+          <div
+            className="absolute bottom-10 right-0 rounded-xl p-3 min-w-[180px]"
+            style={{
+              background: "var(--a-bg-card)",
+              border: "1px solid var(--a-border)",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
+              animation: "fadeScaleIn 0.15s ease-out",
+            }}
+          >
+            <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: "var(--a-text-4)" }}>
+              Скорочення
+            </p>
+            {shortcuts.map((s) => (
+              <div key={s.key} className="flex items-center justify-between gap-4 py-1">
+                <kbd
+                  className="text-[10px] font-mono px-1.5 py-0.5 rounded"
+                  style={{ background: "var(--a-bg-hover)", color: "var(--a-text-2)" }}
+                >
+                  {s.key}
+                </kbd>
+                <span className="text-[11px]" style={{ color: "var(--a-text-3)" }}>
+                  {s.desc}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
