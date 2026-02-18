@@ -6,6 +6,8 @@ import { Save, Loader2, Trash2, ArrowLeft, Plus, X, ImageIcon, Camera } from "lu
 import Link from "next/link";
 import { ImageUpload } from "./ImageUpload";
 import { ImageUploadWithStudio } from "./image-studio/ImageUploadWithStudio";
+import { AiDescriptionButtons } from "./AiDescriptionButtons";
+import { AiSeoButtons } from "./AiSeoButtons";
 
 interface Category { id: string; name_uk: string; }
 interface Brand { id: string; name: string; }
@@ -156,7 +158,32 @@ export function ProductForm({
           {/* Description */}
           <Section title="Опис">
             <TextArea label="Опис (UK)" value={form.description_uk} onChange={(v) => set("description_uk", v)} rows={6} />
+            <AiDescriptionButtons
+              productName={form.name_uk || form.name_ru}
+              brand={brands.find(b => b.id === form.brand_id)?.name}
+              category={categories.find(c => c.id === form.category_id)?.name_uk}
+              price={form.price ? Number(form.price) : undefined}
+              currentDescription={form.description_uk}
+              otherLangDescription={form.description_ru}
+              targetLang="uk"
+              otherLang="ru"
+              onAccept={(html) => set("description_uk", html)}
+            />
+
+            <div className="mt-4" style={{ borderTop: "1px solid var(--a-border)", paddingTop: "12px" }} />
+
             <TextArea label="Опис (RU)" value={form.description_ru} onChange={(v) => set("description_ru", v)} rows={4} />
+            <AiDescriptionButtons
+              productName={form.name_ru || form.name_uk}
+              brand={brands.find(b => b.id === form.brand_id)?.name}
+              category={categories.find(c => c.id === form.category_id)?.name_uk}
+              price={form.price ? Number(form.price) : undefined}
+              currentDescription={form.description_ru}
+              otherLangDescription={form.description_uk}
+              targetLang="ru"
+              otherLang="uk"
+              onAccept={(html) => set("description_ru", html)}
+            />
           </Section>
 
           {/* Images */}
@@ -205,6 +232,17 @@ export function ProductForm({
           <Section title="SEO">
             <Field label="Meta Title" value={form.meta_title} onChange={(v) => set("meta_title", v)} />
             <TextArea label="Meta Description" value={form.meta_description} onChange={(v) => set("meta_description", v)} rows={3} />
+            <AiSeoButtons
+              productName={form.name_uk || form.name_ru}
+              brand={brands.find(b => b.id === form.brand_id)?.name}
+              category={categories.find(c => c.id === form.category_id)?.name_uk}
+              description={form.description_uk || form.description_ru}
+              targetLang="uk"
+              onAccept={(meta) => {
+                set("meta_title", meta.meta_title);
+                set("meta_description", meta.meta_description);
+              }}
+            />
           </Section>
         </div>
 

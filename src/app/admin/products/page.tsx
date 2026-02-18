@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Package, Plus, Pencil, ImageOff, FileX, Search, Tag, DollarSign, AlertTriangle } from "lucide-react";
+import { Package, Plus, Pencil, ImageOff, FileX, Search, Tag, DollarSign, AlertTriangle, Sparkles } from "lucide-react";
 import { getProducts, getProductQualityCounts } from "@/lib/admin/data";
 import { AdminSearch } from "@/components/admin/AdminSearch";
 import { ExportButton } from "@/components/admin/ExportButton";
@@ -55,6 +55,9 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         <div className="flex items-center gap-3">
           <AdminSearch placeholder="Пошук за назвою, SKU..." />
           <ExportButton entity="products" />
+          <Link href="/admin/products/ai-descriptions" className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium shrink-0" style={{ background: "#1a0f2e", color: "#a78bfa", border: "1px solid #7c3aed40" }}>
+            <Sparkles className="w-4 h-4" /> AI описи
+          </Link>
           <Link href="/admin/products/new" className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white shrink-0" style={{ background: "var(--a-accent-btn)" }}>
             <Plus className="w-4 h-4" /> Додати
           </Link>
