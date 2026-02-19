@@ -175,6 +175,13 @@ class CSCartClient {
   }
 }
 
-/* ---- Singleton ---- */
+/* ---- Lazy singleton (avoids throwing during Next.js build/page-data collection) ---- */
 
-export const csCart = new CSCartClient();
+let _instance: CSCartClient | null = null;
+
+export const csCart = new Proxy({} as CSCartClient, {
+  get(_target, prop, receiver) {
+    if (!_instance) _instance = new CSCartClient();
+    return Reflect.get(_instance, prop, receiver);
+  },
+});
