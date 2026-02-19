@@ -51,7 +51,19 @@ const BLACKLISTED_NAMES = [
   "tmp",
   "trash",
   "корзина",
-  "ulka",  // brand miscategorized as root category in CS-Cart
+  "ulka",
+  "default category",
+  "категория-корзина",
+  "товары без категории",
+  "тестовая группа",
+  "!1c",
+  "на удаление",
+  "пилки бафы",
+  "мебель для салонов",
+  "папка с неотсортировкой",
+  "outlet",
+  "sale",
+  "маникюр pro",
 ];
 
 function isBlacklisted(name: string): boolean {
@@ -79,7 +91,7 @@ function mapCategory(
     slug: slugify(cat.category) || `category-${cat.category_id}`,
     image_url: cat.main_pair?.detailed?.image_path ?? null,
     position: cat.position ?? 0,
-    status: cat.status === "A" ? "active" : "disabled",
+    status: cat.status === "A" ? "active" : cat.status === "H" ? "hidden" : "disabled",
     product_count: cat.product_count ?? 0,
   };
 }
@@ -169,7 +181,6 @@ export async function syncCategories(
         console.info(`[sync:categories] [${langCode.toUpperCase()}] Fetching page ${pg}...`);
 
         const response = await csCart.getCategories(pg, ITEMS_PER_PAGE, {
-          status: "A",
           lang_code: langCode,
         });
         const categories = response.categories ?? [];
@@ -270,30 +281,30 @@ export async function syncCategories(
      * Використовуємо NOT IN по cs_cart_id.
      */
 
-    console.info("[sync:categories] Hard-deleting removed/inactive categories...");
+    console.info("[sync:categories] Soft-disabling removed categories...");
 
     const activeCsCartIdsArray = Array.from(activeCsCartIds);
 
-    // Hard DELETE categories that no longer exist in CS-Cart
-    const { data: deletedRows, error: deleteError } = await supabase
+    const { data: disabledRows, error: disableError } = await supabase
       .from("categories")
-      .delete()
+      .update({ status: "disabled" })
       .not("cs_cart_id", "in", `(${activeCsCartIdsArray.join(",")})`)
+      .neq("status", "disabled")
       .select("id");
 
-    if (deleteError) {
+    if (disableError) {
       console.error(
-        "[sync:categories] Failed to delete categories:",
-        deleteError.message,
+        "[sync:categories] Failed to disable categories:",
+        disableError.message,
       );
     } else {
-      itemsDisabled = deletedRows?.length ?? 0;
+      itemsDisabled = disabledRows?.length ?? 0;
       if (itemsDisabled > 0) {
         console.info(
-          `[sync:categories] Deleted ${itemsDisabled} categories`,
+          `[sync:categories] Disabled ${itemsDisabled} categories`,
         );
       } else {
-        console.info("[sync:categories] No categories to delete");
+        console.info("[sync:categories] No categories to disable");
       }
     }
 

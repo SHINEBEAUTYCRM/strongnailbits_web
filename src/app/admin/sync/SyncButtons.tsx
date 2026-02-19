@@ -7,6 +7,7 @@ const ENTITIES = [
   { key: "brands", label: "Бренди" },
   { key: "products", label: "Товари" },
   { key: "link-brands", label: "Зв'язати бренди" },
+  { key: "features", label: "Характеристики" },
 ];
 
 export function SyncButtons() {

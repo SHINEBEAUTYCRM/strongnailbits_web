@@ -108,14 +108,13 @@ export const POST = withApiAuth('products:write', async (req: NextRequest, ctx) 
       } else {
         // INSERT — потрібні додаткові поля
         const slug = generateSlug(item.name) + '-' + Date.now().toString(36);
-        const csCartId = Math.floor(Math.random() * 900000) + 100000;
 
         const { error } = await supabase
           .from('products')
           .insert({
             ...row,
             slug,
-            cs_cart_id: csCartId,
+            cs_cart_id: null,
           });
 
         if (error) {
