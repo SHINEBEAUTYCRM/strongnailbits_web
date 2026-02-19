@@ -33,16 +33,29 @@ function isAdminAuthApi(pathname: string): boolean {
   return ADMIN_AUTH_API.some((r) => pathname === r || pathname.startsWith(r + "/"));
 }
 
+function isAdminApi(pathname: string): boolean {
+  return pathname.startsWith("/api/admin/");
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // ── Fast path: skip for static assets ──
-  if (!needsAuthCheck(pathname) && !isAdminRoute(pathname) && !isAdminAuthApi(pathname)) {
+  if (!needsAuthCheck(pathname) && !isAdminRoute(pathname) && !isAdminApi(pathname)) {
     return NextResponse.next({ request });
   }
 
   // ── Admin auth API routes — skip auth check ──
   if (isAdminAuthApi(pathname)) {
+    return NextResponse.next({ request });
+  }
+
+  // ── Admin API routes — require session cookie ──
+  if (isAdminApi(pathname)) {
+    const sessionToken = request.cookies.get(SESSION_COOKIE)?.value;
+    if (!sessionToken) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     return NextResponse.next({ request });
   }
 
