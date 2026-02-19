@@ -165,35 +165,27 @@ export async function syncFeatureVariants(): Promise<SyncResult> {
     const allRows: Array<Record<string, unknown>> = [];
 
     for (const feature of featuresToSync) {
-      let pg = 1;
-
-      while (true) {
-        const res = await csCart.getFeatureVariants(
-          feature.cs_cart_id,
-          pg,
-          ITEMS_PER_PAGE,
-        );
-        const variants: CSCartFeatureVariant[] = res.variants ?? [];
-
-        for (const v of variants) {
-          allRows.push({
-            feature_id: feature.id,
-            cs_cart_id: v.variant_id,
-            name_uk: v.variant,
-            name_ru: null,
-            slug: slugify(v.variant) || `variant-${v.variant_id}`,
-            position: v.position ?? 0,
-            color_code: v.color || null,
-            image_url: v.image_pair?.detailed?.image_path || null,
-          });
-        }
-
-        if (variants.length < ITEMS_PER_PAGE) break;
-        pg++;
-        await delay(API_DELAY_MS);
-      }
-
+      const fullFeature = await csCart.getFeature(feature.cs_cart_id);
       await delay(API_DELAY_MS);
+
+      if (!fullFeature.variants) continue;
+
+      const variantsList: CSCartFeatureVariant[] = Array.isArray(fullFeature.variants)
+        ? fullFeature.variants
+        : Object.values(fullFeature.variants);
+
+      for (const v of variantsList) {
+        allRows.push({
+          feature_id: feature.id,
+          cs_cart_id: v.variant_id,
+          name_uk: v.variant,
+          name_ru: null,
+          slug: slugify(v.variant) || `variant-${v.variant_id}`,
+          position: v.position ?? 0,
+          color_code: v.color || null,
+          image_url: v.image_pair?.detailed?.image_path || null,
+        });
+      }
     }
 
     const dedupedRows = deduplicateSlugs(allRows as Array<Record<string, unknown> & { slug: string }>);
