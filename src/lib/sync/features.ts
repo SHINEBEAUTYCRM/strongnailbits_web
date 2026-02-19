@@ -358,9 +358,24 @@ export async function syncProductFeatures(): Promise<SyncResult> {
         }
       }
 
+      /* Deduplicate by product_id:feature_id (properties may have both UK and RU keys) */
+      const seen = new Set<string>();
+      const dedupedRows = rows.filter((r) => {
+        const k = `${r.product_id}:${r.feature_id}`;
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+
+      if (dedupedRows.length < rows.length) {
+        console.info(
+          `[sync:product-features] Deduped: ${rows.length} → ${dedupedRows.length}`,
+        );
+      }
+
       /* Batch insert */
-      for (let i = 0; i < rows.length; i += BATCH_SIZE) {
-        const batch = rows.slice(i, i + BATCH_SIZE);
+      for (let i = 0; i < dedupedRows.length; i += BATCH_SIZE) {
+        const batch = dedupedRows.slice(i, i + BATCH_SIZE);
         const { error } = await supabase.from("product_features").insert(batch);
 
         if (error) {
