@@ -304,13 +304,15 @@ export async function syncProductFeatures(): Promise<SyncResult> {
     );
 
     /* Clear existing product_features */
-    const { error: clearErr } = await supabase
+    const { count: deleteCount, error: clearErr } = await supabase
       .from("product_features")
-      .delete()
-      .gte("id", "00000000-0000-0000-0000-000000000000");
+      .delete({ count: "exact" })
+      .not("product_id", "is", null);
 
     if (clearErr) {
       console.error("[sync:product-features] Failed to clear table:", clearErr.message);
+    } else {
+      console.info(`[sync:product-features] Cleared ${deleteCount ?? "?"} existing rows`);
     }
 
     /* Process products in pages */
