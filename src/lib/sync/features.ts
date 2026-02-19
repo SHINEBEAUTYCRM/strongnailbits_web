@@ -246,6 +246,20 @@ export async function syncFeatureVariants(): Promise<SyncResult> {
 const PRODUCTS_PAGE_SIZE = 1000;
 const TEXT_FEATURE_TYPES = new Set(["T", "N", "C"]);
 
+const IGNORED_FEATURE_NAMES = [
+  "артикулксрм",
+  "!скидочный",
+  "бренд",
+  "популярные запросы",
+];
+
+function isIgnoredFeature(nameUk: string | null, nameRu: string | null): boolean {
+  const lower = [nameUk, nameRu]
+    .filter(Boolean)
+    .map((n) => n!.toLowerCase());
+  return lower.some((n) => IGNORED_FEATURE_NAMES.some((ig) => n.includes(ig)));
+}
+
 export async function syncProductFeatures(): Promise<SyncResult> {
   const start = Date.now();
   const supabase = createAdminClient();
@@ -255,30 +269,38 @@ export async function syncProductFeatures(): Promise<SyncResult> {
   let failed = 0;
 
   try {
-    /* Build lookups */
+    /* Build feature lookups (UK + RU) */
     const { data: allFeatures } = await supabase
       .from("features")
-      .select("id, name_uk, feature_type");
+      .select("id, cs_cart_id, name_uk, name_ru, feature_type");
 
-    const featureMap = new Map<string, { id: string; feature_type: string }>();
+    type FeatureEntry = { id: string; feature_type: string };
+    const featureByNameUk = new Map<string, FeatureEntry>();
+    const featureByNameRu = new Map<string, FeatureEntry>();
+
     for (const f of allFeatures || []) {
-      featureMap.set(f.name_uk.toLowerCase(), {
-        id: f.id,
-        feature_type: f.feature_type,
-      });
+      if (isIgnoredFeature(f.name_uk, f.name_ru)) continue;
+
+      const entry: FeatureEntry = { id: f.id, feature_type: f.feature_type };
+      if (f.name_uk) featureByNameUk.set(f.name_uk.toLowerCase(), entry);
+      if (f.name_ru) featureByNameRu.set(f.name_ru.toLowerCase(), entry);
     }
 
+    /* Build variant lookups (UK + RU) */
     const { data: allVariants } = await supabase
       .from("feature_variants")
-      .select("id, feature_id, name_uk");
+      .select("id, feature_id, name_uk, name_ru");
 
-    const variantMap = new Map<string, string>();
+    const variantByNameUk = new Map<string, string>();
+    const variantByNameRu = new Map<string, string>();
+
     for (const v of allVariants || []) {
-      variantMap.set(`${v.feature_id}:${v.name_uk.toLowerCase()}`, v.id);
+      if (v.name_uk) variantByNameUk.set(`${v.feature_id}:${v.name_uk.toLowerCase()}`, v.id);
+      if (v.name_ru) variantByNameRu.set(`${v.feature_id}:${v.name_ru.toLowerCase()}`, v.id);
     }
 
     console.info(
-      `[sync:product-features] Lookups: ${featureMap.size} features, ${variantMap.size} variants`,
+      `[sync:product-features] Lookups: ${featureByNameUk.size} uk + ${featureByNameRu.size} ru features, ${variantByNameUk.size} uk + ${variantByNameRu.size} ru variants`,
     );
 
     /* Clear existing product_features */
@@ -314,13 +336,18 @@ export async function syncProductFeatures(): Promise<SyncResult> {
         if (!props || typeof props !== "object") continue;
 
         for (const [name, value] of Object.entries(props)) {
-          const feature = featureMap.get(name.toLowerCase());
+          const key = name.toLowerCase();
+          const feature =
+            featureByNameUk.get(key) || featureByNameRu.get(key);
           if (!feature) continue;
 
           const isTextType = TEXT_FEATURE_TYPES.has(feature.feature_type);
+          const valLower = String(value).toLowerCase();
           const variantId = isTextType
             ? null
-            : variantMap.get(`${feature.id}:${String(value).toLowerCase()}`) || null;
+            : variantByNameUk.get(`${feature.id}:${valLower}`) ||
+              variantByNameRu.get(`${feature.id}:${valLower}`) ||
+              null;
 
           rows.push({
             product_id: product.id,
