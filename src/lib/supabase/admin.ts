@@ -14,9 +14,15 @@ export function createAdminClient(): SupabaseClient {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error(
-      "Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env variables",
-    );
+    console.warn("[Supabase] Missing env vars — returning stub (build-time?)");
+    return new Proxy({} as SupabaseClient, {
+      get(_, prop) {
+        if (prop === "then" || prop === "toJSON" || typeof prop === "symbol") return undefined;
+        return () => {
+          throw new Error("Supabase admin client is not configured — missing env vars");
+        };
+      },
+    });
   }
 
   _adminClient = createClient(supabaseUrl, serviceRoleKey, {
