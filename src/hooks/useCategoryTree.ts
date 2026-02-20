@@ -12,24 +12,24 @@ export interface CatNode {
   product_count: number;
   total_product_count: number;
   position: number;
+  include_in_menu: boolean;
+  menu_position: number;
   children: CatNode[];
 }
 
-const HIDDEN = ["удалить", "удалити", "видалити", "тест", "test", "temp", "tmp", "trash"];
+const HIDDEN = [
+  "удалить",
+  "удалити",
+  "видалити",
+  "тест",
+  "test",
+  "temp",
+  "tmp",
+  "trash",
+];
 
-/* ─── module-level cache (shared across all components) ─── */
 let _cache: CatNode[] | null = null;
 let _promise: Promise<CatNode[]> | null = null;
-
-/** Recursively find a node by cs_cart_id */
-function findNode(nodes: CatNode[], id: number): CatNode | null {
-  for (const n of nodes) {
-    if (n.cs_cart_id === id) return n;
-    const found = findNode(n.children, id);
-    if (found) return found;
-  }
-  return null;
-}
 
 function buildTree(): Promise<CatNode[]> {
   if (_cache) return Promise.resolve(_cache);
@@ -39,25 +39,27 @@ function buildTree(): Promise<CatNode[]> {
     createClient()
       .from("categories")
       .select(
-        "id, cs_cart_id, parent_cs_cart_id, name_uk, name_ru, slug, product_count, position",
+        "id, cs_cart_id, parent_cs_cart_id, name_uk, name_ru, slug, product_count, position, include_in_menu, menu_position",
       )
       .eq("status", "active")
       .order("position", { ascending: true }),
   ).then(({ data }) => {
     if (!data) return [];
 
-    /* eslint-disable @typescript-eslint/no-explicit-any */
     const clean = data.filter(
       (c: any) =>
-        !HIDDEN.some((h) => c.name_uk.toLowerCase().trim().startsWith(h)),
+        !HIDDEN.some((h) =>
+          (c.name_uk || "").toLowerCase().trim().startsWith(h),
+        ),
     );
 
     const map = new Map<number, CatNode>();
-    const roots: CatNode[] = [];
 
     for (const cat of clean) {
       map.set(cat.cs_cart_id, {
         ...cat,
+        include_in_menu: cat.include_in_menu ?? false,
+        menu_position: cat.menu_position ?? 0,
         total_product_count: 0,
         children: [],
       } as CatNode);
@@ -65,72 +67,36 @@ function buildTree(): Promise<CatNode[]> {
 
     for (const cat of clean) {
       const node = map.get(cat.cs_cart_id)!;
-      if (!cat.parent_cs_cart_id || cat.parent_cs_cart_id === 0) {
-        roots.push(node);
-      } else if (map.has(cat.parent_cs_cart_id)) {
+      if (cat.parent_cs_cart_id && map.has(cat.parent_cs_cart_id)) {
         map.get(cat.parent_cs_cart_id)!.children.push(node);
       }
     }
 
-    // Keep only roots with position > 0 (removes CS-Cart duplicates)
-    const hasPositioned = roots.some((r) => r.position > 0);
-    const deduped = hasPositioned
-      ? roots.filter((r) => r.position > 0)
-      : roots;
-
-    // Compute total product counts (self + all descendants)
-    function computeTotals(nodes: CatNode[]): void {
-      for (const n of nodes) {
-        computeTotals(n.children);
-        n.total_product_count =
-          n.product_count +
-          n.children.reduce((sum, c) => sum + c.total_product_count, 0);
+    function computeTotals(node: CatNode): number {
+      let total = node.product_count || 0;
+      for (const child of node.children) {
+        total += computeTotals(child);
       }
-    }
-    computeTotals(deduped);
-
-    // Prune empty branches
-    function prune(nodes: CatNode[]): CatNode[] {
-      return nodes
-        .map((n) => ({ ...n, children: prune(n.children) }))
-        .filter((n) => n.total_product_count > 0 || n.children.length > 0);
+      node.total_product_count = total;
+      return total;
     }
 
-    const pruned = prune(deduped);
-
-    // ── Build exact navbar order (like CS-Cart) ──
-    // IDs: roots + promoted children in exact sequence
-    const NAVBAR_ORDER = [
-      385,  // Нігті
-      374,  // Гель-лаки (child of 385)
-      821,  // Бази (child of 385)
-      822,  // Топи (child of 385)
-      544,  // Догляд за обличчям
-      640,  // Брови та вії (child of 544)
-      567,  // Депіляція (child of 544)
-      651,  // Інтер'єр/Меблі
-      319,  // Техніка (child of 385)
-      315,  // Одноразова продукція (child of 385)
-      794,  // МініОпт
-    ];
-
-    const ordered: CatNode[] = [];
-
-    // First: add nodes in exact navbar order
-    for (const id of NAVBAR_ORDER) {
-      // Search in pruned roots AND their children
-      const node = findNode(pruned, id);
-      if (node) ordered.push(node);
-    }
-
-    // Then: add remaining roots not in the order list
-    for (const root of pruned) {
-      if (!ordered.some((n) => n.cs_cart_id === root.cs_cart_id)) {
-        ordered.push(root);
+    for (const node of map.values()) {
+      const cat = clean.find((c: any) => c.cs_cart_id === node.cs_cart_id);
+      if (!cat?.parent_cs_cart_id || !map.has(cat.parent_cs_cart_id)) {
+        computeTotals(node);
       }
     }
 
-    _cache = ordered;
+    const navbar: CatNode[] = [];
+    for (const node of map.values()) {
+      if (node.include_in_menu && node.menu_position > 0) {
+        navbar.push(node);
+      }
+    }
+    navbar.sort((a, b) => a.menu_position - b.menu_position);
+
+    _cache = navbar;
     return _cache;
   });
 
