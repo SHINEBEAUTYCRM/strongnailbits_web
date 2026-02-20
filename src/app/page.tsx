@@ -13,8 +13,8 @@ import { B2BCtaDynamic } from "@/components/home/B2BCtaDynamic";
 import { CatalogButton } from "@/components/home/CatalogButton";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 
-/** ISR: revalidate homepage every 2 minutes */
-export const revalidate = 120;
+/** Temporarily disable ISR cache to debug stale data */
+export const revalidate = 0;
 
 const PRODUCT_FIELDS =
   "id, name_uk, name_ru, slug, price, old_price, main_image_url, status, quantity, is_new, is_featured, brands(name)";

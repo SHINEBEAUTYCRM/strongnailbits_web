@@ -6,6 +6,7 @@ interface FetchSourceRequest {
   urls: string[];
   productName: string;
   productSku?: string;
+  directUrl?: string;
 }
 
 interface SourceImage {
