@@ -12,6 +12,7 @@ import {
   buildFilteredUrl,
 } from "@/lib/catalog/filters";
 import { getLanguage, localizedName, type Lang } from "@/lib/language";
+import { MAIN_MENU_ITEMS } from "@/lib/config/menu";
 import type { Metadata } from "next";
 
 /** ISR: revalidate catalog every 2 minutes */
@@ -41,9 +42,27 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
     filters.inStock ||
     filters.sort !== "popular";
 
-  // ── No filters → hierarchical category list ──
+  // ── No filters → menu-driven category list (matches navbar) ──
   if (!hasFilters && filters.page === 1) {
     const tree = await getCategoryTree();
+
+    function findNode(nodes: CategoryNode[], id: number): CategoryNode | null {
+      for (const n of nodes) {
+        if (n.cs_cart_id === id) return n;
+        const found = findNode(n.children, id);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    const menuItems = MAIN_MENU_ITEMS.map((item, idx) => {
+      if (item.type === "link") {
+        return { key: idx, label: item.label, href: item.href, node: null as CategoryNode | null, highlight: item.highlight };
+      }
+      const node = findNode(tree, item.csCartId);
+      const slug = node?.slug ?? item.fallbackSlug;
+      return { key: idx, label: item.label, href: `/catalog/${slug}`, node, highlight: false };
+    });
 
     return (
       <div className="mx-auto max-w-[1280px] px-4 py-6 sm:px-6 sm:py-8">
@@ -52,38 +71,51 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
         </h1>
 
         <div className="overflow-hidden rounded-card border border-[var(--border)] bg-white">
-          {/* Sale */}
-          <Link
-            href="/catalog?in_stock=true&sort=discount"
-            className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4 transition-colors hover:bg-sand"
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-base font-medium text-coral">Sale</span>
-              <span className="rounded-md bg-coral px-2 py-0.5 text-[10px] font-bold uppercase text-white">
-                Знижка!!!
-              </span>
-            </div>
-            <ChevronRight size={18} className="text-[var(--t3)]" />
-          </Link>
+          {menuItems.map((item, idx) => {
+            const isLast = idx === menuItems.length - 1;
 
-          {/* Бренди */}
-          <Link
-            href="/brands"
-            className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4 transition-colors hover:bg-sand"
-          >
-            <span className="text-base font-medium text-dark">Бренди</span>
-            <ChevronRight size={18} className="text-[var(--t3)]" />
-          </Link>
+            if (item.highlight) {
+              return (
+                <Link
+                  key={item.key}
+                  href={item.href}
+                  className={`flex items-center justify-between px-5 py-4 transition-colors hover:bg-sand ${isLast ? "" : "border-b border-[var(--border)]"}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-base font-medium text-coral">{item.label}</span>
+                    <span className="rounded-md bg-coral px-2 py-0.5 text-[10px] font-bold uppercase text-white">
+                      Знижка!!!
+                    </span>
+                  </div>
+                  <ChevronRight size={18} className="text-[var(--t3)]" />
+                </Link>
+              );
+            }
 
-          {/* Top-level categories with subcategories */}
-          {tree.map((cat, i) => (
-            <CategoryRow
-              key={cat.id}
-              cat={cat}
-              lang={lang}
-              isLast={i === tree.length - 1}
-            />
-          ))}
+            if (item.node) {
+              return (
+                <CategoryRow
+                  key={item.key}
+                  cat={item.node}
+                  label={item.label}
+                  href={item.href}
+                  lang={lang}
+                  isLast={isLast}
+                />
+              );
+            }
+
+            return (
+              <Link
+                key={item.key}
+                href={item.href}
+                className={`flex items-center justify-between px-5 py-4 transition-colors hover:bg-sand ${isLast ? "" : "border-b border-[var(--border)]"}`}
+              >
+                <span className="text-base font-medium text-dark">{item.label}</span>
+                <ChevronRight size={18} className="text-[var(--t3)]" />
+              </Link>
+            );
+          })}
         </div>
       </div>
     );
@@ -239,10 +271,14 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
 /* ── Hierarchical category row ── */
 function CategoryRow({
   cat,
+  label,
+  href,
   lang,
   isLast,
 }: {
   cat: CategoryNode;
+  label: string;
+  href: string;
   lang: Lang;
   isLast: boolean;
 }) {
@@ -252,10 +288,10 @@ function CategoryRow({
     <div className={isLast ? "" : "border-b border-[var(--border)]"}>
       {/* Parent category */}
       <Link
-        href={`/catalog/${cat.slug}`}
+        href={href}
         className="flex items-center justify-between px-5 py-4 transition-colors hover:bg-sand"
       >
-        <span className="text-base font-medium text-dark">{localizedName(cat, lang)}</span>
+        <span className="text-base font-medium text-dark">{label}</span>
         <ChevronRight size={18} className="text-[var(--t3)]" />
       </Link>
 

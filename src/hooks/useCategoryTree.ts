@@ -12,20 +12,11 @@ export interface CatNode {
   product_count: number;
   total_product_count: number;
   position: number;
-  include_in_menu: boolean;
-  menu_position: number;
   children: CatNode[];
 }
 
 const HIDDEN = [
-  "удалить",
-  "удалити",
-  "видалити",
-  "тест",
-  "test",
-  "temp",
-  "tmp",
-  "trash",
+  "удалить", "удалити", "видалити", "тест", "test", "temp", "tmp", "trash",
 ];
 
 let _cache: CatNode[] | null = null;
@@ -39,14 +30,27 @@ function buildTree(): Promise<CatNode[]> {
     createClient()
       .from("categories")
       .select(
-        "id, cs_cart_id, parent_cs_cart_id, name_uk, name_ru, slug, product_count, position, include_in_menu, menu_position",
+        "id, cs_cart_id, parent_cs_cart_id, name_uk, name_ru, slug, product_count, position",
       )
       .eq("status", "active")
       .order("position", { ascending: true }),
   ).then(({ data }) => {
     if (!data) return [];
 
-    const clean = data.filter(
+    // Deduplicate by cs_cart_id: prefer slug without "-ru" suffix
+    const byId = new Map<number, (typeof data)[0]>();
+    for (const cat of data) {
+      const existing = byId.get(cat.cs_cart_id);
+      if (!existing) {
+        byId.set(cat.cs_cart_id, cat);
+      } else if (existing.slug.endsWith("-ru") && !cat.slug.endsWith("-ru")) {
+        byId.set(cat.cs_cart_id, cat);
+      }
+    }
+    const deduplicatedRows = Array.from(byId.values());
+
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    const clean = deduplicatedRows.filter(
       (c: any) =>
         !HIDDEN.some((h) =>
           (c.name_uk || "").toLowerCase().trim().startsWith(h),
@@ -54,12 +58,11 @@ function buildTree(): Promise<CatNode[]> {
     );
 
     const map = new Map<number, CatNode>();
+    const roots: CatNode[] = [];
 
     for (const cat of clean) {
       map.set(cat.cs_cart_id, {
         ...cat,
-        include_in_menu: cat.include_in_menu ?? false,
-        menu_position: cat.menu_position ?? 0,
         total_product_count: 0,
         children: [],
       } as CatNode);
@@ -67,36 +70,35 @@ function buildTree(): Promise<CatNode[]> {
 
     for (const cat of clean) {
       const node = map.get(cat.cs_cart_id)!;
-      if (cat.parent_cs_cart_id && map.has(cat.parent_cs_cart_id)) {
+      if (!cat.parent_cs_cart_id || cat.parent_cs_cart_id === 0) {
+        roots.push(node);
+      } else if (map.has(cat.parent_cs_cart_id)) {
         map.get(cat.parent_cs_cart_id)!.children.push(node);
       }
     }
 
-    function computeTotals(node: CatNode): number {
-      let total = node.product_count || 0;
-      for (const child of node.children) {
-        total += computeTotals(child);
-      }
-      node.total_product_count = total;
-      return total;
-    }
+    const hasPositioned = roots.some((r) => r.position > 0);
+    const deduped = hasPositioned
+      ? roots.filter((r) => r.position > 0)
+      : roots;
 
-    for (const node of map.values()) {
-      const cat = clean.find((c: any) => c.cs_cart_id === node.cs_cart_id);
-      if (!cat?.parent_cs_cart_id || !map.has(cat.parent_cs_cart_id)) {
-        computeTotals(node);
+    function computeTotals(nodes: CatNode[]): void {
+      for (const n of nodes) {
+        computeTotals(n.children);
+        n.total_product_count =
+          n.product_count +
+          n.children.reduce((sum, c) => sum + c.total_product_count, 0);
       }
     }
+    computeTotals(deduped);
 
-    const navbar: CatNode[] = [];
-    for (const node of map.values()) {
-      if (node.include_in_menu && node.menu_position > 0) {
-        navbar.push(node);
-      }
+    function prune(nodes: CatNode[]): CatNode[] {
+      return nodes
+        .map((n) => ({ ...n, children: prune(n.children) }))
+        .filter((n) => n.total_product_count > 0 || n.children.length > 0);
     }
-    navbar.sort((a, b) => a.menu_position - b.menu_position);
 
-    _cache = navbar;
+    _cache = prune(deduped);
     return _cache;
   });
 

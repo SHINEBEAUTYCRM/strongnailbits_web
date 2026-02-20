@@ -55,7 +55,19 @@ async function _fetchCategoryTree(): Promise<CategoryNode[]> {
 
   if (!categories) return [];
 
-  const clean = categories.filter((cat) => !isHidden(cat.name_uk));
+  // Deduplicate by cs_cart_id: prefer slug without "-ru" suffix
+  const byId = new Map<number, (typeof categories)[0]>();
+  for (const cat of categories) {
+    const existing = byId.get(cat.cs_cart_id);
+    if (!existing) {
+      byId.set(cat.cs_cart_id, cat);
+    } else if (existing.slug.endsWith("-ru") && !cat.slug.endsWith("-ru")) {
+      byId.set(cat.cs_cart_id, cat);
+    }
+  }
+  const deduplicatedRows = Array.from(byId.values());
+
+  const clean = deduplicatedRows.filter((cat) => !isHidden(cat.name_uk));
 
   const map = new Map<number, CategoryNode>();
   const roots: CategoryNode[] = [];
