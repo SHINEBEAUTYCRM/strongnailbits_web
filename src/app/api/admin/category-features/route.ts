@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/admin/requireAdmin";
+import { getAdminUser } from "@/lib/admin/auth";
 import { logAction } from "@/lib/admin/audit";
 
 export const dynamic = "force-dynamic";
@@ -108,14 +109,17 @@ export async function PUT(request: NextRequest) {
     }
   }
 
-  await logAction({
-    user: auth.user as Parameters<typeof logAction>[0]["user"],
-    entity: "category_features",
-    entity_id: category_id,
-    action: "update",
-    after: { count: features.length },
-    request,
-  });
+  const adminUser = await getAdminUser();
+  if (adminUser) {
+    await logAction({
+      user: adminUser,
+      entity: "category_features",
+      entity_id: category_id,
+      action: "update",
+      after: { count: features.length },
+      request,
+    });
+  }
 
   return NextResponse.json({ ok: true, saved: features.length });
 }
