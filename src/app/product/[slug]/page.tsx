@@ -55,6 +55,25 @@ async function getProduct(slug: string) {
   return { ...data, brands: brand, categories: category };
 }
 
+async function getProductFeatures(productId: string) {
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("product_feature_values")
+    .select("features(name_uk, name_ru, status, position), feature_variants(value_uk, value_ru)")
+    .eq("product_id", productId);
+
+  if (!data) return {};
+
+  const result: Record<string, string> = {};
+  for (const row of data) {
+    const feature = row.features as { name_uk: string; name_ru: string | null; status: string; position: number } | null;
+    const variant = row.feature_variants as { value_uk: string; value_ru: string | null } | null;
+    if (!feature || !variant || feature.status !== "active") continue;
+    result[feature.name_uk] = variant.value_uk;
+  }
+  return result;
+}
+
 async function buildBreadcrumbs(
   categorySlug: string | null,
   categoryName: string | null,
@@ -169,10 +188,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     product.slug,
   );
 
-  const properties: Record<string, string> =
-    product.properties && typeof product.properties === "object"
-      ? (product.properties as Record<string, string>)
-      : {};
+  const properties = await getProductFeatures(product.id);
 
   // Check B2B individual price for logged-in user
   let b2bPrice: number | null = null;
