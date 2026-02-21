@@ -41,11 +41,19 @@ export interface CatalogFilters {
   brandSlugs: string[];
   inStock: boolean;
   view: "grid" | "list";
+  features: Record<string, string[]>;
 }
 
 export function parseSearchParams(
   sp: Record<string, string | undefined>,
 ): CatalogFilters {
+  const features: Record<string, string[]> = {};
+  for (const [key, value] of Object.entries(sp)) {
+    if (key.startsWith("f_") && value) {
+      features[key.slice(2)] = value.split(",").filter(Boolean);
+    }
+  }
+
   return {
     page: Math.max(1, parseInt(sp.page ?? "1", 10)),
     sort: (SORT_MAP[sp.sort as SortValue] ? sp.sort : "popular") as SortValue,
@@ -54,6 +62,7 @@ export function parseSearchParams(
     brandSlugs: sp.brands ? sp.brands.split(",").filter(Boolean) : [],
     inStock: sp.in_stock === "true",
     view: sp.view === "list" ? "list" : "grid",
+    features,
   };
 }
 
@@ -177,6 +186,48 @@ export async function fetchFilteredProducts({
     }
   }
 
+  // Resolve feature filters → product IDs (AND between features, OR within variants)
+  let featureProductIds: string[] | null = null;
+  const featureEntries = Object.entries(filters.features).filter(([, v]) => v.length > 0);
+
+  if (featureEntries.length > 0) {
+    const handles = featureEntries.map(([h]) => h);
+    const { data: featureRows } = await supabase
+      .from("features")
+      .select("id, slug")
+      .in("slug", handles);
+
+    const slugToId = new Map((featureRows ?? []).map((f) => [f.slug, f.id]));
+
+    let matchSet: Set<string> | null = null;
+
+    for (const [handle, variantIds] of featureEntries) {
+      const featureId = slugToId.get(handle);
+      if (!featureId || variantIds.length === 0) continue;
+
+      const { data: pfRows } = await supabase
+        .from("product_features")
+        .select("product_id")
+        .eq("feature_id", featureId)
+        .in("variant_id", variantIds);
+
+      const ids = new Set((pfRows ?? []).map((r) => r.product_id));
+
+      if (matchSet === null) {
+        matchSet = ids;
+      } else {
+        matchSet = new Set([...matchSet].filter((id) => ids.has(id)));
+      }
+    }
+
+    if (matchSet !== null) {
+      featureProductIds = [...matchSet];
+      if (featureProductIds.length === 0) {
+        return { products: [], total: 0 };
+      }
+    }
+  }
+
   const sortDef = SORT_MAP[filters.sort];
   const COLUMNS =
     "id, slug, name_uk, name_ru, price, old_price, main_image_url, status, quantity, is_new, is_featured, brand_id, brands!products_brand_id_fkey(name)";
@@ -184,7 +235,7 @@ export async function fetchFilteredProducts({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   type Q = any;
 
-  /** Apply shared filters (category, price, brand, discount) */
+  /** Apply shared filters (category, price, brand, features, discount) */
   function applyFilters(q: Q): Q {
     let f = q.eq("status", "active");
     if (categoryIds && categoryIds.length > 0)
@@ -194,6 +245,7 @@ export async function fetchFilteredProducts({
     if (filters.priceMax !== null && filters.priceMax > 0)
       f = f.lte("price", filters.priceMax);
     if (brandIds) f = f.in("brand_id", brandIds);
+    if (featureProductIds) f = f.in("id", featureProductIds);
     if (filters.sort === "discount") f = f.gt("old_price", 0);
     return f;
   }
@@ -352,6 +404,92 @@ export async function fetchBrandsForFilter(
 }
 
 /* ------------------------------------------------------------------ */
+/*  Fetch dynamic feature filters for a category                       */
+/* ------------------------------------------------------------------ */
+
+export interface FeatureFilterData {
+  id: string;
+  name_uk: string;
+  name_ru: string | null;
+  handle: string;
+  source_type: string;
+  display_type: string;
+  collapsed: boolean;
+  values: Array<{
+    id: string;
+    label_uk: string;
+    label_ru: string | null;
+    color_code: string | null;
+    metadata: Record<string, unknown>;
+  }>;
+}
+
+export async function fetchCategoryFilters(
+  categorySlug: string,
+): Promise<FeatureFilterData[]> {
+  const supabase = createAdminClient();
+
+  const { data: cat } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("slug", categorySlug)
+    .eq("status", "active")
+    .single();
+
+  if (!cat) return [];
+
+  const [{ data: filterCats }, { data: allFilters }] = await Promise.all([
+    supabase
+      .from("filter_categories")
+      .select("filter_id")
+      .eq("category_id", cat.id),
+    supabase
+      .from("filters")
+      .select("id, name_uk, name_ru, handle, source_type, feature_id, display_type, position, is_active, collapsed")
+      .eq("is_active", true)
+      .order("position", { ascending: true }),
+  ]);
+
+  if (!allFilters) return [];
+
+  const categoryFilterIds = new Set((filterCats ?? []).map((cf) => cf.filter_id));
+  const relevantFilters = allFilters.filter(
+    (f) => categoryFilterIds.has(f.id) && f.source_type === "feature" && f.feature_id,
+  );
+
+  const result: FeatureFilterData[] = [];
+
+  for (const filter of relevantFilters) {
+    const { data: variants } = await supabase
+      .from("feature_variants")
+      .select("id, name_uk, name_ru, color_code, metadata, position")
+      .eq("feature_id", filter.feature_id!)
+      .order("position", { ascending: true });
+
+    if (!variants || variants.length === 0) continue;
+
+    result.push({
+      id: filter.id,
+      name_uk: filter.name_uk,
+      name_ru: filter.name_ru,
+      handle: filter.handle,
+      source_type: filter.source_type,
+      display_type: filter.display_type,
+      collapsed: filter.collapsed,
+      values: variants.map((v) => ({
+        id: v.id,
+        label_uk: v.name_uk || "",
+        label_ru: v.name_ru || null,
+        color_code: v.color_code || null,
+        metadata: (v.metadata as Record<string, unknown>) || {},
+      })),
+    });
+  }
+
+  return result;
+}
+
+/* ------------------------------------------------------------------ */
 /*  Build pagination URL preserving filters                            */
 /* ------------------------------------------------------------------ */
 
@@ -373,6 +511,14 @@ export function buildFilteredUrl(
     params.set("brands", merged.brandSlugs.join(","));
   if (merged.inStock) params.set("in_stock", "true");
   if (merged.view === "list") params.set("view", "list");
+
+  if (merged.features) {
+    for (const [handle, variantIds] of Object.entries(merged.features)) {
+      if (variantIds.length > 0) {
+        params.set(`f_${handle}`, variantIds.join(","));
+      }
+    }
+  }
 
   const qs = params.toString();
   return `${basePath}${qs ? `?${qs}` : ""}`;

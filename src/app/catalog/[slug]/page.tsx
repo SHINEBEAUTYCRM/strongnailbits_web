@@ -14,6 +14,7 @@ import {
   fetchBrandsForFilter,
   buildFilteredUrl,
   getCategoryScopeData,
+  fetchCategoryFilters,
 } from "@/lib/catalog/filters";
 import { getLanguage, localizedName, type Lang } from "@/lib/language";
 
@@ -105,9 +106,10 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
   const { descendantIds, children } = scopeData;
 
-  const [{ products, total }, { brands, minPrice, maxPrice }] = await Promise.all([
+  const [{ products, total }, { brands, minPrice, maxPrice }, featureFilters] = await Promise.all([
     fetchFilteredProducts({ categoryIds: descendantIds, filters, perPage: PER_PAGE }),
     fetchBrandsForFilter(descendantIds),
+    fetchCategoryFilters(slug),
   ]);
 
   const totalPages = Math.ceil(total / PER_PAGE);
@@ -163,7 +165,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
               <h3 className="font-unbounded mb-3 text-[10px] font-bold uppercase tracking-wider text-[var(--t3)]">
                 {lang === "ru" ? "Фильтры" : "Фільтри"}
               </h3>
-              <Filters brands={brands} minPrice={minPrice} maxPrice={maxPrice} />
+              <Filters brands={brands} minPrice={minPrice} maxPrice={maxPrice} featureFilters={featureFilters} />
             </div>
           </div>
         </aside>
@@ -183,6 +185,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
             maxPrice={maxPrice}
             subcategories={children}
             categoryName={localizedName(category, lang)}
+            featureFilters={featureFilters}
           />
 
           {products.length > 0 ? (

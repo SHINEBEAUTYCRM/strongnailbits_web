@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { X, ChevronRight } from "lucide-react";
 import { Filters, type BrandFilterItem } from "./Filters";
+import type { FeatureFilterData } from "@/lib/catalog/filters";
 
 export interface SubcategoryItem {
   id: string;
@@ -20,6 +21,7 @@ interface FilterDrawerProps {
   onClose: () => void;
   subcategories?: SubcategoryItem[];
   categoryName?: string;
+  featureFilters?: FeatureFilterData[];
 }
 
 export function FilterDrawer({
@@ -30,6 +32,7 @@ export function FilterDrawer({
   onClose,
   subcategories,
   categoryName,
+  featureFilters,
 }: FilterDrawerProps) {
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -110,6 +113,7 @@ export function FilterDrawer({
             brands={brands}
             minPrice={minPrice}
             maxPrice={maxPrice}
+            featureFilters={featureFilters}
             onApplied={onClose}
           />
         </div>

@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Search, ChevronDown, ChevronUp, X } from "lucide-react";
+import type { FeatureFilterData } from "@/lib/catalog/filters";
 
 export interface BrandFilterItem {
   id: string;
@@ -15,6 +16,7 @@ interface FiltersProps {
   brands: BrandFilterItem[];
   minPrice?: number;
   maxPrice?: number;
+  featureFilters?: FeatureFilterData[];
   onApplied?: () => void;
 }
 
@@ -24,6 +26,7 @@ export function Filters({
   brands,
   minPrice = 0,
   maxPrice = 99999,
+  featureFilters,
   onApplied,
 }: FiltersProps) {
   const router = useRouter();
@@ -44,6 +47,26 @@ export function Filters({
   const [brandSearch, setBrandSearch] = useState("");
   const [showAllBrands, setShowAllBrands] = useState(false);
 
+  // Feature filter state — initialised from URL
+  const [selectedFeatures, setSelectedFeatures] = useState<Record<string, Set<string>>>(() => {
+    const state: Record<string, Set<string>> = {};
+    for (const [key, value] of searchParams.entries()) {
+      if (key.startsWith("f_") && value) {
+        state[key.slice(2)] = new Set(value.split(",").filter(Boolean));
+      }
+    }
+    return state;
+  });
+
+  // Collapse state for feature sections
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(() => {
+    const s = new Set<string>();
+    featureFilters?.forEach((f) => {
+      if (f.collapsed) s.add(f.id);
+    });
+    return s;
+  });
+
   const filteredBrands = useMemo(() => {
     if (!brandSearch.trim()) return brands;
     const q = brandSearch.toLowerCase();
@@ -56,17 +79,39 @@ export function Filters({
 
   const hasHiddenBrands = filteredBrands.length > INITIAL_BRANDS_SHOWN;
 
+  const hasActiveFeatures = Object.values(selectedFeatures).some((s) => s.size > 0);
+
   const hasActiveFilters =
     priceFrom !== "" ||
     priceTo !== "" ||
     selectedBrands.size > 0 ||
-    inStock;
+    inStock ||
+    hasActiveFeatures;
 
   const toggleBrand = useCallback((slug: string) => {
     setSelectedBrands((prev) => {
       const next = new Set(prev);
       if (next.has(slug)) next.delete(slug);
       else next.add(slug);
+      return next;
+    });
+  }, []);
+
+  const toggleFeatureVariant = useCallback((handle: string, variantId: string) => {
+    setSelectedFeatures((prev) => {
+      const existing = prev[handle] ?? new Set<string>();
+      const next = new Set(existing);
+      if (next.has(variantId)) next.delete(variantId);
+      else next.add(variantId);
+      return { ...prev, [handle]: next };
+    });
+  }, []);
+
+  const toggleSection = useCallback((id: string) => {
+    setCollapsedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }, []);
@@ -86,6 +131,15 @@ export function Filters({
     if (inStock) params.set("in_stock", "true");
     else params.delete("in_stock");
 
+    for (const key of [...params.keys()]) {
+      if (key.startsWith("f_")) params.delete(key);
+    }
+    for (const [handle, ids] of Object.entries(selectedFeatures)) {
+      if (ids.size > 0) {
+        params.set(`f_${handle}`, [...ids].join(","));
+      }
+    }
+
     params.delete("page");
 
     const qs = params.toString();
@@ -100,6 +154,7 @@ export function Filters({
     setInStock(false);
     setBrandSearch("");
     setShowAllBrands(false);
+    setSelectedFeatures({});
 
     const params = new URLSearchParams(searchParams.toString());
     params.delete("price_min");
@@ -107,6 +162,9 @@ export function Filters({
     params.delete("brands");
     params.delete("in_stock");
     params.delete("page");
+    for (const key of [...params.keys()]) {
+      if (key.startsWith("f_")) params.delete(key);
+    }
 
     const qs = params.toString();
     router.push(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
@@ -211,6 +269,64 @@ export function Filters({
           )}
         </div>
       )}
+
+      {/* Dynamic feature filters */}
+      {featureFilters?.map((filter) => {
+        if (filter.source_type !== "feature" || filter.values.length === 0) return null;
+
+        const selected = selectedFeatures[filter.handle] ?? new Set<string>();
+        const isCollapsed = collapsedSections.has(filter.id);
+
+        return (
+          <div key={filter.id}>
+            <button
+              onClick={() => toggleSection(filter.id)}
+              className="mb-2 flex w-full items-center justify-between"
+            >
+              <h4 className="font-unbounded text-[10px] font-bold uppercase tracking-wider text-[var(--t3)]">
+                {filter.name_uk}
+                {selected.size > 0 && (
+                  <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-coral px-1 text-[9px] font-bold text-white">
+                    {selected.size}
+                  </span>
+                )}
+              </h4>
+              {isCollapsed ? (
+                <ChevronDown size={14} className="text-[var(--t3)]" />
+              ) : (
+                <ChevronUp size={14} className="text-[var(--t3)]" />
+              )}
+            </button>
+
+            {!isCollapsed && (
+              <div className="flex max-h-[200px] flex-col gap-0.5 overflow-y-auto transition-all duration-200">
+                {filter.values.map((variant) => (
+                  <label
+                    key={variant.id}
+                    className="flex cursor-pointer items-center gap-2.5 rounded-md px-1 py-1.5 transition-colors hover:bg-sand"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selected.has(variant.id)}
+                      onChange={() => toggleFeatureVariant(filter.handle, variant.id)}
+                      className="h-3.5 w-3.5 shrink-0 cursor-pointer appearance-none rounded border border-[var(--border)] bg-white checked:border-coral checked:bg-coral focus:outline-none"
+                    />
+                    {filter.display_type === "color" && variant.color_code && (
+                      <span
+                        className="h-3.5 w-3.5 shrink-0 rounded-full border border-[var(--border)]"
+                        style={{ backgroundColor: variant.color_code }}
+                      />
+                    )}
+                    <span className="min-w-0 flex-1 truncate text-xs text-[var(--t)]">
+                      {variant.label_uk}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
 
       {/* In stock toggle */}
       <label className="flex cursor-pointer items-center justify-between rounded-[10px] border border-[var(--border)] bg-white px-3 py-2.5 transition-all hover:border-coral/20">
