@@ -8,6 +8,7 @@ import { ValentineHearts } from "@/components/ui/ValentineHearts";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
 import { SiteTracker } from "@/components/analytics/SiteTracker";
 import { TopBarWrapper } from "@/components/layout/TopBarWrapper";
+import { AnnouncementBarWrapper } from "@/components/layout/AnnouncementBarWrapper";
 import { getAnalyticsConfig } from "@/lib/analytics/config";
 import { getSiteSettings } from "@/lib/site-settings";
 import type { SiteContacts, SiteSocial } from "@/lib/site-settings";
@@ -148,6 +149,7 @@ export default async function RootLayout({
           fbPixelId={analytics.fbPixelId}
         />
         <SiteTracker />
+        <AnnouncementBarWrapper />
         <TopBarWrapper />
         <Header contacts={contacts} />
         <main className="min-h-[calc(100dvh-80px)]">{children}</main>
