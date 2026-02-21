@@ -18,21 +18,22 @@ export interface NavItem {
   children: NavItem[];
 }
 
-let _cache: Record<string, NavItem[]> = {};
-let _promises: Record<string, Promise<NavItem[]>> = {};
+const _cache: Record<string, NavItem[]> = {};
+const _promises: Record<string, Promise<NavItem[]> | undefined> = {};
 
 function fetchNav(menu: string): Promise<NavItem[]> {
   if (_cache[menu]) return Promise.resolve(_cache[menu]);
   if (_promises[menu]) return _promises[menu];
 
-  _promises[menu] = fetch(`/api/navigation?menu=${menu}`)
+  const p = fetch(`/api/navigation?menu=${menu}`)
     .then((r) => r.json())
     .then((data) => {
       _cache[menu] = data;
       return data;
     });
 
-  return _promises[menu];
+  _promises[menu] = p;
+  return p;
 }
 
 export function useNavigation(menu: string = "header"): NavItem[] {
