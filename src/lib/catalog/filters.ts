@@ -211,12 +211,13 @@ export async function fetchFilteredProducts({
         .eq("feature_id", featureId)
         .in("variant_id", variantIds);
 
-      const ids = new Set((pfRows ?? []).map((r) => r.product_id));
+      const ids = new Set<string>((pfRows ?? []).map((r) => r.product_id as string));
 
       if (matchSet === null) {
         matchSet = ids;
       } else {
-        matchSet = new Set([...matchSet].filter((id) => ids.has(id)));
+        const prev = matchSet;
+        matchSet = new Set<string>([...prev].filter((id) => ids.has(id)));
       }
     }
 
