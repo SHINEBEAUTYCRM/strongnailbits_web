@@ -231,7 +231,7 @@ export async function fetchFilteredProducts({
 
   const sortDef = SORT_MAP[filters.sort];
   const COLUMNS =
-    "id, slug, name_uk, name_ru, price, old_price, main_image_url, status, quantity, is_new, is_featured, brand_id, brands!products_brand_id_fkey(name)";
+    "id, slug, name_uk, name_ru, price, old_price, main_image_url, status, quantity, is_new, is_featured, brand_id";
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   type Q = any;
