@@ -66,8 +66,8 @@ async function getProductFeatures(productId: string) {
 
   const result: Record<string, string> = {};
   for (const row of data) {
-    const feature = row.features as { name_uk: string; name_ru: string | null; status: string; position: number } | null;
-    const variant = row.feature_variants as { value_uk: string; value_ru: string | null } | null;
+    const feature = row.features as unknown as { name_uk: string; name_ru: string | null; status: string; position: number } | null;
+    const variant = row.feature_variants as unknown as { value_uk: string; value_ru: string | null } | null;
     if (!feature || !variant || feature.status !== "active") continue;
     result[feature.name_uk] = variant.value_uk;
   }
