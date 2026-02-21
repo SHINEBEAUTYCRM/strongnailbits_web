@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Save, Loader2, Trash2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { ImageUploadWithStudio } from "./image-studio/ImageUploadWithStudio";
+import { CategoryFeatures } from "./CategoryFeatures";
 
 interface ParentOption { cs_cart_id: number; name_uk: string; depth: number; }
 
@@ -164,6 +165,11 @@ export function CategoryForm({
             <Field label="Позиція" value={form.position} onChange={(v) => set("position", v)} type="number" />
             <p className="text-[11px] mt-2" style={{ color: "var(--a-text-5)" }}>Менше число = вище в списку</p>
           </Section>
+
+          {/* Category features */}
+          {isEdit && initial?.id && (
+            <CategoryFeatures categoryId={initial.id} />
+          )}
         </div>
       </div>
     </div>
