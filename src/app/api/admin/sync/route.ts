@@ -10,28 +10,19 @@ export const dynamic = "force-dynamic";
 
 async function runFeaturesPipeline() {
   const featuresResult = await syncFeatures();
-  if (featuresResult.status === "failed") return featuresResult;
+  if (featuresResult.errors.length > 0 && featuresResult.synced === 0) {
+    return { step: "features", ...featuresResult };
+  }
   const variantsResult = await syncFeatureVariants();
-  if (variantsResult.status === "failed") return { ...variantsResult, features: featuresResult };
+  if (variantsResult.errors.length > 0 && variantsResult.synced === 0) {
+    return { step: "variants", ...variantsResult, features: featuresResult };
+  }
   const pfResult = await syncProductFeatures();
   return {
     entity: "features",
-    status: pfResult.status,
-    items_processed:
-      featuresResult.items_processed +
-      variantsResult.items_processed +
-      pfResult.items_processed,
-    items_created: pfResult.items_created,
-    items_updated: featuresResult.items_updated + variantsResult.items_updated,
-    items_failed:
-      featuresResult.items_failed +
-      variantsResult.items_failed +
-      pfResult.items_failed,
-    items_disabled: 0,
-    duration_ms:
-      featuresResult.duration_ms +
-      variantsResult.duration_ms +
-      pfResult.duration_ms,
+    features: featuresResult,
+    variants: variantsResult,
+    productFeatures: pfResult,
   };
 }
 
