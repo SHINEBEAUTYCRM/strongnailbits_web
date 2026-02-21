@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const featuresResult = await syncFeatures();
-    if (featuresResult.status === "failed") {
+    if (featuresResult.errors.length > 0 && featuresResult.synced === 0) {
       return NextResponse.json(
         { features: featuresResult, variants: null, product_features: null },
         { status: 500 },
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     }
 
     const variantsResult = await syncFeatureVariants();
-    if (variantsResult.status === "failed") {
+    if (variantsResult.errors.length > 0 && variantsResult.synced === 0) {
       return NextResponse.json(
         { features: featuresResult, variants: variantsResult, product_features: null },
         { status: 500 },
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(
       { features: featuresResult, variants: variantsResult, product_features: pfResult },
-      { status: pfResult.status === "completed" ? 200 : 500 },
+      { status: pfResult.errors > 0 && pfResult.created === 0 ? 500 : 200 },
     );
   } catch (err) {
     return NextResponse.json(
