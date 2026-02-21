@@ -216,7 +216,7 @@ export async function fetchFilteredProducts({
       if (matchSet === null) {
         matchSet = ids;
       } else {
-        const prev = matchSet;
+        const prev: Set<string> = matchSet;
         matchSet = new Set<string>([...prev].filter((id) => ids.has(id)));
       }
     }
