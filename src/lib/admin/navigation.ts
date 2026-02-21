@@ -50,6 +50,8 @@ import {
   Globe,
   Bot,
   FileSpreadsheet,
+  ArrowRightLeft,
+  History,
 } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -187,6 +189,8 @@ export const adminNavigation: NavSection[] = [
     label: "Система",
     icon: Settings,
     children: [
+      { label: "Редиректи", href: "/admin/redirects", icon: ArrowRightLeft },
+      { label: "Журнал дій", href: "/admin/audit", icon: History },
       { label: "Синхронізація", href: "/admin/sync", icon: RefreshCw },
       { label: "Огляд API", href: "/admin/api", icon: Code2 },
       { label: "Документація", href: "/admin/api-docs", icon: BookOpen },

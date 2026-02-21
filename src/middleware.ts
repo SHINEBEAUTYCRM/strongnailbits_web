@@ -1,6 +1,41 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE } from "@/lib/admin/auth";
+
+/* ------------------------------------------------------------------ */
+/*  Redirects cache (in-memory, TTL 5 min)                             */
+/* ------------------------------------------------------------------ */
+
+let redirectCache: Map<string, { to_path: string; code: number }> | null = null;
+let redirectCacheTs = 0;
+const REDIRECT_TTL = 5 * 60 * 1000;
+
+async function getRedirectMap(): Promise<Map<string, { to_path: string; code: number }>> {
+  const now = Date.now();
+  if (redirectCache && now - redirectCacheTs < REDIRECT_TTL) return redirectCache;
+
+  try {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    );
+    const { data } = await supabase
+      .from("redirects")
+      .select("from_path, to_path, code")
+      .eq("is_active", true);
+
+    const map = new Map<string, { to_path: string; code: number }>();
+    for (const r of data ?? []) {
+      map.set(r.from_path, { to_path: r.to_path, code: r.code });
+    }
+    redirectCache = map;
+    redirectCacheTs = now;
+    return map;
+  } catch {
+    return redirectCache ?? new Map();
+  }
+}
 
 /** Public auth routes — no admin check needed */
 const AUTH_ROUTES = ["/account", "/login", "/register"];
@@ -39,6 +74,21 @@ function isAdminApi(pathname: string): boolean {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // ── Redirect check (cached map, skips static/api/admin) ──
+  if (
+    !pathname.startsWith("/_next") &&
+    !pathname.startsWith("/api") &&
+    !pathname.startsWith("/admin") &&
+    !pathname.includes(".")
+  ) {
+    const redirectMap = await getRedirectMap();
+    const match = redirectMap.get(pathname);
+    if (match) {
+      const url = new URL(match.to_path, request.url);
+      return NextResponse.redirect(url, match.code as 301 | 302);
+    }
+  }
 
   // ── Fast path: skip for static assets ──
   if (!needsAuthCheck(pathname) && !isAdminRoute(pathname) && !isAdminApi(pathname)) {
