@@ -138,8 +138,8 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
             </thead>
             <tbody>
               {products.map((pr) => {
-                const cat = pr.categories as { name_uk?: string } | null;
-                const brand = pr.brands as { name?: string } | null;
+                const catId = pr.category_id as string | null;
+                const brandId = pr.brand_id as string | null;
                 const sc = pr.quantity === 0 ? "#f87171" : pr.quantity < 5 ? "#fbbf24" : "#4ade80";
                 const stC = pr.status === "active" ? { c: "#4ade80", bg: "#052e16" } : { c: "var(--a-text-3)", bg: "var(--a-bg-input)" };
 
@@ -158,12 +158,12 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                         }
                         <div className="min-w-0">
                           <p className="text-sm truncate max-w-[250px]" style={{ color: "var(--a-text-body)" }}>{pr.name_uk}</p>
-                          {brand?.name && <p className="text-[11px] mt-0.5" style={{ color: "var(--a-text-5)" }}>{brand.name}</p>}
+                          {brandId && <p className="text-[11px] mt-0.5" style={{ color: "var(--a-text-5)" }}>Brand</p>}
                         </div>
                       </Link>
                     </td>
                     <td className="px-4 py-3 font-mono text-xs hidden md:table-cell" style={{ color: "var(--a-text-4)" }}>{pr.sku || "—"}</td>
-                    <td className="px-4 py-3 text-xs hidden lg:table-cell" style={{ color: "var(--a-text-4)" }}>{cat?.name_uk || <span style={{ color: "var(--a-accent)" }}>—</span>}</td>
+                    <td className="px-4 py-3 text-xs hidden lg:table-cell" style={{ color: "var(--a-text-4)" }}>{catId ? "✓" : <span style={{ color: "var(--a-accent)" }}>—</span>}</td>
                     <td className="px-4 py-3 text-right">
                       <span className="font-mono tabular-nums text-sm" style={{ color: "var(--a-text-2)" }}>{fmt(Number(pr.price))} ₴</span>
                       {pr.old_price && <span className="block text-[10px] line-through font-mono" style={{ color: "var(--a-text-5)" }}>{fmt(Number(pr.old_price))} ₴</span>}
