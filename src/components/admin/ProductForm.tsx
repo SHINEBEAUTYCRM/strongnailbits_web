@@ -9,6 +9,7 @@ import { ImageUploadWithStudio } from "./image-studio/ImageUploadWithStudio";
 import { AiDescriptionButtons } from "./AiDescriptionButtons";
 import { AiSeoButtons } from "./AiSeoButtons";
 import { CategoryTreeSelect } from "./CategoryTreeSelect";
+import { ProductFeatures } from "./ProductFeatures";
 
 interface Category {
   id: string;
@@ -293,6 +294,14 @@ export function ProductForm({
             <Select label="Бренд" value={form.brand_id} onChange={(v) => set("brand_id", v)}
               options={[{ v: "", l: "— Без бренду —" }, ...brands.map((b) => ({ v: b.id, l: b.name }))]} />
           </Section>
+
+          {/* Product features */}
+          {initial?.id && (
+            <ProductFeatures
+              productId={initial.id}
+              categoryId={form.category_id}
+            />
+          )}
         </div>
       </div>
     </div>
