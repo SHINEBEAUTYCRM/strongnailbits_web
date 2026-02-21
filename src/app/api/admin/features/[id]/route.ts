@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/admin/requireAdmin";
+import { getAdminUser } from "@/lib/admin/auth";
 import { logAction } from "@/lib/admin/audit";
 
 export const dynamic = "force-dynamic";
@@ -51,6 +52,7 @@ export async function PUT(
   const auth = await requireAdmin();
   if (auth.error) return auth.error;
 
+  const adminUser = await getAdminUser();
   const { id } = await params;
   const body = await request.json();
   const supabase = createAdminClient();
@@ -110,15 +112,17 @@ export async function PUT(
     }
   }
 
-  await logAction({
-    user: auth.user as Parameters<typeof logAction>[0]["user"],
-    entity: "feature",
-    entity_id: id,
-    action: "update",
-    before: existing,
-    after: patch,
-    request,
-  });
+  if (adminUser) {
+    await logAction({
+      user: adminUser,
+      entity: "feature",
+      entity_id: id,
+      action: "update",
+      before: existing,
+      after: patch,
+      request,
+    });
+  }
 
   return NextResponse.json({ ok: true });
 }
@@ -130,6 +134,7 @@ export async function DELETE(
   const auth = await requireAdmin();
   if (auth.error) return auth.error;
 
+  const adminUser = await getAdminUser();
   const { id } = await params;
   const supabase = createAdminClient();
 
@@ -152,14 +157,16 @@ export async function DELETE(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  await logAction({
-    user: auth.user as Parameters<typeof logAction>[0]["user"],
-    entity: "feature",
-    entity_id: id,
-    action: "delete",
-    before: feature,
-    request,
-  });
+  if (adminUser) {
+    await logAction({
+      user: adminUser,
+      entity: "feature",
+      entity_id: id,
+      action: "delete",
+      before: feature,
+      request,
+    });
+  }
 
   return NextResponse.json({ ok: true });
 }

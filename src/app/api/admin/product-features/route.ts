@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/admin/requireAdmin";
+import { getAdminUser } from "@/lib/admin/auth";
 import { logAction } from "@/lib/admin/audit";
 
 export const dynamic = "force-dynamic";
@@ -79,6 +80,7 @@ export async function PUT(request: NextRequest) {
   const auth = await requireAdmin();
   if (auth.error) return auth.error;
 
+  const adminUser = await getAdminUser();
   const body = await request.json();
   const { product_id, values } = body;
 
@@ -140,15 +142,17 @@ export async function PUT(request: NextRequest) {
     }
   }
 
-  await logAction({
-    user: auth.user as Parameters<typeof logAction>[0]["user"],
-    entity: "product_features",
-    entity_id: product_id,
-    action: "update",
-    before: { count: before?.length || 0 },
-    after: { count: rows.length },
-    request,
-  });
+  if (adminUser) {
+    await logAction({
+      user: adminUser,
+      entity: "product_features",
+      entity_id: product_id,
+      action: "update",
+      before: { count: before?.length || 0 },
+      after: { count: rows.length },
+      request,
+    });
+  }
 
   return NextResponse.json({ ok: true, saved: rows.length });
 }

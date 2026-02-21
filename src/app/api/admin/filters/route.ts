@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/admin/requireAdmin";
+import { getAdminUser } from "@/lib/admin/auth";
 import { logAction } from "@/lib/admin/audit";
 import { slugify } from "@/utils/slugify";
 
@@ -97,6 +98,7 @@ export async function POST(request: NextRequest) {
   const auth = await requireAdmin();
   if (auth.error) return auth.error;
 
+  const adminUser = await getAdminUser();
   const body = await request.json();
   const {
     name_uk, name_ru, source_type, feature_id,
@@ -143,14 +145,16 @@ export async function POST(request: NextRequest) {
     await supabase.from("filter_categories").insert(rows);
   }
 
-  await logAction({
-    user: auth.user as Parameters<typeof logAction>[0]["user"],
-    entity: "filter",
-    entity_id: filter.id,
-    action: "create",
-    after: { name_uk, handle, source_type },
-    request,
-  });
+  if (adminUser) {
+    await logAction({
+      user: adminUser,
+      entity: "filter",
+      entity_id: filter.id,
+      action: "create",
+      after: { name_uk, handle, source_type },
+      request,
+    });
+  }
 
   return NextResponse.json({ ok: true, filter }, { status: 201 });
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/admin/requireAdmin";
+import { getAdminUser } from "@/lib/admin/auth";
 import { logAction } from "@/lib/admin/audit";
 import { slugify } from "@/utils/slugify";
 
@@ -65,6 +66,7 @@ export async function POST(request: NextRequest) {
   const auth = await requireAdmin();
   if (auth.error) return auth.error;
 
+  const adminUser = await getAdminUser();
   const body = await request.json();
   const { name_uk, name_ru, feature_type, is_filter, filter_position, status, variants } = body;
 
@@ -110,14 +112,16 @@ export async function POST(request: NextRequest) {
     await supabase.from("feature_variants").insert(variantRows);
   }
 
-  await logAction({
-    user: auth.user as Parameters<typeof logAction>[0]["user"],
-    entity: "feature",
-    entity_id: feature.id,
-    action: "create",
-    after: { name_uk, feature_type, slug },
-    request,
-  });
+  if (adminUser) {
+    await logAction({
+      user: adminUser,
+      entity: "feature",
+      entity_id: feature.id,
+      action: "create",
+      after: { name_uk, feature_type, slug },
+      request,
+    });
+  }
 
   return NextResponse.json({ ok: true, feature }, { status: 201 });
 }
