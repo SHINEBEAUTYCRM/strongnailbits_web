@@ -24,11 +24,35 @@ async function getProduct(slug: string) {
   const { data } = await supabase
     .from("products")
     .select(
-      "id, name_uk, name_ru, slug, sku, description_uk, description_ru, price, old_price, wholesale_price, quantity, status, main_image_url, images, weight, properties, meta_title, meta_description, is_featured, is_new, category_id, brand_id, cs_cart_id, external_id, ai_metadata, enrichment_status, photo_sources, created_at, updated_at, brands(name, slug), categories(slug, name_uk, name_ru, parent_cs_cart_id, cs_cart_id)",
+      "id, name_uk, name_ru, slug, sku, description_uk, description_ru, price, old_price, wholesale_price, quantity, status, main_image_url, images, weight, properties, meta_title, meta_description, is_featured, is_new, category_id, brand_id, cs_cart_id, external_id, ai_metadata, enrichment_status, photo_sources, created_at, updated_at",
     )
     .eq("slug", slug)
     .single();
-  return data;
+
+  if (!data) return null;
+
+  let brand = null;
+  let category = null;
+
+  if (data.brand_id) {
+    const { data: b } = await supabase
+      .from("brands")
+      .select("name, slug")
+      .eq("id", data.brand_id)
+      .single();
+    brand = b;
+  }
+
+  if (data.category_id) {
+    const { data: c } = await supabase
+      .from("categories")
+      .select("slug, name_uk, name_ru, parent_cs_cart_id, cs_cart_id")
+      .eq("id", data.category_id)
+      .single();
+    category = c;
+  }
+
+  return { ...data, brands: brand, categories: category };
 }
 
 async function buildBreadcrumbs(
