@@ -8,8 +8,18 @@ import { ImageUpload } from "./ImageUpload";
 import { ImageUploadWithStudio } from "./image-studio/ImageUploadWithStudio";
 import { AiDescriptionButtons } from "./AiDescriptionButtons";
 import { AiSeoButtons } from "./AiSeoButtons";
+import { CategoryTreeSelect } from "./CategoryTreeSelect";
 
-interface Category { id: string; name_uk: string; }
+interface Category {
+  id: string;
+  name_uk: string;
+  name_ru: string | null;
+  cs_cart_id: number;
+  parent_cs_cart_id: number | null;
+  parent_id: string | null;
+  product_count: number;
+  position: number;
+}
 interface Brand { id: string; name: string; }
 
 interface ProductData {
@@ -274,8 +284,12 @@ export function ProductForm({
 
           {/* Relations */}
           <Section title="Категорія / Бренд">
-            <Select label="Категорія" value={form.category_id} onChange={(v) => set("category_id", v)}
-              options={[{ v: "", l: "— Без категорії —" }, ...categories.map((c) => ({ v: c.id, l: c.name_uk }))]} />
+            <CategoryTreeSelect
+              categories={categories}
+              value={form.category_id}
+              onChange={(v) => set("category_id", v)}
+              placeholder="Оберіть категорію"
+            />
             <Select label="Бренд" value={form.brand_id} onChange={(v) => set("brand_id", v)}
               options={[{ v: "", l: "— Без бренду —" }, ...brands.map((b) => ({ v: b.id, l: b.name }))]} />
           </Section>

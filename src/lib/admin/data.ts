@@ -111,20 +111,11 @@ export async function getCategoryList() {
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("categories")
-    .select("id, name_uk")
+    .select("id, name_uk, name_ru, cs_cart_id, parent_cs_cart_id, parent_id, product_count, position")
     .eq("status", "active")
-    .order("name_uk", { ascending: true });
-
-  if (!data) return [];
-
-  // Deduplicate by name_uk (case-insensitive) — keep first occurrence
-  const seen = new Set<string>();
-  return data.filter((cat) => {
-    const key = (cat.name_uk || "").trim().toLowerCase();
-    if (!key || seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+    .is("deleted_at", null)
+    .order("position", { ascending: true });
+  return data ?? [];
 }
 
 export async function getCategoryById(id: string) {
