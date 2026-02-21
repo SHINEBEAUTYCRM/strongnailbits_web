@@ -55,7 +55,7 @@ export async function getProducts(params: { page?: number; limit?: number; statu
   const supabase = createAdminClient();
   const from = (page - 1) * limit;
   const to = from + limit - 1;
-  let query = supabase.from("products").select("id, cs_cart_id, name_uk, slug, sku, price, old_price, wholesale_price, quantity, status, main_image_url, description_uk, meta_title, meta_description, is_featured, is_new, created_at, updated_at, categories(name_uk), brands(name)", { count: "exact" }).order("updated_at", { ascending: false }).range(from, to);
+  let query = supabase.from("products").select("id, cs_cart_id, name_uk, slug, sku, price, old_price, wholesale_price, quantity, status, main_image_url, description_uk, meta_title, meta_description, is_featured, is_new, created_at, updated_at, category_id, brand_id", { count: "exact" }).order("updated_at", { ascending: false }).range(from, to);
   if (status && status !== "all") query = query.eq("status", status);
   if (search) query = query.or(`name_uk.ilike.%${search}%,sku.ilike.%${search}%`);
 
