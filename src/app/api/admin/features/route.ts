@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/admin/requireAdmin";
+import { logAction } from "@/lib/admin/audit";
+import { slugify } from "@/utils/slugify";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +34,8 @@ export async function GET(request: NextRequest) {
     list = list.filter(
       (f) =>
         f.name_uk?.toLowerCase().includes(search) ||
-        f.name_ru?.toLowerCase().includes(search),
+        f.name_ru?.toLowerCase().includes(search) ||
+        f.slug?.toLowerCase().includes(search),
     );
   }
 
@@ -56,6 +59,67 @@ export async function GET(request: NextRequest) {
   }));
 
   return NextResponse.json(result);
+}
+
+export async function POST(request: NextRequest) {
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
+
+  const body = await request.json();
+  const { name_uk, name_ru, feature_type, is_filter, filter_position, status, variants } = body;
+
+  if (!name_uk) {
+    return NextResponse.json({ error: "name_uk is required" }, { status: 400 });
+  }
+
+  const supabase = createAdminClient();
+  const slug = body.slug || slugify(name_uk) || `feature-${Date.now()}`;
+
+  const { data: dup } = await supabase.from("features").select("id").eq("slug", slug).single();
+  if (dup) {
+    return NextResponse.json({ error: "Slug already exists" }, { status: 409 });
+  }
+
+  const { data: feature, error } = await supabase
+    .from("features")
+    .insert({
+      name_uk,
+      name_ru: name_ru || null,
+      slug,
+      feature_type: feature_type || "T",
+      is_filter: is_filter ?? false,
+      filter_position: filter_position ?? 0,
+      status: status || "active",
+    })
+    .select()
+    .single();
+
+  if (error || !feature) {
+    return NextResponse.json({ error: error?.message || "Insert failed" }, { status: 500 });
+  }
+
+  if (Array.isArray(variants) && variants.length > 0) {
+    const variantRows = variants.map((v: Record<string, unknown>, i: number) => ({
+      feature_id: feature.id,
+      name_uk: v.name_uk || "",
+      name_ru: v.name_ru || null,
+      color_code: v.color_code || null,
+      position: v.position ?? i,
+      metadata: v.metadata || {},
+    }));
+    await supabase.from("feature_variants").insert(variantRows);
+  }
+
+  await logAction({
+    user: auth.user as Parameters<typeof logAction>[0]["user"],
+    entity: "feature",
+    entity_id: feature.id,
+    action: "create",
+    after: { name_uk, feature_type, slug },
+    request,
+  });
+
+  return NextResponse.json({ ok: true, feature }, { status: 201 });
 }
 
 export async function PATCH(request: NextRequest) {
