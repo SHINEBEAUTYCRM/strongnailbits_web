@@ -2,426 +2,536 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { csCart } from "@/lib/cs-cart";
 import { slugify } from "@/utils/slugify";
 import type { CSCartFeature, CSCartFeatureVariant } from "@/types/cs-cart";
-import type { SyncResult } from "./categories";
+import type { SyncResult } from "@/lib/sync/categories";
 
-const ITEMS_PER_PAGE = 250;
+/* ------------------------------------------------------------------ */
+/*  Константи                                                          */
+/* ------------------------------------------------------------------ */
+
+const BRAND_FEATURE_ID = 18; // бренд — синхронізується окремо в brands.ts
 const BATCH_SIZE = 100;
-const BRAND_FEATURE_ID = 18;
-const API_DELAY_MS = 50;
 
-function delay(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
+/* ------------------------------------------------------------------ */
+/*  Маппінг CS-Cart feature_type → наш                                 */
+/* ------------------------------------------------------------------ */
+
+function mapFeatureType(csType: string): string {
+  const map: Record<string, string> = {
+    S: "select",
+    M: "multiselect",
+    C: "boolean",
+    T: "text",
+    N: "number",
+    E: "brand",
+    O: "text",
+    D: "text",
+  };
+  return map[csType] || "text";
 }
 
-function deduplicateSlugs<T extends { slug: string }>(rows: T[]): T[] {
-  const count = new Map<string, number>();
-  return rows.map((row) => {
-    const base = row.slug;
-    const n = count.get(base) ?? 0;
-    if (n > 0) row.slug = `${base}-${n + 1}`;
-    count.set(base, n + 1);
-    return row;
-  });
-}
+/* ------------------------------------------------------------------ */
+/*  Забезпечити унікальність handle                                    */
+/* ------------------------------------------------------------------ */
 
-/* ================================================================== */
-/*  syncFeatures                                                       */
-/* ================================================================== */
-
-export async function syncFeatures(): Promise<SyncResult> {
-  const start = Date.now();
-  const supabase = createAdminClient();
-
-  let processed = 0;
-  let created = 0;
-  let updated = 0;
-  let failed = 0;
-
-  try {
-    async function fetchAll(langCode: string): Promise<CSCartFeature[]> {
-      const all: CSCartFeature[] = [];
-      let pg = 1;
-
-      while (true) {
-        console.info(`[sync:features] [${langCode.toUpperCase()}] page ${pg}...`);
-        const res = await csCart.getFeatures(pg, ITEMS_PER_PAGE, {
-          status: "A",
-          lang_code: langCode,
-        });
-        const items = res.features ?? [];
-        all.push(...items);
-
-        if (items.length < ITEMS_PER_PAGE) break;
-        pg++;
-        await delay(API_DELAY_MS);
-      }
-
-      return all;
+function deduplicateHandles(
+  rows: Array<{ handle: string; cs_cart_id: number }>
+): void {
+  const seen = new Map<string, number>();
+  for (const row of rows) {
+    const count = seen.get(row.handle) ?? 0;
+    if (count > 0) {
+      row.handle = `${row.handle}-${row.cs_cart_id}`;
     }
-
-    const [featuresUk, featuresRu] = await Promise.all([
-      fetchAll("uk"),
-      fetchAll("ru"),
-    ]);
-
-    console.info(
-      `[sync:features] Fetched UK=${featuresUk.length}, RU=${featuresRu.length}`,
-    );
-
-    const ruMap = new Map<number, CSCartFeature>();
-    for (const f of featuresRu) ruMap.set(f.feature_id, f);
-
-    const rows = featuresUk
-      .filter((f) => f.feature_id !== BRAND_FEATURE_ID)
-      .map((f, idx) => ({
-        cs_cart_id: f.feature_id,
-        name_uk: f.description,
-        name_ru: ruMap.get(f.feature_id)?.description || null,
-        slug: slugify(f.description) || `feature-${f.feature_id}`,
-        feature_type: f.feature_type,
-        is_filter: true,
-        filter_position: idx,
-        status: "active",
-      }));
-
-    const dedupedRows = deduplicateSlugs(rows);
-    processed = dedupedRows.length;
-
-    for (let i = 0; i < dedupedRows.length; i += BATCH_SIZE) {
-      const batch = dedupedRows.slice(i, i + BATCH_SIZE);
-      const { error } = await supabase
-        .from("features")
-        .upsert(batch, { onConflict: "cs_cart_id", ignoreDuplicates: false });
-
-      if (error) {
-        console.error(`[sync:features] Batch error:`, error.message);
-        failed += batch.length;
-      } else {
-        updated += batch.length;
-      }
-    }
-
-    const duration = Date.now() - start;
-    console.info(
-      `[sync:features] Done in ${duration}ms — processed: ${processed}, updated: ${updated}, failed: ${failed}`,
-    );
-
-    return {
-      entity: "features",
-      status: "completed",
-      items_processed: processed,
-      items_created: created,
-      items_updated: updated,
-      items_failed: failed,
-      items_disabled: 0,
-      duration_ms: duration,
-    };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error(`[sync:features] Failed:`, msg);
-    return {
-      entity: "features",
-      status: "failed",
-      items_processed: processed,
-      items_created: created,
-      items_updated: updated,
-      items_failed: failed,
-      items_disabled: 0,
-      duration_ms: Date.now() - start,
-      error: msg,
-    };
+    seen.set(row.handle, count + 1);
   }
 }
 
 /* ================================================================== */
-/*  syncFeatureVariants                                                */
+/*  КРОК 1: Sync features (структура характеристик)                    */
 /* ================================================================== */
 
-const VARIANT_FEATURE_TYPES = new Set(["S", "M", "E"]);
-
-export async function syncFeatureVariants(): Promise<SyncResult> {
-  const start = Date.now();
+export async function syncFeatures(): Promise<{
+  synced: number;
+  skipped: number;
+  errors: string[];
+}> {
   const supabase = createAdminClient();
+  const errors: string[] = [];
+  let synced = 0;
+  let skipped = 0;
 
-  let processed = 0;
-  let created = 0;
-  let updated = 0;
-  let failed = 0;
+  console.info("[sync:features] Step 1 — Fetching features from CS-Cart...");
 
-  try {
-    const { data: dbFeatures } = await supabase
-      .from("features")
-      .select("id, cs_cart_id, feature_type")
-      .eq("status", "active");
+  // Fetch all features (paginate)
+  const allFeatures: CSCartFeature[] = [];
+  let page = 1;
+  const perPage = 500;
 
-    const featuresToSync = (dbFeatures || []).filter((f) =>
-      VARIANT_FEATURE_TYPES.has(f.feature_type),
-    );
-
+  while (true) {
+    const response = await csCart.getFeatures(page, perPage);
+    const features = response.features ?? [];
+    allFeatures.push(...features);
     console.info(
-      `[sync:variants] Features with variants: ${featuresToSync.length}`,
+      `[sync:features] Page ${page}: got ${features.length} features (total: ${allFeatures.length})`
     );
-
-    const allRows: Array<Record<string, unknown>> = [];
-
-    for (const feature of featuresToSync) {
-      const fullFeature = await csCart.getFeature(feature.cs_cart_id);
-      await delay(API_DELAY_MS);
-
-      if (!fullFeature.variants) continue;
-
-      const variantsList: CSCartFeatureVariant[] = Array.isArray(fullFeature.variants)
-        ? fullFeature.variants
-        : Object.values(fullFeature.variants);
-
-      for (const v of variantsList) {
-        allRows.push({
-          feature_id: feature.id,
-          cs_cart_id: v.variant_id,
-          name_uk: v.variant,
-          name_ru: null,
-          slug: slugify(v.variant) || `variant-${v.variant_id}`,
-          position: v.position ?? 0,
-          color_code: v.color || null,
-          image_url: v.image_pair?.detailed?.image_path || null,
-        });
-      }
+    if (
+      features.length < perPage ||
+      allFeatures.length >= (response.params?.total_items ?? allFeatures.length)
+    ) {
+      break;
     }
-
-    const dedupedRows = deduplicateSlugs(allRows as Array<Record<string, unknown> & { slug: string }>);
-    processed = dedupedRows.length;
-
-    console.info(`[sync:variants] Total variants to upsert: ${processed}`);
-
-    for (let i = 0; i < dedupedRows.length; i += BATCH_SIZE) {
-      const batch = dedupedRows.slice(i, i + BATCH_SIZE);
-      const { error } = await supabase
-        .from("feature_variants")
-        .upsert(batch, { onConflict: "cs_cart_id", ignoreDuplicates: false });
-
-      if (error) {
-        console.error(`[sync:variants] Batch error:`, error.message);
-        failed += batch.length;
-      } else {
-        updated += batch.length;
-      }
-    }
-
-    const duration = Date.now() - start;
-    console.info(
-      `[sync:variants] Done in ${duration}ms — processed: ${processed}, updated: ${updated}, failed: ${failed}`,
-    );
-
-    return {
-      entity: "feature_variants",
-      status: "completed",
-      items_processed: processed,
-      items_created: created,
-      items_updated: updated,
-      items_failed: failed,
-      items_disabled: 0,
-      duration_ms: duration,
-    };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error(`[sync:variants] Failed:`, msg);
-    return {
-      entity: "feature_variants",
-      status: "failed",
-      items_processed: processed,
-      items_created: created,
-      items_updated: updated,
-      items_failed: failed,
-      items_disabled: 0,
-      duration_ms: Date.now() - start,
-      error: msg,
-    };
+    page++;
   }
-}
 
-/* ================================================================== */
-/*  syncProductFeatures                                                */
-/* ================================================================== */
+  console.info(`[sync:features] Total features from CS-Cart: ${allFeatures.length}`);
 
-const PRODUCTS_PAGE_SIZE = 1000;
-const TEXT_FEATURE_TYPES = new Set(["T", "N", "C"]);
+  // Filter and map
+  const rows: Array<{
+    cs_cart_id: number;
+    name_uk: string;
+    name_ru: string | null;
+    handle: string;
+    feature_type: string;
+    filterable: boolean;
+    show_on_card: boolean;
+    position: number;
+    status: string;
+  }> = [];
 
-const IGNORED_FEATURE_NAMES = [
-  "артикулксрм",
-  "!скидочный",
-  "бренд",
-  "популярные запросы",
-];
+  for (const f of allFeatures) {
+    // Skip brand
+    if (f.feature_id === BRAND_FEATURE_ID) {
+      skipped++;
+      continue;
+    }
+    // Skip disabled
+    if (f.status === "D") {
+      skipped++;
+      continue;
+    }
+    // Skip empty name
+    if (!f.description || !f.description.trim()) {
+      skipped++;
+      continue;
+    }
 
-function isIgnoredFeature(nameUk: string | null, nameRu: string | null): boolean {
-  const lower = [nameUk, nameRu]
-    .filter(Boolean)
-    .map((n) => n!.toLowerCase());
-  return lower.some((n) => IGNORED_FEATURE_NAMES.some((ig) => n.includes(ig)));
-}
+    const mapped = mapFeatureType(f.feature_type);
+    // Skip brand type too
+    if (mapped === "brand") {
+      skipped++;
+      continue;
+    }
 
-export async function syncProductFeatures(): Promise<SyncResult> {
-  const start = Date.now();
-  const supabase = createAdminClient();
+    rows.push({
+      cs_cart_id: f.feature_id,
+      name_uk: f.description.trim(),
+      name_ru: null, // CS-Cart returns one language per request; we store UK
+      handle: slugify(f.description.trim()) || `feature-${f.feature_id}`,
+      feature_type: mapped,
+      filterable:
+        f.purpose === "find_products" ||
+        f.purpose === "group_catalog_item" ||
+        !!f.filter_style,
+      show_on_card: f.status === "A",
+      position: f.position ?? 0,
+      status: f.status === "A" ? "active" : "disabled",
+    });
+  }
 
-  let processed = 0;
-  let created = 0;
-  let failed = 0;
+  // Deduplicate handles
+  deduplicateHandles(rows);
 
-  try {
-    /* Build feature lookups (UK + RU) */
-    const { data: allFeatures } = await supabase
+  console.info(
+    `[sync:features] Prepared ${rows.length} features for upsert (skipped: ${skipped})`
+  );
+
+  // Batch upsert
+  for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+    const batch = rows.slice(i, i + BATCH_SIZE);
+    const { error } = await supabase
       .from("features")
-      .select("id, cs_cart_id, name_uk, name_ru, feature_type");
+      .upsert(batch, { onConflict: "cs_cart_id" });
 
-    type FeatureEntry = { id: string; feature_type: string };
-    const featureByNameUk = new Map<string, FeatureEntry>();
-    const featureByNameRu = new Map<string, FeatureEntry>();
-
-    for (const f of allFeatures || []) {
-      if (isIgnoredFeature(f.name_uk, f.name_ru)) continue;
-
-      const entry: FeatureEntry = { id: f.id, feature_type: f.feature_type };
-      if (f.name_uk) featureByNameUk.set(f.name_uk.toLowerCase(), entry);
-      if (f.name_ru) featureByNameRu.set(f.name_ru.toLowerCase(), entry);
-    }
-
-    /* Build variant lookups (UK + RU) */
-    const { data: allVariants } = await supabase
-      .from("feature_variants")
-      .select("id, feature_id, name_uk, name_ru");
-
-    const variantByNameUk = new Map<string, string>();
-    const variantByNameRu = new Map<string, string>();
-
-    for (const v of allVariants || []) {
-      if (v.name_uk) variantByNameUk.set(`${v.feature_id}:${v.name_uk.toLowerCase()}`, v.id);
-      if (v.name_ru) variantByNameRu.set(`${v.feature_id}:${v.name_ru.toLowerCase()}`, v.id);
-    }
-
-    console.info(
-      `[sync:product-features] Lookups: ${featureByNameUk.size} uk + ${featureByNameRu.size} ru features, ${variantByNameUk.size} uk + ${variantByNameRu.size} ru variants`,
-    );
-
-    /* Clear existing product_features */
-    const { count: deleteCount, error: clearErr } = await supabase
-      .from("product_features")
-      .delete({ count: "exact" })
-      .not("product_id", "is", null);
-
-    if (clearErr) {
-      console.error("[sync:product-features] Failed to clear table:", clearErr.message);
+    if (error) {
+      console.error(`[sync:features] Upsert batch error:`, error.message);
+      errors.push(error.message);
     } else {
-      console.info(`[sync:product-features] Cleared ${deleteCount ?? "?"} existing rows`);
+      synced += batch.length;
     }
+  }
 
-    /* Process products in pages */
-    let offset = 0;
-    let hasMore = true;
+  console.info(`[sync:features] ✔ Step 1 done: synced=${synced}, skipped=${skipped}`);
+  return { synced, skipped, errors };
+}
 
-    while (hasMore) {
-      const { data: products } = await supabase
-        .from("products")
-        .select("id, properties")
-        .not("properties", "is", null)
-        .range(offset, offset + PRODUCTS_PAGE_SIZE - 1);
+/* ================================================================== */
+/*  КРОК 2: Sync feature variants                                      */
+/* ================================================================== */
 
-      if (!products || products.length === 0) {
-        hasMore = false;
-        break;
-      }
+export async function syncFeatureVariants(): Promise<{
+  synced: number;
+  errors: string[];
+}> {
+  const supabase = createAdminClient();
+  const errors: string[] = [];
+  let synced = 0;
 
-      const rows: Array<Record<string, unknown>> = [];
+  console.info("[sync:features] Step 2 — Fetching feature variants...");
 
-      for (const product of products) {
-        const props = product.properties as Record<string, string> | null;
-        if (!props || typeof props !== "object") continue;
+  // Get all our features that need variants (select, multiselect, color)
+  const { data: features } = await supabase
+    .from("features")
+    .select("id, cs_cart_id, feature_type")
+    .in("feature_type", ["select", "multiselect", "color"])
+    .eq("status", "active");
 
-        for (const [name, value] of Object.entries(props)) {
-          const key = name.toLowerCase();
-          const feature =
-            featureByNameUk.get(key) || featureByNameRu.get(key);
-          if (!feature) continue;
+  if (!features || features.length === 0) {
+    console.info("[sync:features] No features need variants");
+    return { synced: 0, errors: [] };
+  }
 
-          const isTextType = TEXT_FEATURE_TYPES.has(feature.feature_type);
-          const valLower = String(value).toLowerCase();
-          const variantId = isTextType
-            ? null
-            : variantByNameUk.get(`${feature.id}:${valLower}`) ||
-              variantByNameRu.get(`${feature.id}:${valLower}`) ||
-              null;
+  console.info(
+    `[sync:features] ${features.length} features need variants`
+  );
 
-          rows.push({
-            product_id: product.id,
-            feature_id: feature.id,
-            variant_id: variantId,
-            value_text: isTextType ? String(value) : null,
-          });
+  for (const feature of features) {
+    try {
+      // Fetch from CS-Cart — try getting feature detail which includes variants
+      const detail = await csCart.getFeature(feature.cs_cart_id);
+      const rawVariants = detail.variants ?? {};
+      const variantList: CSCartFeatureVariant[] = Array.isArray(rawVariants)
+        ? rawVariants
+        : Object.values(rawVariants);
+
+      if (variantList.length === 0) {
+        // Try variants endpoint as fallback
+        const varResponse = await csCart.getFeatureVariants(
+          feature.cs_cart_id,
+          1,
+          500
+        );
+        const fromEndpoint = varResponse.variants ?? [];
+        if (fromEndpoint.length > 0) {
+          variantList.push(...fromEndpoint);
         }
       }
 
-      /* Deduplicate by product_id:feature_id (properties may have both UK and RU keys) */
-      const seen = new Set<string>();
-      const dedupedRows = rows.filter((r) => {
-        const k = `${r.product_id}:${r.feature_id}`;
-        if (seen.has(k)) return false;
-        seen.add(k);
-        return true;
-      });
+      if (variantList.length === 0) continue;
 
-      if (dedupedRows.length < rows.length) {
-        console.info(
-          `[sync:product-features] Deduped: ${rows.length} → ${dedupedRows.length}`,
-        );
-      }
+      // Map variants
+      const rows = variantList.map((v) => ({
+        feature_id: feature.id, // UUID з нашої таблиці
+        cs_cart_id: v.variant_id,
+        value_uk: (v.variant || `Variant ${v.variant_id}`).trim(),
+        value_ru: null as string | null,
+        position: v.position ?? 0,
+        metadata: {
+          color: v.color || null,
+          image_url: v.image_pair?.detailed?.image_path || null,
+        },
+      }));
 
-      /* Batch insert */
-      for (let i = 0; i < dedupedRows.length; i += BATCH_SIZE) {
-        const batch = dedupedRows.slice(i, i + BATCH_SIZE);
-        const { error } = await supabase.from("product_features").insert(batch);
+      // Upsert — batch
+      for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+        const batch = rows.slice(i, i + BATCH_SIZE);
+        const { error } = await supabase
+          .from("feature_variants")
+          .upsert(batch, { onConflict: "feature_id,value_uk" });
 
         if (error) {
-          console.error("[sync:product-features] Batch error:", error.message);
-          failed += batch.length;
+          console.error(
+            `[sync:features] Variants upsert error for feature ${feature.cs_cart_id}:`,
+            error.message
+          );
+          errors.push(`Feature ${feature.cs_cart_id}: ${error.message}`);
+        } else {
+          synced += batch.length;
+        }
+      }
+
+      // Small delay to not hammer CS-Cart API
+      await new Promise((r) => setTimeout(r, 100));
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : String(err);
+      console.error(
+        `[sync:features] Failed to fetch variants for feature ${feature.cs_cart_id}:`,
+        msg
+      );
+      errors.push(`Feature ${feature.cs_cart_id}: ${msg}`);
+    }
+  }
+
+  console.info(
+    `[sync:features] ✔ Step 2 done: synced=${synced} variants`
+  );
+  return { synced, errors };
+}
+
+/* ================================================================== */
+/*  КРОК 3: Sync product feature values (з products.properties JSONB)  */
+/* ================================================================== */
+
+export async function syncProductFeatures(): Promise<{
+  processed: number;
+  created: number;
+  errors: number;
+}> {
+  const supabase = createAdminClient();
+
+  console.info("[sync:features] Step 3 — Mapping product properties to features...");
+
+  // Перевірка: чи є features в базі
+  const { count: featCount } = await supabase
+    .from("features")
+    .select("id", { count: "exact", head: true });
+
+  if (!featCount || featCount === 0) {
+    console.error("[sync:features] No features in database! Run syncFeatures() first.");
+    return { processed: 0, created: 0, errors: 1 };
+  }
+
+  // Завантажити всі features: name_uk → { id, feature_type }
+  const { data: allFeatures } = await supabase
+    .from("features")
+    .select("id, name_uk, feature_type");
+
+  const featureByName = new Map<string, { id: string; feature_type: string }>();
+  for (const f of allFeatures ?? []) {
+    featureByName.set(f.name_uk.toLowerCase(), {
+      id: f.id,
+      feature_type: f.feature_type,
+    });
+  }
+
+  // Завантажити всі feature_variants: feature_id + value_uk → variant UUID
+  const { data: allVariants } = await supabase
+    .from("feature_variants")
+    .select("id, feature_id, value_uk");
+
+  const variantMap = new Map<string, string>();
+  for (const v of allVariants ?? []) {
+    variantMap.set(`${v.feature_id}::${v.value_uk.toLowerCase()}`, v.id);
+  }
+
+  console.info(
+    `[sync:features] Loaded ${featureByName.size} features, ${variantMap.size} variants`
+  );
+
+  // Fetch products з properties
+  const PAGE_SIZE = 1000;
+  let offset = 0;
+  let processed = 0;
+  let created = 0;
+  let errorCount = 0;
+
+  while (true) {
+    const { data: products } = await supabase
+      .from("products")
+      .select("id, properties")
+      .not("properties", "is", null)
+      .range(offset, offset + PAGE_SIZE - 1);
+
+    if (!products || products.length === 0) break;
+
+    const rows: Array<{
+      product_id: string;
+      feature_id: string;
+      variant_id: string | null;
+      value_text: string | null;
+      value_number: number | null;
+      value_boolean: boolean | null;
+    }> = [];
+
+    for (const product of products) {
+      const props = product.properties as Record<string, string> | null;
+      if (!props || typeof props !== "object") continue;
+
+      processed++;
+
+      for (const [key, value] of Object.entries(props)) {
+        if (!key || !value) continue;
+
+        const feature = featureByName.get(key.toLowerCase());
+        if (!feature) continue; // характеристика не знайдена
+
+        if (
+          feature.feature_type === "select" ||
+          feature.feature_type === "multiselect" ||
+          feature.feature_type === "color"
+        ) {
+          // Шукаємо variant
+          const variantId = variantMap.get(
+            `${feature.id}::${value.toLowerCase()}`
+          );
+          if (variantId) {
+            rows.push({
+              product_id: product.id,
+              feature_id: feature.id,
+              variant_id: variantId,
+              value_text: null,
+              value_number: null,
+              value_boolean: null,
+            });
+          }
+        } else if (feature.feature_type === "number") {
+          const num = parseFloat(value);
+          if (!isNaN(num)) {
+            rows.push({
+              product_id: product.id,
+              feature_id: feature.id,
+              variant_id: null,
+              value_text: null,
+              value_number: num,
+              value_boolean: null,
+            });
+          }
+        } else if (feature.feature_type === "boolean") {
+          rows.push({
+            product_id: product.id,
+            feature_id: feature.id,
+            variant_id: null,
+            value_text: null,
+            value_number: null,
+            value_boolean:
+              value === "Y" || value === "Yes" || value === "1" || value === "true",
+          });
+        } else {
+          // text
+          rows.push({
+            product_id: product.id,
+            feature_id: feature.id,
+            variant_id: null,
+            value_text: value,
+            value_number: null,
+            value_boolean: null,
+          });
+        }
+      }
+    }
+
+    // Batch insert (не upsert — спочатку чистимо)
+    if (rows.length > 0) {
+      for (let i = 0; i < rows.length; i += 500) {
+        const batch = rows.slice(i, i + 500);
+        const { error } = await supabase
+          .from("product_feature_values")
+          .upsert(batch, {
+            onConflict: "product_id,feature_id,variant_id",
+            ignoreDuplicates: true,
+          });
+
+        if (error) {
+          console.error(
+            `[sync:features] Product values batch error:`,
+            error.message
+          );
+          errorCount++;
         } else {
           created += batch.length;
         }
       }
-
-      processed += products.length;
-      offset += PRODUCTS_PAGE_SIZE;
-
-      if (products.length < PRODUCTS_PAGE_SIZE) hasMore = false;
     }
 
-    const duration = Date.now() - start;
     console.info(
-      `[sync:product-features] Done in ${duration}ms — products: ${processed}, links: ${created}, failed: ${failed}`,
+      `[sync:features] Processed ${offset + products.length} products, ${created} values so far`
     );
 
+    if (products.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
+  }
+
+  console.info(
+    `[sync:features] ✔ Step 3 done: processed=${processed}, created=${created}, errors=${errorCount}`
+  );
+  return { processed, created, errors: errorCount };
+}
+
+/* ================================================================== */
+/*  Головний pipeline — 3 кроки послідовно                             */
+/* ================================================================== */
+
+export async function runFeaturesPipeline(): Promise<SyncResult> {
+  const startTime = Date.now();
+  const supabase = createAdminClient();
+
+  // Запис у sync_log
+  const { data: logEntry } = await supabase
+    .from("sync_log")
+    .insert({ entity: "features", action: "full_sync", status: "started" })
+    .select("id")
+    .single();
+
+  const logId = logEntry?.id ?? null;
+
+  try {
+    // КРОК 1: Features
+    const step1 = await syncFeatures();
+    console.info("[sync:features] Step 1 result:", step1);
+
+    // КРОК 2: Variants
+    const step2 = await syncFeatureVariants();
+    console.info("[sync:features] Step 2 result:", step2);
+
+    // КРОК 3: Product values
+    const step3 = await syncProductFeatures();
+    console.info("[sync:features] Step 3 result:", step3);
+
+    const duration = Date.now() - startTime;
+
+    if (logId) {
+      await supabase
+        .from("sync_log")
+        .update({
+          status: "completed",
+          items_processed: step1.synced + step2.synced + step3.processed,
+          items_created: step3.created,
+          items_updated: step1.synced,
+          items_failed:
+            step1.errors.length + step2.errors.length + step3.errors,
+          completed_at: new Date().toISOString(),
+        })
+        .eq("id", logId);
+    }
+
     return {
-      entity: "product_features",
+      entity: "features",
       status: "completed",
-      items_processed: processed,
-      items_created: created,
-      items_updated: 0,
-      items_failed: failed,
+      items_processed: step3.processed,
+      items_created: step3.created,
+      items_updated: step1.synced,
+      items_failed:
+        step1.errors.length + step2.errors.length + step3.errors,
       items_disabled: 0,
       duration_ms: duration,
     };
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error("[sync:product-features] Failed:", msg);
+    const duration = Date.now() - startTime;
+    const errorMessage = err instanceof Error ? err.message : String(err);
+
+    console.error(`[sync:features] ✗ Pipeline failed:`, errorMessage);
+
+    if (logId) {
+      await supabase
+        .from("sync_log")
+        .update({
+          status: "failed",
+          error_message: errorMessage,
+          completed_at: new Date().toISOString(),
+        })
+        .eq("id", logId);
+    }
+
     return {
-      entity: "product_features",
+      entity: "features",
       status: "failed",
-      items_processed: processed,
-      items_created: created,
+      items_processed: 0,
+      items_created: 0,
       items_updated: 0,
-      items_failed: failed,
+      items_failed: 0,
       items_disabled: 0,
-      duration_ms: Date.now() - start,
-      error: msg,
+      duration_ms: duration,
+      error: errorMessage,
     };
   }
 }

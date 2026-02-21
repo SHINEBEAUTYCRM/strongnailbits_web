@@ -1,188 +1,481 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { csCart } from "@/lib/cs-cart";
 import { slugify } from "@/utils/slugify";
-import type { CSCartFeatureVariant } from "@/types/cs-cart";
+import type { CSCartFeature, CSCartFeatureVariant } from "@/types/cs-cart";
 import type { SyncResult } from "@/lib/sync/categories";
-
-/* ------------------------------------------------------------------ */
-/*  Типи                                                               */
-/* ------------------------------------------------------------------ */
-
-interface BrandRow {
-  cs_cart_id: number;
-  name: string;
-  slug: string;
-  logo_url: string | null;
-  position: number;
-}
 
 /* ------------------------------------------------------------------ */
 /*  Константи                                                          */
 /* ------------------------------------------------------------------ */
 
-const BRAND_FEATURE_ID = 18;
-const BATCH_SIZE = 50;
-const CS_CART_BASE_URL = "https://shine-shop.com.ua";
+const BRAND_FEATURE_ID = 18; // бренд — синхронізується окремо в brands.ts
+const BATCH_SIZE = 100;
 
 /* ------------------------------------------------------------------ */
-/*  Хелпери                                                            */
+/*  Маппінг CS-Cart feature_type → наш                                 */
 /* ------------------------------------------------------------------ */
 
-function normalizeImageUrl(url: string | undefined | null): string | null {
-  if (!url) return null;
-  if (url.startsWith("http://") || url.startsWith("https://")) return url;
-  return `${CS_CART_BASE_URL}/${url.replace(/^\/+/, "")}`;
-}
-
-/* ------------------------------------------------------------------ */
-/*  Маппінг CS-Cart variant → Supabase brand row                      */
-/* ------------------------------------------------------------------ */
-
-function mapBrand(variant: CSCartFeatureVariant): BrandRow {
-  const name = variant.variant || `Brand ${variant.variant_id}`;
-  return {
-    cs_cart_id: variant.variant_id,
-    name,
-    slug: slugify(name) || `brand-${variant.variant_id}`,
-    logo_url: normalizeImageUrl(variant.image_pair?.detailed?.image_path),
-    position: variant.position ?? 0,
+function mapFeatureType(csType: string): string {
+  const map: Record<string, string> = {
+    S: "select",
+    M: "multiselect",
+    C: "boolean",
+    T: "text",
+    N: "number",
+    E: "brand",
+    O: "text",
+    D: "text",
   };
+  return map[csType] || "text";
 }
 
 /* ------------------------------------------------------------------ */
-/*  Забезпечити унікальність slug'ів                                   */
+/*  Забезпечити унікальність handle                                    */
 /* ------------------------------------------------------------------ */
 
-function deduplicateSlugs(rows: BrandRow[]): BrandRow[] {
-  const slugCount = new Map<string, number>();
-
-  return rows.map((row) => {
-    const base = row.slug;
-    const count = slugCount.get(base) ?? 0;
-
+function deduplicateHandles(
+  rows: Array<{ handle: string; cs_cart_id: number }>
+): void {
+  const seen = new Map<string, number>();
+  for (const row of rows) {
+    const count = seen.get(row.handle) ?? 0;
     if (count > 0) {
-      row.slug = `${base}-${row.cs_cart_id}`;
+      row.handle = `${row.handle}-${row.cs_cart_id}`;
+    }
+    seen.set(row.handle, count + 1);
+  }
+}
+
+/* ================================================================== */
+/*  КРОК 1: Sync features (структура характеристик)                    */
+/* ================================================================== */
+
+export async function syncFeatures(): Promise<{
+  synced: number;
+  skipped: number;
+  errors: string[];
+}> {
+  const supabase = createAdminClient();
+  const errors: string[] = [];
+  let synced = 0;
+  let skipped = 0;
+
+  console.info("[sync:features] Step 1 — Fetching features from CS-Cart...");
+
+  // Fetch all features (paginate)
+  const allFeatures: CSCartFeature[] = [];
+  let page = 1;
+  const perPage = 500;
+
+  while (true) {
+    const response = await csCart.getFeatures(page, perPage);
+    const features = response.features ?? [];
+    allFeatures.push(...features);
+    console.info(
+      `[sync:features] Page ${page}: got ${features.length} features (total: ${allFeatures.length})`
+    );
+    if (
+      features.length < perPage ||
+      allFeatures.length >= (response.params?.total_items ?? allFeatures.length)
+    ) {
+      break;
+    }
+    page++;
+  }
+
+  console.info(`[sync:features] Total features from CS-Cart: ${allFeatures.length}`);
+
+  // Filter and map
+  const rows: Array<{
+    cs_cart_id: number;
+    name_uk: string;
+    name_ru: string | null;
+    handle: string;
+    feature_type: string;
+    filterable: boolean;
+    show_on_card: boolean;
+    position: number;
+    status: string;
+  }> = [];
+
+  for (const f of allFeatures) {
+    // Skip brand
+    if (f.feature_id === BRAND_FEATURE_ID) {
+      skipped++;
+      continue;
+    }
+    // Skip disabled
+    if (f.status === "D") {
+      skipped++;
+      continue;
+    }
+    // Skip empty name
+    if (!f.description || !f.description.trim()) {
+      skipped++;
+      continue;
     }
 
-    slugCount.set(base, count + 1);
-    return row;
-  });
+    const mapped = mapFeatureType(f.feature_type);
+    // Skip brand type too
+    if (mapped === "brand") {
+      skipped++;
+      continue;
+    }
+
+    rows.push({
+      cs_cart_id: f.feature_id,
+      name_uk: f.description.trim(),
+      name_ru: null, // CS-Cart returns one language per request; we store UK
+      handle: slugify(f.description.trim()) || `feature-${f.feature_id}`,
+      feature_type: mapped,
+      filterable:
+        f.purpose === "find_products" ||
+        f.purpose === "group_catalog_item" ||
+        !!f.filter_style,
+      show_on_card: f.status === "A",
+      position: f.position ?? 0,
+      status: f.status === "A" ? "active" : "disabled",
+    });
+  }
+
+  // Deduplicate handles
+  deduplicateHandles(rows);
+
+  console.info(
+    `[sync:features] Prepared ${rows.length} features for upsert (skipped: ${skipped})`
+  );
+
+  // Batch upsert
+  for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+    const batch = rows.slice(i, i + BATCH_SIZE);
+    const { error } = await supabase
+      .from("features")
+      .upsert(batch, { onConflict: "cs_cart_id" });
+
+    if (error) {
+      console.error(`[sync:features] Upsert batch error:`, error.message);
+      errors.push(error.message);
+    } else {
+      synced += batch.length;
+    }
+  }
+
+  console.info(`[sync:features] ✔ Step 1 done: synced=${synced}, skipped=${skipped}`);
+  return { synced, skipped, errors };
 }
 
-/* ------------------------------------------------------------------ */
-/*  Головна функція синхронізації                                      */
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
+/*  КРОК 2: Sync feature variants                                      */
+/* ================================================================== */
 
-export async function syncBrands(): Promise<SyncResult> {
-  const startTime = Date.now();
+export async function syncFeatureVariants(): Promise<{
+  synced: number;
+  errors: string[];
+}> {
+  const supabase = createAdminClient();
+  const errors: string[] = [];
+  let synced = 0;
+
+  console.info("[sync:features] Step 2 — Fetching feature variants...");
+
+  // Get all our features that need variants (select, multiselect, color)
+  const { data: features } = await supabase
+    .from("features")
+    .select("id, cs_cart_id, feature_type")
+    .in("feature_type", ["select", "multiselect", "color"])
+    .eq("status", "active");
+
+  if (!features || features.length === 0) {
+    console.info("[sync:features] No features need variants");
+    return { synced: 0, errors: [] };
+  }
+
+  console.info(
+    `[sync:features] ${features.length} features need variants`
+  );
+
+  for (const feature of features) {
+    try {
+      // Fetch from CS-Cart — try getting feature detail which includes variants
+      const detail = await csCart.getFeature(feature.cs_cart_id);
+      const rawVariants = detail.variants ?? {};
+      const variantList: CSCartFeatureVariant[] = Array.isArray(rawVariants)
+        ? rawVariants
+        : Object.values(rawVariants);
+
+      if (variantList.length === 0) {
+        // Try variants endpoint as fallback
+        const varResponse = await csCart.getFeatureVariants(
+          feature.cs_cart_id,
+          1,
+          500
+        );
+        const fromEndpoint = varResponse.variants ?? [];
+        if (fromEndpoint.length > 0) {
+          variantList.push(...fromEndpoint);
+        }
+      }
+
+      if (variantList.length === 0) continue;
+
+      // Map variants
+      const rows = variantList.map((v) => ({
+        feature_id: feature.id, // UUID з нашої таблиці
+        cs_cart_id: v.variant_id,
+        value_uk: (v.variant || `Variant ${v.variant_id}`).trim(),
+        value_ru: null as string | null,
+        position: v.position ?? 0,
+        metadata: {
+          color: v.color || null,
+          image_url: v.image_pair?.detailed?.image_path || null,
+        },
+      }));
+
+      // Upsert — batch
+      for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+        const batch = rows.slice(i, i + BATCH_SIZE);
+        const { error } = await supabase
+          .from("feature_variants")
+          .upsert(batch, { onConflict: "feature_id,value_uk" });
+
+        if (error) {
+          console.error(
+            `[sync:features] Variants upsert error for feature ${feature.cs_cart_id}:`,
+            error.message
+          );
+          errors.push(`Feature ${feature.cs_cart_id}: ${error.message}`);
+        } else {
+          synced += batch.length;
+        }
+      }
+
+      // Small delay to not hammer CS-Cart API
+      await new Promise((r) => setTimeout(r, 100));
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : String(err);
+      console.error(
+        `[sync:features] Failed to fetch variants for feature ${feature.cs_cart_id}:`,
+        msg
+      );
+      errors.push(`Feature ${feature.cs_cart_id}: ${msg}`);
+    }
+  }
+
+  console.info(
+    `[sync:features] ✔ Step 2 done: synced=${synced} variants`
+  );
+  return { synced, errors };
+}
+
+/* ================================================================== */
+/*  КРОК 3: Sync product feature values (з products.properties JSONB)  */
+/* ================================================================== */
+
+export async function syncProductFeatures(): Promise<{
+  processed: number;
+  created: number;
+  errors: number;
+}> {
   const supabase = createAdminClient();
 
-  let logId: string | null = null;
-  let itemsProcessed = 0;
-  let itemsCreated = 0;
-  let itemsUpdated = 0;
-  let itemsFailed = 0;
-  let itemsDisabled = 0;
+  console.info("[sync:features] Step 3 — Mapping product properties to features...");
 
-  try {
-    /* ---- 1. Створити запис в sync_log ---- */
+  // Перевірка: чи є features в базі
+  const { count: featCount } = await supabase
+    .from("features")
+    .select("id", { count: "exact", head: true });
 
-    const { data: logEntry, error: logError } = await supabase
-      .from("sync_log")
-      .insert({
-        entity: "brands",
-        action: "full_sync",
-        status: "started",
-      })
-      .select("id")
-      .single();
+  if (!featCount || featCount === 0) {
+    console.error("[sync:features] No features in database! Run syncFeatures() first.");
+    return { processed: 0, created: 0, errors: 1 };
+  }
 
-    if (logError) {
-      console.error("[sync:brands] Failed to create sync_log:", logError.message);
-    } else {
-      logId = logEntry.id;
-    }
+  // Завантажити всі features: name_uk → { id, feature_type }
+  const { data: allFeatures } = await supabase
+    .from("features")
+    .select("id, name_uk, feature_type");
 
-    console.info("[sync:brands] Starting full sync...");
+  const featureByName = new Map<string, { id: string; feature_type: string }>();
+  for (const f of allFeatures ?? []) {
+    featureByName.set(f.name_uk.toLowerCase(), {
+      id: f.id,
+      feature_type: f.feature_type,
+    });
+  }
 
-    /* ---- 2. Завантажити feature "Бренд" (id=18) з варіантами ---- */
+  // Завантажити всі feature_variants: feature_id + value_uk → variant UUID
+  const { data: allVariants } = await supabase
+    .from("feature_variants")
+    .select("id, feature_id, value_uk");
 
-    console.info(`[sync:brands] Fetching feature ${BRAND_FEATURE_ID}...`);
-    const feature = await csCart.getFeature(BRAND_FEATURE_ID);
+  const variantMap = new Map<string, string>();
+  for (const v of allVariants ?? []) {
+    variantMap.set(`${v.feature_id}::${v.value_uk.toLowerCase()}`, v.id);
+  }
 
-    const rawVariants = feature.variants ?? {};
-    const allVariants: CSCartFeatureVariant[] = Array.isArray(rawVariants)
-      ? rawVariants
-      : Object.values(rawVariants);
+  console.info(
+    `[sync:features] Loaded ${featureByName.size} features, ${variantMap.size} variants`
+  );
 
-    console.info(`[sync:brands] Got ${allVariants.length} brand variants`);
+  // Fetch products з properties
+  const PAGE_SIZE = 1000;
+  let offset = 0;
+  let processed = 0;
+  let created = 0;
+  let errorCount = 0;
 
-    /* ---- 3. Маппінг та підготовка рядків ---- */
+  while (true) {
+    const { data: products } = await supabase
+      .from("products")
+      .select("id, properties")
+      .not("properties", "is", null)
+      .range(offset, offset + PAGE_SIZE - 1);
 
-    const rows = deduplicateSlugs(allVariants.map(mapBrand));
-    const activeCsCartIds = rows.map((r) => r.cs_cart_id);
-    itemsProcessed = rows.length;
+    if (!products || products.length === 0) break;
 
-    /* ---- 4. Batch upsert у Supabase ---- */
+    const rows: Array<{
+      product_id: string;
+      feature_id: string;
+      variant_id: string | null;
+      value_text: string | null;
+      value_number: number | null;
+      value_boolean: boolean | null;
+    }> = [];
 
-    const totalBatches = Math.ceil(rows.length / BATCH_SIZE);
+    for (const product of products) {
+      const props = product.properties as Record<string, string> | null;
+      if (!props || typeof props !== "object") continue;
 
-    for (let i = 0; i < rows.length; i += BATCH_SIZE) {
-      const batch = rows.slice(i, i + BATCH_SIZE);
-      const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+      processed++;
 
-      console.info(
-        `[sync:brands] Upserting batch ${batchNum}/${totalBatches} (${batch.length} items)...`,
-      );
+      for (const [key, value] of Object.entries(props)) {
+        if (!key || !value) continue;
 
-      const { data, error } = await supabase
-        .from("brands")
-        .upsert(batch, {
-          onConflict: "cs_cart_id",
-          ignoreDuplicates: false,
-        })
-        .select("id");
+        const feature = featureByName.get(key.toLowerCase());
+        if (!feature) continue; // характеристика не знайдена
 
-      if (error) {
-        console.error(
-          `[sync:brands] Batch ${batchNum} error: ${error.message}`,
-        );
-        itemsFailed += batch.length;
-      } else {
-        const count = data?.length ?? batch.length;
-        itemsUpdated += count;
-      }
-    }
-
-    itemsCreated = 0;
-
-    /* ---- 5. Позначити відсутні бренди (видалити зі списку активних) ---- */
-
-    if (activeCsCartIds.length > 0) {
-      console.info("[sync:brands] Removing unlisted brands...");
-
-      const { data: deletedRows, error: deleteError } = await supabase
-        .from("brands")
-        .delete()
-        .not("cs_cart_id", "in", `(${activeCsCartIds.join(",")})`)
-        .select("id");
-
-      if (deleteError) {
-        console.error(
-          "[sync:brands] Failed to remove brands:",
-          deleteError.message,
-        );
-      } else {
-        itemsDisabled = deletedRows?.length ?? 0;
-        if (itemsDisabled > 0) {
-          console.info(`[sync:brands] Removed ${itemsDisabled} brands`);
+        if (
+          feature.feature_type === "select" ||
+          feature.feature_type === "multiselect" ||
+          feature.feature_type === "color"
+        ) {
+          // Шукаємо variant
+          const variantId = variantMap.get(
+            `${feature.id}::${value.toLowerCase()}`
+          );
+          if (variantId) {
+            rows.push({
+              product_id: product.id,
+              feature_id: feature.id,
+              variant_id: variantId,
+              value_text: null,
+              value_number: null,
+              value_boolean: null,
+            });
+          }
+        } else if (feature.feature_type === "number") {
+          const num = parseFloat(value);
+          if (!isNaN(num)) {
+            rows.push({
+              product_id: product.id,
+              feature_id: feature.id,
+              variant_id: null,
+              value_text: null,
+              value_number: num,
+              value_boolean: null,
+            });
+          }
+        } else if (feature.feature_type === "boolean") {
+          rows.push({
+            product_id: product.id,
+            feature_id: feature.id,
+            variant_id: null,
+            value_text: null,
+            value_number: null,
+            value_boolean:
+              value === "Y" || value === "Yes" || value === "1" || value === "true",
+          });
         } else {
-          console.info("[sync:brands] No brands to remove");
+          // text
+          rows.push({
+            product_id: product.id,
+            feature_id: feature.id,
+            variant_id: null,
+            value_text: value,
+            value_number: null,
+            value_boolean: null,
+          });
         }
       }
     }
 
-    /* ---- 6. Оновити sync_log ---- */
+    // Batch insert (не upsert — спочатку чистимо)
+    if (rows.length > 0) {
+      for (let i = 0; i < rows.length; i += 500) {
+        const batch = rows.slice(i, i + 500);
+        const { error } = await supabase
+          .from("product_feature_values")
+          .upsert(batch, {
+            onConflict: "product_id,feature_id,variant_id",
+            ignoreDuplicates: true,
+          });
+
+        if (error) {
+          console.error(
+            `[sync:features] Product values batch error:`,
+            error.message
+          );
+          errorCount++;
+        } else {
+          created += batch.length;
+        }
+      }
+    }
+
+    console.info(
+      `[sync:features] Processed ${offset + products.length} products, ${created} values so far`
+    );
+
+    if (products.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
+  }
+
+  console.info(
+    `[sync:features] ✔ Step 3 done: processed=${processed}, created=${created}, errors=${errorCount}`
+  );
+  return { processed, created, errors: errorCount };
+}
+
+/* ================================================================== */
+/*  Головний pipeline — 3 кроки послідовно                             */
+/* ================================================================== */
+
+export async function runFeaturesPipeline(): Promise<SyncResult> {
+  const startTime = Date.now();
+  const supabase = createAdminClient();
+
+  // Запис у sync_log
+  const { data: logEntry } = await supabase
+    .from("sync_log")
+    .insert({ entity: "features", action: "full_sync", status: "started" })
+    .select("id")
+    .single();
+
+  const logId = logEntry?.id ?? null;
+
+  try {
+    // КРОК 1: Features
+    const step1 = await syncFeatures();
+    console.info("[sync:features] Step 1 result:", step1);
+
+    // КРОК 2: Variants
+    const step2 = await syncFeatureVariants();
+    console.info("[sync:features] Step 2 result:", step2);
+
+    // КРОК 3: Product values
+    const step3 = await syncProductFeatures();
+    console.info("[sync:features] Step 3 result:", step3);
 
     const duration = Date.now() - startTime;
 
@@ -191,46 +484,38 @@ export async function syncBrands(): Promise<SyncResult> {
         .from("sync_log")
         .update({
           status: "completed",
-          items_processed: itemsProcessed,
-          items_created: itemsCreated,
-          items_updated: itemsUpdated,
-          items_failed: itemsFailed,
+          items_processed: step1.synced + step2.synced + step3.processed,
+          items_created: step3.created,
+          items_updated: step1.synced,
+          items_failed:
+            step1.errors.length + step2.errors.length + step3.errors,
           completed_at: new Date().toISOString(),
         })
         .eq("id", logId);
     }
 
-    console.info(
-      `[sync:brands] ✓ Completed in ${duration}ms — ` +
-        `processed: ${itemsProcessed}, updated: ${itemsUpdated}, ` +
-        `failed: ${itemsFailed}, removed: ${itemsDisabled}`,
-    );
-
     return {
-      entity: "brands",
+      entity: "features",
       status: "completed",
-      items_processed: itemsProcessed,
-      items_created: itemsCreated,
-      items_updated: itemsUpdated,
-      items_failed: itemsFailed,
-      items_disabled: itemsDisabled,
+      items_processed: step3.processed,
+      items_created: step3.created,
+      items_updated: step1.synced,
+      items_failed:
+        step1.errors.length + step2.errors.length + step3.errors,
+      items_disabled: 0,
       duration_ms: duration,
     };
   } catch (err) {
     const duration = Date.now() - startTime;
     const errorMessage = err instanceof Error ? err.message : String(err);
 
-    console.error(`[sync:brands] ✗ Failed after ${duration}ms:`, errorMessage);
+    console.error(`[sync:features] ✗ Pipeline failed:`, errorMessage);
 
     if (logId) {
       await supabase
         .from("sync_log")
         .update({
           status: "failed",
-          items_processed: itemsProcessed,
-          items_created: itemsCreated,
-          items_updated: itemsUpdated,
-          items_failed: itemsFailed,
           error_message: errorMessage,
           completed_at: new Date().toISOString(),
         })
@@ -238,13 +523,13 @@ export async function syncBrands(): Promise<SyncResult> {
     }
 
     return {
-      entity: "brands",
+      entity: "features",
       status: "failed",
-      items_processed: itemsProcessed,
-      items_created: itemsCreated,
-      items_updated: itemsUpdated,
-      items_failed: itemsFailed,
-      items_disabled: itemsDisabled,
+      items_processed: 0,
+      items_created: 0,
+      items_updated: 0,
+      items_failed: 0,
+      items_disabled: 0,
       duration_ms: duration,
       error: errorMessage,
     };
