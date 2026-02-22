@@ -80,6 +80,20 @@ function clearSearchHistory() {
   try { localStorage.removeItem(HISTORY_KEY); } catch { /* ignore */ }
 }
 
+function HighlightMatch({ text, query }: { text: string; query: string }) {
+  const lower = text.toLowerCase();
+  const qLower = query.toLowerCase();
+  const idx = lower.indexOf(qLower);
+  if (idx === -1) return <span>{text}</span>;
+  return (
+    <span>
+      {text.slice(0, idx)}
+      <span className="text-[#D6264A] font-semibold">{text.slice(idx, idx + query.length)}</span>
+      {text.slice(idx + query.length)}
+    </span>
+  );
+}
+
 interface SearchModalProps {
   open: boolean;
   onClose: () => void;
@@ -96,6 +110,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
 
   useEffect(() => { setReady(true); }, []);
 
@@ -121,6 +136,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     if (!open) {
       setQuery("");
       setResults(null);
+      setSuggestions([]);
       setLoading(false);
     }
   }, [open]);
@@ -161,13 +177,18 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (value.trim().length < 2) {
       setResults(null);
+      setSuggestions([]);
       setLoading(false);
       return;
     }
     setLoading(true);
     debounceRef.current = setTimeout(() => {
       doSearch(value.trim());
-    }, 300);
+      fetch(`/api/search/suggest?q=${encodeURIComponent(value.trim())}`)
+        .then((r) => r.json())
+        .then((data) => setSuggestions(data))
+        .catch(() => setSuggestions([]));
+    }, 200);
   }
 
   function handleSubmit(e: FormEvent) {
@@ -256,6 +277,25 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
               <div className="h-px bg-[var(--border)]" />
 
               <div className="max-h-[60vh] overflow-y-auto">
+                {/* Autocomplete suggestions */}
+                {suggestions.length > 0 && query.length >= 2 && (
+                  <div className="border-b border-gray-100 px-2 py-2">
+                    {suggestions.map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => {
+                          setQuery(s);
+                          doSearch(s);
+                          setSuggestions([]);
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <HighlightMatch text={s} query={query} />
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 {/* History + Popular queries */}
                 {query.length < 2 && !results && (
                   <div className="p-4 space-y-4">
