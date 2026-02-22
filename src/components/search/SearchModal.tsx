@@ -56,6 +56,30 @@ function fmtPrice(v: number) {
   return v.toLocaleString("uk-UA");
 }
 
+const HISTORY_KEY = "shine-search-history";
+const MAX_HISTORY = 6;
+
+function getSearchHistory(): string[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function addToSearchHistory(q: string) {
+  try {
+    const trimmed = q.trim();
+    if (trimmed.length < 2) return;
+    const history = getSearchHistory().filter(h => h.toLowerCase() !== trimmed.toLowerCase());
+    history.unshift(trimmed);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, MAX_HISTORY)));
+  } catch { /* ignore */ }
+}
+
+function clearSearchHistory() {
+  try { localStorage.removeItem(HISTORY_KEY); } catch { /* ignore */ }
+}
+
 interface SearchModalProps {
   open: boolean;
   onClose: () => void;
@@ -71,12 +95,14 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
   const [ready, setReady] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [history, setHistory] = useState<string[]>([]);
 
   useEffect(() => { setReady(true); }, []);
 
   useEffect(() => {
     if (open) {
       setMounted(true);
+      setHistory(getSearchHistory());
       requestAnimationFrame(() => {
         requestAnimationFrame(() => setVisible(true));
       });
@@ -147,12 +173,14 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (query.trim().length > 0) {
+      addToSearchHistory(query);
       window.location.href = `/search?q=${encodeURIComponent(query.trim())}`;
       onClose();
     }
   }
 
   function handleResultClick() {
+    addToSearchHistory(query);
     onClose();
   }
 
@@ -228,22 +256,48 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
               <div className="h-px bg-[var(--border)]" />
 
               <div className="max-h-[60vh] overflow-y-auto">
-                {/* Popular queries */}
+                {/* History + Popular queries */}
                 {query.length < 2 && !results && (
-                  <div className="p-4">
-                    <p className="font-unbounded mb-3 text-[10px] font-bold uppercase tracking-wider text-[var(--t3)]">
-                      Популярні запити
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {POPULAR_QUERIES.map((q) => (
-                        <button
-                          key={q}
-                          onClick={() => handlePopularClick(q)}
-                          className="rounded-pill border border-[var(--border)] bg-sand px-3 py-1.5 text-sm text-[var(--t2)] transition-all hover:border-coral hover:text-coral"
-                        >
-                          {q}
-                        </button>
-                      ))}
+                  <div className="p-4 space-y-4">
+                    {history.length > 0 && (
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-unbounded text-[10px] font-bold uppercase tracking-wider text-[var(--t3)]">Нещодавно шукали</span>
+                          <button
+                            onClick={() => { clearSearchHistory(); setHistory([]); }}
+                            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                          >
+                            Очистити
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {history.map((h) => (
+                            <button
+                              key={h}
+                              onClick={() => handlePopularClick(h)}
+                              className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm text-[#444] transition-colors hover:border-[#D6264A] hover:text-[#D6264A]"
+                            >
+                              {h}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-unbounded mb-2 text-[10px] font-bold uppercase tracking-wider text-[var(--t3)]">
+                        Популярні запити
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {POPULAR_QUERIES.map((q) => (
+                          <button
+                            key={q}
+                            onClick={() => handlePopularClick(q)}
+                            className="rounded-pill border border-[var(--border)] bg-sand px-3 py-1.5 text-sm text-[var(--t2)] transition-all hover:border-coral hover:text-coral"
+                          >
+                            {q}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
