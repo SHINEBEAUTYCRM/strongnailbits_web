@@ -289,9 +289,15 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
                           onClick={handleResultClick}
                           className="flex items-center gap-3 rounded-[10px] px-2 py-2 transition-all hover:bg-sand"
                         >
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-violet/[0.06] text-violet">
-                            <Tag size={14} />
-                          </div>
+                          {brand.logo_url ? (
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-white border border-[var(--border)] overflow-hidden">
+                              <img src={brand.logo_url} alt={brand.name} className="h-6 w-6 object-contain" />
+                            </div>
+                          ) : (
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-coral/[0.06] text-coral">
+                              <Tag size={14} />
+                            </div>
+                          )}
                           <span className="text-sm text-dark">{brand.name}</span>
                         </Link>
                       ))}
@@ -313,7 +319,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
                           onClick={handleResultClick}
                           className="flex items-center gap-3 rounded-[10px] px-2 py-2 transition-all hover:bg-sand"
                         >
-                          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[10px] border border-[var(--border)] bg-sand">
+                          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-gray-100 bg-gray-50">
                             {p.main_image_url ? (
                               <Image
                                 src={p.main_image_url}
@@ -323,23 +329,23 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
                                 className="object-contain p-0.5"
                               />
                             ) : (
-                              <div className="flex h-full w-full items-center justify-center text-[var(--t3)]">
-                                <Search size={14} />
+                              <div className="flex h-full w-full items-center justify-center">
+                                <Tag size={16} className="text-gray-300" />
                               </div>
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="line-clamp-1 text-sm text-dark">{localizedName(p, lang)}</p>
+                            <p className="line-clamp-1 text-sm font-medium text-[#222]">{localizedName(p, lang)}</p>
                             {p.sku && (
-                              <p className="font-price text-[10px] text-[var(--t3)]">{p.sku}</p>
+                              <p className="text-xs text-gray-400 mt-0.5">Арт: {p.sku}</p>
                             )}
                           </div>
                           <div className="shrink-0 text-right">
-                            <span className="font-price text-sm font-bold text-dark">
+                            <span className="text-sm font-bold text-[#222]" style={{ fontFamily: 'var(--font-jetbrains)' }}>
                               {fmtPrice(p.price)} ₴
                             </span>
                             {p.old_price && p.old_price > p.price && (
-                              <span className="ml-1.5 font-price text-[10px] text-[var(--t3)] line-through">
+                              <span className="block text-xs text-gray-400 line-through">
                                 {fmtPrice(p.old_price)} ₴
                               </span>
                             )}
