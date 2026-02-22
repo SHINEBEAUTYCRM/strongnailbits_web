@@ -111,9 +111,8 @@ export async function getCategoryList() {
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("categories")
-    .select("id, name_uk, name_ru, cs_cart_id, parent_cs_cart_id, parent_id, product_count, position")
+    .select("id, name_uk, name_ru, cs_cart_id, parent_cs_cart_id, product_count, position")
     .eq("status", "active")
-    .is("deleted_at", null)
     .order("position", { ascending: true });
   return data ?? [];
 }
