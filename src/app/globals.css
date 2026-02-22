@@ -1030,7 +1030,7 @@ body {
     #c8c8cc 100%
   );
   background-size: 300% 100%;
-  animation: holoShift 10s linear infinite;
+  animation: holoShift 25s linear infinite;
   color: #1a1a1a;
   text-shadow: 0 0.5px 0 rgba(255,255,255,0.5);
 }
@@ -1053,7 +1053,7 @@ body {
     transparent 85%
   );
   background-size: 250% 100%;
-  animation: holoSheen 5s ease-in-out infinite;
+  animation: holoSheen 12.5s ease-in-out infinite;
   pointer-events: none;
   z-index: 1;
 }
@@ -1072,7 +1072,7 @@ body {
     rgba(180,140,255,0.1) 100%
   );
   background-size: 400% 100%;
-  animation: holoRainbow 15s linear infinite;
+  animation: holoRainbow 37.5s linear infinite;
   pointer-events: none;
   z-index: 1;
   mix-blend-mode: overlay;
