@@ -43,7 +43,19 @@ export async function GET(req: NextRequest) {
 
   const matchingBrands = allMatchingBrands ?? [];
 
-  /* ── 2. Products — multi-word AND, transliterated variants, brand-aware ── */
+  /* ── 2a. Exact SKU match — highest priority ── */
+  const skuPromise =
+    words.length === 1 && safeQ.length >= 3
+      ? supabase
+          .from("products")
+          .select("id, slug, name_uk, name_ru, price, old_price, main_image_url, sku, quantity, status, brand_id")
+          .eq("status", "active")
+          .ilike("sku", `%${safeQ}%`)
+          .order("quantity", { ascending: false })
+          .limit(3)
+      : null;
+
+  /* ── 2b. Products — multi-word AND, transliterated variants, brand-aware ── */
   let productQuery = supabase
     .from("products")
     .select(
@@ -90,16 +102,25 @@ export async function GET(req: NextRequest) {
     .limit(3);
 
   /* ── 4. Run all in parallel ── */
-  const [productsRes, categoriesRes] = await Promise.all([
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [productsRes, categoriesRes, skuRes] = await Promise.all([
     productsPromise,
     categoriesPromise,
+    skuPromise ?? Promise.resolve({ data: [] as any[] }),
   ]);
+
+  const skuMatch = skuRes.data ?? [];
+  const skuIds = new Set(skuMatch.map((p: any) => p.id));
+  const mergedProducts = [
+    ...skuMatch,
+    ...(productsRes.data ?? []).filter((p: any) => !skuIds.has(p.id)),
+  ].slice(0, 8);
 
   // Brands: return top 3 from the ones already fetched
   const brandResults = matchingBrands.slice(0, 3);
 
   return NextResponse.json({
-    products: productsRes.data ?? [],
+    products: mergedProducts,
     categories: categoriesRes.data ?? [],
     brands: brandResults,
   });
