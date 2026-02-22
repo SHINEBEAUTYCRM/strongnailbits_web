@@ -2,12 +2,12 @@ import { Truck } from "lucide-react";
 
 export function AnnouncementBar() {
   return (
-    <div className="announcement-bar-holo py-3.5 text-[14.5px] font-semibold tracking-wide">
-      <div className="relative z-[2] flex items-center justify-center gap-2">
-        <Truck size={18} className="shrink-0 opacity-65" />
-        <span>
+    <div className="announcement-bar-holo announcement-bar">
+      <div className="relative z-[2] flex items-center justify-center announcement-bar-inner">
+        <Truck className="shrink-0 opacity-65 announcement-bar-icon" />
+        <span className="whitespace-nowrap">
           Безкоштовно доставимо при замовленні від{" "}
-          <span className="font-semibold" style={{ fontFamily: 'var(--font-jetbrains), "JetBrains Mono", monospace' }}>1900 грн</span>
+          <span className="announcement-bar-sum">1900 грн</span>
         </span>
       </div>
     </div>
