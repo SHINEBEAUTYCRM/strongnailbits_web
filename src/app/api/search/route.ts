@@ -7,7 +7,7 @@ import {
 } from "@/utils/search-helpers";
 
 /** Text fields to search products in */
-const PRODUCT_FIELDS = ["name_uk", "name_ru", "sku", "description_uk"];
+const PRODUCT_FIELDS = ["name_uk", "name_ru", "sku", "description_uk", "description_ru"];
 
 /** Text fields to search categories in */
 const CATEGORY_FIELDS = ["name_uk", "name_ru"];

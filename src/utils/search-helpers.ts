@@ -118,6 +118,23 @@ export function getSearchVariants(word: string): string[] {
   const hasCyrillic = /[а-яіїєґёы]/.test(lower);
   const hasLatin = /[a-z]/.test(lower);
 
+  // Ukrainian ↔ Russian letter substitutions
+  if (hasCyrillic) {
+    const ukToRu: [string, string][] = [
+      ["і", "и"], ["ї", "и"], ["є", "е"], ["ґ", "г"],
+    ];
+    let ruVariant = lower;
+    for (const [uk, ru] of ukToRu) ruVariant = ruVariant.replaceAll(uk, ru);
+    if (ruVariant !== lower) variants.add(ruVariant);
+
+    let ukVariant = lower;
+    const ruToUk: [string, string][] = [
+      ["ы", "и"], ["э", "е"], ["ё", "е"],
+    ];
+    for (const [ru, uk] of ruToUk) ukVariant = ukVariant.replaceAll(ru, uk);
+    if (ukVariant !== lower) variants.add(ukVariant);
+  }
+
   // Transliterate in the appropriate direction(s)
   if (hasCyrillic) {
     const lat = cyrToLat(lower);
