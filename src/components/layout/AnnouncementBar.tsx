@@ -87,12 +87,11 @@ export function AnnouncementBar({ items, lang }: Props) {
 
   return (
     <div
-      className="overflow-hidden whitespace-nowrap py-2 text-[12px] font-medium cursor-grab"
-      style={{ background: items[0].bg_color, color: items[0].text_color }}
+      className="announcement-bar-holo overflow-hidden whitespace-nowrap py-2 text-[12px] font-semibold tracking-wide cursor-grab"
     >
       <div
         ref={trackRef}
-        className="animate-marquee inline-flex items-center gap-0"
+        className="animate-marquee inline-flex items-center gap-0 relative z-[2]"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}

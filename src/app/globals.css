@@ -1018,6 +1018,81 @@ body {
   }
 }
 
+/* Holographic announcement bar */
+.announcement-bar-holo {
+  position: relative;
+  background: linear-gradient(
+    90deg,
+    #c8c8cc 0%, #ddd0dc 6%, #d0d8e4 12%, #c8ccd0 18%,
+    #dcd0e0 24%, #d0e0d8 30%, #c8c8cc 36%, #e0d4d4 42%,
+    #d0d8e4 48%, #c8ccd0 54%, #dcd8d0 60%, #d0dcd8 66%,
+    #c8c8cc 72%, #ddd0dc 78%, #d0d8e4 84%, #c8ccd0 90%,
+    #c8c8cc 100%
+  );
+  background-size: 300% 100%;
+  animation: holoShift 10s linear infinite;
+  color: #1a1a1a;
+  text-shadow: 0 0.5px 0 rgba(255,255,255,0.5);
+}
+
+.announcement-bar-holo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 25%,
+    rgba(255,255,255,0.2) 35%,
+    rgba(255,255,255,0.4) 37%,
+    rgba(255,255,255,0.2) 39%,
+    transparent 49%,
+    transparent 61%,
+    rgba(255,255,255,0.15) 71%,
+    rgba(255,255,255,0.35) 73%,
+    rgba(255,255,255,0.15) 75%,
+    transparent 85%
+  );
+  background-size: 250% 100%;
+  animation: holoSheen 5s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.announcement-bar-holo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(180,140,255,0.1) 0%,
+    rgba(120,200,255,0.1) 20%,
+    rgba(120,255,180,0.1) 40%,
+    rgba(255,200,120,0.1) 60%,
+    rgba(255,140,180,0.1) 80%,
+    rgba(180,140,255,0.1) 100%
+  );
+  background-size: 400% 100%;
+  animation: holoRainbow 15s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: overlay;
+}
+
+@keyframes holoShift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+
+@keyframes holoSheen {
+  0%, 100% { background-position: -100% 0; }
+  50% { background-position: 250% 0; }
+}
+
+@keyframes holoRainbow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 400% 50%; }
+}
+
 @keyframes marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(-33.33%); }
