@@ -17,7 +17,6 @@ interface Category {
   name_ru: string | null;
   cs_cart_id: number;
   parent_cs_cart_id: number | null;
-  parent_id: string | null;
   product_count: number;
   position: number;
 }
