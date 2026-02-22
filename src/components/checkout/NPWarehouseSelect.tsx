@@ -266,7 +266,7 @@ export function NPWarehouseSelect({
               className="flex w-full items-start gap-2.5 border-b border-[var(--border)] px-3 py-2.5 text-left transition-colors last:border-0 hover:bg-coral/5 active:bg-coral/10"
             >
               {activeTab === "postomat" ? (
-                <MailboxIcon size={12} className="mt-0.5 shrink-0 text-purple-400" />
+                <MailboxIcon size={12} className="mt-0.5 shrink-0 text-[#D6264A]" />
               ) : (
                 <Building2 size={12} className="mt-0.5 shrink-0 text-coral/50" />
               )}

@@ -11,7 +11,7 @@ export function BrandCard({ slug, name, logoUrl }: BrandCardProps) {
   return (
     <Link
       href={`/brand/${slug}`}
-      className="group flex flex-col items-center justify-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 transition-all duration-300 hover:border-white/[0.12] hover:bg-white/[0.04] hover:shadow-lg hover:shadow-purple-500/[0.04]"
+      className="group flex flex-col items-center justify-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 transition-all duration-300 hover:border-white/[0.12] hover:bg-white/[0.04] hover:shadow-lg hover:shadow-[#D6264A]/[0.04]"
     >
       <div className="relative flex h-12 w-full items-center justify-center">
         {logoUrl ? (

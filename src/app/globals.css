@@ -976,7 +976,7 @@ body {
   }
 
   .mobile-nav-item.active {
-    color: #a855f7;
+    color: #D6264A;
   }
 
   .mobile-nav-icon-wrap {
@@ -1002,7 +1002,7 @@ body {
     position: absolute;
     top: -5px;
     right: -10px;
-    background: #a855f7;
+    background: #D6264A;
     color: #fff;
     font-size: 9px;
     font-family: var(--font-jetbrains, "JetBrains Mono", monospace);

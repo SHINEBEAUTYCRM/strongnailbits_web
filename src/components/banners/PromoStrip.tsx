@@ -81,7 +81,7 @@ export function PromoStrip({ banners }: PromoStripProps) {
   // ─── Guard ────────────────────────────────────────────
   if (!banner) return null;
 
-  const bgColor = banner.bg_color || "#7c3aed";
+  const bgColor = banner.bg_color || "#D6264A";
   const textColor = banner.text_color || "#ffffff";
   const displayText = banner.heading || banner.subheading || banner.title;
 

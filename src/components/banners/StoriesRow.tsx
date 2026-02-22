@@ -177,7 +177,7 @@ export function StoriesRow({ banners }: StoriesRowProps) {
                 className={`flex items-center justify-center rounded-full p-[3px] ${
                   isSeen
                     ? "bg-gray-300"
-                    : "bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400"
+                    : "bg-gradient-to-br from-[#D6264A] via-[#e84566] to-[#f08060]"
                 }`}
               >
                 <div className="h-16 w-16 overflow-hidden rounded-full bg-white p-[2px] sm:h-20 sm:w-20">
@@ -193,7 +193,7 @@ export function StoriesRow({ banners }: StoriesRowProps) {
                     <div
                       className="flex h-full w-full items-center justify-center rounded-full text-xs font-bold"
                       style={{
-                        backgroundColor: banner.bg_color || "#7c3aed",
+                        backgroundColor: banner.bg_color || "#D6264A",
                         color: banner.text_color || "#fff",
                       }}
                     >

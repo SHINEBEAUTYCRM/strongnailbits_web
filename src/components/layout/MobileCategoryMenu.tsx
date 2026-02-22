@@ -162,7 +162,7 @@ export function MobileCategoryMenu({
                     <ChevronLeft size={18} />
                   </button>
                 ) : (
-                  <div className="flex h-8 w-8 items-center justify-center text-purple-400">
+                  <div className="flex h-8 w-8 items-center justify-center text-[#D6264A]">
                     <LayoutGrid size={18} />
                   </div>
                 )}
@@ -184,7 +184,7 @@ export function MobileCategoryMenu({
               <Link
                 href={`/catalog/${current.slug}`}
                 onClick={onClose}
-                className="flex items-center gap-2 border-b border-zinc-800/50 px-5 py-3 text-sm font-medium text-purple-400 transition-colors hover:text-purple-300"
+                className="flex items-center gap-2 border-b border-zinc-800/50 px-5 py-3 text-sm font-medium text-[#D6264A] transition-colors hover:text-[#b91c3a]"
               >
                 Дивитися все в &quot;{current.title}&quot;
               </Link>

@@ -229,7 +229,7 @@ export function HeroSlider({ banners }: HeroSliderProps) {
               <span
                 className={`block rounded-full transition-all duration-300 ${
                   i === current
-                    ? "h-2.5 w-7 bg-purple-500"
+                    ? "h-2.5 w-7 bg-[#D6264A]"
                     : "h-2 w-2 bg-white/50 hover:bg-white/70"
                 }`}
               />

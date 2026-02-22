@@ -244,7 +244,7 @@ export function Header({ contacts }: HeaderProps) {
             >
               <Heart size={22} />
               {mounted && wishlistCount > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white" style={{ background: "#a855f7" }}>
+                <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white" style={{ background: "#D6264A" }}>
                   {wishlistCount}
                 </span>
               )}
@@ -261,7 +261,7 @@ export function Header({ contacts }: HeaderProps) {
                   className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-white transition-transform ${
                     pulse ? "scale-125" : "scale-100"
                   }`}
-                  style={{ background: "#a855f7" }}
+                  style={{ background: "#D6264A" }}
                 >
                   {count}
                 </span>
@@ -316,7 +316,7 @@ export function Header({ contacts }: HeaderProps) {
           >
             <ShoppingBag size={20} />
             {mounted && count > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white" style={{ background: "#a855f7" }}>
+              <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white" style={{ background: "#D6264A" }}>
                 {count}
               </span>
             )}

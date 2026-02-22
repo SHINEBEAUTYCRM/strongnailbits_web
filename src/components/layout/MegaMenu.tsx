@@ -201,7 +201,7 @@ export function MegaMenu({ categories }: MegaMenuProps) {
                     onClick={closeNow}
                     className={`group flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition-all duration-200 ${
                       isActive
-                        ? "bg-purple-500/10 font-semibold text-purple-400"
+                        ? "bg-[#D6264A]/10 font-semibold text-[#D6264A]"
                         : "text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100"
                     }`}
                   >
@@ -211,7 +211,7 @@ export function MegaMenu({ categories }: MegaMenuProps) {
                         size={14}
                         className={`shrink-0 transition-all duration-200 ${
                           isActive
-                            ? "translate-x-0.5 text-purple-400"
+                            ? "translate-x-0.5 text-[#D6264A]"
                             : "text-zinc-700 group-hover:translate-x-0.5 group-hover:text-zinc-400"
                         }`}
                       />
@@ -229,7 +229,7 @@ export function MegaMenu({ categories }: MegaMenuProps) {
               <Link
                 href={activeRoot.href}
                 onClick={closeNow}
-                className="mb-5 inline-flex items-center gap-1.5 text-base font-bold text-white transition-colors hover:text-purple-400"
+                className="mb-5 inline-flex items-center gap-1.5 text-base font-bold text-white transition-colors hover:text-[#D6264A]"
               >
                 {activeRoot.item.label}
                 <ChevronRight size={16} />
@@ -259,7 +259,7 @@ export function MegaMenu({ categories }: MegaMenuProps) {
         <Link
           href={activeCategoryItem.href}
           onClick={closeNow}
-          className="mb-4 inline-flex items-center gap-1.5 text-base font-bold text-white transition-colors hover:text-purple-400"
+          className="mb-4 inline-flex items-center gap-1.5 text-base font-bold text-white transition-colors hover:text-[#D6264A]"
         >
           {activeCategoryItem.item.label}
           <ChevronRight size={16} />
@@ -307,14 +307,14 @@ export function MegaMenu({ categories }: MegaMenuProps) {
         onMouseLeave={handleClose}
       >
         <div className="mx-auto flex h-full max-w-7xl items-center gap-1 px-6">
-          {/* Каталог button — purple */}
+          {/* Каталог button */}
           <button
             onMouseEnter={handleCatalogOpen}
             onClick={() => (open && mode === "catalog" ? closeNow() : handleCatalogOpen())}
             className={`flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-all duration-200 ${
               open && mode === "catalog"
-                ? "bg-purple-500 text-white"
-                : "bg-purple-600 text-white hover:bg-purple-500"
+                ? "bg-[#D6264A] text-white"
+                : "bg-[#b91c3a] text-white hover:bg-[#D6264A]"
             }`}
           >
             <LayoutGrid size={15} />
@@ -430,7 +430,7 @@ function ChildrenGrid({
             <Link
               href={`/catalog/${child.slug}`}
               onClick={onClose}
-              className="mb-2 block border-b border-zinc-800/40 pb-1.5 text-sm font-semibold text-white transition-colors hover:text-purple-400"
+              className="mb-2 block border-b border-zinc-800/40 pb-1.5 text-sm font-semibold text-white transition-colors hover:text-[#D6264A]"
             >
               {localizedName(child, lang)}
             </Link>
@@ -441,7 +441,7 @@ function ChildrenGrid({
                     <Link
                       href={`/catalog/${gc.slug}`}
                       onClick={onClose}
-                      className="block py-0.5 text-[13px] leading-snug text-zinc-400 transition-colors hover:text-purple-400"
+                      className="block py-0.5 text-[13px] leading-snug text-zinc-400 transition-colors hover:text-[#D6264A]"
                     >
                       {localizedName(gc, lang)}
                     </Link>
@@ -456,7 +456,7 @@ function ChildrenGrid({
                           [child.id]: !prev[child.id],
                         }))
                       }
-                      className="mt-1 cursor-pointer text-[12px] text-purple-400 transition-colors hover:text-pink-400 hover:underline"
+                      className="mt-1 cursor-pointer text-[12px] text-[#D6264A] transition-colors hover:text-[#b91c3a] hover:underline"
                     >
                       {isExpanded ? "згорнути" : `ще ${hiddenCount}...`}
                     </button>
