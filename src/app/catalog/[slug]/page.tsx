@@ -54,18 +54,27 @@ async function getCategory(slug: string) {
 
 async function getMergedCategoryIds(categoryId: string): Promise<string[]> {
   const supabase = createAdminClient();
-  const { data: mergeGroups } = await supabase
+  const { data: mergeGroups, error } = await supabase
     .from("category_merge_groups")
     .select("primary_category_id, merged_category_id")
     .or(`primary_category_id.eq.${categoryId},merged_category_id.eq.${categoryId}`);
 
-  if (!mergeGroups?.length) return [];
+  if (error) {
+    console.error("[getMergedCategoryIds] Error:", error.message);
+    return [];
+  }
+  if (!mergeGroups?.length) {
+    console.log("[getMergedCategoryIds] No merge groups for", categoryId);
+    return [];
+  }
 
   const ids = new Set<string>();
   for (const g of mergeGroups) {
-    if (g.primary_category_id !== categoryId) ids.add(g.primary_category_id);
-    if (g.merged_category_id !== categoryId) ids.add(g.merged_category_id);
+    ids.add(g.primary_category_id);
+    ids.add(g.merged_category_id);
   }
+  ids.delete(categoryId);
+  console.log("[getMergedCategoryIds] Found merged IDs:", Array.from(ids));
   return Array.from(ids);
 }
 
@@ -77,19 +86,22 @@ async function buildBreadcrumbs(category: CategoryRow, lang: Lang): Promise<Brea
   let currentParentId = category.parent_cs_cart_id;
   const visited = new Set<number>();
 
-  while (currentParentId && !visited.has(currentParentId)) {
+  while (currentParentId && currentParentId !== 0 && !visited.has(currentParentId)) {
     visited.add(currentParentId);
-    // Skip "Нігті" container — its children are shown as root categories
     if (currentParentId === NAIL_ROOT_CS_CART_ID) break;
 
-    const { data: parent } = await supabase
+    const { data: parents } = await supabase
       .from("categories")
       .select("slug, name_uk, name_ru, parent_cs_cart_id, cs_cart_id")
       .eq("cs_cart_id", currentParentId)
-      .single();
-    if (!parent) break;
+      .eq("status", "active")
+      .order("slug", { ascending: true })
+      .limit(5);
 
-    // If this parent IS "Нігті", stop without adding it
+    if (!parents?.length) break;
+
+    // Prefer non-"-ru" slug
+    const parent = parents.find((p) => !p.slug.endsWith("-ru")) ?? parents[0];
     if (parent.cs_cart_id === NAIL_ROOT_CS_CART_ID) break;
 
     crumbs.unshift({ label: localizedName(parent, lang), href: `/catalog/${parent.slug}` });
@@ -134,14 +146,18 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   let { descendantIds } = scopeData;
   const { children } = scopeData;
 
+  console.log("[CategoryPage]", slug, "| base descendantIds:", descendantIds.length, "| mergedCatIds:", mergedCatIds);
+
   // Expand descendantIds with merged categories' descendants
   if (mergedCatIds.length > 0) {
     const supabase = createAdminClient();
     const { data: mergedCats } = await supabase
       .from("categories")
-      .select("cs_cart_id")
+      .select("id, cs_cart_id")
       .in("id", mergedCatIds)
       .eq("status", "active");
+
+    console.log("[CategoryPage] Merged cats from DB:", mergedCats);
 
     if (mergedCats?.length) {
       const mergedScopes = await Promise.all(
@@ -151,6 +167,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
       for (const scope of mergedScopes) {
         for (const id of scope.descendantIds) allIds.add(id);
       }
+      console.log("[CategoryPage] Total category IDs after merge:", allIds.size, "(was", descendantIds.length, ")");
       descendantIds = Array.from(allIds);
     }
   }
