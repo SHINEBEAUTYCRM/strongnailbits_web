@@ -1,6 +1,6 @@
 // ================================================================
 //  PATCH /api/v1/products/stock — Швидке оновлення залишків
-//  Permission: products:write
+//  Пошук по SKU
 // ================================================================
 
 import { NextRequest } from 'next/server';
@@ -16,50 +16,48 @@ export const dynamic = 'force-dynamic';
 export const PATCH = withApiAuth('products:write', async (req: NextRequest, ctx) => {
   const body = await req.json();
 
-  // Валідація масиву
   const { items, error: arrayError } = validateArray<StockUpdateInput>(body, 500, 'stock updates');
-  if (arrayError || !items) {
-    return apiValidationError(arrayError || 'Invalid input');
-  }
+  if (arrayError || !items) return apiValidationError(arrayError || 'Invalid input');
 
-  // Валідація кожного елемента
   const allErrors: Array<{ field: string; message: string }> = [];
   for (let i = 0; i < items.length; i++) {
-    const errs = validateStockUpdate(items[i], i);
-    allErrors.push(...errs);
+    allErrors.push(...validateStockUpdate(items[i], i));
   }
-
   if (allErrors.length > 0) {
-    return apiValidationError(
-      `Validation failed for ${allErrors.length} field(s)`,
-      allErrors.slice(0, 50)
-    );
+    return apiValidationError(`Validation failed for ${allErrors.length} field(s)`, allErrors.slice(0, 50));
   }
 
   const supabase = createAdminClient();
+  let updatedCount = 0;
+  const errors: Array<{ sku: string; error: string }> = [];
 
-  let updated = 0;
-  const errors: Array<{ external_id: string; error: string }> = [];
+  const skus = items.map(i => i.sku);
+  const { data: existingProducts } = await supabase
+    .from('products').select('id, sku').in('sku', skus);
+
+  const skuToId = new Map((existingProducts || []).map(p => [p.sku, p.id]));
 
   for (const item of items) {
-    const { error } = await supabase
-      .from('products')
-      .update({
-        quantity: item.stock_qty,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('external_id', item.external_id);
-
-    if (error) {
-      errors.push({ external_id: item.external_id, error: error.message });
-    } else {
-      updated++;
+    const productId = skuToId.get(item.sku);
+    if (!productId) {
+      errors.push({ sku: item.sku, error: 'Product not found' });
+      continue;
     }
+
+    const updateData: Record<string, unknown> = {
+      quantity: item.stock_qty,
+      updated_at: new Date().toISOString(),
+    };
+    if (item.external_id) updateData.external_id = item.external_id;
+
+    const { error } = await supabase.from('products').update(updateData).eq('id', productId);
+    if (error) errors.push({ sku: item.sku, error: error.message });
+    else updatedCount++;
   }
 
-  if (updated > 0) {
-    fireWebhook('stock.updated', { updated, total: items.length }, ctx.tenantId).catch(() => {});
+  if (updatedCount > 0) {
+    fireWebhook('product.stock_updated', { updated: updatedCount }, ctx.tenantId).catch(() => {});
   }
 
-  return apiSuccess({ updated, errors: errors.length > 0 ? errors : undefined });
+  return apiSuccess({ updated: updatedCount, errors });
 });

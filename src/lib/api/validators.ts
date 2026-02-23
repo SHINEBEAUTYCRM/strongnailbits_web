@@ -1,6 +1,5 @@
 // ================================================================
 //  ShineShop OS — API Validators
-//  Валідація вхідних даних для /api/v1/*
 // ================================================================
 
 import type {
@@ -17,27 +16,19 @@ interface ValidationError {
   message: string;
 }
 
-// ────────────────────────────────────────────────────────
-//  UUID Validator
-// ────────────────────────────────────────────────────────
-
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function isUUID(value: string): boolean {
   return UUID_REGEX.test(value);
 }
 
-// ────────────────────────────────────────────────────────
-//  Products
-// ────────────────────────────────────────────────────────
+// ── Products ──
 
 export function validateProductUpsert(item: ProductUpsertInput, index: number): ValidationError[] {
   const errors: ValidationError[] = [];
   const prefix = `[${index}]`;
 
-  if (!item.external_id) {
-    errors.push({ field: `${prefix}.external_id`, message: 'required' });
-  } else if (!isUUID(item.external_id)) {
+  if (item.external_id && !isUUID(item.external_id)) {
     errors.push({ field: `${prefix}.external_id`, message: 'must be a valid UUID' });
   }
 
@@ -76,12 +67,18 @@ export function validateProductUpsert(item: ProductUpsertInput, index: number): 
   return errors;
 }
 
+// ── Stock ──
+
 export function validateStockUpdate(item: StockUpdateInput, index: number): ValidationError[] {
   const errors: ValidationError[] = [];
   const prefix = `[${index}]`;
 
-  if (!item.external_id) {
-    errors.push({ field: `${prefix}.external_id`, message: 'required' });
+  if (!item.sku) {
+    errors.push({ field: `${prefix}.sku`, message: 'required' });
+  }
+
+  if (item.external_id && !isUUID(item.external_id)) {
+    errors.push({ field: `${prefix}.external_id`, message: 'must be a valid UUID' });
   }
 
   if (item.stock_qty === undefined || item.stock_qty === null) {
@@ -93,9 +90,7 @@ export function validateStockUpdate(item: StockUpdateInput, index: number): Vali
   return errors;
 }
 
-// ────────────────────────────────────────────────────────
-//  Customers
-// ────────────────────────────────────────────────────────
+// ── Customers ──
 
 const PHONE_REGEX = /^\+380\d{9}$/;
 const LOYALTY_TIERS = ['bronze', 'silver', 'gold', 'platinum'];
@@ -135,9 +130,7 @@ export function validateCustomerUpsert(item: CustomerUpsertInput, index: number)
   return errors;
 }
 
-// ────────────────────────────────────────────────────────
-//  Documents
-// ────────────────────────────────────────────────────────
+// ── Documents ──
 
 const DOC_TYPES = ['sale', 'return', 'invoice'];
 
@@ -145,104 +138,49 @@ export function validateDocument(item: DocumentInput, index: number): Validation
   const errors: ValidationError[] = [];
   const prefix = `[${index}]`;
 
-  if (!item.external_id) {
-    errors.push({ field: `${prefix}.external_id`, message: 'required' });
-  }
-
-  if (!item.customer_external_id) {
-    errors.push({ field: `${prefix}.customer_external_id`, message: 'required' });
-  }
-
-  if (!item.doc_type || !DOC_TYPES.includes(item.doc_type)) {
-    errors.push({ field: `${prefix}.doc_type`, message: `must be one of: ${DOC_TYPES.join(', ')}` });
-  }
-
-  if (!item.doc_number) {
-    errors.push({ field: `${prefix}.doc_number`, message: 'required' });
-  }
-
-  if (!item.doc_date) {
-    errors.push({ field: `${prefix}.doc_date`, message: 'required' });
-  }
-
-  if (item.total_amount === undefined || typeof item.total_amount !== 'number') {
-    errors.push({ field: `${prefix}.total_amount`, message: 'required, must be a number' });
-  }
-
-  if (!item.items || !Array.isArray(item.items) || item.items.length === 0) {
-    errors.push({ field: `${prefix}.items`, message: 'required, must be a non-empty array' });
-  }
+  if (!item.external_id) errors.push({ field: `${prefix}.external_id`, message: 'required' });
+  if (!item.customer_external_id) errors.push({ field: `${prefix}.customer_external_id`, message: 'required' });
+  if (!item.doc_type || !DOC_TYPES.includes(item.doc_type)) errors.push({ field: `${prefix}.doc_type`, message: `must be one of: ${DOC_TYPES.join(', ')}` });
+  if (!item.doc_number) errors.push({ field: `${prefix}.doc_number`, message: 'required' });
+  if (!item.doc_date) errors.push({ field: `${prefix}.doc_date`, message: 'required' });
+  if (item.total_amount === undefined || typeof item.total_amount !== 'number') errors.push({ field: `${prefix}.total_amount`, message: 'required, must be a number' });
+  if (!item.items || !Array.isArray(item.items) || item.items.length === 0) errors.push({ field: `${prefix}.items`, message: 'required, must be a non-empty array' });
 
   return errors;
 }
 
-// ────────────────────────────────────────────────────────
-//  Bonuses
-// ────────────────────────────────────────────────────────
+// ── Bonuses ──
 
 const BONUS_TYPES = ['accrual', 'redemption'];
 
 export function validateBonus(item: BonusInput): ValidationError[] {
   const errors: ValidationError[] = [];
-
-  if (!item.customer_external_id) {
-    errors.push({ field: 'customer_external_id', message: 'required' });
-  }
-
-  if (!item.type || !BONUS_TYPES.includes(item.type)) {
-    errors.push({ field: 'type', message: `must be one of: ${BONUS_TYPES.join(', ')}` });
-  }
-
-  if (item.amount === undefined || typeof item.amount !== 'number' || item.amount <= 0) {
-    errors.push({ field: 'amount', message: 'must be > 0' });
-  }
-
+  if (!item.customer_external_id) errors.push({ field: 'customer_external_id', message: 'required' });
+  if (!item.type || !BONUS_TYPES.includes(item.type)) errors.push({ field: 'type', message: `must be one of: ${BONUS_TYPES.join(', ')}` });
+  if (item.amount === undefined || typeof item.amount !== 'number' || item.amount <= 0) errors.push({ field: 'amount', message: 'must be > 0' });
   return errors;
 }
 
-// ────────────────────────────────────────────────────────
-//  Prices
-// ────────────────────────────────────────────────────────
+// ── Prices ──
 
 export function validatePrice(item: PriceInput, index: number): ValidationError[] {
   const errors: ValidationError[] = [];
   const prefix = `[${index}]`;
-
-  if (!item.customer_external_id) {
-    errors.push({ field: `${prefix}.customer_external_id`, message: 'required' });
-  }
-
-  if (!item.product_external_id) {
-    errors.push({ field: `${prefix}.product_external_id`, message: 'required' });
-  }
-
-  if (item.price === undefined || typeof item.price !== 'number' || item.price <= 0) {
-    errors.push({ field: `${prefix}.price`, message: 'must be > 0' });
-  }
-
+  if (!item.customer_external_id) errors.push({ field: `${prefix}.customer_external_id`, message: 'required' });
+  if (!item.product_external_id) errors.push({ field: `${prefix}.product_external_id`, message: 'required' });
+  if (item.price === undefined || typeof item.price !== 'number' || item.price <= 0) errors.push({ field: `${prefix}.price`, message: 'must be > 0' });
   return errors;
 }
 
-// ────────────────────────────────────────────────────────
-//  Generic array validator
-// ────────────────────────────────────────────────────────
+// ── Generic array validator ──
 
 export function validateArray<T>(
   body: unknown,
   maxItems: number,
-  label: string
+  entityName: string
 ): { items: T[] | null; error: string | null } {
-  if (!body || !Array.isArray(body)) {
-    return { items: null, error: `Request body must be a JSON array of ${label}` };
-  }
-
-  if (body.length === 0) {
-    return { items: null, error: `Array must contain at least one ${label}` };
-  }
-
-  if (body.length > maxItems) {
-    return { items: null, error: `Maximum ${maxItems} ${label} per request` };
-  }
-
+  if (!Array.isArray(body)) return { items: null, error: `Request body must be a JSON array of ${entityName}` };
+  if (body.length === 0) return { items: null, error: 'Array must contain at least 1 item' };
+  if (body.length > maxItems) return { items: null, error: `Array must contain at most ${maxItems} items (got ${body.length})` };
   return { items: body as T[], error: null };
 }
