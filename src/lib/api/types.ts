@@ -10,6 +10,7 @@ export interface ApiTokenRow {
   permissions: string[];
   rate_limit: number;
   ip_whitelist: string[] | null;
+  allowed_ips: string[] | null;
   is_active: boolean;
   expires_at: string | null;
   created_at: string;
