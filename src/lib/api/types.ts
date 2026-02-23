@@ -21,6 +21,13 @@ export interface ApiAuthContext {
   tenantId: string;
 }
 
+export interface ApiContext {
+  tokenId: string;
+  tenantId: string;
+  tokenName: string;
+  permissions: string[];
+}
+
 /** Вхідні дані для upsert товарів (пошук по SKU) */
 export interface ProductUpsertInput {
   external_id?: string;
