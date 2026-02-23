@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { getCategoryTree, type CategoryNode } from "@/lib/categories/tree";
+import { getCatalogCategoryTree, type CategoryNode as CatalogCatNode } from "@/lib/catalog/categories";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { CatalogToolbar } from "@/components/catalog/CatalogToolbar";
@@ -12,7 +12,6 @@ import {
   buildFilteredUrl,
 } from "@/lib/catalog/filters";
 import { getLanguage, localizedName, type Lang } from "@/lib/language";
-import { MAIN_MENU_ITEMS } from "@/lib/config/menu";
 import type { Metadata } from "next";
 
 /** ISR: revalidate catalog every 2 minutes */
@@ -42,27 +41,9 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
     filters.inStock ||
     filters.sort !== "popular";
 
-  // ── No filters → menu-driven category list (matches navbar) ──
+  // ── No filters → hierarchical category tree ──
   if (!hasFilters && filters.page === 1) {
-    const tree = await getCategoryTree();
-
-    function findNode(nodes: CategoryNode[], id: number): CategoryNode | null {
-      for (const n of nodes) {
-        if (n.cs_cart_id === id) return n;
-        const found = findNode(n.children, id);
-        if (found) return found;
-      }
-      return null;
-    }
-
-    const menuItems = MAIN_MENU_ITEMS.map((item, idx) => {
-      if (item.type === "link") {
-        return { key: idx, label: item.label, href: item.href, node: null as CategoryNode | null, highlight: item.highlight };
-      }
-      const node = findNode(tree, item.csCartId);
-      const slug = node?.slug ?? item.fallbackSlug;
-      return { key: idx, label: item.label, href: `/catalog/${slug}`, node, highlight: false };
-    });
+    const catalogTree = await getCatalogCategoryTree();
 
     return (
       <div className="mx-auto max-w-[1280px] px-4 py-6 sm:px-6 sm:py-8">
@@ -70,52 +51,10 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
           Каталог товарів
         </h1>
 
-        <div className="overflow-hidden rounded-card border border-[var(--border)] bg-white">
-          {menuItems.map((item, idx) => {
-            const isLast = idx === menuItems.length - 1;
-
-            if (item.highlight) {
-              return (
-                <Link
-                  key={item.key}
-                  href={item.href}
-                  className={`flex items-center justify-between px-5 py-4 transition-colors hover:bg-sand ${isLast ? "" : "border-b border-[var(--border)]"}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-base font-medium text-coral">{item.label}</span>
-                    <span className="rounded-md bg-coral px-2 py-0.5 text-[10px] font-bold uppercase text-white">
-                      Знижка!!!
-                    </span>
-                  </div>
-                  <ChevronRight size={18} className="text-[var(--t3)]" />
-                </Link>
-              );
-            }
-
-            if (item.node) {
-              return (
-                <CategoryRow
-                  key={item.key}
-                  cat={item.node}
-                  label={item.label}
-                  href={item.href}
-                  lang={lang}
-                  isLast={isLast}
-                />
-              );
-            }
-
-            return (
-              <Link
-                key={item.key}
-                href={item.href}
-                className={`flex items-center justify-between px-5 py-4 transition-colors hover:bg-sand ${isLast ? "" : "border-b border-[var(--border)]"}`}
-              >
-                <span className="text-base font-medium text-dark">{item.label}</span>
-                <ChevronRight size={18} className="text-[var(--t3)]" />
-              </Link>
-            );
-          })}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {catalogTree.map((cat) => (
+            <CatalogTreeCard key={cat.id} cat={cat} lang={lang} />
+          ))}
         </div>
       </div>
     );
@@ -268,44 +207,32 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
   );
 }
 
-/* ── Hierarchical category row ── */
-function CategoryRow({
-  cat,
-  label,
-  href,
-  lang,
-  isLast,
-}: {
-  cat: CategoryNode;
-  label: string;
-  href: string;
-  lang: Lang;
-  isLast: boolean;
-}) {
-  const hasChildren = cat.children.length > 0;
-
+/* ── Category tree card ── */
+function CatalogTreeCard({ cat, lang }: { cat: CatalogCatNode; lang: Lang }) {
   return (
-    <div className={isLast ? "" : "border-b border-[var(--border)]"}>
-      {/* Parent category */}
+    <div className="rounded-card border border-[var(--border)] bg-white overflow-hidden">
       <Link
-        href={href}
+        href={`/catalog/${cat.slug}`}
         className="flex items-center justify-between px-5 py-4 transition-colors hover:bg-sand"
       >
-        <span className="text-base font-medium text-dark">{label}</span>
-        <ChevronRight size={18} className="text-[var(--t3)]" />
+        <div className="min-w-0">
+          <span className="text-base font-medium text-dark">{localizedName(cat, lang)}</span>
+          <span className="ml-2 text-xs text-[var(--t3)]">{cat.total_product_count}</span>
+        </div>
+        <ChevronRight size={18} className="shrink-0 text-[var(--t3)]" />
       </Link>
 
-      {/* Children (subcategories) */}
-      {hasChildren && (
-        <div className="border-t border-[var(--border)] bg-sand/30 px-5 py-2">
-          <div className="flex flex-wrap gap-x-4 gap-y-1">
+      {cat.children.length > 0 && (
+        <div className="border-t border-[var(--border)] bg-sand/30 px-5 py-3">
+          <div className="flex flex-wrap gap-2">
             {cat.children.map((child) => (
               <Link
                 key={child.id}
                 href={`/catalog/${child.slug}`}
-                className="py-1 text-[13px] text-[var(--t2)] transition-colors hover:text-coral"
+                className="rounded-full border border-gray-200 bg-white px-3 py-1 text-sm text-[var(--t2)] transition-colors hover:border-[#D6264A] hover:text-[#D6264A]"
               >
                 {localizedName(child, lang)}
+                <span className="ml-1 text-[10px] text-[var(--t3)]">({child.total_product_count})</span>
               </Link>
             ))}
           </div>

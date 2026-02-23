@@ -52,6 +52,8 @@ async function getCategory(slug: string) {
   return data as CategoryRow | null;
 }
 
+const NAIL_ROOT_CS_CART_ID = 385;
+
 async function buildBreadcrumbs(category: CategoryRow, lang: Lang): Promise<BreadcrumbItem[]> {
   const crumbs: BreadcrumbItem[] = [];
   const supabase = createAdminClient();
@@ -60,12 +62,19 @@ async function buildBreadcrumbs(category: CategoryRow, lang: Lang): Promise<Brea
 
   while (currentParentId && !visited.has(currentParentId)) {
     visited.add(currentParentId);
+    // Skip "Нігті" container — its children are shown as root categories
+    if (currentParentId === NAIL_ROOT_CS_CART_ID) break;
+
     const { data: parent } = await supabase
       .from("categories")
-      .select("slug, name_uk, name_ru, parent_cs_cart_id")
+      .select("slug, name_uk, name_ru, parent_cs_cart_id, cs_cart_id")
       .eq("cs_cart_id", currentParentId)
       .single();
     if (!parent) break;
+
+    // If this parent IS "Нігті", stop without adding it
+    if (parent.cs_cart_id === NAIL_ROOT_CS_CART_ID) break;
+
     crumbs.unshift({ label: localizedName(parent, lang), href: `/catalog/${parent.slug}` });
     currentParentId = parent.parent_cs_cart_id;
   }
