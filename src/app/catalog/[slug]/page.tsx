@@ -52,21 +52,49 @@ async function getCategory(slug: string) {
   return data as CategoryRow | null;
 }
 
+/**
+ * BFS from a category UUID, collecting it + all descendant UUIDs via parent_id.
+ */
+async function getDescendantIds(categoryId: string): Promise<string[]> {
+  const supabase = createAdminClient();
+  const { data: allCats } = await supabase
+    .from("categories")
+    .select("id, parent_id")
+    .eq("status", "active");
+
+  if (!allCats) return [categoryId];
+
+  const childrenMap = new Map<string, string[]>();
+  for (const c of allCats) {
+    if (c.parent_id) {
+      const arr = childrenMap.get(c.parent_id);
+      if (arr) arr.push(c.id);
+      else childrenMap.set(c.parent_id, [c.id]);
+    }
+  }
+
+  const result: string[] = [];
+  const queue = [categoryId];
+  const visited = new Set<string>();
+  while (queue.length > 0) {
+    const id = queue.shift()!;
+    if (visited.has(id)) continue;
+    visited.add(id);
+    result.push(id);
+    const kids = childrenMap.get(id);
+    if (kids) queue.push(...kids);
+  }
+  return result;
+}
+
 async function getMergedCategoryIds(categoryId: string): Promise<string[]> {
   const supabase = createAdminClient();
-  const { data: mergeGroups, error } = await supabase
+  const { data: mergeGroups } = await supabase
     .from("category_merge_groups")
     .select("primary_category_id, merged_category_id")
     .or(`primary_category_id.eq.${categoryId},merged_category_id.eq.${categoryId}`);
 
-  if (error) {
-    console.error("[getMergedCategoryIds] Error:", error.message);
-    return [];
-  }
-  if (!mergeGroups?.length) {
-    console.log("[getMergedCategoryIds] No merge groups for", categoryId);
-    return [];
-  }
+  if (!mergeGroups?.length) return [];
 
   const ids = new Set<string>();
   for (const g of mergeGroups) {
@@ -74,7 +102,6 @@ async function getMergedCategoryIds(categoryId: string): Promise<string[]> {
     ids.add(g.merged_category_id);
   }
   ids.delete(categoryId);
-  console.log("[getMergedCategoryIds] Found merged IDs:", Array.from(ids));
   return Array.from(ids);
 }
 
@@ -137,39 +164,26 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
   const basePath = `/catalog/${slug}`;
 
-  const [scopeData, mergedCatIds, breadcrumbs] = await Promise.all([
+  const [scopeData, baseDescendantIds, mergedCatIds, breadcrumbs] = await Promise.all([
     getCategoryScopeData(category.cs_cart_id),
+    getDescendantIds(category.id),
     getMergedCategoryIds(category.id),
     buildBreadcrumbs(category, lang),
   ]);
 
-  let { descendantIds } = scopeData;
   const { children } = scopeData;
 
-  console.log("[CategoryPage]", slug, "| base descendantIds:", descendantIds.length, "| mergedCatIds:", mergedCatIds);
-
-  // Expand descendantIds with merged categories' descendants
+  // Expand with merged categories' descendants
+  let descendantIds = baseDescendantIds;
   if (mergedCatIds.length > 0) {
-    const supabase = createAdminClient();
-    const { data: mergedCats } = await supabase
-      .from("categories")
-      .select("id, cs_cart_id")
-      .in("id", mergedCatIds)
-      .eq("status", "active");
-
-    console.log("[CategoryPage] Merged cats from DB:", mergedCats);
-
-    if (mergedCats?.length) {
-      const mergedScopes = await Promise.all(
-        mergedCats.map((mc) => getCategoryScopeData(mc.cs_cart_id)),
-      );
-      const allIds = new Set(descendantIds);
-      for (const scope of mergedScopes) {
-        for (const id of scope.descendantIds) allIds.add(id);
-      }
-      console.log("[CategoryPage] Total category IDs after merge:", allIds.size, "(was", descendantIds.length, ")");
-      descendantIds = Array.from(allIds);
+    const mergedDescendants = await Promise.all(
+      mergedCatIds.map((id) => getDescendantIds(id)),
+    );
+    const allIds = new Set(baseDescendantIds);
+    for (const ids of mergedDescendants) {
+      for (const id of ids) allIds.add(id);
     }
+    descendantIds = Array.from(allIds);
   }
 
   const [{ products, total }, { brands, minPrice, maxPrice }, featureFilters] = await Promise.all([
