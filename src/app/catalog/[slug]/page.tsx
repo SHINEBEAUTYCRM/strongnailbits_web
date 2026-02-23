@@ -52,6 +52,23 @@ async function getCategory(slug: string) {
   return data as CategoryRow | null;
 }
 
+async function getMergedCategoryIds(categoryId: string): Promise<string[]> {
+  const supabase = createAdminClient();
+  const { data: mergeGroups } = await supabase
+    .from("category_merge_groups")
+    .select("primary_category_id, merged_category_id")
+    .or(`primary_category_id.eq.${categoryId},merged_category_id.eq.${categoryId}`);
+
+  if (!mergeGroups?.length) return [];
+
+  const ids = new Set<string>();
+  for (const g of mergeGroups) {
+    if (g.primary_category_id !== categoryId) ids.add(g.primary_category_id);
+    if (g.merged_category_id !== categoryId) ids.add(g.merged_category_id);
+  }
+  return Array.from(ids);
+}
+
 const NAIL_ROOT_CS_CART_ID = 385;
 
 async function buildBreadcrumbs(category: CategoryRow, lang: Lang): Promise<BreadcrumbItem[]> {
@@ -108,12 +125,35 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
   const basePath = `/catalog/${slug}`;
 
-  const [scopeData, breadcrumbs] = await Promise.all([
+  const [scopeData, mergedCatIds, breadcrumbs] = await Promise.all([
     getCategoryScopeData(category.cs_cart_id),
+    getMergedCategoryIds(category.id),
     buildBreadcrumbs(category, lang),
   ]);
 
-  const { descendantIds, children } = scopeData;
+  let { descendantIds } = scopeData;
+  const { children } = scopeData;
+
+  // Expand descendantIds with merged categories' descendants
+  if (mergedCatIds.length > 0) {
+    const supabase = createAdminClient();
+    const { data: mergedCats } = await supabase
+      .from("categories")
+      .select("cs_cart_id")
+      .in("id", mergedCatIds)
+      .eq("status", "active");
+
+    if (mergedCats?.length) {
+      const mergedScopes = await Promise.all(
+        mergedCats.map((mc) => getCategoryScopeData(mc.cs_cart_id)),
+      );
+      const allIds = new Set(descendantIds);
+      for (const scope of mergedScopes) {
+        for (const id of scope.descendantIds) allIds.add(id);
+      }
+      descendantIds = Array.from(allIds);
+    }
+  }
 
   const [{ products, total }, { brands, minPrice, maxPrice }, featureFilters] = await Promise.all([
     fetchFilteredProducts({ categoryIds: descendantIds, filters, perPage: PER_PAGE }),
