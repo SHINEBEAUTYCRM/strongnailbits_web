@@ -16,7 +16,7 @@ export async function getDashboardStats() {
 
 export async function getRecentOrders(limit = 10) {
   const supabase = createAdminClient();
-  const { data } = await supabase.from("orders").select("id, order_number, status, total, created_at, profile_id, profiles(first_name, last_name, email, phone)").order("created_at", { ascending: false }).limit(limit);
+  const { data } = await supabase.from("orders").select("id, order_number, status, total, created_at, profile_id, source, profiles(first_name, last_name, email, phone)").order("created_at", { ascending: false }).limit(limit);
   return data ?? [];
 }
 
@@ -32,7 +32,7 @@ export async function getOrders(params: { page?: number; limit?: number; status?
   const supabase = createAdminClient();
   const from = (page - 1) * limit;
   const to = from + limit - 1;
-  let query = supabase.from("orders").select("id, order_number, status, payment_status, total, shipping_cost, discount, created_at, payment_method, shipping_method, ttn, notes, profile_id, items, profiles(first_name, last_name, email, phone)", { count: "exact" }).order("created_at", { ascending: false }).range(from, to);
+  let query = supabase.from("orders").select("id, order_number, status, payment_status, total, shipping_cost, discount, created_at, payment_method, shipping_method, ttn, notes, profile_id, items, source, profiles(first_name, last_name, email, phone)", { count: "exact" }).order("created_at", { ascending: false }).range(from, to);
   if (status && status !== "all") query = query.eq("status", status);
   if (search) query = query.or(`order_number.ilike.%${search}%,ttn.ilike.%${search}%`);
   const { data, count } = await query;

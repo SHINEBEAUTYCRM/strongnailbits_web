@@ -24,6 +24,7 @@ export interface Banner {
   image_alt?: string | null;
   type: BannerType;
   placement: string[];
+  target?: string | null;
   starts_at?: string | null;
   ends_at?: string | null;
   is_active: boolean;

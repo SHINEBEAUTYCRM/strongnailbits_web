@@ -1,38 +1,10 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { createPortal } from "react-dom";
 import { LayoutGrid, ChevronRight } from "lucide-react";
 import type { CategoryNode } from "@/lib/categories/tree";
-import {
-  MAIN_MENU_ITEMS,
-  type MenuItemCategory,
-} from "@/lib/config/menu";
-import { useLanguage, localizedName } from "@/hooks/useLanguage";
-
-/* ------------------------------------------------------------------ */
-/*  Helpers                                                            */
-/* ------------------------------------------------------------------ */
-
-function findByCsCartId(
-  nodes: CategoryNode[],
-  id: number,
-): CategoryNode | null {
-  for (const node of nodes) {
-    if (node.cs_cart_id === id) return node;
-    const found = findByCsCartId(node.children, id);
-    if (found) return found;
-  }
-  return null;
-}
-
-interface ResolvedCategory {
-  item: MenuItemCategory;
-  node: CategoryNode | null;
-  slug: string;
-  href: string;
-}
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -51,38 +23,15 @@ interface MegaMenuProps {
 export function MegaMenu({ categories }: MegaMenuProps) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<DropdownMode>("catalog");
-  const [activeRoot, setActiveRoot] = useState<ResolvedCategory | null>(null);
+  const [activeRoot, setActiveRoot] = useState<CategoryNode | null>(null);
   const [activeCategoryItem, setActiveCategoryItem] =
-    useState<ResolvedCategory | null>(null);
+    useState<CategoryNode | null>(null);
 
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const barRef = useRef<HTMLDivElement>(null);
   const [dropdownTop, setDropdownTop] = useState(0);
   const [portalReady, setPortalReady] = useState(false);
-
-  /* ---- Resolve ALL menu category items ---- */
-
-  const resolvedCategories = useMemo(() => {
-    const map = new Map<number, ResolvedCategory>();
-    for (const item of MAIN_MENU_ITEMS) {
-      if (item.type !== "category") continue;
-      const node = findByCsCartId(categories, item.csCartId);
-      const slug = node?.slug ?? item.fallbackSlug;
-      map.set(item.csCartId, { item, node, slug, href: `/catalog/${slug}` });
-    }
-    return map;
-  }, [categories]);
-
-  const catalogSidebarItems = useMemo(() => {
-    const items: ResolvedCategory[] = [];
-    for (const item of MAIN_MENU_ITEMS) {
-      if (item.type !== "category") continue;
-      const resolved = resolvedCategories.get(item.csCartId);
-      if (resolved) items.push(resolved);
-    }
-    return items;
-  }, [resolvedCategories]);
 
   /* ---- Portal ready ---- */
   useEffect(() => {
@@ -141,18 +90,18 @@ export function MegaMenu({ categories }: MegaMenuProps) {
     setMode("catalog");
     setActiveCategoryItem(null);
     setOpen(true);
-    if (!activeRoot && catalogSidebarItems.length > 0) {
-      setActiveRoot(catalogSidebarItems[0]);
+    if (!activeRoot && categories.length > 0) {
+      setActiveRoot(categories[0]);
     }
-  }, [cancelTimers, activeRoot, catalogSidebarItems]);
+  }, [cancelTimers, activeRoot, categories]);
 
   const handleBarCategoryHover = useCallback(
-    (resolved: ResolvedCategory) => {
+    (cat: CategoryNode) => {
       cancelTimers();
-      if (!resolved.node || resolved.node.children.length === 0) return;
+      if (cat.children.length === 0) return;
       openTimer.current = setTimeout(() => {
         setMode("category");
-        setActiveCategoryItem(resolved);
+        setActiveCategoryItem(cat);
         setActiveRoot(null);
         setOpen(true);
       }, 120);
@@ -161,10 +110,10 @@ export function MegaMenu({ categories }: MegaMenuProps) {
   );
 
   const handleSidebarHover = useCallback(
-    (resolved: ResolvedCategory) => {
+    (cat: CategoryNode) => {
       cancelTimers();
       openTimer.current = setTimeout(() => {
-        setActiveRoot(resolved);
+        setActiveRoot(cat);
       }, 80);
     },
     [cancelTimers],
@@ -190,14 +139,14 @@ export function MegaMenu({ categories }: MegaMenuProps) {
         <div className="w-56 shrink-0 border-r border-zinc-800/50 py-4 pr-3">
           <div className="max-h-[60vh] overflow-y-auto">
             <div className="flex flex-col gap-0.5">
-              {catalogSidebarItems.map((resolved) => {
-                const isActive = activeRoot?.item.csCartId === resolved.item.csCartId;
-                const hasChildren = (resolved.node?.children.length ?? 0) > 0;
+              {categories.map((cat) => {
+                const isActive = activeRoot?.cs_cart_id === cat.cs_cart_id;
+                const hasChildren = cat.children.length > 0;
                 return (
                   <Link
-                    key={resolved.item.csCartId}
-                    href={resolved.href}
-                    onMouseEnter={() => handleSidebarHover(resolved)}
+                    key={cat.id}
+                    href={`/catalog/${cat.slug}`}
+                    onMouseEnter={() => handleSidebarHover(cat)}
                     onClick={closeNow}
                     className={`group flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition-all duration-200 ${
                       isActive
@@ -205,7 +154,7 @@ export function MegaMenu({ categories }: MegaMenuProps) {
                         : "text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100"
                     }`}
                   >
-                    <span className="line-clamp-1">{resolved.item.label}</span>
+                    <span className="line-clamp-1">{cat.name_uk}</span>
                     {hasChildren && (
                       <ChevronRight
                         size={14}
@@ -224,19 +173,19 @@ export function MegaMenu({ categories }: MegaMenuProps) {
         </div>
 
         <div className="max-h-[65vh] flex-1 overflow-y-auto py-5 pl-8 pr-2">
-          {activeRoot?.node && (
-            <div key={activeRoot.item.csCartId}>
+          {activeRoot && (
+            <div key={activeRoot.id}>
               <Link
-                href={activeRoot.href}
+                href={`/catalog/${activeRoot.slug}`}
                 onClick={closeNow}
                 className="mb-5 inline-flex items-center gap-1.5 text-base font-bold text-white transition-colors hover:text-[#D6264A]"
               >
-                {activeRoot.item.label}
+                {activeRoot.name_uk}
                 <ChevronRight size={16} />
               </Link>
 
-              {activeRoot.node.children.length > 0 ? (
-                <ChildrenGrid items={activeRoot.node.children} onClose={closeNow} />
+              {activeRoot.children.length > 0 ? (
+                <ChildrenGrid items={activeRoot.children} onClose={closeNow} />
               ) : (
                 <p className="text-sm text-zinc-500">
                   Перейдіть до категорії для перегляду товарів
@@ -253,18 +202,18 @@ export function MegaMenu({ categories }: MegaMenuProps) {
   /*  Dropdown: "category" mode                                        */
   /* ================================================================ */
 
-  const categoryDropdown = activeCategoryItem?.node && (
+  const categoryDropdown = activeCategoryItem && (
     <div className="border-b border-zinc-800 bg-[#0a0a0f]">
       <div className="mx-auto max-w-7xl px-6 py-5">
         <Link
-          href={activeCategoryItem.href}
+          href={`/catalog/${activeCategoryItem.slug}`}
           onClick={closeNow}
           className="mb-4 inline-flex items-center gap-1.5 text-base font-bold text-white transition-colors hover:text-[#D6264A]"
         >
-          {activeCategoryItem.item.label}
+          {activeCategoryItem.name_uk}
           <ChevronRight size={16} />
         </Link>
-        <ChildrenGrid items={activeCategoryItem.node.children} onClose={closeNow} />
+        <ChildrenGrid items={activeCategoryItem.children} onClose={closeNow} />
       </div>
     </div>
   );
@@ -323,50 +272,21 @@ export function MegaMenu({ categories }: MegaMenuProps) {
 
           <div className="mx-1 h-4 w-px bg-zinc-700/50" />
 
-          {/* Menu items */}
+          {/* Menu items — top-level categories */}
           <nav className="flex flex-1 items-center gap-0.5 overflow-hidden">
-            {MAIN_MENU_ITEMS.map((item, idx) => {
-              if (item.type === "link") {
-                return (
-                  <Link
-                    key={idx}
-                    href={item.href}
-                    onMouseEnter={() => {
-                      cancelTimers();
-                      if (open) {
-                        closeTimer.current = setTimeout(() => {
-                          setOpen(false);
-                          setActiveRoot(null);
-                          setActiveCategoryItem(null);
-                        }, 200);
-                      }
-                    }}
-                    className={`shrink-0 rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap transition-all duration-200 ${
-                      item.highlight
-                        ? "sale-text font-semibold"
-                        : "text-zinc-300 hover:bg-zinc-800/50 hover:text-white"
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              }
-
-              const resolved = resolvedCategories.get(item.csCartId);
-              if (!resolved) return null;
-
+            {categories.map((cat) => {
               const isActive =
                 open &&
                 mode === "category" &&
-                activeCategoryItem?.item.csCartId === item.csCartId;
+                activeCategoryItem?.cs_cart_id === cat.cs_cart_id;
 
               return (
                 <Link
-                  key={idx}
-                  href={resolved.href}
+                  key={cat.id}
+                  href={`/catalog/${cat.slug}`}
                   onMouseEnter={() => {
-                    if (resolved.node && resolved.node.children.length > 0) {
-                      handleBarCategoryHover(resolved);
+                    if (cat.children.length > 0) {
+                      handleBarCategoryHover(cat);
                     } else {
                       cancelTimers();
                       if (open) {
@@ -385,7 +305,7 @@ export function MegaMenu({ categories }: MegaMenuProps) {
                       : "text-zinc-300 hover:bg-zinc-800/50 hover:text-white"
                   }`}
                 >
-                  {item.label}
+                  {cat.name_uk}
                 </Link>
               );
             })}
@@ -409,20 +329,9 @@ function ChildrenGrid({
   items: CategoryNode[];
   onClose: () => void;
 }) {
-  const { lang } = useLanguage();
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const VISIBLE_COUNT = 6;
-
   return (
     <div className="grid grid-cols-3 gap-x-6 gap-y-6 xl:grid-cols-4">
-      {items.map((child) => {
-        const isExpanded = expanded[child.id] ?? false;
-        const visibleChildren = isExpanded
-          ? child.children
-          : child.children.slice(0, VISIBLE_COUNT);
-        const hiddenCount = child.children.length - VISIBLE_COUNT;
-
-        return (
+      {items.map((child) => (
           <div
             key={child.id}
             className="border-r border-zinc-800/50 pr-5 last:border-r-0"
@@ -430,43 +339,27 @@ function ChildrenGrid({
             <Link
               href={`/catalog/${child.slug}`}
               onClick={onClose}
-              className="mb-2 block border-b border-zinc-800/40 pb-1.5 text-sm font-semibold text-white transition-colors hover:text-[#D6264A]"
+            className="mb-2 block border-b border-zinc-800/40 pb-1.5 text-sm font-semibold text-white transition-colors hover:text-[#D6264A]"
             >
-              {localizedName(child, lang)}
+            {child.name_uk}
             </Link>
             {child.children.length > 0 && (
               <ul className="flex flex-col gap-0.5">
-                {visibleChildren.map((gc) => (
+              {child.children.map((gc) => (
                   <li key={gc.id}>
                     <Link
                       href={`/catalog/${gc.slug}`}
                       onClick={onClose}
-                      className="block py-0.5 text-[13px] leading-snug text-zinc-400 transition-colors hover:text-[#D6264A]"
+                    className="block py-0.5 text-[13px] leading-snug text-zinc-400 transition-colors hover:text-[#D6264A]"
                     >
-                      {localizedName(gc, lang)}
+                    {gc.name_uk}
                     </Link>
                   </li>
                 ))}
-                {hiddenCount > 0 && (
-                  <li>
-                    <button
-                      onClick={() =>
-                        setExpanded((prev) => ({
-                          ...prev,
-                          [child.id]: !prev[child.id],
-                        }))
-                      }
-                      className="mt-1 cursor-pointer text-[12px] text-[#D6264A] transition-colors hover:text-[#b91c3a] hover:underline"
-                    >
-                      {isExpanded ? "згорнути" : `ще ${hiddenCount}...`}
-                    </button>
-                  </li>
-                )}
               </ul>
             )}
           </div>
-        );
-      })}
+      ))}
     </div>
   );
 }

@@ -5,6 +5,13 @@ import { AdminSearch } from "@/components/admin/AdminSearch";
 import { ExportButton } from "@/components/admin/ExportButton";
 import { NPTrackingBadge } from "@/components/admin/NPTrackingBadge";
 
+const SOURCE_ICON: Record<string, string> = {
+  web: "🌐",
+  mobile: "📱",
+  api: "⚙️",
+  "1c": "🏢",
+};
+
 const SM: Record<string, { label: string; cVar: string; bgVar: string }> = {
   new: { label: "Нове", cVar: "var(--a-st-new-c)", bgVar: "var(--a-st-new-bg)" },
   processing: { label: "В обробці", cVar: "var(--a-st-processing-c)", bgVar: "var(--a-st-processing-bg)" },
@@ -85,7 +92,9 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                 return (
                   <tr key={o.id} className="admin-row transition-colors cursor-default" style={{ borderBottom: "1px solid var(--a-border-sub)" }}>
                     <td className="px-4 py-3">
-                      <Link href={`/admin/orders/${o.id}`} className="font-medium hover:underline" style={{ color: "var(--a-text-body)" }}>#{o.order_number}</Link>
+                      <Link href={`/admin/orders/${o.id}`} className="font-medium hover:underline" style={{ color: "var(--a-text-body)" }}>
+                        <span title={o.source || "web"}>{SOURCE_ICON[o.source || "web"] || "🌐"}</span>{" "}#{o.order_number}
+                      </Link>
                       {o.ttn && <NPTrackingBadge ttn={o.ttn} />}
                     </td>
                     <td className="px-4 py-3 text-xs hidden sm:table-cell" style={{ color: "var(--a-text-3)" }}>{fmtD(o.created_at)}</td>

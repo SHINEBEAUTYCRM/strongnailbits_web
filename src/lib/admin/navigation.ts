@@ -52,6 +52,7 @@ import {
   FileSpreadsheet,
   ArrowRightLeft,
   History,
+  Smartphone,
 } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -135,6 +136,7 @@ export const adminNavigation: NavSection[] = [
       { label: "Головна сторінка", href: "/admin/homepage", icon: Home },
       { label: "Банери", href: "/admin/banners", icon: ImageIcon },
       { label: "Сторінки", href: "/admin/pages-cms", icon: FileText },
+      { label: "Мобільний додаток", href: "/admin/app-config", icon: Smartphone },
       { label: "Блог", href: "/admin/blog", icon: BookOpen, badge: "скоро" },
     ],
   },

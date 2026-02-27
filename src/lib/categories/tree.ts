@@ -10,25 +10,10 @@ export interface CategoryNode {
   parent_cs_cart_id: number | null;
   position: number;
   product_count: number;
-  /** Total products in this category and all descendants */
   total_product_count: number;
   children: CategoryNode[];
 }
 
-/** Names to always exclude from display */
-const HIDDEN_NAMES = [
-  "удалить", "удалити", "видалити", "тест", "test", "temp", "tmp", "trash", "корзина",
-  "ulka",  // brand miscategorized as root category in CS-Cart
-];
-
-function isHidden(name: string): boolean {
-  const lower = name.toLowerCase().trim();
-  return HIDDEN_NAMES.some(
-    (h) => lower === h || lower.startsWith(h + " ") || lower.startsWith(h + "_"),
-  );
-}
-
-/** Recursively compute total_product_count (self + all descendants) */
 function computeTotals(nodes: CategoryNode[]): void {
   for (const node of nodes) {
     computeTotals(node.children);
@@ -36,12 +21,6 @@ function computeTotals(nodes: CategoryNode[]): void {
       node.product_count +
       node.children.reduce((sum, c) => sum + c.total_product_count, 0);
   }
-}
-
-function pruneEmpty(nodes: CategoryNode[]): CategoryNode[] {
-  return nodes
-    .map((n) => ({ ...n, children: pruneEmpty(n.children) }))
-    .filter((n) => n.total_product_count > 0 || n.children.length > 0);
 }
 
 async function _fetchCategoryTree(): Promise<CategoryNode[]> {
@@ -65,18 +44,16 @@ async function _fetchCategoryTree(): Promise<CategoryNode[]> {
       byId.set(cat.cs_cart_id, cat);
     }
   }
-  const deduplicatedRows = Array.from(byId.values());
-
-  const clean = deduplicatedRows.filter((cat) => !isHidden(cat.name_uk));
+  const rows = Array.from(byId.values());
 
   const map = new Map<number, CategoryNode>();
   const roots: CategoryNode[] = [];
 
-  for (const cat of clean) {
+  for (const cat of rows) {
     map.set(cat.cs_cart_id, { ...cat, total_product_count: 0, children: [] });
   }
 
-  for (const cat of clean) {
+  for (const cat of rows) {
     const node = map.get(cat.cs_cart_id)!;
     if (cat.parent_cs_cart_id === null || cat.parent_cs_cart_id === 0) {
       roots.push(node);
@@ -85,22 +62,12 @@ async function _fetchCategoryTree(): Promise<CategoryNode[]> {
     }
   }
 
-  const hasPositionedRoots = roots.some((r) => r.position > 0);
-  const deduped = hasPositionedRoots
-    ? roots.filter((r) => r.position > 0)
-    : roots;
-
-  computeTotals(deduped);
-  return pruneEmpty(deduped);
+  computeTotals(roots);
+  return roots;
 }
 
-/**
- * Cached category tree — revalidates every 5 minutes.
- * This avoids hitting Supabase on every page render for
- * homepage sidebar, catalog, header menu, etc.
- */
 export const getCategoryTree = unstable_cache(
   _fetchCategoryTree,
   ["category-tree"],
-  { revalidate: 300 }, // 5 minutes
+  { revalidate: 300 },
 );

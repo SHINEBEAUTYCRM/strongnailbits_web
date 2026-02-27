@@ -19,9 +19,8 @@ import dynamic from "next/dynamic";
 import { useCartStore } from "@/lib/store/cart";
 import { useWishlistStore } from "@/lib/store/wishlist";
 import { useCategoryTree, type CatNode } from "@/hooks/useCategoryTree";
-import { useLanguage, localizedName } from "@/hooks/useLanguage";
+import { useLanguage } from "@/hooks/useLanguage";
 import { LanguageSwitcher, LanguageSwitcherMini } from "@/components/ui/LanguageSwitcher";
-import { MAIN_MENU_ITEMS } from "@/lib/config/menu";
 import type { SiteContacts } from "@/lib/site-settings";
 
 const CartDrawer = dynamic(
@@ -59,9 +58,8 @@ export function Header({ contacts }: HeaderProps) {
   const [expandedCats, setExpandedCats] = useState<Record<string, boolean>>({});
   const catalogRef = useRef<HTMLDivElement>(null);
 
-  const { lang } = useLanguage();
+  useLanguage();
 
-  /* Resolve MAIN_MENU_ITEMS category entries against the full tree */
   const findByCsCartId = (nodes: CatNode[], id: number): CatNode | null => {
     for (const n of nodes) {
       if (n.cs_cart_id === id) return n;
@@ -70,28 +68,6 @@ export function Header({ contacts }: HeaderProps) {
     }
     return null;
   };
-
-  interface ResolvedMenuItem {
-    label: string;
-    href: string;
-    node: CatNode | null;
-    csCartId?: number;
-    highlight?: boolean;
-  }
-
-  const resolvedMenuItems = useMemo(() => {
-    const items: ResolvedMenuItem[] = [];
-    for (const item of MAIN_MENU_ITEMS) {
-      if (item.type === "link") {
-        items.push({ label: item.label, href: item.href, node: null, highlight: item.highlight });
-      } else {
-        const node = findByCsCartId(tree, item.csCartId);
-        const slug = node?.slug ?? item.fallbackSlug;
-        items.push({ label: item.label, href: `/catalog/${slug}`, node, csCartId: item.csCartId });
-      }
-    }
-    return items;
-  }, [tree]);
 
   const totalSum = useCartStore((s) => s.getTotal());
   const count = useCartStore((s) => s.getCount());
@@ -162,7 +138,7 @@ export function Header({ contacts }: HeaderProps) {
   const currentParent =
     menuStack.length > 0 ? menuStack[menuStack.length - 1] : null;
   const currentItems = currentParent ? currentParent.children : tree;
-  const currentTitle = currentParent ? localizedName(currentParent, lang) : (lang === "ru" ? "Каталог" : "Каталог");
+  const currentTitle = currentParent ? currentParent.name_uk : "Каталог";
 
   const hoveredCat = hoveredCatId
     ? findByCsCartId(tree, hoveredCatId)
@@ -344,35 +320,16 @@ export function Header({ contacts }: HeaderProps) {
           />
           <div className="fixed left-0 right-0 top-[72px] z-[70] border-t border-[#f0f0f0] bg-white shadow-[0_16px_64px_rgba(0,0,0,0.12)]">
             <div className="mx-auto flex max-h-[calc(100vh-72px)] max-w-[1400px] px-6">
-              {/* Left panel: menu items from MAIN_MENU_ITEMS */}
+              {/* Left panel: full category tree roots */}
               <div className="w-[260px] shrink-0 overflow-y-auto border-r border-[#f0f0f0] py-4 pr-2">
-                {resolvedMenuItems.map((item, idx) => {
-                  const hasChildren = (item.node?.children.length ?? 0) > 0;
-                  const isHovered = item.csCartId != null && hoveredCatId === item.csCartId;
-
-                  if (item.highlight) {
-                    return (
-                      <Link
-                        key={idx}
-                        href={item.href}
-                        onClick={() => setCatalogOpen(false)}
-                        className="flex items-center gap-2.5 rounded-xl px-4 py-3 transition-colors hover:bg-[#fff5f6]"
-                        onMouseEnter={() => setHoveredCatId(null)}
-                      >
-                        <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-coral text-[11px] font-extrabold text-white">
-                          %
-                        </span>
-                        <span className="text-[14px] font-semibold text-coral">
-                          {item.label}
-                        </span>
-                      </Link>
-                    );
-                  }
+                {tree.map((cat) => {
+                  const hasChildren = cat.children.length > 0;
+                  const isHovered = hoveredCatId === cat.cs_cart_id;
 
                   return (
                     <Link
-                      key={idx}
-                      href={item.href}
+                      key={cat.id}
+                      href={`/catalog/${cat.slug}`}
                       onClick={() => setCatalogOpen(false)}
                       className={`group flex items-center justify-between rounded-xl px-4 py-2.5 text-[14px] transition-all duration-200 ${
                         isHovered
@@ -381,14 +338,14 @@ export function Header({ contacts }: HeaderProps) {
                       }`}
                       onMouseEnter={() => {
                         if (hasChildren) {
-                          if (hoveredCatId !== item.csCartId) setExpandedCats({});
-                          setHoveredCatId(item.csCartId!);
+                          if (hoveredCatId !== cat.cs_cart_id) setExpandedCats({});
+                          setHoveredCatId(cat.cs_cart_id);
                         } else {
                           setHoveredCatId(null);
                         }
                       }}
                     >
-                      <span>{item.label}</span>
+                      <span>{cat.name_uk}</span>
                       {hasChildren && (
                         <ChevronRight
                           size={14}
@@ -412,62 +369,38 @@ export function Header({ contacts }: HeaderProps) {
                     onClick={() => setCatalogOpen(false)}
                     className="font-unbounded mb-5 inline-block text-[16px] font-bold text-[#1a1a1a] transition-colors hover:text-coral"
                   >
-                    {localizedName(hoveredCat, lang)} →
+                    {hoveredCat.name_uk} →
                   </Link>
                   <div className="grid grid-cols-3 gap-x-6 gap-y-6 xl:grid-cols-4">
-                    {hoveredCat.children.map((child) => {
-                      const isExpanded = expandedCats[child.id] ?? false;
-                      const VISIBLE = 6;
-                      const visibleChildren = isExpanded
-                        ? child.children
-                        : child.children.slice(0, VISIBLE);
-                      const hiddenCount = child.children.length - VISIBLE;
-
-                      return (
-                        <div
-                          key={child.id}
-                          className="border-r border-[#f0f0f0] pr-5 last:border-r-0"
+                    {hoveredCat.children.map((child) => (
+                      <div
+                        key={child.id}
+                        className="border-r border-[#f0f0f0] pr-5 last:border-r-0"
+                      >
+                        <Link
+                          href={`/catalog/${child.slug}`}
+                          onClick={() => setCatalogOpen(false)}
+                          className="mb-2 block border-b border-[#f0f0f0] pb-1.5 text-[13px] font-semibold text-[#1a1a1a] transition-colors hover:text-coral"
                         >
-                          <Link
-                            href={`/catalog/${child.slug}`}
-                            onClick={() => setCatalogOpen(false)}
-                            className="mb-2 block border-b border-[#f0f0f0] pb-1.5 text-[13px] font-semibold text-[#1a1a1a] transition-colors hover:text-coral"
-                          >
-                            {localizedName(child, lang)}
-                          </Link>
-                          {child.children.length > 0 && (
-                            <ul className="flex flex-col gap-0.5">
-                              {visibleChildren.map((gc) => (
-                                <li key={gc.id}>
-                                  <Link
-                                    href={`/catalog/${gc.slug}`}
-                                    onClick={() => setCatalogOpen(false)}
-                                    className="block py-0.5 text-[13px] leading-snug text-[#666] transition-colors hover:text-coral"
-                                  >
-                                    {localizedName(gc, lang)}
-                                  </Link>
-                                </li>
-                              ))}
-                              {hiddenCount > 0 && (
-                                <li>
-                                  <button
-                                    onClick={() =>
-                                      setExpandedCats((prev) => ({
-                                        ...prev,
-                                        [child.id]: !prev[child.id],
-                                      }))
-                                    }
-                                    className="mt-1 cursor-pointer text-[12px] text-coral transition-colors hover:underline"
-                                  >
-                                    {isExpanded ? "згорнути" : `ще ${hiddenCount}...`}
-                                  </button>
-                                </li>
-                              )}
-                            </ul>
-                          )}
-                        </div>
-                      );
-                    })}
+                          {child.name_uk}
+                        </Link>
+                        {child.children.length > 0 && (
+                          <ul className="flex flex-col gap-0.5">
+                            {child.children.map((gc) => (
+                              <li key={gc.id}>
+                                <Link
+                                  href={`/catalog/${gc.slug}`}
+                                  onClick={() => setCatalogOpen(false)}
+                                  className="block py-0.5 text-[13px] leading-snug text-[#666] transition-colors hover:text-coral"
+                                >
+                                  {gc.name_uk}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -504,54 +437,31 @@ export function Header({ contacts }: HeaderProps) {
 
           {/* Scrollable list */}
           <div className="flex-1 overflow-y-auto">
-            {/* Root: show all MAIN_MENU_ITEMS */}
+            {/* Root: show all categories from DB tree */}
             {menuStack.length === 0 && (
               <>
-                {resolvedMenuItems.map((item, idx) => {
-                  const hasChildren = (item.node?.children.length ?? 0) > 0;
-                  if (item.highlight) {
-                    return (
-                      <Link
-                        key={idx}
-                        href={item.href}
-                        onClick={closeMobileMenu}
-                        className="flex items-center justify-between border-b border-[#f0f0f0] px-5 py-4 active:bg-[#f8f8f8]"
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="text-base font-semibold text-coral">
-                            {item.label}
-                          </span>
-                          <span className="rounded-md bg-coral px-2 py-0.5 text-[10px] font-bold uppercase text-white">
-                            Знижка!!!
-                          </span>
-                        </div>
-                        <ChevronRight size={18} className="text-[#c4c4cc]" />
-                      </Link>
-                    );
-                  }
-                  if (hasChildren) {
-                    return (
-                      <button
-                        key={idx}
-                        onClick={() => pushCat(item.node!)}
-                        className="flex w-full items-center justify-between border-b border-[#f0f0f0] px-5 py-4 text-left active:bg-[#f8f8f8]"
-                      >
-                        <span className="text-base font-medium text-[#1a1a1a]">
-                          {item.label}
-                        </span>
-                        <ChevronRight size={18} className="text-[#c4c4cc]" />
-                      </button>
-                    );
-                  }
-                  return (
+                {tree.map((cat) => {
+                  const hasChildren = cat.children.length > 0;
+                  return hasChildren ? (
+                    <button
+                      key={cat.id}
+                      onClick={() => pushCat(cat)}
+                      className="flex w-full items-center justify-between border-b border-[#f0f0f0] px-5 py-4 text-left active:bg-[#f8f8f8]"
+                    >
+                      <span className="text-base font-medium text-[#1a1a1a]">
+                        {cat.name_uk}
+                      </span>
+                      <ChevronRight size={18} className="text-[#c4c4cc]" />
+                    </button>
+                  ) : (
                     <Link
-                      key={idx}
-                      href={item.href}
+                      key={cat.id}
+                      href={`/catalog/${cat.slug}`}
                       onClick={closeMobileMenu}
                       className="flex items-center justify-between border-b border-[#f0f0f0] px-5 py-4 active:bg-[#f8f8f8]"
                     >
                       <span className="text-base font-medium text-[#1a1a1a]">
-                        {item.label}
+                        {cat.name_uk}
                       </span>
                       <ChevronRight size={18} className="text-[#c4c4cc]" />
                     </Link>
@@ -567,7 +477,7 @@ export function Header({ contacts }: HeaderProps) {
                 className="flex items-center justify-between border-b border-[#f0f0f0] bg-[#fafafa] px-5 py-3 active:bg-[#f0f0f0]"
               >
                 <span className="text-sm font-medium text-coral">
-                  {lang === "ru" ? "Смотреть всё в" : "Дивитись все в"} &quot;{localizedName(currentParent, lang)}&quot;
+                  Дивитись все в &quot;{currentParent.name_uk}&quot;
                 </span>
                 <ChevronRight size={16} className="text-coral" />
               </Link>
@@ -582,7 +492,7 @@ export function Header({ contacts }: HeaderProps) {
                   className="flex w-full items-center justify-between border-b border-[#f0f0f0] px-5 py-4 text-left active:bg-[#f8f8f8]"
                 >
                   <span className="text-base font-medium text-[#1a1a1a]">
-                    {localizedName(cat, lang)}
+                    {cat.name_uk}
                   </span>
                   <ChevronRight size={18} className="text-[#c4c4cc]" />
                 </button>
@@ -594,7 +504,7 @@ export function Header({ contacts }: HeaderProps) {
                   className="flex items-center justify-between border-b border-[#f0f0f0] px-5 py-4 active:bg-[#f8f8f8]"
                 >
                   <span className="text-base text-[#1a1a1a]">
-                    {localizedName(cat, lang)}
+                    {cat.name_uk}
                   </span>
                   <ChevronRight size={18} className="text-[#c4c4cc]" />
                 </Link>

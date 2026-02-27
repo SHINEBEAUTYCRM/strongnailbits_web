@@ -41,6 +41,7 @@ interface FormData {
   image_alt: string;
   type: BannerType;
   placement: string[];
+  target: string;
   starts_at: string;
   ends_at: string;
   is_active: boolean;
@@ -64,6 +65,7 @@ const EMPTY: FormData = {
   image_alt: "",
   type: "hero_slider",
   placement: [],
+  target: "all",
   starts_at: "",
   ends_at: "",
   is_active: true,
@@ -88,6 +90,7 @@ function bannerToFormData(b: Banner): FormData {
     image_alt: b.image_alt ?? "",
     type: b.type,
     placement: b.placement ?? [],
+    target: b.target ?? "all",
     starts_at: b.starts_at ? b.starts_at.slice(0, 16) : "",
     ends_at: b.ends_at ? b.ends_at.slice(0, 16) : "",
     is_active: b.is_active,
@@ -179,6 +182,7 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
       image_alt: form.image_alt || null,
       type: form.type,
       placement: autoPlacement,
+      target: form.target || "all",
       starts_at: form.starts_at ? new Date(form.starts_at).toISOString() : null,
       ends_at: form.ends_at ? new Date(form.ends_at).toISOString() : null,
       is_active: form.is_active,
@@ -705,6 +709,25 @@ export function BannerForm({ initial, categories }: BannerFormProps) {
                   <ToggleLeft className="w-8 h-8" />
                 )}
               </button>
+            </div>
+
+            {/* Target platform */}
+            <div>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--a-text-3)" }}>
+                Де показувати
+              </label>
+              <select
+                value={form.target}
+                onChange={(e) => set("target", e.target.value)}
+                className="w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-colors cursor-pointer"
+                style={{ background: "var(--a-bg-card)", border: "1px solid var(--a-border)", color: "var(--a-text-body)" }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = "var(--a-accent-btn)"; }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = "var(--a-border)"; }}
+              >
+                <option value="all">Всюди (сайт + додаток)</option>
+                <option value="web">Тільки сайт</option>
+                <option value="mobile">Тільки мобільний додаток</option>
+              </select>
             </div>
 
             {/* Schedule */}

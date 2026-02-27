@@ -11,7 +11,7 @@ import {
   fetchBrandsForFilter,
   buildFilteredUrl,
 } from "@/lib/catalog/filters";
-import { getLanguage, localizedName, type Lang } from "@/lib/language";
+import { getLanguage } from "@/lib/language";
 import type { Metadata } from "next";
 
 /** ISR: revalidate catalog every 2 minutes */
@@ -53,7 +53,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {catalogTree.map((cat) => (
-            <CatalogTreeCard key={cat.id} cat={cat} lang={lang} />
+            <CatalogTreeCard key={cat.id} cat={cat} />
           ))}
         </div>
       </div>
@@ -208,7 +208,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
 }
 
 /* ── Category tree card ── */
-function CatalogTreeCard({ cat, lang }: { cat: CatalogCatNode; lang: Lang }) {
+function CatalogTreeCard({ cat }: { cat: CatalogCatNode }) {
   return (
     <div className="rounded-card border border-[var(--border)] bg-white overflow-hidden">
       <Link
@@ -216,7 +216,7 @@ function CatalogTreeCard({ cat, lang }: { cat: CatalogCatNode; lang: Lang }) {
         className="flex items-center justify-between px-5 py-4 transition-colors hover:bg-sand"
       >
         <div className="min-w-0">
-          <span className="text-base font-medium text-dark">{localizedName(cat, lang)}</span>
+          <span className="text-base font-medium text-dark">{cat.name_uk}</span>
           <span className="ml-2 text-xs text-[var(--t3)]">{cat.total_product_count}</span>
         </div>
         <ChevronRight size={18} className="shrink-0 text-[var(--t3)]" />
@@ -231,7 +231,7 @@ function CatalogTreeCard({ cat, lang }: { cat: CatalogCatNode; lang: Lang }) {
                 href={`/catalog/${child.slug}`}
                 className="rounded-full border border-gray-200 bg-white px-3 py-1 text-sm text-[var(--t2)] transition-colors hover:border-[#D6264A] hover:text-[#D6264A]"
               >
-                {localizedName(child, lang)}
+                {child.name_uk}
                 <span className="ml-1 text-[10px] text-[var(--t3)]">({child.total_product_count})</span>
               </Link>
             ))}

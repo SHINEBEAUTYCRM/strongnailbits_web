@@ -16,6 +16,16 @@ export async function PUT(request: NextRequest) {
 
     if (!body.id) return NextResponse.json({ error: "id is required" }, { status: 400 });
 
+    let oldStatus: string | null = null;
+    if (body.status !== undefined) {
+      const { data: currentOrder } = await supabase
+        .from("orders")
+        .select("status")
+        .eq("id", body.id)
+        .single();
+      oldStatus = currentOrder?.status ?? null;
+    }
+
     const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
 
     if (body.status !== undefined) {
@@ -50,6 +60,21 @@ export async function PUT(request: NextRequest) {
 
     const { error } = await supabase.from("orders").update(update).eq("id", body.id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    if (body.status && body.status !== oldStatus && body.status !== "new") {
+      try {
+        await supabase.functions.invoke("notify-order-status", {
+          body: {
+            order_id: body.id,
+            new_status: body.status,
+            ttn: body.ttn || null,
+          },
+        });
+      } catch (pushError) {
+        console.error("[Orders API] Push notification error:", pushError);
+      }
+    }
+
     return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : "Unknown error" }, { status: 500 });

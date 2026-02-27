@@ -15,10 +15,6 @@ export interface CatNode {
   children: CatNode[];
 }
 
-const HIDDEN = [
-  "удалить", "удалити", "видалити", "тест", "test", "temp", "tmp", "trash",
-];
-
 let _cache: CatNode[] | null = null;
 let _promise: Promise<CatNode[]> | null = null;
 
@@ -47,20 +43,12 @@ function buildTree(): Promise<CatNode[]> {
         byId.set(cat.cs_cart_id, cat);
       }
     }
-    const deduplicatedRows = Array.from(byId.values());
-
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    const clean = deduplicatedRows.filter(
-      (c: any) =>
-        !HIDDEN.some((h) =>
-          (c.name_uk || "").toLowerCase().trim().startsWith(h),
-        ),
-    );
+    const rows = Array.from(byId.values());
 
     const map = new Map<number, CatNode>();
     const roots: CatNode[] = [];
 
-    for (const cat of clean) {
+    for (const cat of rows) {
       map.set(cat.cs_cart_id, {
         ...cat,
         total_product_count: 0,
@@ -68,7 +56,7 @@ function buildTree(): Promise<CatNode[]> {
       } as CatNode);
     }
 
-    for (const cat of clean) {
+    for (const cat of rows) {
       const node = map.get(cat.cs_cart_id)!;
       if (!cat.parent_cs_cart_id || cat.parent_cs_cart_id === 0) {
         roots.push(node);
@@ -76,11 +64,6 @@ function buildTree(): Promise<CatNode[]> {
         map.get(cat.parent_cs_cart_id)!.children.push(node);
       }
     }
-
-    const hasPositioned = roots.some((r) => r.position > 0);
-    const deduped = hasPositioned
-      ? roots.filter((r) => r.position > 0)
-      : roots;
 
     function computeTotals(nodes: CatNode[]): void {
       for (const n of nodes) {
@@ -90,15 +73,9 @@ function buildTree(): Promise<CatNode[]> {
           n.children.reduce((sum, c) => sum + c.total_product_count, 0);
       }
     }
-    computeTotals(deduped);
+    computeTotals(roots);
 
-    function prune(nodes: CatNode[]): CatNode[] {
-      return nodes
-        .map((n) => ({ ...n, children: prune(n.children) }))
-        .filter((n) => n.total_product_count > 0 || n.children.length > 0);
-    }
-
-    _cache = prune(deduped);
+    _cache = roots;
     return _cache;
   });
 
