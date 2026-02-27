@@ -1,4 +1,5 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import * as Sentry from "@sentry/nextjs";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -43,12 +44,18 @@ interface CategoryRow {
 
 async function getCategory(slug: string) {
   const supabase = createAdminClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("categories")
     .select("*")
     .eq("slug", slug)
     .eq("status", "active")
-    .single();
+    .maybeSingle();
+
+  if (error) {
+    Sentry.captureException(new Error(`Category lookup failed: ${error.message}`), {
+      extra: { slug, code: error.code, details: error.details },
+    });
+  }
   return data as CategoryRow | null;
 }
 
@@ -57,10 +64,16 @@ async function getCategory(slug: string) {
  */
 async function getDescendantIds(categoryId: string): Promise<string[]> {
   const supabase = createAdminClient();
-  const { data: allCats } = await supabase
+  const { data: allCats, error } = await supabase
     .from("categories")
     .select("id, parent_id")
     .eq("status", "active");
+
+  if (error) {
+    Sentry.captureException(new Error(`getDescendantIds failed: ${error.message}`), {
+      extra: { categoryId, code: error.code },
+    });
+  }
 
   if (!allCats) return [categoryId];
 
@@ -88,55 +101,67 @@ async function getDescendantIds(categoryId: string): Promise<string[]> {
 }
 
 async function getMergedCategoryIds(categoryId: string): Promise<string[]> {
-  const supabase = createAdminClient();
-  const { data: mergeGroups } = await supabase
-    .from("category_merge_groups")
-    .select("primary_category_id, merged_category_id")
-    .or(`primary_category_id.eq.${categoryId},merged_category_id.eq.${categoryId}`);
+  try {
+    const supabase = createAdminClient();
+    const { data: mergeGroups } = await supabase
+      .from("category_merge_groups")
+      .select("primary_category_id, merged_category_id")
+      .or(`primary_category_id.eq.${categoryId},merged_category_id.eq.${categoryId}`);
 
-  if (!mergeGroups?.length) return [];
+    if (!mergeGroups?.length) return [];
 
-  const ids = new Set<string>();
-  for (const g of mergeGroups) {
-    ids.add(g.primary_category_id);
-    ids.add(g.merged_category_id);
+    const ids = new Set<string>();
+    for (const g of mergeGroups) {
+      ids.add(g.primary_category_id);
+      ids.add(g.merged_category_id);
+    }
+    ids.delete(categoryId);
+    return Array.from(ids);
+  } catch (error) {
+    Sentry.captureException(error, { extra: { categoryId } });
+    return [];
   }
-  ids.delete(categoryId);
-  return Array.from(ids);
 }
 
 const NAIL_ROOT_CS_CART_ID = 385;
 
 async function buildBreadcrumbs(category: CategoryRow, lang: Lang): Promise<BreadcrumbItem[]> {
-  const crumbs: BreadcrumbItem[] = [];
-  const supabase = createAdminClient();
-  let currentParentId = category.parent_cs_cart_id;
-  const visited = new Set<number>();
+  try {
+    const crumbs: BreadcrumbItem[] = [];
+    const supabase = createAdminClient();
+    let currentParentId = category.parent_cs_cart_id;
+    const visited = new Set<number>();
 
-  while (currentParentId && currentParentId !== 0 && !visited.has(currentParentId)) {
-    visited.add(currentParentId);
-    if (currentParentId === NAIL_ROOT_CS_CART_ID) break;
+    while (currentParentId && currentParentId !== 0 && !visited.has(currentParentId)) {
+      visited.add(currentParentId);
+      if (currentParentId === NAIL_ROOT_CS_CART_ID) break;
 
-    const { data: parents } = await supabase
-      .from("categories")
-      .select("slug, name_uk, name_ru, parent_cs_cart_id, cs_cart_id")
-      .eq("cs_cart_id", currentParentId)
-      .eq("status", "active")
-      .order("slug", { ascending: true })
-      .limit(5);
+      const { data: parents } = await supabase
+        .from("categories")
+        .select("slug, name_uk, name_ru, parent_cs_cart_id, cs_cart_id")
+        .eq("cs_cart_id", currentParentId)
+        .eq("status", "active")
+        .order("slug", { ascending: true })
+        .limit(5);
 
-    if (!parents?.length) break;
+      if (!parents?.length) break;
 
-    // Prefer non-"-ru" slug
-    const parent = parents.find((p) => !p.slug.endsWith("-ru")) ?? parents[0];
-    if (parent.cs_cart_id === NAIL_ROOT_CS_CART_ID) break;
+      // Prefer non-"-ru" slug
+      const parent = parents.find((p) => !p.slug.endsWith("-ru")) ?? parents[0];
+      if (parent.cs_cart_id === NAIL_ROOT_CS_CART_ID) break;
 
-    crumbs.unshift({ label: localizedName(parent, lang), href: `/catalog/${parent.slug}` });
-    currentParentId = parent.parent_cs_cart_id;
+      crumbs.unshift({ label: localizedName(parent, lang), href: `/catalog/${parent.slug}` });
+      currentParentId = parent.parent_cs_cart_id;
+    }
+
+    crumbs.push({ label: localizedName(category, lang) });
+    return crumbs;
+  } catch (error) {
+    Sentry.captureException(error, {
+      extra: { categorySlug: category.slug, categoryId: category.id },
+    });
+    return [{ label: localizedName(category, lang) }];
   }
-
-  crumbs.push({ label: localizedName(category, lang) });
-  return crumbs;
 }
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
@@ -160,7 +185,51 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   const lang = await getLanguage();
 
   const category = await getCategory(slug);
-  if (!category) notFound();
+  if (!category) {
+    // --- Fallback: try alternate slug ---
+    const supabaseFb = createAdminClient();
+
+    const fallbackSlug = slug.endsWith("-ru") ? slug.replace(/-ru$/, "") : slug + "-ru";
+    const { data: fallback } = await supabaseFb
+      .from("categories")
+      .select("slug")
+      .eq("slug", fallbackSlug)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (fallback) {
+      redirect(`/catalog/${fallback.slug}`);
+    }
+
+    const baseSlug = slug.replace(/-\d+$/, "");
+    if (baseSlug !== slug) {
+      const { data: partial } = await supabaseFb
+        .from("categories")
+        .select("slug")
+        .eq("slug", baseSlug)
+        .eq("status", "active")
+        .maybeSingle();
+      if (partial) {
+        redirect(`/catalog/${partial.slug}`);
+      }
+    }
+
+    Sentry.captureMessage(`Category 404: /catalog/${slug}`, {
+      level: "warning",
+      extra: {
+        slug,
+        fallbackSlugTried: fallbackSlug,
+        baseSlugTried: baseSlug !== slug ? baseSlug : null,
+        timestamp: new Date().toISOString(),
+      },
+      tags: {
+        page: "catalog_category",
+        error_type: "category_not_found",
+      },
+    });
+
+    notFound();
+  }
 
   const basePath = `/catalog/${slug}`;
 

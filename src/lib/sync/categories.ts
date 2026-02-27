@@ -238,6 +238,27 @@ export async function syncCategories(
     const activeCsCartIds = new Set(rows.map((r) => r.cs_cart_id));
     itemsProcessed = rows.length;
 
+    /* ---- 3b. Захистити вручну змінені slug та статус ---- */
+
+    const { data: existingCats } = await supabase
+      .from("categories")
+      .select("cs_cart_id, slug, status")
+      .in("cs_cart_id", rows.map((r) => r.cs_cart_id));
+
+    const existingMap = new Map(
+      (existingCats || []).map((c) => [c.cs_cart_id, c]),
+    );
+
+    for (const row of rows) {
+      const existing = existingMap.get(row.cs_cart_id);
+      if (existing) {
+        row.slug = existing.slug;
+        if (existing.status === "disabled" && row.status === "active") {
+          row.status = "disabled";
+        }
+      }
+    }
+
     /* ---- 4. Batch upsert у Supabase ---- */
 
     for (let i = 0; i < rows.length; i += BATCH_SIZE) {
