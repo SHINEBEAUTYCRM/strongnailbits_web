@@ -5,6 +5,15 @@ import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
 
+function normalizeTo380(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  if (digits.startsWith("380") && digits.length === 12) return digits;
+  if (digits.startsWith("80") && digits.length === 11) return "3" + digits;
+  if (digits.startsWith("0") && digits.length === 10) return "38" + digits;
+  if (digits.length === 9) return "380" + digits;
+  return digits;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -49,7 +58,8 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const fakeEmail = `${profile.phone.replace(/\D/g, "")}@phone.shineshop.local`;
+      const phone380 = normalizeTo380(profile.phone);
+      const fakeEmail = `${phone380}@phone.shineshop.local`;
 
       // Check if auth user already exists
       const {
@@ -111,7 +121,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Профіль не знайдено" }, { status: 404 });
     }
 
-    const fakeEmail = `${profile.phone}@phone.shineshop.local`;
+    const fakeEmail = `${normalizeTo380(profile.phone)}@phone.shineshop.local`;
 
     const {
       data: { users: loginUsers },

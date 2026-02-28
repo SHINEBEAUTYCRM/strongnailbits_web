@@ -298,6 +298,7 @@ async function handleContactShared(
       .from("auth_requests")
       .update({
         profile_id: newProfile.id,
+        phone: normalizedPhone,
         status: "confirmed",
         confirmed_at: new Date().toISOString(),
       })
