@@ -14,6 +14,7 @@ import {
   Globe,
 } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart";
+import { createClient } from "@/lib/supabase/client";
 import { OrderSummary } from "@/components/checkout/OrderSummary";
 import { TrackCheckout } from "@/components/analytics/TrackCheckout";
 import { trackPurchase } from "@/lib/analytics/tracker";
@@ -208,6 +209,43 @@ export default function CheckoutPage() {
   const formRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("first_name, last_name, phone, email, company, city, np_branch, address")
+          .eq("id", user.id)
+          .single();
+
+        if (!profile) return;
+
+        setForm((f) => ({
+          ...f,
+          firstName: profile.first_name || f.firstName,
+          lastName: profile.last_name || f.lastName,
+          phone: profile.phone
+            ? `+${profile.phone.startsWith("380") ? profile.phone : "38" + profile.phone}`
+            : f.phone,
+          email:
+            profile.email && !profile.email.includes("@phone.shineshop.local")
+              ? profile.email
+              : f.email,
+          companyName: profile.company || f.companyName,
+          city: profile.city || f.city,
+          warehouse: profile.np_branch || f.warehouse,
+        }));
+      } catch (err) {
+        console.error("[Checkout] Failed to load profile:", err);
+      }
+    }
+    loadProfile();
+  }, []);
 
   useEffect(() => {
     if (mounted && items.length === 0) {
