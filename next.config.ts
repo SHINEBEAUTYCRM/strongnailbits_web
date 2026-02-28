@@ -81,8 +81,6 @@ const nextConfig: NextConfig = {
       ],
     },
   ],
-  // Packages that should only run in the browser (WASM/WebGL), not bundled for SSR
-  serverExternalPackages: ["@imgly/background-removal", "onnxruntime-web"],
   // Experimental optimizations
   experimental: {
     // Tree-shake barrel imports for smaller bundles
