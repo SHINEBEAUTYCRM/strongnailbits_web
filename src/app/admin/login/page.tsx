@@ -7,6 +7,8 @@ import { createClient } from "@/lib/supabase/client";
 
 type Status = "idle" | "sending" | "waiting" | "confirmed" | "error" | "no_telegram";
 
+const ADMIN_BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_ADMIN_BOT_USERNAME || "ShineShopAdminBot";
+
 export default function AdminLoginPage() {
   const [phone, setPhone] = useState("");
   const [status, setStatus] = useState<Status>("idle");
@@ -386,7 +388,7 @@ export default function AdminLoginPage() {
               </div>
 
               <a
-                href="https://t.me/ShineShopAdminBot"
+                href={`https://t.me/${ADMIN_BOT_USERNAME}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full mt-4 py-2.5 rounded-xl text-sm font-medium transition-colors"
@@ -404,7 +406,7 @@ export default function AdminLoginPage() {
                   e.currentTarget.style.color = "#a1a1aa";
                 }}
               >
-                Відкрити @ShineShopAdminBot
+                Відкрити @{ADMIN_BOT_USERNAME}
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M7 17L17 7M17 7H7M17 7V17" />
                 </svg>
@@ -497,12 +499,12 @@ export default function AdminLoginPage() {
               <p className="text-sm mb-5" style={{ color: "#71717a" }}>
                 Спочатку напишіть <span style={{ color: "#a855f7" }}>/start</span> боту{" "}
                 <a
-                  href="https://t.me/ShineShopAdminBot"
+                  href={`https://t.me/${ADMIN_BOT_USERNAME}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{ color: "#a855f7" }}
                 >
-                  @ShineShopAdminBot
+                  @{ADMIN_BOT_USERNAME}
                 </a>{" "}
                 і надішліть свій номер телефону.
               </p>

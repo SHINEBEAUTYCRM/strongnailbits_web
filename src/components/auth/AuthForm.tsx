@@ -17,7 +17,8 @@ type Step =
   | "register-form"       // Fill name + password (new users)
   | "login-password"      // Main login screen (phone + SMS/password choice)
   | "login-password-form" // Login with phone + password form
-  | "reset-password";     // Reset password after OTP
+  | "reset-password"      // Reset password after OTP
+  | "telegram-waiting";   // Waiting for Telegram confirmation
 
 export function AuthForm({ mode, redirect }: AuthFormProps) {
   const router = useRouter();
@@ -45,6 +46,16 @@ export function AuthForm({ mode, redirect }: AuthFormProps) {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const verificationTokenRef = useRef<string | null>(null);
 
+  // Telegram auth
+  const [telegramToken, setTelegramToken] = useState<string | null>(null);
+  const [telegramBotUrl, setTelegramBotUrl] = useState<string | null>(null);
+  const [telegramStatus, setTelegramStatus] = useState<"sent" | "need_link" | null>(null);
+  const [tgCountdown, setTgCountdown] = useState(300);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const pollingRef = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const channelRef = useRef<any>(null);
+
   // OTP input refs
   const otpRefs = [
     useRef<HTMLInputElement>(null),
@@ -56,8 +67,25 @@ export function AuthForm({ mode, redirect }: AuthFormProps) {
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      stopTelegramPolling();
+      stopTelegramRealtime();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (step !== "telegram-waiting") return;
+    if (tgCountdown <= 0) {
+      stopTelegramPolling();
+      stopTelegramRealtime();
+      setError("Час вийшов. Спробуйте ще раз.");
+      setStep("login-password");
+      return;
+    }
+    const timer = setInterval(() => setTgCountdown((c) => c - 1), 1000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, tgCountdown]);
 
   function startOtpTimer() {
     setOtpTimer(60);
@@ -141,6 +169,134 @@ export function AuthForm({ mode, redirect }: AuthFormProps) {
       setOtpCode(newOtp);
       otpRefs[3]?.current?.focus();
       setTimeout(() => handleVerifyOtp(pasted), 100);
+    }
+  }
+
+  // ────── Telegram Auth ──────
+
+  function stopTelegramPolling() {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+  }
+
+  function stopTelegramRealtime() {
+    if (channelRef.current) {
+      const supabase = createClient();
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+  }
+
+  function startTelegramPolling(token: string) {
+    stopTelegramPolling();
+    pollingRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/auth/telegram-check?token=${token}`);
+        const data = await res.json();
+        if (data.status === "confirmed") {
+          stopTelegramPolling();
+          stopTelegramRealtime();
+          await completeTelegramLogin(token);
+        } else if (data.status === "expired" || data.status === "denied") {
+          stopTelegramPolling();
+          stopTelegramRealtime();
+          setError("Час вийшов або вхід відхилено. Спробуйте ще раз.");
+          setStep("login-password");
+        }
+      } catch {
+        /* ignore network errors — will retry */
+      }
+    }, 3000);
+  }
+
+  function startTelegramRealtime(token: string) {
+    const supabase = createClient();
+    stopTelegramRealtime();
+    const channel = supabase
+      .channel(`auth-${token}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "auth_requests",
+          filter: `token=eq.${token}`,
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        async (payload: any) => {
+          const newStatus = payload.new?.status;
+          if (newStatus === "confirmed") {
+            stopTelegramPolling();
+            stopTelegramRealtime();
+            await completeTelegramLogin(token);
+          } else if (newStatus === "expired" || newStatus === "denied") {
+            stopTelegramPolling();
+            stopTelegramRealtime();
+            setError("Вхід відхилено.");
+            setStep("login-password");
+          }
+        },
+      )
+      .subscribe();
+    channelRef.current = channel;
+  }
+
+  async function completeTelegramLogin(token: string) {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/telegram-confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Помилка підтвердження");
+
+      const supabase = createClient();
+      const { error: otpError } = await supabase.auth.verifyOtp({
+        token_hash: data.token_hash,
+        type: "magiclink",
+      });
+      if (otpError) throw new Error("Помилка автоматичного входу");
+
+      router.push(redirect || "/account");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Помилка входу");
+      setStep("login-password");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleTelegramLogin() {
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/telegram-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (res.status === 404)
+          throw new Error(data.error || "Користувача не знайдено. Зареєструйтесь");
+        throw new Error(data.error || "Помилка");
+      }
+      setTelegramToken(data.token);
+      setTelegramStatus(data.status);
+      if (data.botUrl) setTelegramBotUrl(data.botUrl);
+      setStep("telegram-waiting");
+      setTgCountdown(300);
+      startTelegramPolling(data.token);
+      startTelegramRealtime(data.token);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Помилка");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -841,6 +997,100 @@ export function AuthForm({ mode, redirect }: AuthFormProps) {
     );
   }
 
+  // ────── RENDER: Telegram waiting ──────
+  if (step === "telegram-waiting") {
+    const botUsername =
+      process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "shineshop_b2b_bot";
+    const minutes = Math.floor(tgCountdown / 60);
+    const seconds = tgCountdown % 60;
+
+    return (
+      <div className="flex flex-col items-center gap-4 py-4">
+        <div className="relative inline-flex items-center justify-center">
+          <div className="absolute h-20 w-20 animate-ping rounded-full bg-[#26A5E4]/15" />
+          <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-[#26A5E4]/10 border border-[#26A5E4]/20">
+            <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13"
+                stroke="#26A5E4"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+        </div>
+
+        <h3 className="font-unbounded text-lg font-bold text-dark">
+          {telegramStatus === "need_link"
+            ? "Підключіть Telegram"
+            : "Перевірте Telegram"}
+        </h3>
+
+        <p className="text-center text-sm text-[var(--t2)]">
+          {telegramStatus === "need_link"
+            ? "Відкрийте бот та підтвердіть вхід"
+            : 'Натисніть «Підтвердити» в повідомленні від бота'}
+        </p>
+
+        <div className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] px-4 py-2">
+          <svg
+            className="h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={tgCountdown < 60 ? "#ef4444" : "var(--t3)"}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          <span
+            className={`text-sm font-mono ${tgCountdown < 60 ? "text-red" : "text-[var(--t2)]"}`}
+          >
+            {minutes}:{seconds.toString().padStart(2, "0")}
+          </span>
+        </div>
+
+        <a
+          href={
+            telegramStatus === "need_link" && telegramBotUrl
+              ? telegramBotUrl
+              : `https://t.me/${botUsername}`
+          }
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-pill bg-[#26A5E4] text-[13px] font-bold text-white transition-all hover:bg-[#1E96D1]"
+        >
+          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          Відкрити Telegram
+        </a>
+
+        <button
+          type="button"
+          onClick={() => {
+            stopTelegramPolling();
+            stopTelegramRealtime();
+            setStep("login-password");
+            setError(null);
+          }}
+          className="text-sm text-[var(--t3)] transition-colors hover:text-coral"
+        >
+          Ввести інший номер
+        </button>
+      </div>
+    );
+  }
+
   // ────── RENDER: Login with phone (SMS first, password as fallback) ──────
   return (
     <form
@@ -877,28 +1127,50 @@ export function AuthForm({ mode, redirect }: AuthFormProps) {
           />
         </div>
         <p className="mt-1.5 text-[11px] text-[var(--t3)]">
-          Ми відправимо SMS з кодом для входу
+          Оберіть спосіб входу
         </p>
       </div>
 
-      {/* Primary: Login via SMS */}
+      {/* Primary: Login via Telegram */}
       <button
-        type="submit"
+        type="button"
+        onClick={handleTelegramLogin}
         disabled={loading || phone.replace(/\D/g, "").length < 10}
         className="font-unbounded mt-1 flex h-12 w-full items-center justify-center gap-2 rounded-pill bg-coral text-[13px] font-bold text-white transition-all hover:bg-coral-2 hover:glow-coral disabled:opacity-60"
       >
         {loading ? (
           <Loader2 size={18} className="animate-spin" />
         ) : (
-          "Отримати SMS-код"
+          <>
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Увійти через Telegram
+          </>
         )}
       </button>
 
-      {/* Secondary: Login with password (for those who have it) */}
+      {/* Secondary: Login via SMS */}
+      <button
+        type="button"
+        onClick={() => handleSendOtp()}
+        disabled={loading || phone.replace(/\D/g, "").length < 10}
+        className="flex h-11 w-full items-center justify-center gap-2 rounded-pill border border-[var(--border)] text-[13px] font-medium text-[var(--t2)] transition-all hover:border-coral hover:text-coral disabled:opacity-60"
+      >
+        Отримати SMS-код
+      </button>
+
+      {/* Tertiary: Login with password */}
       <button
         type="button"
         onClick={() => setStep("login-password-form")}
-        className="flex h-11 w-full items-center justify-center gap-2 rounded-pill border border-[var(--border)] text-[13px] font-medium text-[var(--t2)] transition-all hover:border-coral hover:text-coral"
+        className="text-center text-sm text-[var(--t3)] transition-colors hover:text-coral"
       >
         Увійти з паролем
       </button>

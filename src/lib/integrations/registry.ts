@@ -175,10 +175,12 @@ const freeUtilities: ServiceDefinition[] = [
     requiredFields: [
       { key: 'bot_token', label: 'Bot Token', type: 'password', placeholder: '123456:ABC-DEF...', required: true },
       { key: 'chat_id', label: 'Chat ID', type: 'text', placeholder: '-100123456789', required: true, helpText: 'ID чату або групи для сповіщень' },
+      { key: 'bot_username', label: 'Bot Username', type: 'text', placeholder: 'shineshop_b2b_bot', required: false },
     ],
     envMapping: {
       bot_token: 'TELEGRAM_BOT_TOKEN',
       chat_id: 'TELEGRAM_CHAT_ID',
+      bot_username: 'TELEGRAM_BOT_USERNAME',
     },
   },
   {
@@ -866,8 +868,12 @@ const additionalServices: ServiceDefinition[] = [
     isRequired: false,
     requiredFields: [
       { key: 'bot_token', label: 'Bot Token', type: 'password', required: true },
+      { key: 'bot_username', label: 'Bot Username', type: 'text', placeholder: 'ShineShopAdminBot', required: false },
     ],
-    envMapping: { bot_token: 'TELEGRAM_ADMIN_BOT_TOKEN' },
+    envMapping: {
+      bot_token: 'TELEGRAM_ADMIN_BOT_TOKEN',
+      bot_username: 'TELEGRAM_ADMIN_BOT_USERNAME',
+    },
   },
 ];
 

@@ -94,6 +94,25 @@ async function handleUpdate(update: TgUpdate): Promise<void> {
     await bot.answerCallbackQuery(callbackQuery.id);
   }
 
+  // ─── Client Auth: /start auth_TOKEN (deep link) ───
+  if (text.startsWith('/start auth_')) {
+    const authToken = text.replace('/start auth_', '').trim();
+    await handleClientAuthStart(bot, supabase, chatId, telegramId, from!, authToken);
+    return;
+  }
+
+  // ─── Client Auth callbacks ───
+  if (callbackData?.startsWith('client_auth_confirm:')) {
+    const authToken = callbackData.replace('client_auth_confirm:', '');
+    await handleClientAuthCallback(bot, supabase, callbackQuery!, chatId, authToken, true);
+    return;
+  }
+  if (callbackData?.startsWith('client_auth_deny:')) {
+    const authToken = callbackData.replace('client_auth_deny:', '');
+    await handleClientAuthCallback(bot, supabase, callbackQuery!, chatId, authToken, false);
+    return;
+  }
+
   // Handle contact shared (for phone-based linking)
   if (message?.contact) {
     await handleContactShared(bot, supabase, chatId, telegramId, from!, message.contact);
@@ -220,4 +239,108 @@ async function handleContactShared(
     "",
     "Просто напишіть що шукаєте! 👇",
   ].join("\n"));
+}
+
+// ────── Client Auth: /start auth_TOKEN (deep link) ──────
+
+async function handleClientAuthStart(
+  bot: TelegramBot,
+  supabase: ReturnType<typeof createAdminClient>,
+  chatId: number,
+  telegramId: number,
+  from: { first_name?: string; username?: string },
+  authToken: string,
+): Promise<void> {
+  const { data: authReq } = await supabase
+    .from("auth_requests")
+    .select("id, token, phone, profile_id, status, expires_at")
+    .eq("token", authToken)
+    .eq("type", "client")
+    .eq("status", "pending")
+    .gte("expires_at", new Date().toISOString())
+    .maybeSingle();
+
+  if (!authReq) {
+    await bot.sendMessage(chatId, "⏰ Запит на вхід не знайдено або час вийшов. Спробуйте ще раз на сайті.");
+    return;
+  }
+
+  if (authReq.profile_id) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id, telegram_chat_id")
+      .eq("id", authReq.profile_id)
+      .single();
+
+    if (profile && !profile.telegram_chat_id) {
+      await supabase
+        .from("profiles")
+        .update({ telegram_chat_id: chatId, telegram_username: from.username || null })
+        .eq("id", profile.id);
+    } else if (profile && profile.telegram_chat_id && profile.telegram_chat_id !== chatId) {
+      await bot.sendMessage(chatId, "⚠️ Цей номер вже прив'язано до іншого Telegram акаунту.");
+      return;
+    }
+  }
+
+  const masked = authReq.phone.slice(0, 4) + "*****" + authReq.phone.slice(-4);
+  const timeStr = new Date().toLocaleString("uk-UA", { timeZone: "Europe/Kyiv" });
+
+  await bot.sendMessage(
+    chatId,
+    `🔐 <b>Запит на вхід в ShineShop</b>\n\n📱 ${masked}\n🕐 ${timeStr}\n\nЦе ви?`,
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: "✅ Підтвердити вхід", callback_data: `client_auth_confirm:${authToken}` },
+            { text: "❌ Це не я", callback_data: `client_auth_deny:${authToken}` },
+          ],
+        ],
+      },
+    },
+  );
+}
+
+// ────── Client Auth: confirm/deny callback ──────
+
+async function handleClientAuthCallback(
+  bot: TelegramBot,
+  supabase: ReturnType<typeof createAdminClient>,
+  callbackQuery: { id: string; message?: { chat: { id: number }; message_id: number } },
+  chatId: number,
+  authToken: string,
+  confirm: boolean,
+): Promise<void> {
+  if (confirm) {
+    const { data: authReq } = await supabase
+      .from("auth_requests")
+      .update({ status: "confirmed", confirmed_at: new Date().toISOString() })
+      .eq("token", authToken)
+      .eq("type", "client")
+      .eq("status", "pending")
+      .gte("expires_at", new Date().toISOString())
+      .select("id")
+      .maybeSingle();
+
+    const messageId = callbackQuery.message?.message_id;
+    if (authReq && messageId) {
+      const timeStr = new Date().toLocaleString("uk-UA", { timeZone: "Europe/Kyiv" });
+      await bot.editMessageText(chatId, messageId, `✅ Вхід підтверджено о ${timeStr}\n\nПоверніться на сайт — він оновиться автоматично.`);
+    } else if (!authReq) {
+      await bot.sendMessage(chatId, "⏰ Запит вже не активний. Спробуйте ще раз.");
+    }
+  } else {
+    await supabase
+      .from("auth_requests")
+      .update({ status: "expired" })
+      .eq("token", authToken)
+      .eq("type", "client")
+      .eq("status", "pending");
+
+    const messageId = callbackQuery.message?.message_id;
+    if (messageId) {
+      await bot.editMessageText(chatId, messageId, "❌ Вхід відхилено. Якщо це не ви — зверніться до підтримки.");
+    }
+  }
 }
