@@ -94,6 +94,13 @@ async function handleUpdate(update: TgUpdate): Promise<void> {
     await bot.answerCallbackQuery(callbackQuery.id);
   }
 
+  // ─── Client Registration: /start reg_TOKEN (deep link) ───
+  if (text.startsWith('/start reg_')) {
+    const regToken = text.replace('/start reg_', '').trim();
+    await handleClientRegStart(bot, supabase, chatId, telegramId, from!, regToken);
+    return;
+  }
+
   // ─── Client Auth: /start auth_TOKEN (deep link) ───
   if (text.startsWith('/start auth_')) {
     const authToken = text.replace('/start auth_', '').trim();
@@ -183,18 +190,145 @@ async function handleContactShared(
   supabase: ReturnType<typeof createAdminClient>,
   chatId: number,
   telegramId: number,
-  from: { first_name?: string; username?: string },
-  contact: { phone_number: string; first_name?: string },
+  from: { first_name?: string; last_name?: string; username?: string },
+  contact: { phone_number: string; first_name?: string; last_name?: string },
 ): Promise<void> {
-  // Normalize phone
-  const rawPhone = contact.phone_number.replace(/\D/g, "");
+  const rawContactPhone = contact.phone_number.replace(/\D/g, "");
+
+  // ─── Check if this is a registration flow ───
+  const { data: pendingReg } = await supabase
+    .from("auth_requests")
+    .select("id, token, phone, status")
+    .eq("type", "client_register")
+    .eq("status", "pending")
+    .eq("ip_address", chatId.toString())
+    .gte("expires_at", new Date().toISOString())
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (pendingReg) {
+    const regPhone = pendingReg.phone.replace(/\D/g, "");
+    const contactPhone = rawContactPhone.startsWith("38")
+      ? rawContactPhone
+      : rawContactPhone.startsWith("0")
+        ? "38" + rawContactPhone
+        : rawContactPhone;
+
+    const regLast9 = regPhone.slice(-9);
+    const contactLast9 = contactPhone.slice(-9);
+
+    if (regLast9 !== contactLast9) {
+      await bot.sendMessage(
+        chatId,
+        "❌ Номер не збігається.\n\nВи вводили інший номер на сайті. Спробуйте ще раз.",
+        { reply_markup: { remove_keyboard: true } },
+      );
+      return;
+    }
+
+    // Phone verified — check if profile already exists
+    const phoneVariantsList = [
+      rawContactPhone,
+      rawContactPhone.startsWith("38") ? rawContactPhone.slice(2) : rawContactPhone,
+      rawContactPhone.startsWith("380") ? rawContactPhone.slice(3) : rawContactPhone,
+      `+${rawContactPhone}`,
+      `+38${rawContactPhone}`,
+      `+380${rawContactPhone}`,
+    ].filter((v) => v.length >= 9);
+
+    const { data: existingProfile } = await supabase
+      .from("profiles")
+      .select("id, first_name")
+      .in("phone", phoneVariantsList)
+      .limit(1)
+      .maybeSingle();
+
+    if (existingProfile) {
+      await supabase
+        .from("profiles")
+        .update({ telegram_chat_id: chatId, telegram_username: from.username || null })
+        .eq("id", existingProfile.id);
+
+      await supabase
+        .from("auth_requests")
+        .update({
+          type: "client",
+          profile_id: existingProfile.id,
+          status: "confirmed",
+          confirmed_at: new Date().toISOString(),
+        })
+        .eq("id", pendingReg.id);
+
+      await bot.sendMessage(
+        chatId,
+        `✅ Акаунт знайдено та підключено!\n\n` +
+          `${existingProfile.first_name || "Друже"}, поверніться на сайт — він оновиться автоматично.`,
+        { reply_markup: { remove_keyboard: true } },
+      );
+      return;
+    }
+
+    // Create new profile
+    const normalizedPhone = rawContactPhone.startsWith("380")
+      ? rawContactPhone
+      : rawContactPhone.startsWith("0")
+        ? "38" + rawContactPhone
+        : rawContactPhone;
+
+    const { data: newProfile, error: profileError } = await supabase
+      .from("profiles")
+      .insert({
+        phone: normalizedPhone,
+        first_name: from.first_name || contact.first_name || "",
+        last_name: from.last_name || "",
+        telegram_chat_id: chatId,
+        telegram_username: from.username || null,
+        role: "user",
+        type: "retail",
+      })
+      .select("id")
+      .single();
+
+    if (profileError) {
+      console.error("[TgWebhook] Profile create error:", profileError);
+      await bot.sendMessage(chatId, "❌ Помилка реєстрації. Спробуйте ще раз.", {
+        reply_markup: { remove_keyboard: true },
+      });
+      return;
+    }
+
+    await supabase
+      .from("auth_requests")
+      .update({
+        profile_id: newProfile.id,
+        status: "confirmed",
+        confirmed_at: new Date().toISOString(),
+      })
+      .eq("id", pendingReg.id);
+
+    await bot.sendMessage(
+      chatId,
+      `✅ Реєстрацію завершено!\n\n` +
+        `${from.first_name || "Друже"}, ваш акаунт створено.\n` +
+        `Поверніться на сайт — він оновиться автоматично.\n\n` +
+        `Тепер вам доступні:\n` +
+        `📦 Замовлення — статус у реальному часі\n` +
+        `🛒 Кошик — додавайте через бот\n` +
+        `🤖 AI-консультант — питайте будь-що`,
+      { reply_markup: { remove_keyboard: true } },
+    );
+    return;
+  }
+
+  // ─── Original contact handling (non-registration) ───
   const variants = [
-    rawPhone,
-    rawPhone.startsWith("38") ? rawPhone.slice(2) : rawPhone,
-    rawPhone.startsWith("380") ? rawPhone.slice(3) : rawPhone,
-    `+${rawPhone}`,
-    `+38${rawPhone}`,
-    `+380${rawPhone}`,
+    rawContactPhone,
+    rawContactPhone.startsWith("38") ? rawContactPhone.slice(2) : rawContactPhone,
+    rawContactPhone.startsWith("380") ? rawContactPhone.slice(3) : rawContactPhone,
+    `+${rawContactPhone}`,
+    `+38${rawContactPhone}`,
+    `+380${rawContactPhone}`,
   ].filter((v) => v.length >= 9);
 
   const { data: profile } = await supabase
@@ -221,7 +355,6 @@ async function handleContactShared(
     return;
   }
 
-  // Link
   await supabase
     .from("profiles")
     .update({ telegram_chat_id: chatId, telegram_username: from.username || null })
@@ -239,6 +372,59 @@ async function handleContactShared(
     "",
     "Просто напишіть що шукаєте! 👇",
   ].join("\n"));
+}
+
+// ────── Client Registration: /start reg_TOKEN (deep link) ──────
+
+async function handleClientRegStart(
+  bot: TelegramBot,
+  supabase: ReturnType<typeof createAdminClient>,
+  chatId: number,
+  _telegramId: number,
+  from: { first_name?: string; last_name?: string; username?: string },
+  regToken: string,
+): Promise<void> {
+  const { data: authReq } = await supabase
+    .from("auth_requests")
+    .select("id, token, phone, status, expires_at")
+    .eq("token", regToken)
+    .eq("type", "client_register")
+    .eq("status", "pending")
+    .gte("expires_at", new Date().toISOString())
+    .maybeSingle();
+
+  if (!authReq) {
+    await bot.sendMessage(
+      chatId,
+      "⏰ Запит на реєстрацію не знайдено або час вийшов.\n\nСпробуйте ще раз на сайті.",
+    );
+    return;
+  }
+
+  // Store chatId in ip_address field so handleContactShared can find this request
+  await supabase
+    .from("auth_requests")
+    .update({ ip_address: chatId.toString() })
+    .eq("id", authReq.id);
+
+  const masked =
+    authReq.phone.length > 8
+      ? authReq.phone.slice(0, 4) + "*****" + authReq.phone.slice(-4)
+      : authReq.phone;
+
+  await bot.sendMessage(
+    chatId,
+    `👋 Вітаємо в ShineShop!\n\n` +
+      `Для реєстрації акаунту (${masked}) надішліть свій номер телефону кнопкою нижче.\n\n` +
+      `Це потрібно для підтвердження, що номер належить вам.`,
+    {
+      reply_markup: {
+        keyboard: [[{ text: "📱 Надіслати номер", request_contact: true }]],
+        one_time_keyboard: true,
+        resize_keyboard: true,
+      },
+    },
+  );
 }
 
 // ────── Client Auth: /start auth_TOKEN (deep link) ──────

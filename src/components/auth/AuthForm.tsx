@@ -49,7 +49,7 @@ export function AuthForm({ mode, redirect }: AuthFormProps) {
   // Telegram auth
   const [telegramToken, setTelegramToken] = useState<string | null>(null);
   const [telegramBotUrl, setTelegramBotUrl] = useState<string | null>(null);
-  const [telegramStatus, setTelegramStatus] = useState<"sent" | "need_link" | null>(null);
+  const [telegramStatus, setTelegramStatus] = useState<"sent" | "need_link" | "register" | null>(null);
   const [tgCountdown, setTgCountdown] = useState(300);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const pollingRef = useRef<any>(null);
@@ -261,7 +261,11 @@ export function AuthForm({ mode, redirect }: AuthFormProps) {
       });
       if (otpError) throw new Error("Помилка автоматичного входу");
 
-      router.push(redirect || "/account");
+      if (data.isNewUser) {
+        router.push("/account?welcome=true");
+      } else {
+        router.push(redirect || "/account");
+      }
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Помилка входу");
@@ -1022,15 +1026,19 @@ export function AuthForm({ mode, redirect }: AuthFormProps) {
         </div>
 
         <h3 className="font-unbounded text-lg font-bold text-dark">
-          {telegramStatus === "need_link"
-            ? "Підключіть Telegram"
-            : "Перевірте Telegram"}
+          {telegramStatus === "register"
+            ? "Реєстрація через Telegram"
+            : telegramStatus === "need_link"
+              ? "Підключіть Telegram"
+              : "Перевірте Telegram"}
         </h3>
 
         <p className="text-center text-sm text-[var(--t2)]">
-          {telegramStatus === "need_link"
-            ? "Відкрийте бот та підтвердіть вхід"
-            : 'Натисніть «Підтвердити» в повідомленні від бота'}
+          {telegramStatus === "register"
+            ? "Відкрийте бот та надішліть свій номер для реєстрації"
+            : telegramStatus === "need_link"
+              ? "Відкрийте бот та підтвердіть вхід"
+              : 'Натисніть «Підтвердити» в повідомленні від бота'}
         </p>
 
         <div className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] px-4 py-2">
@@ -1055,7 +1063,8 @@ export function AuthForm({ mode, redirect }: AuthFormProps) {
 
         <a
           href={
-            telegramStatus === "need_link" && telegramBotUrl
+            (telegramStatus === "need_link" || telegramStatus === "register") &&
+            telegramBotUrl
               ? telegramBotUrl
               : `https://t.me/${botUsername}`
           }

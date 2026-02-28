@@ -15,9 +15,9 @@ export async function GET(request: NextRequest) {
 
     const { data: authReq } = await supabase
       .from("auth_requests")
-      .select("status, expires_at")
+      .select("status, type, expires_at")
       .eq("token", token)
-      .eq("type", "client")
+      .in("type", ["client", "client_register"])
       .maybeSingle();
 
     if (!authReq) {
@@ -25,10 +25,10 @@ export async function GET(request: NextRequest) {
     }
 
     if (authReq.status === "pending" && new Date(authReq.expires_at) < new Date()) {
-      return NextResponse.json({ status: "expired" });
+      return NextResponse.json({ status: "expired", type: authReq.type });
     }
 
-    return NextResponse.json({ status: authReq.status });
+    return NextResponse.json({ status: authReq.status, type: authReq.type });
   } catch (err) {
     console.error("[ClientAuthCheck] Error:", err);
     return NextResponse.json({ status: "error" }, { status: 500 });

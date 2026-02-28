@@ -50,10 +50,33 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (!profile) {
-      return NextResponse.json(
-        { error: "Користувача не знайдено. Зареєструйтесь" },
-        { status: 404 },
-      );
+      // Registration flow — no profile found, create reg request
+      const regToken = generateToken();
+      const regExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+      await supabase.from("auth_requests").insert({
+        token: regToken,
+        phone,
+        type: "client_register",
+        status: "pending",
+        ip_address: ip,
+        user_agent: userAgent,
+        expires_at: regExpiresAt.toISOString(),
+      });
+
+      const botUsername =
+        (await getServiceField("telegram-bot", "bot_username")) ||
+        process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ||
+        "shineshop_b2b_bot";
+      const botUrl = `https://t.me/${botUsername}?start=reg_${regToken}`;
+
+      return NextResponse.json({
+        ok: true,
+        token: regToken,
+        status: "register",
+        botUrl,
+        expires_at: regExpiresAt.toISOString(),
+      });
     }
 
     const token = generateToken();
