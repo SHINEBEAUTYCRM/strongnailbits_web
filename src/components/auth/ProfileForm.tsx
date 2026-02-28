@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Loader2, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { NpCitySearch } from "@/components/ui/NpCitySearch";
+import { NpWarehouseSearch } from "@/components/ui/NpWarehouseSearch";
 
 interface ProfileFormProps {
   userId: string;
@@ -27,6 +29,7 @@ export function ProfileForm({ userId, initialData }: ProfileFormProps) {
     initialData.email?.includes("@phone.shineshop.local") ? "" : (initialData.email || ""),
   );
   const [city, setCity] = useState(initialData.city);
+  const [cityRef, setCityRef] = useState("");
   const [npBranch, setNpBranch] = useState(initialData.npBranch);
   const [address, setAddress] = useState(initialData.address);
   const [loading, setLoading] = useState(false);
@@ -151,12 +154,13 @@ export function ProfileForm({ userId, initialData }: ProfileFormProps) {
           <label className="mb-1 block text-xs font-medium text-[var(--t2)]">
             Місто
           </label>
-          <input
-            type="text"
+          <NpCitySearch
             value={city}
-            onChange={(e) => setCity(e.target.value)}
-            placeholder="Київ"
-            className="h-11 w-full rounded-[10px] border border-[var(--border)] bg-pearl px-3 text-sm text-dark outline-none transition-colors focus:border-coral"
+            onChange={(name, ref) => {
+              setCity(name);
+              setCityRef(ref);
+              setNpBranch("");
+            }}
           />
         </div>
 
@@ -164,12 +168,10 @@ export function ProfileForm({ userId, initialData }: ProfileFormProps) {
           <label className="mb-1 block text-xs font-medium text-[var(--t2)]">
             Відділення Нової Пошти
           </label>
-          <input
-            type="text"
+          <NpWarehouseSearch
             value={npBranch}
-            onChange={(e) => setNpBranch(e.target.value)}
-            placeholder="Відділення №5, вул. Хрещатик 22"
-            className="h-11 w-full rounded-[10px] border border-[var(--border)] bg-pearl px-3 text-sm text-dark outline-none transition-colors focus:border-coral"
+            cityName={city}
+            onChange={(name) => setNpBranch(name)}
           />
         </div>
 
