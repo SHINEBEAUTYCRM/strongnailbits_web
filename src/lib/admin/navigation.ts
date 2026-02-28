@@ -134,6 +134,7 @@ export const adminNavigation: NavSection[] = [
     icon: FileText,
     children: [
       { label: "Головна сторінка", href: "/admin/homepage", icon: Home },
+      { label: "Блоки категорій", href: "/admin/homepage/category-blocks", icon: LayoutGrid },
       { label: "Банери", href: "/admin/banners", icon: ImageIcon },
       { label: "Сторінки", href: "/admin/pages-cms", icon: FileText },
       { label: "Мобільний додаток", href: "/admin/app-config", icon: Smartphone },
