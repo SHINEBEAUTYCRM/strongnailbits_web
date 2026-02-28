@@ -32,7 +32,15 @@ export default async function AccountPage() {
       <h1 className="font-unbounded text-2xl font-black text-dark">
         Мій акаунт
       </h1>
-      <p className="mt-1 text-sm text-[var(--t2)]">{user.email}</p>
+      {profile?.phone ? (
+        <p className="mt-1 text-sm text-[var(--t2)]">
+          {`+${profile.phone.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})(\d{2})$/, "$1 ($2) $3-$4-$5")}`}
+        </p>
+      ) : (
+        !user.email?.includes("@phone.shineshop.local") && (
+          <p className="mt-1 text-sm text-[var(--t2)]">{user.email}</p>
+        )
+      )}
 
       {/* B2B info banner */}
       {profile?.is_b2b && (
@@ -169,6 +177,10 @@ export default async function AccountPage() {
             lastName: profile?.last_name || "",
             phone: profile?.phone || "",
             company: profile?.company || "",
+            email: profile?.email || "",
+            city: profile?.city || "",
+            npBranch: profile?.np_branch || "",
+            address: profile?.address || "",
           }}
         />
       </div>

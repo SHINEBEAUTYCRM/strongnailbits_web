@@ -227,22 +227,15 @@ async function handleContactShared(
       return;
     }
 
-    // Phone verified — check if profile already exists
-    const phoneVariantsList = [
-      rawContactPhone,
-      rawContactPhone.startsWith("38") ? rawContactPhone.slice(2) : rawContactPhone,
-      rawContactPhone.startsWith("380") ? rawContactPhone.slice(3) : rawContactPhone,
-      `+${rawContactPhone}`,
-      `+38${rawContactPhone}`,
-      `+380${rawContactPhone}`,
-    ].filter((v) => v.length >= 9);
+    // Phone verified — check if profile already exists (match by last 9 digits)
+    const last9 = rawContactPhone.slice(-9);
 
-    const { data: existingProfile } = await supabase
+    const { data: allMatchingProfiles } = await supabase
       .from("profiles")
-      .select("id, first_name")
-      .in("phone", phoneVariantsList)
-      .limit(1)
-      .maybeSingle();
+      .select("id, first_name, phone, telegram_chat_id")
+      .or(`phone.like.%${last9}`);
+
+    const existingProfile = allMatchingProfiles?.[0] || null;
 
     if (existingProfile) {
       await supabase
@@ -269,12 +262,15 @@ async function handleContactShared(
       return;
     }
 
-    // Create new profile
-    const normalizedPhone = rawContactPhone.startsWith("380")
-      ? rawContactPhone
-      : rawContactPhone.startsWith("0")
-        ? "38" + rawContactPhone
-        : rawContactPhone;
+    // Create new profile — always store as 380XXXXXXXXX
+    const normalizedPhone = (() => {
+      const digits = rawContactPhone.replace(/\D/g, "");
+      if (digits.startsWith("380") && digits.length === 12) return digits;
+      if (digits.startsWith("80") && digits.length === 11) return "3" + digits;
+      if (digits.startsWith("0") && digits.length === 10) return "38" + digits;
+      if (digits.length === 9) return "380" + digits;
+      return digits;
+    })();
 
     const { data: newProfile, error: profileError } = await supabase
       .from("profiles")

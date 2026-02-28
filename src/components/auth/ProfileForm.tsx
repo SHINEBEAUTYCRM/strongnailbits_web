@@ -11,6 +11,10 @@ interface ProfileFormProps {
     lastName: string;
     phone: string;
     company: string;
+    email: string;
+    city: string;
+    npBranch: string;
+    address: string;
   };
 }
 
@@ -19,6 +23,12 @@ export function ProfileForm({ userId, initialData }: ProfileFormProps) {
   const [lastName, setLastName] = useState(initialData.lastName);
   const [phone, setPhone] = useState(initialData.phone);
   const [company, setCompany] = useState(initialData.company);
+  const [email, setEmail] = useState(
+    initialData.email?.includes("@phone.shineshop.local") ? "" : (initialData.email || ""),
+  );
+  const [city, setCity] = useState(initialData.city);
+  const [npBranch, setNpBranch] = useState(initialData.npBranch);
+  const [address, setAddress] = useState(initialData.address);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +48,10 @@ export function ProfileForm({ userId, initialData }: ProfileFormProps) {
           last_name: lastName,
           phone,
           company,
+          email: email || null,
+          city: city || null,
+          np_branch: npBranch || null,
+          address: address || null,
         })
         .eq("id", userId);
 
@@ -100,6 +114,22 @@ export function ProfileForm({ userId, initialData }: ProfileFormProps) {
 
       <div>
         <label className="mb-1 block text-xs font-medium text-[var(--t2)]">
+          Email
+        </label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="your@email.com"
+          className="h-11 w-full rounded-[10px] border border-[var(--border)] bg-pearl px-3 text-sm text-dark outline-none transition-colors focus:border-coral"
+        />
+        <p className="mt-1 text-[11px] text-[var(--t3)]">
+          Для отримання чеків та повідомлень
+        </p>
+      </div>
+
+      <div>
+        <label className="mb-1 block text-xs font-medium text-[var(--t2)]">
           Компанія
         </label>
         <input
@@ -109,6 +139,55 @@ export function ProfileForm({ userId, initialData }: ProfileFormProps) {
           className="h-11 w-full rounded-[10px] border border-[var(--border)] bg-pearl px-3 text-sm text-dark outline-none transition-colors focus:border-coral"
           placeholder="Назва салону / ФОП"
         />
+      </div>
+
+      {/* ── Доставка ── */}
+      <div className="border-t border-[var(--border)] pt-4 mt-2">
+        <p className="mb-3 text-xs font-semibold text-[var(--t2)] uppercase tracking-wider">
+          Доставка
+        </p>
+
+        <div className="mb-3">
+          <label className="mb-1 block text-xs font-medium text-[var(--t2)]">
+            Місто
+          </label>
+          <input
+            type="text"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            placeholder="Київ"
+            className="h-11 w-full rounded-[10px] border border-[var(--border)] bg-pearl px-3 text-sm text-dark outline-none transition-colors focus:border-coral"
+          />
+        </div>
+
+        <div className="mb-3">
+          <label className="mb-1 block text-xs font-medium text-[var(--t2)]">
+            Відділення Нової Пошти
+          </label>
+          <input
+            type="text"
+            value={npBranch}
+            onChange={(e) => setNpBranch(e.target.value)}
+            placeholder="Відділення №5, вул. Хрещатик 22"
+            className="h-11 w-full rounded-[10px] border border-[var(--border)] bg-pearl px-3 text-sm text-dark outline-none transition-colors focus:border-coral"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs font-medium text-[var(--t2)]">
+            Адреса доставки
+          </label>
+          <input
+            type="text"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            placeholder="вул. Шевченка 10, кв. 5"
+            className="h-11 w-full rounded-[10px] border border-[var(--border)] bg-pearl px-3 text-sm text-dark outline-none transition-colors focus:border-coral"
+          />
+          <p className="mt-1 text-[11px] text-[var(--t3)]">
+            Для адресної доставки кур&apos;єром
+          </p>
+        </div>
       </div>
 
       <button

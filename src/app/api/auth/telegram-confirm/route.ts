@@ -51,14 +51,25 @@ export async function POST(request: NextRequest) {
 
       const fakeEmail = `${profile.phone.replace(/\D/g, "")}@phone.shineshop.local`;
 
-      const {
-        data: { users },
-      } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+      // Check if auth user already exists (by email or phone)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let authUser = users.find((u: any) => u.email === fakeEmail || u.phone === profile.phone);
+      let authUser: any = null;
+      try {
+        const { data: byEmail } = await supabase.auth.admin.getUserByEmail(fakeEmail);
+        authUser = byEmail?.user || null;
+      } catch { /* not found */ }
 
       if (!authUser) {
+        try {
+          const { data: byPhone } = await supabase.auth.admin.getUserByPhone(profile.phone);
+          authUser = byPhone?.user || null;
+        } catch { /* not found */ }
+      }
+
+      if (!authUser) {
+        // Create auth user with SAME ID as profile — links them automatically
         const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+          id: profile.id,
           email: fakeEmail,
           phone: profile.phone,
           email_confirm: true,
@@ -67,13 +78,14 @@ export async function POST(request: NextRequest) {
           user_metadata: { phone: profile.phone },
         });
         if (createError) {
-          console.error("[ClientAuthConfirm] Create user error:", createError);
+          console.error("[TelegramConfirm] Create user error:", createError);
           return NextResponse.json({ error: "Помилка створення акаунту" }, { status: 500 });
         }
         authUser = newUser.user;
-
-        await supabase.from("profiles").update({ id: authUser!.id }).eq("id", profile.id);
       }
+
+      // Update profile email to match auth user
+      await supabase.from("profiles").update({ email: fakeEmail }).eq("id", profile.id);
 
       const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
         type: "magiclink",
@@ -107,12 +119,19 @@ export async function POST(request: NextRequest) {
 
     const fakeEmail = `${profile.phone}@phone.shineshop.local`;
 
-    const {
-      data: { users },
-    } = await supabase.auth.admin.listUsers({ perPage: 1000 });
-    const existingUser = users.find(
-      (u) => u.email === fakeEmail || u.phone === profile.phone,
-    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let existingUser: any = null;
+    try {
+      const { data: byEmail } = await supabase.auth.admin.getUserByEmail(fakeEmail);
+      existingUser = byEmail?.user || null;
+    } catch { /* not found */ }
+
+    if (!existingUser) {
+      try {
+        const { data: byPhone } = await supabase.auth.admin.getUserByPhone(profile.phone);
+        existingUser = byPhone?.user || null;
+      } catch { /* not found */ }
+    }
 
     if (!existingUser) {
       const { error: createError } = await supabase.auth.admin.createUser({
