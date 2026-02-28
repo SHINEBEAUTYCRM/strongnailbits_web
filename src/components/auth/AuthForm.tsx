@@ -635,20 +635,43 @@ export function AuthForm({ mode, redirect }: AuthFormProps) {
             />
           </div>
           <p className="mt-1.5 text-[11px] text-[var(--t3)]">
-            Ми відправимо SMS з кодом підтвердження
+            Оберіть спосіб реєстрації
           </p>
         </div>
 
+        {/* Primary: Register via Telegram */}
         <button
-          type="submit"
+          type="button"
+          onClick={handleTelegramLogin}
           disabled={loading || phone.replace(/\D/g, "").length < 10}
           className="font-unbounded mt-1 flex h-12 w-full items-center justify-center gap-2 rounded-pill bg-coral text-[13px] font-bold text-white transition-all hover:bg-coral-2 hover:glow-coral disabled:opacity-60"
         >
           {loading ? (
             <Loader2 size={18} className="animate-spin" />
           ) : (
-            "Отримати код"
+            <>
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Зареєструватись через Telegram
+            </>
           )}
+        </button>
+
+        {/* Secondary: Register via SMS */}
+        <button
+          type="button"
+          onClick={() => handleSendOtp()}
+          disabled={loading || phone.replace(/\D/g, "").length < 10}
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-pill border border-[var(--border)] text-[13px] font-medium text-[var(--t2)] transition-all hover:border-coral hover:text-coral disabled:opacity-60"
+        >
+          Отримати SMS-код
         </button>
 
         <p className="text-center text-sm text-[var(--t2)]">
@@ -661,7 +684,7 @@ export function AuthForm({ mode, redirect }: AuthFormProps) {
             }}
             className="font-medium text-coral hover:text-coral-2"
           >
-            Увійти з паролем
+            Увійти
           </button>
         </p>
       </form>
