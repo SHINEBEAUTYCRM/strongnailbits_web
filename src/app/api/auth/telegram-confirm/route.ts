@@ -51,20 +51,14 @@ export async function POST(request: NextRequest) {
 
       const fakeEmail = `${profile.phone.replace(/\D/g, "")}@phone.shineshop.local`;
 
-      // Check if auth user already exists (by email or phone)
+      // Check if auth user already exists
+      const {
+        data: { users },
+      } = await supabase.auth.admin.listUsers({ perPage: 1000 });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let authUser: any = null;
-      try {
-        const { data: byEmail } = await supabase.auth.admin.getUserByEmail(fakeEmail);
-        authUser = byEmail?.user || null;
-      } catch { /* not found */ }
-
-      if (!authUser) {
-        try {
-          const { data: byPhone } = await supabase.auth.admin.getUserByPhone(profile.phone);
-          authUser = byPhone?.user || null;
-        } catch { /* not found */ }
-      }
+      let authUser: any = users.find(
+        (u: any) => u.email === fakeEmail || u.phone === profile.phone,
+      ) || null;
 
       if (!authUser) {
         // Create auth user with SAME ID as profile — links them automatically
@@ -119,19 +113,12 @@ export async function POST(request: NextRequest) {
 
     const fakeEmail = `${profile.phone}@phone.shineshop.local`;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let existingUser: any = null;
-    try {
-      const { data: byEmail } = await supabase.auth.admin.getUserByEmail(fakeEmail);
-      existingUser = byEmail?.user || null;
-    } catch { /* not found */ }
-
-    if (!existingUser) {
-      try {
-        const { data: byPhone } = await supabase.auth.admin.getUserByPhone(profile.phone);
-        existingUser = byPhone?.user || null;
-      } catch { /* not found */ }
-    }
+    const {
+      data: { users: loginUsers },
+    } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+    const existingUser = loginUsers.find(
+      (u) => u.email === fakeEmail || u.phone === profile.phone,
+    );
 
     if (!existingUser) {
       const { error: createError } = await supabase.auth.admin.createUser({
