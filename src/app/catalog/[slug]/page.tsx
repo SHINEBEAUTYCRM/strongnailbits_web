@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import * as Sentry from "@sentry/nextjs";
+// TODO: re-add @sentry/nextjs when compatible with next@16
 import Link from "next/link";
 import type { Metadata } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -52,9 +52,7 @@ async function getCategory(slug: string) {
     .maybeSingle();
 
   if (error) {
-    Sentry.captureException(new Error(`Category lookup failed: ${error.message}`), {
-      extra: { slug, code: error.code, details: error.details },
-    });
+    console.error(`[Catalog] Category lookup failed:`, error.message, { slug });
   }
   return data as CategoryRow | null;
 }
@@ -70,9 +68,7 @@ async function getDescendantIds(categoryId: string): Promise<string[]> {
     .eq("status", "active");
 
   if (error) {
-    Sentry.captureException(new Error(`getDescendantIds failed: ${error.message}`), {
-      extra: { categoryId, code: error.code },
-    });
+    console.error(`[Catalog] getDescendantIds failed:`, error.message, { categoryId });
   }
 
   if (!allCats) return [categoryId];
@@ -118,7 +114,7 @@ async function getMergedCategoryIds(categoryId: string): Promise<string[]> {
     ids.delete(categoryId);
     return Array.from(ids);
   } catch (error) {
-    Sentry.captureException(error, { extra: { categoryId } });
+    console.error(`[Catalog] getDescendantIds error:`, error, { categoryId });
     return [];
   }
 }
@@ -157,9 +153,7 @@ async function buildBreadcrumbs(category: CategoryRow, lang: Lang): Promise<Brea
     crumbs.push({ label: localizedName(category, lang) });
     return crumbs;
   } catch (error) {
-    Sentry.captureException(error, {
-      extra: { categorySlug: category.slug, categoryId: category.id },
-    });
+    console.error(`[Catalog] Breadcrumbs error:`, error, { slug: category.slug });
     return [{ label: localizedName(category, lang) }];
   }
 }
@@ -214,19 +208,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
       }
     }
 
-    Sentry.captureMessage(`Category 404: /catalog/${slug}`, {
-      level: "warning",
-      extra: {
-        slug,
-        fallbackSlugTried: fallbackSlug,
-        baseSlugTried: baseSlug !== slug ? baseSlug : null,
-        timestamp: new Date().toISOString(),
-      },
-      tags: {
-        page: "catalog_category",
-        error_type: "category_not_found",
-      },
-    });
+    console.warn(`[Catalog] Category 404: /catalog/${slug}`, { fallbackSlug, baseSlug });
 
     notFound();
   }
