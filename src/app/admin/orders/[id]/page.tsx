@@ -119,7 +119,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                     </td>
                     <td className="px-5 py-3 text-right font-mono tabular-nums" style={{ color: "var(--a-text-2)" }}>{fmt(item.price)} ₴</td>
                     <td className="px-5 py-3 text-center font-mono tabular-nums" style={{ color: "var(--a-text-3)" }}>×{item.quantity}</td>
-                    <td className="px-5 py-3 text-right font-mono tabular-nums font-medium" style={{ color: "var(--a-text-body)" }}>{fmt(item.total)} ₴</td>
+                    <td className="px-5 py-3 text-right font-mono tabular-nums font-medium" style={{ color: "var(--a-text-body)" }}>{fmt(item.total ?? item.price * item.quantity)} ₴</td>
                   </tr>
                 ))}
               </tbody>
