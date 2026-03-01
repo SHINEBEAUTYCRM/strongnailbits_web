@@ -40,6 +40,9 @@ async function getRedirectMap(): Promise<Map<string, { to_path: string; code: nu
 /** Public auth routes — no admin check needed */
 const AUTH_ROUTES = ["/account", "/login", "/register"];
 
+/** OAuth callback — must be publicly accessible */
+const OAUTH_CALLBACK = "/auth/callback";
+
 /** Admin routes that DON'T require admin auth */
 const ADMIN_PUBLIC = ["/admin/login", "/admin/register", "/admin/unauthorized", "/admin/reset-password"];
 
@@ -88,6 +91,11 @@ export async function middleware(request: NextRequest) {
       const url = new URL(match.to_path, request.url);
       return NextResponse.redirect(url, match.code as 301 | 302);
     }
+  }
+
+  // ── OAuth callback — let it through without auth check ──
+  if (pathname.startsWith(OAUTH_CALLBACK)) {
+    return NextResponse.next({ request });
   }
 
   // ── Fast path: skip for static assets ──
