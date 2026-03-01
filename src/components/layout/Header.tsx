@@ -21,6 +21,7 @@ import { useWishlistStore } from "@/lib/store/wishlist";
 import { useCategoryTree, type CatNode } from "@/hooks/useCategoryTree";
 import { useLanguage } from "@/hooks/useLanguage";
 import { LanguageSwitcher, LanguageSwitcherMini } from "@/components/ui/LanguageSwitcher";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import type { SiteContacts } from "@/lib/site-settings";
 
 const CartDrawer = dynamic(
@@ -150,8 +151,10 @@ export function Header({ contacts }: HeaderProps) {
       {/*  STICKY HEADER                              */}
       {/* ═══════════════════════════════════════════ */}
       <header
-        className={`sticky top-0 z-50 bg-white transition-shadow duration-300 ${
-          scrolled ? "shadow-[0_2px_20px_rgba(0,0,0,0.06)]" : ""
+        className={`sticky top-0 z-50 transition-all duration-300 ${
+          scrolled
+            ? "bg-[var(--card)]/80 shadow-[0_2px_20px_rgba(0,0,0,0.06)] backdrop-blur-2xl"
+            : "bg-[var(--card)] backdrop-blur-none"
         }`}
       >
         {/* ── Desktop ── */}
@@ -203,6 +206,7 @@ export function Header({ contacts }: HeaderProps) {
 
           {/* Actions */}
           <div className="flex shrink-0 items-center gap-1">
+            <ThemeToggle />
             <LanguageSwitcher />
 
             <Link

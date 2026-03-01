@@ -92,17 +92,17 @@ export function ProductCard({
   return (
     <Link
       href={`/product/${slug}`}
-      className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.10)]"
+      className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-[var(--card)] shadow-[0_1px_4px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.12)]"
     >
       {/* ── Image area ── */}
-      <div className="relative aspect-square overflow-hidden bg-[#f5f5f7]">
+      <div className="relative aspect-square overflow-hidden bg-[var(--bg)]">
         {imageUrl ? (
           <Image
             src={imageUrl}
             alt={name}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-contain p-5 transition-transform duration-500 group-hover:scale-105"
+            className="object-contain p-5 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.08]"
             priority={priority}
             loading={priority ? "eager" : "lazy"}
           />
@@ -114,7 +114,7 @@ export function ProductCard({
 
         {/* Out of stock */}
         {!isAvailable && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/75">
+          <div className="absolute inset-0 flex items-center justify-center bg-white/75 backdrop-blur-[2px]">
             <span className="rounded-full bg-[#999] px-3 py-1 text-[11px] font-semibold text-white">
               Немає в наявності
             </span>
@@ -124,7 +124,7 @@ export function ProductCard({
         {/* ── Badges top-left ── */}
         <div className="absolute left-2.5 top-2.5 flex flex-col gap-1">
           {hasDiscount && (
-            <span className="rounded-lg bg-coral px-2.5 py-1 text-[11px] font-bold leading-none text-white">
+            <span className="badge-pulse rounded-lg bg-coral px-2.5 py-1 text-[11px] font-bold leading-none text-white">
               -{discountPct}%
             </span>
           )}
@@ -163,10 +163,10 @@ export function ProductCard({
               isInWishlist ? "Видалено з обраного" : "Додано в обране",
             );
           }}
-          className={`absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200 ${
+          className={`absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95 ${
             mounted && isInWishlist
               ? "bg-coral text-white shadow-md"
-              : "bg-white text-[#6e6e7a] shadow-sm hover:text-coral"
+              : "bg-[var(--card)] text-[var(--t3)] shadow-sm hover:text-coral"
           }`}
           aria-label={
             isInWishlist ? "Видалити з обраного" : "Додати в обране"
@@ -189,7 +189,7 @@ export function ProductCard({
         )}
 
         {/* Name */}
-        <h3 className="line-clamp-2 min-h-[2.4rem] text-[13px] leading-snug text-[#1a1a1a] transition-colors duration-200 group-hover:text-coral">
+        <h3 className="line-clamp-2 min-h-[2.4rem] text-[13px] leading-snug text-[var(--t)] transition-colors duration-200 group-hover:text-coral">
           {name}
         </h3>
 
@@ -210,7 +210,7 @@ export function ProductCard({
             )}
             <span
               className={`font-price text-[17px] font-bold leading-tight ${
-                hasDiscount ? "text-coral" : "text-[#1a1a1a]"
+                hasDiscount ? "text-coral" : "text-[var(--t)]"
               }`}
             >
               {fmtPrice(price)}&thinsp;₴
@@ -223,8 +223,8 @@ export function ProductCard({
               onClick={handleAdd}
               className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 ${
                 added
-                  ? "bg-green text-white"
-                  : "bg-coral text-white shadow-sm hover:shadow-md active:scale-95"
+                  ? "scale-110 bg-green text-white shadow-md"
+                  : "bg-coral text-white shadow-sm hover:shadow-md hover:brightness-110 active:scale-95"
               }`}
               aria-label="Купити"
             >

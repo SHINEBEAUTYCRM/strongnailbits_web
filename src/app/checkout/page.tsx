@@ -22,6 +22,7 @@ import { NPCitySearch } from "@/components/checkout/NPCitySearch";
 import { NPWarehouseSelect } from "@/components/checkout/NPWarehouseSelect";
 import { NPStreetSearch } from "@/components/checkout/NPStreetSearch";
 import { NPDeliveryCost } from "@/components/checkout/NPDeliveryCost";
+import { CheckoutProgress } from "@/components/checkout/CheckoutProgress";
 
 interface FormData {
   firstName: string;
@@ -137,14 +138,14 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-card border border-[var(--border)] bg-white p-5 sm:p-6">
+    <div data-checkout-step={step} className="rounded-card border border-[var(--border)] bg-[var(--card)] p-5 transition-all duration-300 sm:p-6">
       <div className="mb-5 flex items-center gap-3">
         <div className="font-unbounded flex h-8 w-8 items-center justify-center rounded-full bg-coral text-xs font-bold text-white">
           {step}
         </div>
         <div className="flex items-center gap-2">
           <Icon size={16} className="text-coral" />
-          <h2 className="font-unbounded text-sm font-bold text-dark">{title}</h2>
+          <h2 className="font-unbounded text-sm font-bold text-[var(--t)]">{title}</h2>
         </div>
       </div>
       {children}
@@ -207,8 +208,28 @@ export default function CheckoutPage() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
+  const [activeStep, setActiveStep] = useState(1);
 
   useEffect(() => setMounted(true), []);
+
+  // Track which section is in view for progress indicator
+  useEffect(() => {
+    const sections = formRef.current?.querySelectorAll("[data-checkout-step]");
+    if (!sections?.length) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const step = Number((entry.target as HTMLElement).dataset.checkoutStep);
+            if (step) setActiveStep(step);
+          }
+        }
+      },
+      { threshold: 0.3, rootMargin: "-100px 0px -50% 0px" },
+    );
+    sections.forEach((s) => observer.observe(s));
+    return () => observer.disconnect();
+  }, [mounted]);
 
   useEffect(() => {
     async function loadProfile() {
@@ -435,9 +456,11 @@ export default function CheckoutPage() {
         <ChevronLeft size={16} /> Продовжити покупки
       </Link>
 
-      <h1 className="font-unbounded mb-8 text-2xl font-black text-dark sm:text-3xl">
+      <h1 className="font-unbounded mb-4 text-2xl font-black text-[var(--t)] sm:text-3xl">
         Оформлення замовлення
       </h1>
+
+      <CheckoutProgress activeStep={activeStep} />
 
       {errors._form && (
         <div className="mb-6 rounded-card border border-red/20 bg-red/5 px-4 py-3 text-sm text-red">

@@ -52,6 +52,25 @@
   --border: #f0f0f0;
 }
 
+/* ── Dark mode ── */
+html.dark {
+  --bg: #0A0A0A;
+  --bg2: #1C1C1E;
+  --card: #1C1C1E;
+  --coral: #FF4D6D;
+  --coral2: #D6264A;
+  --violet: #A78BFA;
+  --dark: #F5F5F7;
+  --t: #F5F5F7;
+  --t2: #A1A1AA;
+  --t3: #71717A;
+  --green: #4ADE80;
+  --amber: #FBBF24;
+  --red: #F87171;
+  --border: #38383A;
+  color-scheme: dark;
+}
+
 /* ================================================================ */
 /*  Base                                                              */
 /* ================================================================ */
@@ -65,6 +84,7 @@ html {
 body {
   background: var(--bg);
   color: var(--t);
+  transition: background-color 0.3s ease, color 0.3s ease;
   font-family: var(--font-inter), "Inter", system-ui, sans-serif;
   min-height: 100dvh;
   overflow-x: hidden;
@@ -222,6 +242,49 @@ body {
 
 .sale-dot {
   animation: sale-pulse 2s ease-in-out infinite;
+}
+
+/* ================================================================ */
+/*  Skeleton shimmer                                                   */
+/* ================================================================ */
+
+@keyframes skeleton-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #EBEBF0 25%,
+    rgba(255,255,255,0.5) 50%,
+    #EBEBF0 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+html.dark .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #2C2C2E 25%,
+    rgba(255,255,255,0.08) 50%,
+    #2C2C2E 75%
+  );
+  background-size: 200% 100%;
+}
+
+/* ================================================================ */
+/*  Discount badge pulse                                               */
+/* ================================================================ */
+
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.badge-pulse {
+  animation: badge-pulse 2s ease-in-out infinite;
 }
 
 /* ================================================================ */

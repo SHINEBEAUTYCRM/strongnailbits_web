@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { ProfileForm } from "@/components/auth/ProfileForm";
+import { DashboardMetrics } from "@/components/account/DashboardMetrics";
 import Link from "next/link";
 import { Package, LogOut, Heart, ChevronRight, Star, FileText, Wallet } from "lucide-react";
 
@@ -27,6 +28,15 @@ export default async function AccountPage() {
     .select("id", { count: "exact", head: true })
     .eq("profile_id", user.id);
 
+  const { data: orderTotals } = await supabase
+    .from("orders")
+    .select("total")
+    .eq("profile_id", user.id);
+
+  const totalSpent = Math.round(
+    (orderTotals ?? []).reduce((acc, o) => acc + (Number(o.total) || 0), 0),
+  );
+
   return (
     <div className="mx-auto max-w-[800px] px-4 py-8 sm:px-6">
       <h1 className="font-unbounded text-2xl font-black text-dark">
@@ -44,32 +54,34 @@ export default async function AccountPage() {
 
       {/* B2B info banner */}
       {profile?.is_b2b && (
-        <div className="mt-6 rounded-2xl border border-violet/20 bg-violet/5 p-5">
+        <div className="mt-6 space-y-4">
           <div className="flex items-center gap-3 flex-wrap">
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-violet/10 text-violet">B2B</span>
-            {profile.company && <span className="text-sm font-medium text-dark">{profile.company}</span>}
+            {profile.company && <span className="text-sm font-medium text-[var(--t)]">{profile.company}</span>}
             {profile.manager_name && <span className="text-xs text-[var(--t2)]">Менеджер: {profile.manager_name}</span>}
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
-            <div>
-              <p className="text-[10px] uppercase text-[var(--t3)]">Бонуси</p>
-              <p className="text-lg font-bold text-dark">{Number(profile.loyalty_points ?? 0).toFixed(0)}</p>
-            </div>
-            <div>
-              <p className="text-[10px] uppercase text-[var(--t3)]">Баланс</p>
-              <p className="text-lg font-bold" style={{ color: Number(profile.balance ?? 0) < 0 ? "#dc2626" : "#16a34a" }}>
-                {Number(profile.balance ?? 0).toLocaleString("uk-UA")} ₴
-              </p>
-            </div>
-            <div>
-              <p className="text-[10px] uppercase text-[var(--t3)]">Кредит ліміт</p>
-              <p className="text-lg font-bold text-dark">{Number(profile.credit_limit ?? 0).toLocaleString("uk-UA")} ₴</p>
-            </div>
-            <div>
-              <p className="text-[10px] uppercase text-[var(--t3)]">Знижка</p>
-              <p className="text-lg font-bold text-dark">{Number(profile.discount_percent ?? 0)}%</p>
-            </div>
-          </div>
+          <DashboardMetrics
+            ordersCount={orderCount ?? 0}
+            totalSpent={totalSpent}
+            bonusPoints={Number(profile.loyalty_points ?? 0)}
+            balance={Number(profile.balance ?? 0)}
+            discountPercent={Number(profile.discount_percent ?? 0)}
+            creditLimit={Number(profile.credit_limit ?? 0)}
+          />
+        </div>
+      )}
+
+      {/* Non-B2B metrics */}
+      {!profile?.is_b2b && (
+        <div className="mt-6">
+          <DashboardMetrics
+            ordersCount={orderCount ?? 0}
+            totalSpent={totalSpent}
+            bonusPoints={Number(profile?.loyalty_points ?? 0)}
+            balance={0}
+            discountPercent={0}
+            creditLimit={0}
+          />
         </div>
       )}
 
