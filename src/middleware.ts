@@ -38,7 +38,7 @@ async function getRedirectMap(): Promise<Map<string, { to_path: string; code: nu
 }
 
 /** Public auth routes — no admin check needed */
-const AUTH_ROUTES = ["/account", "/login", "/register", "/link-phone"];
+const AUTH_ROUTES = ["/account", "/login", "/register"];
 
 /** OAuth callback — must be publicly accessible */
 const OAUTH_CALLBACK = "/auth/callback";
@@ -173,7 +173,7 @@ export async function middleware(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user && (pathname.startsWith("/account") || pathname === "/link-phone")) {
+    if (!user && pathname.startsWith("/account")) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       url.searchParams.set("redirect", pathname);

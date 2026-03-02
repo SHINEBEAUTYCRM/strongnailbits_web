@@ -32,20 +32,6 @@ export async function GET(request: Request) {
 
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      // Check if user has a phone in their profile
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("phone")
-          .eq("id", user.id)
-          .single();
-
-        // No profile or no phone → need to link phone number
-        if (!profile?.phone) {
-          return NextResponse.redirect(`${origin}/link-phone`);
-        }
-      }
       return NextResponse.redirect(`${origin}${next}`);
     }
   }

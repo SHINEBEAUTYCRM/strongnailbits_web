@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { ProfileForm } from "@/components/auth/ProfileForm";
 import { DashboardMetrics } from "@/components/account/DashboardMetrics";
+import { LinkPhoneForm } from "@/components/auth/LinkPhoneForm";
 import Link from "next/link";
 import { Package, LogOut, Heart, ChevronRight, Star, FileText, Wallet } from "lucide-react";
 
@@ -22,6 +23,27 @@ export default async function AccountPage() {
     .select("*")
     .eq("id", user.id)
     .single();
+
+  // Apple Sign-In user without phone → show phone linking form
+  if (!profile?.phone) {
+    return (
+      <div className="mx-auto flex min-h-[60vh] max-w-md items-center px-4 py-12">
+        <div className="w-full">
+          <div className="mb-8 text-center">
+            <h1 className="font-unbounded text-2xl font-black text-dark">
+              Останній крок
+            </h1>
+            <p className="mt-2 text-sm text-[var(--t2)]">
+              Вкажіть номер телефону для завершення реєстрації
+            </p>
+          </div>
+          <div className="rounded-2xl border border-[var(--border)] bg-white p-6 shadow-sm">
+            <LinkPhoneForm />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const { count: orderCount } = await supabase
     .from("orders")
