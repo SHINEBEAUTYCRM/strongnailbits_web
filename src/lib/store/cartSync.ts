@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useCartStore } from "./cart";
 import type { CartItem } from "@/types/cart";
+import type { Session, AuthChangeEvent } from "@supabase/supabase-js";
 
 const TABLE = "carts";
 
@@ -81,7 +82,7 @@ export function useCartSync() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
       const userId = session?.user?.id;
 
       if (event === "SIGNED_IN" && userId && !didSync.current) {
@@ -118,7 +119,7 @@ export function useCartSync() {
     });
 
     let unsub: (() => void) | undefined;
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(({ data }: { data: { user: { id: string } | null } }) => {
       const userId = data.user?.id;
       if (!userId) return;
 
