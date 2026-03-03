@@ -187,9 +187,12 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // Safety-net: if email is NULL, build fallback from phone
+      const loginEmail = profile.email || `${phone}@phone.shineshop.local`;
+
       return NextResponse.json({
         success: true,
-        loginEmail: profile.email,
+        loginEmail,
       });
     }
 
@@ -250,6 +253,9 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // Safety-net: if email is NULL, build fallback from phone
+      const loginEmail = profile.email || `${phone}@phone.shineshop.local`;
+
       // Generate a temporary password and set it, then return credentials
       const tempPassword = crypto.randomUUID();
 
@@ -268,7 +274,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        loginEmail: profile.email,
+        loginEmail,
         tempPassword,
       });
     }
