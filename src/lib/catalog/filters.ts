@@ -74,6 +74,8 @@ export interface ChildCategoryInfo {
   id: string;
   slug: string;
   name_uk: string;
+  name_ru: string | null;
+  product_count: number;
 }
 
 export interface CategoryScopeData {
@@ -136,20 +138,27 @@ export async function getCategoryScopeData(
   // Direct children for sidebar
   const directChildren = byParent.get(csCartId) ?? [];
 
-  // Recursive check: does this category have any products in its subtree?
-  function hasProductsInSubtree(catCsCartId: number, seen = new Set<number>()): boolean {
-    if (seen.has(catCsCartId)) return false;
+  // Sum product_count across entire subtree (self + all descendants)
+  function subtreeProductCount(catCsCartId: number, seen = new Set<number>()): number {
+    if (seen.has(catCsCartId)) return 0;
     seen.add(catCsCartId);
     const cat = catMap.get(catCsCartId);
-    if (!cat) return false;
-    if (cat.product_count > 0) return true;
+    if (!cat) return 0;
+    let total = cat.product_count;
     const kids = byParent.get(catCsCartId) ?? [];
-    return kids.some((k) => hasProductsInSubtree(k.cs_cart_id, seen));
+    for (const k of kids) total += subtreeProductCount(k.cs_cart_id, seen);
+    return total;
   }
 
   const children: ChildCategoryInfo[] = directChildren
-    .filter((c) => hasProductsInSubtree(c.cs_cart_id))
-    .map((c) => ({ id: c.id, slug: c.slug, name_uk: c.name_uk }));
+    .map((c) => ({
+      id: c.id,
+      slug: c.slug,
+      name_uk: c.name_uk,
+      name_ru: c.name_ru,
+      product_count: subtreeProductCount(c.cs_cart_id),
+    }))
+    .filter((c) => c.product_count > 0);
 
   return { descendantIds, children };
 }

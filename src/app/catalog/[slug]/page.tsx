@@ -19,6 +19,7 @@ import {
   fetchCategoryFilters,
 } from "@/lib/catalog/filters";
 import { getLanguage, localizedName, type Lang } from "@/lib/language";
+import { SubcategoryList } from "@/components/catalog/SubcategoryList";
 
 /** ISR: revalidate category pages every 2 minutes */
 export const revalidate = 120;
@@ -248,23 +249,6 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     <div className="mx-auto max-w-[1280px] px-4 py-6 sm:px-6 sm:py-8">
       <Breadcrumbs items={breadcrumbs} />
 
-      {/* Mobile subcategory pills */}
-      {children.length > 0 && (
-        <div className="-mx-4 mb-4 px-4 lg:hidden">
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-              {children.map((child) => (
-              <Link
-                key={child.id}
-                href={`/catalog/${child.slug}`}
-                className="shrink-0 rounded-pill border border-[var(--border)] bg-white px-4 py-2 text-xs font-medium text-[var(--t2)] transition-all hover:border-coral hover:text-coral"
-              >
-                {localizedName(child, lang)}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-
       <div className="flex gap-8">
         {/* Sidebar */}
         <aside className="hidden w-60 shrink-0 lg:block">
@@ -279,9 +263,10 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                     <li key={child.id}>
                       <Link
                         href={`/catalog/${child.slug}`}
-                        className="block border-b border-[var(--border)] py-1.5 text-sm text-[var(--t2)] transition-colors hover:text-coral"
+                        className="flex items-center justify-between border-b border-[var(--border)] py-1.5 text-sm text-[var(--t2)] transition-colors hover:text-coral"
                       >
-                        {localizedName(child, lang)}
+                        <span>{localizedName(child, lang)}</span>
+                        <span className="ml-2 text-xs text-[var(--t3)]">{child.product_count}</span>
                       </Link>
                     </li>
                   ))}
@@ -306,7 +291,16 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
             <h1 className="font-unbounded text-2xl font-black text-dark sm:text-3xl">
               {localizedName(category, lang)}
             </h1>
+            {total > 0 && (
+              <p className="mt-1 text-sm text-[var(--t3)]">
+                {total} {getProductWord(total)}
+              </p>
+            )}
           </div>
+
+          {children.length > 0 && (
+            <SubcategoryList children={children} lang={lang} />
+          )}
 
           <CatalogToolbar
             total={total}
