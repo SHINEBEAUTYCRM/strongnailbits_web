@@ -14,6 +14,8 @@ interface CartDrawerProps {
 
 export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const items = useCartStore((s) => s.items);
+  const hydrating = useCartStore((s) => s.hydrating);
+  const hydrateCart = useCartStore((s) => s.hydrateCart);
   const removeItem = useCartStore((s) => s.removeItem);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const getTotal = useCartStore((s) => s.getTotal);
@@ -30,6 +32,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
         requestAnimationFrame(() => setVisible(true));
       });
       document.body.style.overflow = "hidden";
+      hydrateCart();
     } else {
       setVisible(false);
       const timer = setTimeout(() => setMounted(false), 300);
@@ -37,7 +40,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
       return () => clearTimeout(timer);
     }
     return () => { document.body.style.overflow = ""; };
-  }, [open]);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const total = getTotal();
   const count = getCount();
@@ -81,7 +84,25 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
         </div>
 
         {/* Items */}
-        {items.length === 0 ? (
+        {hydrating ? (
+          <div className="flex-1 overflow-y-auto p-5">
+            <div className="flex flex-col gap-4">
+              {[...Array(items.length || 2)].map((_, i) => (
+                <div key={i} className="flex gap-3 rounded-card border border-[var(--border)] bg-white p-3 animate-pulse">
+                  <div className="h-20 w-20 shrink-0 rounded-[10px] bg-sand" />
+                  <div className="flex flex-1 flex-col gap-2 py-1">
+                    <div className="h-3 w-3/4 rounded bg-sand" />
+                    <div className="h-3 w-1/2 rounded bg-sand" />
+                    <div className="mt-auto flex items-center justify-between">
+                      <div className="h-8 w-24 rounded-[10px] bg-sand" />
+                      <div className="h-4 w-16 rounded bg-sand" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : items.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-sand">
               <ShoppingBag size={32} strokeWidth={1.5} className="text-[var(--t3)]" />
@@ -184,7 +205,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
         )}
 
         {/* Footer */}
-        {items.length > 0 && (
+        {!hydrating && items.length > 0 && (
           <div className="border-t border-[var(--border)] p-5">
             <div className="mb-4 flex items-center justify-between">
               <span className="text-sm text-[var(--t2)]">
