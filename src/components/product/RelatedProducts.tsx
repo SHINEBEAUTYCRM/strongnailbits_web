@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getLanguage, localizedName } from "@/lib/language";
+import { getLanguage, localizedName } from "@/lib/language-server";
 import { RelatedCarousel } from "./RelatedCarousel";
 
 interface Props {

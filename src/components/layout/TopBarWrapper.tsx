@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { TopBar } from "@/components/home/TopBar";
-import { getLanguage } from "@/lib/language";
+import { getLanguage } from "@/lib/language-server";
 
 export async function TopBarWrapper() {
   try {
