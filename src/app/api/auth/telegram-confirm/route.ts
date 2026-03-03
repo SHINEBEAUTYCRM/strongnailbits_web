@@ -61,17 +61,10 @@ export async function POST(request: NextRequest) {
       const phone380 = normalizeTo380(profile.phone);
       const fakeEmail = `${phone380}@phone.shineshop.local`;
 
-      // Check if auth user already exists
-      const {
-        data: { users },
-      } = await supabase.auth.admin.listUsers({ perPage: 1000 });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let authUser: any = users.find(
-        (u: any) => u.email === fakeEmail || u.phone === profile.phone,
-      ) || null;
+      // Ensure auth user exists — check by profile.id (same as auth user id)
+      const { data: existingReg } = await supabase.auth.admin.getUserById(profile.id);
 
-      if (!authUser) {
-        // Create auth user with SAME ID as profile — links them automatically
+      if (!existingReg?.user) {
         const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
           id: profile.id,
           email: fakeEmail,
@@ -81,11 +74,13 @@ export async function POST(request: NextRequest) {
           password: crypto.randomUUID(),
           user_metadata: { phone: profile.phone },
         });
-        if (createError) {
+        if (createError && !createError.message.includes("already")) {
           console.error("[TelegramConfirm] Create user error:", createError);
           return NextResponse.json({ error: "Помилка створення акаунту" }, { status: 500 });
         }
-        authUser = newUser.user;
+        if (newUser?.user) {
+          // Use newUser
+        }
       }
 
       // Update profile email to match auth user
@@ -123,14 +118,10 @@ export async function POST(request: NextRequest) {
 
     const fakeEmail = `${normalizeTo380(profile.phone)}@phone.shineshop.local`;
 
-    const {
-      data: { users: loginUsers },
-    } = await supabase.auth.admin.listUsers({ perPage: 1000 });
-    const existingUser = loginUsers.find(
-      (u) => u.email === fakeEmail || u.phone === profile.phone,
-    );
+    // Ensure auth user exists — check by profile.id (same as auth user id)
+    const { data: existingById } = await supabase.auth.admin.getUserById(profile.id);
 
-    if (!existingUser) {
+    if (!existingById?.user) {
       const { error: createError } = await supabase.auth.admin.createUser({
         email: fakeEmail,
         phone: profile.phone,
@@ -139,11 +130,14 @@ export async function POST(request: NextRequest) {
         password: crypto.randomUUID(),
       });
 
-      if (createError) {
+      if (createError && !createError.message.includes("already")) {
         console.error("[ClientAuthConfirm] Create user error:", createError);
         return NextResponse.json({ error: "Помилка створення користувача" }, { status: 500 });
       }
     }
+
+    // Ensure profile has email set
+    await supabase.from("profiles").update({ email: fakeEmail }).eq("id", profile.id);
 
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: "magiclink",
