@@ -95,14 +95,26 @@ export const useCartStore = create<CartState>()(
 
           if (!products) return;
 
-          const productMap = new Map(products.map((p) => [p.id, p]));
+          interface HydratedProduct {
+            id: string;
+            name_uk: string;
+            slug: string;
+            price: number;
+            quantity: number;
+            sku: string | null;
+            images: string[] | null;
+          }
+
+          const productMap = new Map(
+            (products as HydratedProduct[]).map((p) => [p.id, p]),
+          );
 
           set((state) => ({
             items: state.items
               .filter((item) => productMap.has(item.product_id))
               .map((item) => {
                 const p = productMap.get(item.product_id)!;
-                const images = p.images as string[] | null;
+                const images = p.images;
                 return {
                   ...item,
                   name: p.name_uk || item.name,

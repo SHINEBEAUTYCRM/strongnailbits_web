@@ -78,6 +78,13 @@ export function Header({ contacts }: HeaderProps) {
     setMounted(true);
   }, []);
 
+  /* open cart from custom event (e.g. ReorderButton) */
+  useEffect(() => {
+    const handler = () => setCartOpen(true);
+    window.addEventListener("open-cart", handler);
+    return () => window.removeEventListener("open-cart", handler);
+  }, []);
+
   /* scroll → shadow */
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 10);
