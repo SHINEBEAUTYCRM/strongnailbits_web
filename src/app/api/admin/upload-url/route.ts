@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. Завантажити зображення
-    console.info(`[Upload URL] ${auth.user.email} завантажує: ${url.slice(0, 100)}`);
+    console.info(`[Upload URL] ${auth.user.name} завантажує: ${url.slice(0, 100)}`);
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT);

@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 6. Запит до PhotoRoom API
-    console.info(`[PhotoRoom] Запит від ${auth.user.email}, дія: ${describeAction(clientFormData)}`);
+    console.info(`[PhotoRoom] Запит від ${auth.user.name}, дія: ${describeAction(clientFormData)}`);
 
     const photoRoomRes = await fetch(PHOTOROOM_API, {
       method: 'POST',

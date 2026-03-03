@@ -1,55 +1,59 @@
-import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { SESSION_COOKIE } from "@/lib/admin/auth";
 
 /**
  * Verify that the current request comes from an authenticated admin/manager.
+ * Uses the custom admin_session cookie + admin_sessions/team_members tables.
  * Use in API routes: const check = await requireAdmin(); if (check.error) return check.error;
  */
 export async function requireAdmin(): Promise<
-  { user: { id: string; email: string; role: string }; error: null } |
+  { user: { id: string; name: string; role: string }; error: null } |
   { user: null; error: NextResponse }
 > {
   try {
     const cookieStore = await cookies();
+    const sessionToken = cookieStore.get(SESSION_COOKIE)?.value;
 
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options),
-              );
-            } catch (err) {
-              console.error('[AdminAuth:Require] Cookie set failed:', err);
-            }
-          },
-        },
-      },
-    );
-
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
+    if (!sessionToken) {
       return {
         user: null,
         error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
       };
     }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role, admin_approved")
-      .eq("id", user.id)
-      .single();
+    const supabase = createAdminClient();
 
-    if (!profile || !["admin", "manager"].includes(profile.role || "") || !profile.admin_approved) {
+    const { data: session } = await supabase
+      .from("admin_sessions")
+      .select("team_member_id, expires_at")
+      .eq("session_token", sessionToken)
+      .maybeSingle();
+
+    if (!session) {
+      return {
+        user: null,
+        error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+      };
+    }
+
+    if (new Date(session.expires_at) < new Date()) {
+      await supabase.from("admin_sessions").delete().eq("session_token", sessionToken);
+      return {
+        user: null,
+        error: NextResponse.json({ error: "Session expired" }, { status: 401 }),
+      };
+    }
+
+    const { data: member } = await supabase
+      .from("team_members")
+      .select("id, name, phone, role, is_active")
+      .eq("id", session.team_member_id)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (!member) {
       return {
         user: null,
         error: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
@@ -57,7 +61,7 @@ export async function requireAdmin(): Promise<
     }
 
     return {
-      user: { id: user.id, email: user.email || "", role: profile.role },
+      user: { id: member.id, name: member.name, role: member.role },
       error: null,
     };
   } catch (err) {

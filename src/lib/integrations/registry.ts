@@ -174,7 +174,7 @@ const freeUtilities: ServiceDefinition[] = [
     docsUrl: 'https://core.telegram.org/bots/api',
     requiredFields: [
       { key: 'bot_token', label: 'Bot Token', type: 'password', placeholder: '123456:ABC-DEF...', required: true },
-      { key: 'chat_id', label: 'Chat ID', type: 'text', placeholder: '-100123456789', required: true, helpText: 'ID чату або групи для сповіщень' },
+      { key: 'chat_id', label: 'Chat ID', type: 'text', placeholder: '-100123456789', required: false, helpText: 'ID чату або групи для сповіщень (можна додати пізніше)' },
       { key: 'bot_username', label: 'Bot Username', type: 'text', placeholder: 'shineshop_b2b_bot', required: false },
     ],
     envMapping: {
