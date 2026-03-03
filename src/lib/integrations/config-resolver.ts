@@ -64,8 +64,8 @@ function tryEnvFallback(slug: string): Record<string, string> | null {
   let hasAny = false;
 
   for (const [field, envVar] of Object.entries(service.envMapping)) {
-    const val = process.env[envVar];
-    if (val && val.trim().length > 0) {
+    const val = process.env[envVar]?.trim();
+    if (val && val.length > 0) {
       envConfig[field] = val;
       hasAny = true;
     }

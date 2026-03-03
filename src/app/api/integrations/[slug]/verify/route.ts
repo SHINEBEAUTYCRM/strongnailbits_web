@@ -85,6 +85,79 @@ export async function POST(
     }
   }
 
+  // —— Telegram: перевірка токена через getMe ——
+  if (slug === "telegram-bot" || slug === "telegram-admin") {
+    const botToken = config.bot_token || "";
+
+    if (!botToken) {
+      return NextResponse.json({
+        success: false,
+        message: "Bot Token не вказано. Створіть бота через @BotFather і вставте токен.",
+      });
+    }
+
+    try {
+      const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/getMe`, {
+        signal: AbortSignal.timeout(10000),
+      });
+      const tgData = await tgRes.json();
+
+      if (!tgData.ok) {
+        return NextResponse.json({
+          success: false,
+          message: `Telegram: невірний токен — ${tgData.description || "перевірте і спробуйте знову"}`,
+        });
+      }
+
+      // Автозаповнення bot_username якщо не вказано
+      if (!config.bot_username && tgData.result?.username) {
+        config.bot_username = tgData.result.username;
+      }
+
+      // Зберегти верифіковану конфігурацію
+      const integration = new SimpleKeyIntegration(slug, requiredKeys.length > 0 ? requiredKeys : Object.keys(config).filter(k => config[k]));
+      await integration.verifyAndSave(config);
+
+      const botName = tgData.result?.first_name || tgData.result?.username || "Bot";
+      let webhookMsg = "";
+
+      // Auto-set webhook for telegram-admin
+      if (slug === "telegram-admin") {
+        const webhookUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com"}/api/admin/auth/telegram-webhook`;
+        const whSecret = process.env.TELEGRAM_WEBHOOK_SECRET || "";
+        try {
+          const whBody: Record<string, unknown> = {
+            url: webhookUrl,
+            allowed_updates: ["message", "callback_query"],
+          };
+          if (whSecret) whBody.secret_token = whSecret;
+
+          const whRes = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(whBody),
+            signal: AbortSignal.timeout(10000),
+          });
+          const whData = await whRes.json();
+          webhookMsg = whData.ok ? " Webhook встановлено." : ` Webhook: ${whData.description}`;
+        } catch {
+          webhookMsg = " (Webhook не вдалось встановити)";
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `${botName} (@${tgData.result?.username}) підключено!${webhookMsg}`,
+        details: { bot_id: tgData.result?.id, username: tgData.result?.username },
+      });
+    } catch (err) {
+      return NextResponse.json({
+        success: false,
+        message: `Telegram: помилка з'єднання — ${err instanceof Error ? err.message : "timeout"}`,
+      });
+    }
+  }
+
   // —— Базова верифікація для інших сервісів ——
   try {
     const integration = new SimpleKeyIntegration(slug, requiredKeys);

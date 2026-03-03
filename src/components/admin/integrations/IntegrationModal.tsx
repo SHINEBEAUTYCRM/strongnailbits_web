@@ -5,10 +5,11 @@
 // ================================================================
 
 import { useState, useEffect, useCallback } from "react";
-import { X, ExternalLink, Check, AlertCircle, Loader2, RefreshCw } from "lucide-react";
+import { X, ExternalLink, Check, AlertCircle, Loader2, RefreshCw, Webhook, Globe } from "lucide-react";
 import type { ServiceDefinition, IntegrationStatusItem } from "@/lib/integrations/types";
 import { IntegrationStatus } from "./IntegrationStatus";
 import { IntegrationLogs } from "./IntegrationLogs";
+import { TelegramWebhookPanel } from "./TelegramWebhookPanel";
 
 /* ── Health data type ── */
 interface HealthData {
@@ -50,7 +51,7 @@ export function IntegrationModal({
   const [saving, setSaving] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [verifyResult, setVerifyResult] = useState<{ success: boolean; message: string } | null>(null);
-  const [activeTab, setActiveTab] = useState<"config" | "logs" | "health" | "events">("config");
+  const [activeTab, setActiveTab] = useState<"config" | "webhook" | "logs" | "health" | "events">("config");
   const [healthData, setHealthData] = useState<HealthData | null>(null);
   const [healthLoading, setHealthLoading] = useState(false);
   const [recentEvents, setRecentEvents] = useState<EventRow[]>([]);
@@ -162,6 +163,10 @@ export function IntegrationModal({
       });
 
       const result = await res.json();
+      if (!res.ok) {
+        setVerifyResult({ success: false, message: result.error || result.message || `Помилка ${res.status}` });
+        return;
+      }
       setVerifyResult({ success: result.success, message: result.message });
       if (result.success) {
         onSaved();
@@ -249,6 +254,9 @@ export function IntegrationModal({
           {(
             [
               { id: "config" as const, label: "Налаштування" },
+              ...(service.slug === "telegram-admin"
+                ? [{ id: "webhook" as const, label: "Webhook" }]
+                : []),
               { id: "logs" as const, label: "Логи" },
               { id: "health" as const, label: "Здоров'я" },
               { id: "events" as const, label: "Події" },
@@ -362,6 +370,11 @@ export function IntegrationModal({
                 </div>
               )}
             </div>
+          )}
+
+          {/* ── Webhook Tab (telegram-admin only) ── */}
+          {activeTab === "webhook" && service.slug === "telegram-admin" && (
+            <TelegramWebhookPanel />
           )}
 
           {/* ── Logs Tab ── */}
