@@ -1,0 +1,126 @@
+---
+description: ShineShop B2B project rules
+globs:
+---
+
+# ShineShop B2B — Project Rules
+
+## ПРОЕКТ
+- ShineShop B2B — e-commerce платформа для nail-індустрії
+- Сайт: shineshopb2b.com
+- Stack: Next.js 16, React, TypeScript, Supabase, Vercel
+- БД: Supabase (PostgreSQL + Auth + Edge Functions + RLS + Realtime)
+- Деплой: Vercel (auto-deploy з main branch)
+- CRM: 1C інтеграція
+- SMS: Альфа SMS (альфа-ім'я "Шайн-Шоп")
+
+## GIT — КРИТИЧНІ ПРАВИЛА
+
+### ЗАБОРОНЕНО (НІКОЛИ):
+- НЕ використовувати git plumbing: write-tree, commit-tree, update-ref, hash-object
+- НЕ створювати коміти через low-level команди
+- НЕ обходити git commit навіть якщо він зависає
+- НЕ робити force push (git push --force)
+
+### ОБОВ'ЯЗКОВО (ЗАВЖДИ):
+- git add -A
+- git commit -m "тип: опис змін"
+- git push origin main
+- Commit message формат: feat:, fix:, refactor:, style:, docs:, chore:
+
+### ЯКЩО GIT ЗАВИСАЄ:
+1. rm -f .git/index.lock
+2. pkill -9 -f git
+3. git -c core.fsmonitor=false add -A && git -c core.fsmonitor=false commit -m "..."
+4. Якщо нічого не допомогло — СКАЖИ РОЗРОБНИКУ, не використовуй plumbing
+
+### ЯКЩО "TOO MANY ACTIVE CHANGES":
+1. Перевір що node_modules/ і .next/ є в .gitignore
+2. git rm -r --cached node_modules/ .next/ 2>/dev/null
+3. git add .gitignore && git commit -m "fix: cleanup gitignore"
+
+## SUPABASE — ПРАВИЛА
+
+### Обробка помилок:
+- ЗАВЖДИ деструктурувати { data, error } з кожного запиту
+- ЗАВЖДИ перевіряти error ПЕРЕД використанням data
+- Sentry НЕ перехоплює помилки Supabase автоматично — додавати Sentry.captureException(error) явно
+- item.total може бути undefined — використовувати item.total ?? item.price * item.quantity
+
+### Edge Functions:
+- Деплой ВРУЧНУ: npx supabase functions deploy NAME --project-ref kqgtxmdruxwtocmvsvwh
+- Cursor НЕ робить деплой Edge Functions автоматично — нагадувати розробнику
+- CORS headers обов'язкові для кожної функції
+- --no-verify-jwt для публічних функцій (send-otp, verify-otp)
+
+### RLS:
+- Перевіряти RLS політики ОКРЕМО від логіки запитів при дебагу
+- Анонімні користувачі мають обмежений доступ
+
+## VERCEL / ДЕПЛОЙ
+
+### Змінні середовища:
+- .env.local — локальна розробка (НЕ коммітити)
+- .env.vercel-prod — референс для Vercel (НЕ трекається гітом)
+- NEXT_PUBLIC_ змінні доступні на фронті
+- Перевіряти що немає переносів рядка або пробілів на кінці значень
+- При додаванні нової env змінної — додати і в .env.example і в Vercel
+
+### Деплой:
+- Автоматичний при push в main
+- Якщо Vercel не підхопив — зробити порожній коміт:
+  git commit --allow-empty -m "trigger: redeploy" && git push origin main
+
+## TELEGRAM БОТИ
+
+### @shineshop_b2b_bot — клієнтський бот:
+- Токен: TELEGRAM_BOT_TOKEN (env)
+- Сповіщення клієнтам про замовлення
+
+### @ShineShopAdminBot — адмін бот:
+- Токен: TELEGRAM_ADMIN_BOT_TOKEN (env)
+- Підтвердження входу в адмінку
+- Webhook: /api/admin/auth/telegram-webhook
+- При проблемах — перевірити getWebhookInfo через curl
+
+## КОД — СТИЛЬ І ПАТЕРНИ
+
+### TypeScript:
+- Strict mode
+- Ніяких any без коментаря чому
+- Всі API responses типізовані
+
+### Компоненти:
+- Файли більше 90KB — розбивати на менші
+- Server Components де можливо
+- "use client" тільки де потрібна інтерактивність
+
+### API Routes:
+- Rate limiting на всіх публічних ендпоінтах
+- Input validation і sanitization
+- Не повертати internal errors клієнту
+
+## АНАЛІЗ ПЕРЕД ЗМІНАМИ
+
+### Перед будь-якою зміною:
+1. Прочитай файл який збираєшся міняти
+2. Перевір чи функціонал вже не реалізований
+3. Перевір правильний шлях файлу (account/ не profile/)
+4. Оціни ризик: що може зламатись?
+5. Якщо ризик високий — спитай розробника перед зміною
+
+### Типові помилки які НЕ повторювати:
+- Створювати дублікат файлу замість редагування існуючого
+- Додавати FlashList пропси (estimatedItemSize, overrideItemLayout) до FlatList
+- Міняти файл по неправильному шляху (profile/ замість account/)
+- Plumbing коміти замість нормального git commit
+- Перезаписувати існуючий Skeleton компонент простішою версією
+
+## МОБІЛЬНИЙ ДОДАТОК (окремий репо)
+
+- Stack: React Native + Expo 54 + TypeScript + Supabase
+- Supabase project-ref: kqgtxmdruxwtocmvsvwh
+- EAS білди — ТІЛЬКИ ВРУЧНУ розробником
+- Ніколи не пропонувати робити білд через Cursor
+- Після змін: git add -A && git commit && git push origin main
+- Потім розробник робить білд руками
