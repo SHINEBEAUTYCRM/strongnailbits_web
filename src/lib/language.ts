@@ -1,19 +1,7 @@
-import { cookies } from "next/headers";
-
 export type Lang = "uk" | "ru";
 
-const COOKIE_NAME = "lang";
-const DEFAULT_LANG: Lang = "uk";
-
-/**
- * Get current language from cookies (server-side).
- * Must be called inside a Server Component or Route Handler.
- */
-export async function getLanguage(): Promise<Lang> {
-  const cookieStore = await cookies();
-  const value = cookieStore.get(COOKIE_NAME)?.value;
-  return value === "ru" ? "ru" : DEFAULT_LANG;
-}
+export const LANG_COOKIE = "lang";
+export const DEFAULT_LANG: Lang = "uk";
 
 /**
  * Pick localized name from an object that has name_uk and name_ru.
