@@ -38,16 +38,26 @@ export function ReorderButton({ items }: Props) {
   const checkStock = useCallback(async () => {
     setLoading(true);
     try {
+      interface ProductStock {
+        id: string;
+        name_uk: string;
+        slug: string;
+        price: number;
+        quantity: number;
+        images: string[] | null;
+      }
+
       const supabase = createClient();
       const ids = items.map((i) => i.product_id);
 
       const { data: products } = await supabase
         .from("products")
         .select("id, name_uk, slug, price, quantity, images")
-        .in("id", ids);
+        .in("id", ids)
+        .returns<ProductStock[]>();
 
       const productMap = new Map(
-        (products ?? []).map((p: Record<string, unknown>) => [p.id as string, p]),
+        (products ?? []).map((p) => [p.id, p]),
       );
 
       const result: StockItem[] = items.map((item) => {
@@ -62,11 +72,10 @@ export function ReorderButton({ items }: Props) {
             freshName: item.name,
           };
         }
-        const stock = (p.quantity as number) ?? 0;
-        const imgs = p.images as string[] | null;
-        const freshImage = imgs && imgs.length > 0 ? imgs[0] : null;
-        const freshPrice = (p.price as number) ?? item.price;
-        const freshName = (p.name_uk as string) || item.name;
+        const stock = p.quantity ?? 0;
+        const freshImage = p.images && p.images.length > 0 ? p.images[0] : null;
+        const freshPrice = p.price ?? item.price;
+        const freshName = p.name_uk || item.name;
 
         let status: "ok" | "partial" | "unavailable" = "ok";
         if (stock <= 0) status = "unavailable";
@@ -75,7 +84,7 @@ export function ReorderButton({ items }: Props) {
         return {
           item: {
             ...item,
-            slug: (p.slug as string) || item.slug,
+            slug: p.slug || item.slug,
             max_quantity: stock,
           },
           status,
