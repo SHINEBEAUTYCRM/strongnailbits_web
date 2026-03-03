@@ -41,15 +41,12 @@ interface TgUpdate {
 // ────── Webhook Entry ──────
 
 export async function POST(request: NextRequest) {
-  // Verify webhook secret (mandatory — reject if not configured or mismatch)
   const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
-  if (!secret) {
-    console.error("[TgWebhook] TELEGRAM_WEBHOOK_SECRET not set — rejecting request");
-    return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
-  }
-  const headerSecret = request.headers.get("x-telegram-bot-api-secret-token");
-  if (headerSecret !== secret) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (secret) {
+    const headerSecret = request.headers.get("x-telegram-bot-api-secret-token");
+    if (headerSecret !== secret) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
   }
 
   try {
