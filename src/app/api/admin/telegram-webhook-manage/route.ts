@@ -8,12 +8,12 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin/requireAdmin";
-import { getServiceField } from "@/lib/integrations/config-resolver";
+import { getAdminBotToken } from "@/lib/admin/telegram";
 
 export const dynamic = "force-dynamic";
 
 async function getBotToken(): Promise<string | null> {
-  return getServiceField("telegram-admin", "bot_token");
+  return getAdminBotToken();
 }
 
 export async function GET() {

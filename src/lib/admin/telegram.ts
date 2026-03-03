@@ -1,8 +1,17 @@
 /**
  * Telegram Bot API utility — sends messages via the Admin Bot
+ *
+ * Uses TELEGRAM_ADMIN_BOT_TOKEN env var directly to avoid
+ * DB config override (integration_keys may contain wrong token).
  */
 
-import { getServiceField } from '@/lib/integrations/config-resolver';
+export async function getAdminBotToken(): Promise<string | null> {
+  const envToken = process.env.TELEGRAM_ADMIN_BOT_TOKEN?.trim();
+  if (envToken) return envToken;
+
+  const { getServiceField } = await import('@/lib/integrations/config-resolver');
+  return getServiceField('telegram-admin', 'bot_token');
+}
 
 export async function sendTelegramMessage(
   chatId: string | number,
@@ -12,7 +21,7 @@ export async function sendTelegramMessage(
     reply_markup?: object;
   },
 ): Promise<{ ok: boolean; error?: string }> {
-  const token = await getServiceField('telegram-admin', 'bot_token');
+  const token = await getAdminBotToken();
 
   if (!token) {
     console.error("[Telegram] Admin bot token is not configured!");

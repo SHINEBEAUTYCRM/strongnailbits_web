@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { phoneLast9 } from "@/lib/admin/phone";
 import { sendTelegramMessage } from "@/lib/admin/telegram";
 import { generateToken } from "@/lib/admin/auth";
+import { getServiceField } from "@/lib/integrations/config-resolver";
 
 export const dynamic = "force-dynamic";
 
@@ -118,11 +119,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. Send Telegram message
+    // 4. Send Telegram message via Admin Bot
     const browser = parseUserAgent(userAgent);
     const timeStr = new Date().toLocaleString("uk-UA", {
       timeZone: "Europe/Kyiv",
     });
+
+    const resolvedToken = await getServiceField('telegram-admin', 'bot_token');
+    console.info("[AuthRequest] Resolved bot token prefix:", resolvedToken?.slice(0, 10) ?? "NULL");
 
     const result = await sendTelegramMessage(
       member.telegram_chat_id,

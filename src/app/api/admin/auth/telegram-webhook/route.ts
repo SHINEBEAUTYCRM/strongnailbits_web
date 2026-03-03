@@ -13,8 +13,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { normalizePhone, phoneLast9 } from "@/lib/admin/phone";
-import { sendTelegramMessage } from "@/lib/admin/telegram";
-import { getServiceField } from '@/lib/integrations/config-resolver';
+import { sendTelegramMessage, getAdminBotToken } from "@/lib/admin/telegram";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +54,7 @@ async function tgApi(
   method: string,
   body: Record<string, unknown>,
 ): Promise<boolean> {
-  const token = await getServiceField('telegram-admin', 'bot_token');
+  const token = await getAdminBotToken();
   if (!token) return false;
   try {
     const res = await fetch(

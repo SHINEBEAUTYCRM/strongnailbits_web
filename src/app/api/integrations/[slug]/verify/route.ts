@@ -124,13 +124,11 @@ export async function POST(
       // Auto-set webhook for telegram-admin
       if (slug === "telegram-admin") {
         const webhookUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com"}/api/admin/auth/telegram-webhook`;
-        const whSecret = process.env.TELEGRAM_WEBHOOK_SECRET || "";
         try {
           const whBody: Record<string, unknown> = {
             url: webhookUrl,
             allowed_updates: ["message", "callback_query"],
           };
-          if (whSecret) whBody.secret_token = whSecret;
 
           const whRes = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
             method: "POST",
