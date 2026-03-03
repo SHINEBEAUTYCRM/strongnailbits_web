@@ -279,6 +279,103 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // ACTION: register-direct — register with password, no OTP/SMS required
+    if (action === "register-direct") {
+      if (!password || password.length < 6) {
+        return NextResponse.json(
+          { error: "Пароль повинен містити мінімум 6 символів" },
+          { status: 400 },
+        );
+      }
+
+      if (!firstName) {
+        return NextResponse.json(
+          { error: "Ім'я обов'язкове" },
+          { status: 400 },
+        );
+      }
+
+      const variants = phoneVariants(phone);
+      const { data: existingProfile } = await supabase
+        .from("profiles")
+        .select("id")
+        .in("phone", variants)
+        .limit(1)
+        .single();
+
+      if (existingProfile) {
+        return NextResponse.json(
+          { error: "Користувач з цим номером вже існує. Увійдіть" },
+          { status: 409 },
+        );
+      }
+
+      const fakeEmail = `${phone}@phone.shineshop.local`;
+
+      const { data: authData, error: authError } =
+        await supabase.auth.admin.createUser({
+          email: fakeEmail,
+          password,
+          phone,
+          phone_confirm: true,
+          email_confirm: true,
+          user_metadata: {
+            first_name: firstName,
+            last_name: lastName || "",
+            phone,
+          },
+        });
+
+      if (authError) {
+        console.error("[Phone Auth] register-direct error:", authError);
+        if (authError.message.includes("already")) {
+          return NextResponse.json(
+            { error: "Користувач з цим номером вже зареєстрований" },
+            { status: 409 },
+          );
+        }
+        return NextResponse.json(
+          { error: "Помилка створення акаунту" },
+          { status: 500 },
+        );
+      }
+
+      const { error: profileError } = await supabase.from("profiles").upsert({
+        id: authData.user.id,
+        email: fakeEmail,
+        phone,
+        first_name: firstName,
+        last_name: lastName || "",
+        company: company || "",
+        role: "user",
+      });
+
+      if (profileError) {
+        console.error("[Phone Auth] Profile create error:", profileError);
+      }
+
+      const linked = await autoLinkWith1C(supabase, authData.user.id, phone);
+
+      trackFunnelEvent({
+        event: "register",
+        phone,
+        profileId: authData.user.id,
+        name: `${firstName} ${lastName || ""}`.trim(),
+      });
+
+      notifyNewCustomer({
+        name: `${firstName} ${lastName || ""}`.trim(),
+        phone: `+${phone}`,
+        company: company || undefined,
+        linkedTo1C: linked,
+      });
+
+      return NextResponse.json({
+        success: true,
+        loginEmail: fakeEmail,
+      });
+    }
+
     return NextResponse.json({ error: "Невідома дія" }, { status: 400 });
   } catch (err) {
     console.error("[Phone Auth] Error:", err);
