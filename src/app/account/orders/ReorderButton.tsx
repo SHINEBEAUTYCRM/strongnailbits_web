@@ -50,14 +50,15 @@ export function ReorderButton({ items }: Props) {
       const supabase = createClient();
       const ids = items.map((i) => i.product_id);
 
-      const { data: products } = await supabase
+      const { data } = await supabase
         .from("products")
         .select("id, name_uk, slug, price, quantity, images")
-        .in("id", ids)
-        .returns<ProductStock[]>();
+        .in("id", ids);
+
+      const products = (data ?? []) as ProductStock[];
 
       const productMap = new Map(
-        (products ?? []).map((p) => [p.id, p]),
+        products.map((p) => [p.id, p]),
       );
 
       const result: StockItem[] = items.map((item) => {
