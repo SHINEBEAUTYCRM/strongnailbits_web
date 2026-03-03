@@ -7,7 +7,7 @@ import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductInfo } from "@/components/product/ProductInfo";
 import { ProductBuySidebar } from "@/components/product/ProductBuySidebar";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
-import { getLanguage, localizedName, localizedDescription } from "@/lib/language";
+import { getLanguage, localizedName, localizedDescription } from "@/lib/language-server";
 import { TrackProductView } from "@/components/analytics/TrackProductView";
 
 /** ISR: revalidate product pages every 3 minutes */

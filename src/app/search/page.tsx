@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getLanguage, localizedName } from "@/lib/language";
+import { getLanguage, localizedName } from "@/lib/language-server";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { Breadcrumbs } from "@/components/catalog/Breadcrumbs";

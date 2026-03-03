@@ -18,7 +18,7 @@ import {
   getCategoryScopeData,
   fetchCategoryFilters,
 } from "@/lib/catalog/filters";
-import { getLanguage, localizedName, type Lang } from "@/lib/language";
+import { getLanguage, localizedName, type Lang } from "@/lib/language-server";
 import { SubcategoryList } from "@/components/catalog/SubcategoryList";
 
 /** ISR: revalidate category pages every 2 minutes */

@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCategoryTree } from "@/lib/categories/tree";
-import { getLanguage } from "@/lib/language";
+import { getLanguage } from "@/lib/language-server";
 
 /* Components */
 import { HomeSidebar } from "@/components/home/HomeSidebar";

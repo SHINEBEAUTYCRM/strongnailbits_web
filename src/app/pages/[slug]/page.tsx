@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getPageBySlug } from "@/lib/admin/pages-cms";
-import { getLanguage } from "@/lib/language";
+import { getLanguage } from "@/lib/language-server";
 
 export const revalidate = 300;
 

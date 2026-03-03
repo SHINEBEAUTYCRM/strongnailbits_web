@@ -6,7 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/catalog/Breadcrumbs";
-import { getLanguage, localizedName } from "@/lib/language";
+import { getLanguage, localizedName } from "@/lib/language-server";
 
 export const revalidate = 300; // 5 min ISR
 

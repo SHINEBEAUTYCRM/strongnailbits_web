@@ -11,7 +11,7 @@ import {
   fetchBrandsForFilter,
   buildFilteredUrl,
 } from "@/lib/catalog/filters";
-import { getLanguage } from "@/lib/language";
+import { getLanguage } from "@/lib/language-server";
 import type { Metadata } from "next";
 
 /** ISR: revalidate catalog every 2 minutes */
