@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { NAIL_ROOT_CS_CART_ID } from "@/lib/config/catalog";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/catalog/Breadcrumbs";
@@ -118,8 +119,6 @@ async function getMergedCategoryIds(categoryId: string): Promise<string[]> {
     return [];
   }
 }
-
-const NAIL_ROOT_CS_CART_ID = 385;
 
 async function buildBreadcrumbs(category: CategoryRow, lang: Lang): Promise<BreadcrumbItem[]> {
   try {

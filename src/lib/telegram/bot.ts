@@ -10,6 +10,33 @@ import { getServiceConfig, getServiceField } from '@/lib/integrations/config-res
 const TELEGRAM_API = "https://api.telegram.org/bot";
 const REQUEST_TIMEOUT = 15_000;
 
+/** Non-blocking Telegram message log to DB */
+async function logTelegramMessage(data: {
+  chatId: number | string;
+  method: string;
+  textPreview: string;
+  success: boolean;
+  error?: string;
+}): Promise<void> {
+  try {
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    const supabase = createAdminClient();
+    await supabase.from("message_log").insert({
+      channel: "telegram",
+      status: data.success ? "sent" : "failed",
+      template_code: data.method,
+      content_preview: data.textPreview.slice(0, 300),
+      metadata: {
+        chat_id: data.chatId,
+        method: data.method,
+        error: data.error || null,
+      },
+    });
+  } catch {
+    // Logging should never break main flow
+  }
+}
+
 // ────── Types ──────
 
 export interface TgSendMessageOptions {
@@ -210,11 +237,14 @@ export class TelegramBot {
     return this.request("setChatMenuButton", { menu_button: menuButton });
   }
 
-  /** Generic Telegram API request */
+  /** Generic Telegram API request with logging */
   private async request(
     method: string,
     body: Record<string, unknown>,
   ): Promise<TgApiResult> {
+    const chatId = body.chat_id as number | string | undefined;
+    const textPreview = (body.text as string) || (body.caption as string) || method;
+
     try {
       const res = await fetch(`${this.baseUrl}/${method}`, {
         method: "POST",
@@ -229,12 +259,36 @@ export class TelegramBot {
         console.error(`[TgBot] ${method} failed:`, data.description);
       }
 
+      // Non-blocking log for message-sending methods
+      if (chatId && ["sendMessage", "sendPhoto", "sendMediaGroup"].includes(method)) {
+        logTelegramMessage({
+          chatId,
+          method,
+          textPreview,
+          success: data.ok,
+          error: data.ok ? undefined : data.description,
+        }).catch(() => {});
+      }
+
       return data;
     } catch (err) {
       console.error(`[TgBot] ${method} error:`, err);
+      const errMsg = err instanceof Error ? err.message : "Request failed";
+
+      // Log failures too
+      if (chatId && ["sendMessage", "sendPhoto", "sendMediaGroup"].includes(method)) {
+        logTelegramMessage({
+          chatId,
+          method,
+          textPreview,
+          success: false,
+          error: errMsg,
+        }).catch(() => {});
+      }
+
       return {
         ok: false,
-        description: err instanceof Error ? err.message : "Request failed",
+        description: errMsg,
       };
     }
   }
@@ -312,14 +366,18 @@ export async function sendMessage(
     const data = await res.json();
     if (!data.ok) {
       console.error("[Telegram] Legacy API error:", data.description);
+      logTelegramMessage({ chatId, method: "sendMessage", textPreview: text, success: false, error: data.description }).catch(() => {});
       return { success: false, error: data.description };
     }
+    logTelegramMessage({ chatId, method: "sendMessage", textPreview: text, success: true }).catch(() => {});
     return { success: true, messageId: data.result?.message_id };
   } catch (err) {
     console.error("[Telegram] Legacy send failed:", err);
+    const errMsg = err instanceof Error ? err.message : "Send failed";
+    logTelegramMessage({ chatId: "unknown", method: "sendMessage", textPreview: text, success: false, error: errMsg }).catch(() => {});
     return {
       success: false,
-      error: err instanceof Error ? err.message : "Send failed",
+      error: errMsg,
     };
   }
 }

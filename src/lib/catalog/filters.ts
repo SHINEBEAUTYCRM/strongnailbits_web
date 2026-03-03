@@ -458,16 +458,29 @@ export async function fetchCategoryFilters(
     (f) => categoryFilterIds.has(f.id) && f.source_type === "feature" && f.feature_id,
   );
 
+  if (relevantFilters.length === 0) return [];
+
+  /* Batch: fetch ALL variants for all relevant features in one query */
+  const featureIds = relevantFilters.map((f) => f.feature_id!);
+  const { data: allVariants } = await supabase
+    .from("feature_variants")
+    .select("id, feature_id, name_uk, name_ru, color_code, metadata, position")
+    .in("feature_id", featureIds)
+    .order("position", { ascending: true });
+
+  /* Group variants by feature_id */
+  const variantsByFeature = new Map<string, typeof allVariants>();
+  for (const v of allVariants ?? []) {
+    const arr = variantsByFeature.get(v.feature_id) ?? [];
+    arr.push(v);
+    variantsByFeature.set(v.feature_id, arr);
+  }
+
   const result: FeatureFilterData[] = [];
 
   for (const filter of relevantFilters) {
-    const { data: variants } = await supabase
-      .from("feature_variants")
-      .select("id, name_uk, name_ru, color_code, metadata, position")
-      .eq("feature_id", filter.feature_id!)
-      .order("position", { ascending: true });
-
-    if (!variants || variants.length === 0) continue;
+    const variants = variantsByFeature.get(filter.feature_id!) ?? [];
+    if (variants.length === 0) continue;
 
     result.push({
       id: filter.id,

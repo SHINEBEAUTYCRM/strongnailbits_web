@@ -13,8 +13,8 @@ import { B2BCtaDynamic } from "@/components/home/B2BCtaDynamic";
 import { CatalogButton } from "@/components/home/CatalogButton";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 
-/** Temporarily disable ISR cache to debug stale data */
-export const revalidate = 0;
+/** ISR: regenerate homepage every 60 s */
+export const revalidate = 60;
 
 const PRODUCT_FIELDS =
   "id, name_uk, name_ru, slug, price, old_price, main_image_url, status, quantity, is_new, is_featured, brands(name)";
@@ -37,10 +37,26 @@ async function getShowcases() {
   }
   if (!showcases?.length) return [];
 
+  /* ── Pre-fetch ALL categories once to avoid N+1 queries ── */
+  const { data: allCats } = await supabase
+    .from("categories")
+    .select("id, cs_cart_id, parent_cs_cart_id, status");
+
+  const catsById = new Map<string, { cs_cart_id: number | null; parent_cs_cart_id: number | null; status: string }>();
+  const catsByParentCsCart = new Map<number, string[]>();
+
+  for (const c of allCats ?? []) {
+    catsById.set(c.id, c);
+    if (c.parent_cs_cart_id && c.status === "active") {
+      const arr = catsByParentCsCart.get(c.parent_cs_cart_id) ?? [];
+      arr.push(c.id);
+      catsByParentCsCart.set(c.parent_cs_cart_id, arr);
+    }
+  }
+
   const results = await Promise.all(
     showcases.map(async (showcase: any) => {
-      const sb = createAdminClient();
-      let query = sb
+      let query = supabase
         .from("products")
         .select(PRODUCT_FIELDS)
         .eq("status", "active")
@@ -49,24 +65,16 @@ async function getShowcases() {
       const rule = (showcase.rule as Record<string, any>) || {};
 
       if (rule.category_ids?.length > 0) {
-        const sb2 = createAdminClient();
-        const { data: parentCats } = await sb2
-          .from("categories")
-          .select("cs_cart_id")
-          .in("id", rule.category_ids);
-        const parentCsCartIds = parentCats?.map((c: any) => c.cs_cart_id).filter(Boolean) || [];
+        /* Resolve children in-memory instead of DB queries */
+        const parentCsCartIds = rule.category_ids
+          .map((id: string) => catsById.get(id)?.cs_cart_id)
+          .filter(Boolean) as number[];
 
-        let childIds: string[] = [];
-        if (parentCsCartIds.length > 0) {
-          const { data: childCats } = await sb2
-            .from("categories")
-            .select("id")
-            .in("parent_cs_cart_id", parentCsCartIds)
-            .eq("status", "active");
-          childIds = childCats?.map((c: any) => c.id) || [];
-        }
+        const childIds = parentCsCartIds.flatMap(
+          (csId: number) => catsByParentCsCart.get(csId) ?? [],
+        );
 
-        const allCatIds = [...rule.category_ids, ...childIds];
+        const allCatIds = [...new Set([...rule.category_ids, ...childIds])];
         query = query.in("category_id", allCatIds);
       } else if (rule.category_id) {
         query = query.eq("category_id", rule.category_id);
@@ -120,21 +128,52 @@ async function getShowcases() {
 async function getHomepageData() {
   const supabase = createAdminClient();
 
-  const { data: sections } = await supabase
-    .from("homepage_sections")
-    .select("*")
-    .eq("is_enabled", true)
-    .order("sort_order");
+  /* Run all independent queries in parallel */
+  const [
+    { data: sections },
+    { data: deal },
+    { data: quickCats },
+    { data: features },
+    { data: b2bBlock },
+    { data: topBarLinks },
+  ] = await Promise.all([
+    supabase
+      .from("homepage_sections")
+      .select("*")
+      .eq("is_enabled", true)
+      .order("sort_order"),
+    supabase
+      .from("deal_of_day")
+      .select("*")
+      .eq("is_enabled", true)
+      .gt("end_at", new Date().toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single(),
+    supabase
+      .from("quick_categories")
+      .select("*, categories(id, name_uk, name_ru, slug, image_url)")
+      .eq("is_enabled", true)
+      .order("sort_order"),
+    supabase
+      .from("service_features")
+      .select("*")
+      .eq("is_enabled", true)
+      .order("sort_order"),
+    supabase
+      .from("content_blocks")
+      .select("*")
+      .eq("code", "b2b_cta")
+      .eq("is_enabled", true)
+      .single(),
+    supabase
+      .from("top_bar_links")
+      .select("*")
+      .eq("is_enabled", true)
+      .order("sort_order"),
+  ]);
 
-  const { data: deal } = await supabase
-    .from("deal_of_day")
-    .select("*")
-    .eq("is_enabled", true)
-    .gt("end_at", new Date().toISOString())
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single();
-
+  /* Deal products depend on the deal query result */
   let dealProducts: any[] = [];
   if (deal?.product_ids?.length) {
     const { data } = await supabase
@@ -144,31 +183,6 @@ async function getHomepageData() {
       .eq("status", "active");
     dealProducts = data || [];
   }
-
-  const { data: quickCats } = await supabase
-    .from("quick_categories")
-    .select("*, categories(id, name_uk, name_ru, slug, image_url)")
-    .eq("is_enabled", true)
-    .order("sort_order");
-
-  const { data: features } = await supabase
-    .from("service_features")
-    .select("*")
-    .eq("is_enabled", true)
-    .order("sort_order");
-
-  const { data: b2bBlock } = await supabase
-    .from("content_blocks")
-    .select("*")
-    .eq("code", "b2b_cta")
-    .eq("is_enabled", true)
-    .single();
-
-  const { data: topBarLinks } = await supabase
-    .from("top_bar_links")
-    .select("*")
-    .eq("is_enabled", true)
-    .order("sort_order");
 
   return {
     sections: sections || [],

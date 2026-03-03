@@ -3,9 +3,14 @@
  *
  * All notification types with beautiful formatted messages.
  * Each function is fire-and-forget (non-blocking, errors logged silently).
+ *
+ * Two categories:
+ * 1. Admin notifications — sent to configured admin chat_id (sendMessage)
+ * 2. Client notifications — sent to individual client telegram_chat_id (bot.sendMessage)
  */
 
-import { sendMessage, escHtml, isTelegramConfigured } from "./bot";
+import { sendMessage, escHtml, isTelegramConfigured, getBot, TelegramBot } from "./bot";
+import { fmtMoney } from "./formatters";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com";
 const ADMIN_URL = `${SITE_URL}/admin`;
@@ -393,4 +398,151 @@ export async function notifyLowStock(products: { name: string; stock: number; sk
   lines.push(`<a href="${ADMIN_URL}/inventory">Склад →</a>`);
 
   await sendMessage(lines.join("\n"));
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  📱 CLIENT NOTIFICATIONS (бот → клієнт)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+/** Safe get bot instance (non-throwing) */
+async function safeGetBot(): Promise<TelegramBot | null> {
+  try {
+    return await getBot();
+  } catch (err) {
+    console.error("[Telegram:Notify] Bot init failed:", err);
+    return null;
+  }
+}
+
+/** Order confirmed → client */
+export async function notifyClientOrderConfirmed(data: {
+  telegramChatId: number;
+  orderNumber: string;
+  total: number;
+}) {
+  const bot = await safeGetBot();
+  if (!bot) return;
+
+  await bot.sendMessage(
+    data.telegramChatId,
+    `✅ Замовлення #${escHtml(data.orderNumber)} підтверджено!\n💰 ${fmtMoney(data.total)}\nОчікуйте відправку протягом доби.`,
+  );
+}
+
+/** Order shipped with TTN → client */
+export async function notifyClientOrderShipped(data: {
+  telegramChatId: number;
+  orderNumber: string;
+  trackingNumber: string;
+  estimatedDelivery?: string;
+}) {
+  const bot = await safeGetBot();
+  if (!bot) return;
+
+  const lines = [
+    `🚚 Замовлення #${escHtml(data.orderNumber)} відправлено!`,
+    ``,
+    `📋 ТТН: <code>${escHtml(data.trackingNumber)}</code>`,
+  ];
+
+  if (data.estimatedDelivery) {
+    lines.push(`📅 Очікувана доставка: ${escHtml(data.estimatedDelivery)}`);
+  }
+
+  await bot.sendMessage(data.telegramChatId, lines.join("\n"), {
+    parse_mode: "HTML",
+    reply_markup: {
+      inline_keyboard: [
+        [
+          {
+            text: "📍 Трекінг",
+            url: `https://novaposhta.ua/tracking/?cargo_number=${data.trackingNumber}`,
+          },
+        ],
+      ],
+    },
+  });
+}
+
+/** Order delivered → client */
+export async function notifyClientOrderDelivered(data: {
+  telegramChatId: number;
+  orderNumber: string;
+}) {
+  const bot = await safeGetBot();
+  if (!bot) return;
+
+  await bot.sendMessage(
+    data.telegramChatId,
+    `📬 Замовлення #${escHtml(data.orderNumber)} доставлено!\n\nДякуємо за покупку! Будемо раді вашому відгуку 🙌`,
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: "⭐ Залишити відгук",
+              url: `${SITE_URL}/review/${data.orderNumber}`,
+            },
+            {
+              text: "♻️ Замовити ще",
+              callback_data: `reorder:${data.orderNumber}`,
+            },
+          ],
+        ],
+      },
+    },
+  );
+}
+
+/** Product available from waitlist → client */
+export async function notifyClientProductAvailable(data: {
+  telegramChatId: number;
+  productName: string;
+  productSlug: string;
+  price: number;
+  imageUrl?: string;
+}) {
+  const bot = await safeGetBot();
+  if (!bot) return;
+
+  const text = `🔔 ${escHtml(data.productName)} знову в наявності!\n💰 ${fmtMoney(data.price)}`;
+  const keyboard = {
+    inline_keyboard: [
+      [{ text: "🛒 Купити", url: `${SITE_URL}/product/${data.productSlug}` }],
+    ],
+  };
+
+  if (data.imageUrl && !data.imageUrl.includes("placeholder")) {
+    await bot.sendPhoto(data.telegramChatId, data.imageUrl, {
+      caption: text,
+      reply_markup: keyboard,
+    });
+  } else {
+    await bot.sendMessage(data.telegramChatId, text, { reply_markup: keyboard });
+  }
+}
+
+/** Abandoned cart reminder → client */
+export async function notifyClientAbandonedCart(data: {
+  telegramChatId: number;
+  itemsCount: number;
+  total: number;
+}) {
+  const bot = await safeGetBot();
+  if (!bot) return;
+
+  await bot.sendMessage(
+    data.telegramChatId,
+    `🛒 У вас ${data.itemsCount} товарів в кошику на ${fmtMoney(data.total)}. Оформити?`,
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: "✅ Оформити", url: `${SITE_URL}/checkout` },
+            { text: "🛒 Переглянути", callback_data: "quick:cart" },
+          ],
+        ],
+      },
+    },
+  );
 }
