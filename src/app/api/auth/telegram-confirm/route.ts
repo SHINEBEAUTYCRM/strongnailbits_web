@@ -61,11 +61,14 @@ export async function POST(request: NextRequest) {
       const phone380 = normalizeTo380(profile.phone);
       const fakeEmail = `${phone380}@phone.shineshop.local`;
 
-      // Ensure auth user exists — check by profile.id (same as auth user id)
-      const { data: existingReg } = await supabase.auth.admin.getUserById(profile.id);
+      // Ensure auth user exists — fault-tolerant: always proceed to generateLink
+      const { data: existingReg, error: lookupErrorReg } = await supabase.auth.admin.getUserById(profile.id);
+      if (lookupErrorReg) {
+        console.warn("[TelegramConfirm] getUserById error (continuing):", lookupErrorReg.message);
+      }
 
       if (!existingReg?.user) {
-        const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+        const { error: createError } = await supabase.auth.admin.createUser({
           id: profile.id,
           email: fakeEmail,
           phone: profile.phone,
@@ -74,12 +77,8 @@ export async function POST(request: NextRequest) {
           password: crypto.randomUUID(),
           user_metadata: { phone: profile.phone },
         });
-        if (createError && !createError.message.includes("already")) {
-          console.error("[TelegramConfirm] Create user error:", createError);
-          return NextResponse.json({ error: "Помилка створення акаунту" }, { status: 500 });
-        }
-        if (newUser?.user) {
-          // Use newUser
+        if (createError) {
+          console.warn("[TelegramConfirm] createUser error (continuing):", createError.message);
         }
       }
 
@@ -120,9 +119,11 @@ export async function POST(request: NextRequest) {
     const fakeEmail = `${normalizeTo380(profile.phone)}@phone.shineshop.local`;
     console.log("[ClientAuthConfirm] fakeEmail:", fakeEmail);
 
-    // Ensure auth user exists — check by profile.id (same as auth user id)
+    // Ensure auth user exists — fault-tolerant: always proceed to generateLink
     const { data: existingById, error: lookupError } = await supabase.auth.admin.getUserById(profile.id);
-    if (lookupError) console.error("[ClientAuthConfirm] getUserById error:", lookupError);
+    if (lookupError) {
+      console.warn("[ClientAuthConfirm] getUserById error (continuing):", lookupError.message);
+    }
     console.log("[ClientAuthConfirm] getUserById result:", !!existingById?.user);
 
     if (!existingById?.user) {
@@ -134,10 +135,8 @@ export async function POST(request: NextRequest) {
         password: crypto.randomUUID(),
         user_metadata: { phone: profile.phone },
       });
-
-      if (createError && !createError.message.includes("already")) {
-        console.error("[ClientAuthConfirm] Create user error:", createError);
-        return NextResponse.json({ error: "Помилка створення акаунту: " + createError.message }, { status: 500 });
+      if (createError) {
+        console.warn("[ClientAuthConfirm] createUser error (continuing):", createError.message);
       }
     }
 
