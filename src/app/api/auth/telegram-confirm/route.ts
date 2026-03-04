@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { phoneVariants } from "@/lib/sms/alphasms";
-import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +11,57 @@ function normalizeTo380(raw: string): string {
   if (digits.startsWith("0") && digits.length === 10) return "38" + digits;
   if (digits.length === 9) return "380" + digits;
   return digits;
+}
+
+/**
+ * Migrate profile to a new id when generateLink created an auth user
+ * with a different UUID than profile.id.
+ */
+async function migrateProfileId(
+  supabase: ReturnType<typeof createAdminClient>,
+  oldId: string,
+  newId: string,
+  email: string,
+): Promise<void> {
+  const { data: oldProfile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", oldId)
+    .single();
+
+  if (!oldProfile) {
+    console.warn("[migrateProfileId] Old profile not found:", oldId);
+    return;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { id: _oldId, ...profileData } = oldProfile;
+  const { error: upsertError } = await supabase.from("profiles").upsert({
+    id: newId,
+    ...profileData,
+    email,
+  });
+
+  if (upsertError) {
+    console.error("[migrateProfileId] Upsert new profile failed:", upsertError.message);
+    return;
+  }
+
+  const { error: deleteError } = await supabase
+    .from("profiles")
+    .delete()
+    .eq("id", oldId);
+
+  if (deleteError) {
+    console.warn("[migrateProfileId] Delete old profile failed (FK refs?):", deleteError.message);
+  }
+
+  await supabase
+    .from("auth_requests")
+    .update({ profile_id: newId })
+    .eq("profile_id", oldId);
+
+  console.log("[migrateProfileId] Migrated profile", oldId, "→", newId);
 }
 
 export async function POST(request: NextRequest) {
@@ -60,38 +110,26 @@ export async function POST(request: NextRequest) {
 
       const phone380 = normalizeTo380(profile.phone);
       const fakeEmail = `${phone380}@phone.shineshop.local`;
-
-      // Ensure auth user exists — fault-tolerant: always proceed to generateLink
-      const { data: existingReg, error: lookupErrorReg } = await supabase.auth.admin.getUserById(profile.id);
-      if (lookupErrorReg) {
-        console.warn("[TelegramConfirm] getUserById error (continuing):", lookupErrorReg.message);
-      }
-
-      if (!existingReg?.user) {
-        const { error: createError } = await supabase.auth.admin.createUser({
-          id: profile.id,
-          email: fakeEmail,
-          phone: profile.phone,
-          email_confirm: true,
-          phone_confirm: true,
-          password: crypto.randomUUID(),
-          user_metadata: { phone: profile.phone },
-        });
-        if (createError) {
-          console.warn("[TelegramConfirm] createUser error (continuing):", createError.message);
-        }
-      }
-
-      // Update profile email to match auth user
-      await supabase.from("profiles").update({ email: fakeEmail }).eq("id", profile.id);
+      console.log("[TelegramConfirm:register] profile:", profile.id, "email:", fakeEmail);
 
       const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
         type: "magiclink",
         email: fakeEmail,
       });
+
       if (linkError || !linkData) {
-        console.error("[ClientAuthConfirm] Generate link error:", linkError);
+        console.error("[TelegramConfirm:register] generateLink error:", linkError);
         return NextResponse.json({ error: "Помилка генерації посилання" }, { status: 500 });
+      }
+
+      const authUserId = linkData.user?.id;
+      console.log("[TelegramConfirm:register] auth user id:", authUserId);
+
+      if (authUserId && authUserId !== profile.id) {
+        console.warn("[TelegramConfirm:register] ID mismatch! auth:", authUserId, "profile:", profile.id);
+        await migrateProfileId(supabase, profile.id, authUserId, fakeEmail);
+      } else {
+        await supabase.from("profiles").update({ email: fakeEmail }).eq("id", profile.id);
       }
 
       await supabase.from("auth_requests").update({ status: "expired" }).eq("id", authReq.id);
@@ -115,33 +153,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Профіль не знайдено" }, { status: 404 });
     }
 
-    console.log("[ClientAuthConfirm] profile_id:", profile.id);
     const fakeEmail = `${normalizeTo380(profile.phone)}@phone.shineshop.local`;
-    console.log("[ClientAuthConfirm] fakeEmail:", fakeEmail);
-
-    // Ensure auth user exists — fault-tolerant: always proceed to generateLink
-    const { data: existingById, error: lookupError } = await supabase.auth.admin.getUserById(profile.id);
-    if (lookupError) {
-      console.warn("[ClientAuthConfirm] getUserById error (continuing):", lookupError.message);
-    }
-    console.log("[ClientAuthConfirm] getUserById result:", !!existingById?.user);
-
-    if (!existingById?.user) {
-      const { error: createError } = await supabase.auth.admin.createUser({
-        id: profile.id,
-        email: fakeEmail,
-        email_confirm: true,
-        phone_confirm: true,
-        password: crypto.randomUUID(),
-        user_metadata: { phone: profile.phone },
-      });
-      if (createError) {
-        console.warn("[ClientAuthConfirm] createUser error (continuing):", createError.message);
-      }
-    }
-
-    // Ensure profile has email set
-    await supabase.from("profiles").update({ email: fakeEmail }).eq("id", profile.id);
+    console.log("[TelegramConfirm:login] profile:", profile.id, "email:", fakeEmail);
 
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: "magiclink",
@@ -149,8 +162,18 @@ export async function POST(request: NextRequest) {
     });
 
     if (linkError || !linkData) {
-      console.error("[ClientAuthConfirm] Generate link error:", linkError);
+      console.error("[TelegramConfirm:login] generateLink error:", linkError);
       return NextResponse.json({ error: "Помилка генерації посилання" }, { status: 500 });
+    }
+
+    const authUserId = linkData.user?.id;
+    console.log("[TelegramConfirm:login] auth user id:", authUserId);
+
+    if (authUserId && authUserId !== profile.id) {
+      console.warn("[TelegramConfirm:login] ID mismatch! auth:", authUserId, "profile:", profile.id);
+      await migrateProfileId(supabase, profile.id, authUserId, fakeEmail);
+    } else {
+      await supabase.from("profiles").update({ email: fakeEmail }).eq("id", profile.id);
     }
 
     await supabase
@@ -164,7 +187,7 @@ export async function POST(request: NextRequest) {
       email: fakeEmail,
     });
   } catch (err) {
-    console.error("[ClientAuthConfirm] Error:", err);
+    console.error("[TelegramConfirm] Error:", err);
     return NextResponse.json({ error: "Внутрішня помилка сервера" }, { status: 500 });
   }
 }
