@@ -73,7 +73,7 @@ export default function EditAttributePage() {
         id: data.id as string,
         name_uk: (data.name_uk as string) || "",
         name_ru: (data.name_ru as string) || "",
-        slug: (data.slug as string) || "",
+        slug: (data.handle as string) || "",
         feature_type: (data.feature_type as string) || "T",
         is_filter: !!data.is_filter,
         filter_position: (data.filter_position as number) || 0,

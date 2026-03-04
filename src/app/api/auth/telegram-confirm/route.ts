@@ -116,23 +116,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Профіль не знайдено" }, { status: 404 });
     }
 
+    console.log("[ClientAuthConfirm] profile_id:", profile.id);
     const fakeEmail = `${normalizeTo380(profile.phone)}@phone.shineshop.local`;
+    console.log("[ClientAuthConfirm] fakeEmail:", fakeEmail);
 
     // Ensure auth user exists — check by profile.id (same as auth user id)
-    const { data: existingById } = await supabase.auth.admin.getUserById(profile.id);
+    const { data: existingById, error: lookupError } = await supabase.auth.admin.getUserById(profile.id);
+    if (lookupError) console.error("[ClientAuthConfirm] getUserById error:", lookupError);
+    console.log("[ClientAuthConfirm] getUserById result:", !!existingById?.user);
 
     if (!existingById?.user) {
       const { error: createError } = await supabase.auth.admin.createUser({
+        id: profile.id,
         email: fakeEmail,
-        phone: profile.phone,
         email_confirm: true,
         phone_confirm: true,
         password: crypto.randomUUID(),
+        user_metadata: { phone: profile.phone },
       });
 
       if (createError && !createError.message.includes("already")) {
         console.error("[ClientAuthConfirm] Create user error:", createError);
-        return NextResponse.json({ error: "Помилка створення користувача" }, { status: 500 });
+        return NextResponse.json({ error: "Помилка створення акаунту: " + createError.message }, { status: 500 });
       }
     }
 

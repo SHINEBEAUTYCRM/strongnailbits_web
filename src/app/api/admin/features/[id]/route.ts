@@ -30,17 +30,23 @@ export async function GET(
     .from("feature_variants")
     .select("*")
     .eq("feature_id", id)
-    .order("position", { ascending: true })
-    .order("name_uk", { ascending: true });
+    .order("position", { ascending: true });
 
   const { count: productsCount } = await supabase
     .from("product_features")
     .select("id", { count: "exact", head: true })
     .eq("feature_id", id);
 
+  // Map value_uk/value_ru → name_uk/name_ru for UI compatibility
+  const mappedVariants = (variants ?? []).map((v) => ({
+    ...v,
+    name_uk: v.value_uk ?? "",
+    name_ru: v.value_ru ?? "",
+  }));
+
   return NextResponse.json({
     ...feature,
-    variants: variants ?? [],
+    variants: mappedVariants,
     products_count: productsCount ?? 0,
   });
 }
@@ -70,21 +76,21 @@ export async function PUT(
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (body.name_uk !== undefined) patch.name_uk = body.name_uk;
   if (body.name_ru !== undefined) patch.name_ru = body.name_ru || null;
-  if (body.slug !== undefined) patch.slug = body.slug;
+  if (body.slug !== undefined) patch.handle = body.slug; // form sends slug, DB stores as handle
   if (body.feature_type !== undefined) patch.feature_type = body.feature_type;
   if (body.is_filter !== undefined) patch.is_filter = body.is_filter;
   if (body.filter_position !== undefined) patch.filter_position = Number(body.filter_position);
   if (body.status !== undefined) patch.status = body.status;
 
-  if (body.slug && body.slug !== existing.slug) {
+  if (body.slug && body.slug !== existing.handle) {
     const { data: dup } = await supabase
       .from("features")
       .select("id")
-      .eq("slug", body.slug)
+      .eq("handle", body.slug)
       .neq("id", id)
       .single();
     if (dup) {
-      return NextResponse.json({ error: "Slug already exists" }, { status: 409 });
+      return NextResponse.json({ error: "Handle already exists" }, { status: 409 });
     }
   }
 
@@ -98,9 +104,8 @@ export async function PUT(
       const variantRows = body.variants.map((v: Record<string, unknown>, i: number) => ({
         feature_id: id,
         cs_cart_id: v.cs_cart_id || null,
-        name_uk: v.name_uk || "",
-        name_ru: v.name_ru || null,
-        color_code: v.color_code || null,
+        value_uk: (v.name_uk as string) || "",
+        value_ru: (v.name_ru as string) || null,
         position: v.position ?? i,
         metadata: v.metadata || {},
       }));
