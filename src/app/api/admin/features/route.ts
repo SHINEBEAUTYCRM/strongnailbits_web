@@ -103,9 +103,8 @@ export async function POST(request: NextRequest) {
   if (Array.isArray(variants) && variants.length > 0) {
     const variantRows = variants.map((v: Record<string, unknown>, i: number) => ({
       feature_id: feature.id,
-      name_uk: v.name_uk || "",
-      name_ru: v.name_ru || null,
-      color_code: v.color_code || null,
+      value_uk: (v.value_uk || v.name_uk || "") as string,
+      value_ru: (v.value_ru || v.name_ru || null) as string | null,
       position: v.position ?? i,
       metadata: v.metadata || {},
     }));

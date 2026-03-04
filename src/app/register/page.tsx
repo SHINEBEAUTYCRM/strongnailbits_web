@@ -11,12 +11,14 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [phone, setPhone] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [company, setCompany] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const phoneRef = useRef<HTMLInputElement>(null);
 
@@ -25,12 +27,12 @@ export default function RegisterPage() {
   }, []);
 
   function formatPhoneDisplay(value: string): string {
-    const digits = value.replace(/\D/g, "");
-    if (digits.length <= 3) return digits;
-    if (digits.length <= 5) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-    if (digits.length <= 7)
-      return `(${digits.slice(0, 3)}) ${digits.slice(3, 5)}-${digits.slice(5)}`;
-    return `(${digits.slice(0, 3)}) ${digits.slice(3, 5)}-${digits.slice(5, 7)}-${digits.slice(7, 9)}`;
+    const d = value.replace(/\D/g, "");
+    if (d.length <= 2) return d;
+    if (d.length <= 5) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+    if (d.length <= 7)
+      return `(${d.slice(0, 2)}) ${d.slice(2, 5)}-${d.slice(5)}`;
+    return `(${d.slice(0, 2)}) ${d.slice(2, 5)}-${d.slice(5, 7)}-${d.slice(7, 9)}`;
   }
 
   function handlePhoneChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -52,6 +54,10 @@ export default function RegisterPage() {
     }
     if (!password || password.length < 6) {
       setError("Пароль повинен містити мінімум 6 символів");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Паролі не збігаються");
       return;
     }
 
@@ -133,7 +139,7 @@ export default function RegisterPage() {
                   inputMode="numeric"
                   value={formatPhoneDisplay(phone)}
                   onChange={handlePhoneChange}
-                  placeholder="(0XX) XX-XX-XX"
+                  placeholder="(XX) XXX-XX-XX"
                   className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg2)] py-3 pl-[5.5rem] pr-4 text-sm outline-none transition-colors focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
                 />
               </div>
@@ -210,6 +216,30 @@ export default function RegisterPage() {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--t3)] hover:text-[var(--t1)]"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-[var(--t1)]">
+                Підтвердити пароль <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--t3)]" />
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Повторіть пароль"
+                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg2)] py-3 pl-10 pr-10 text-sm outline-none transition-colors focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--t3)] hover:text-[var(--t1)]"
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>

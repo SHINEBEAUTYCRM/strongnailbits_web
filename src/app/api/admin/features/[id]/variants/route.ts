@@ -19,8 +19,15 @@ export async function GET(
     .select("*")
     .eq("feature_id", id)
     .order("position", { ascending: true })
-    .order("name_uk", { ascending: true });
+    .order("value_uk", { ascending: true });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data || []);
+
+  // Map value_uk/value_ru → name_uk/name_ru for UI compatibility
+  const mapped = (data || []).map((v) => ({
+    ...v,
+    name_uk: v.value_uk ?? null,
+    name_ru: v.value_ru ?? null,
+  }));
+  return NextResponse.json(mapped);
 }
