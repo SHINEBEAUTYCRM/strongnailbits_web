@@ -14,7 +14,7 @@ import { CatalogButton } from "@/components/home/CatalogButton";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 
 /** ISR: regenerate homepage every 60 s */
-export const revalidate = 60;
+export const revalidate = 0;
 
 const PRODUCT_FIELDS =
   "id, name_uk, name_ru, slug, price, old_price, main_image_url, status, quantity, is_new, is_featured, brands(name)";

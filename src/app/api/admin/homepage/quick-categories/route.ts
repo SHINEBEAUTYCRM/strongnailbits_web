@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/admin/requireAdmin';
 
@@ -44,6 +45,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    revalidatePath('/');
     return NextResponse.json({ ok: true, quickCategory: data });
   } catch (err) {
     console.error('[API:QuickCategories] POST error:', err);
@@ -82,6 +84,7 @@ export async function PUT(request: NextRequest) {
           results.push({ id: item.id, ok: true, quickCategory: data });
         }
       }
+      revalidatePath('/');
       return NextResponse.json({ ok: true, results });
     }
 
@@ -110,6 +113,7 @@ export async function PUT(request: NextRequest) {
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    revalidatePath('/');
     return NextResponse.json({ ok: true, quickCategory: data });
   } catch (err) {
     console.error('[API:QuickCategories] PUT error:', err);
@@ -136,6 +140,7 @@ export async function DELETE(request: NextRequest) {
       .eq('id', body.id);
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    revalidatePath('/');
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('[API:QuickCategories] DELETE error:', err);
