@@ -51,14 +51,14 @@ export async function GET() {
   const { count: externalCount } = await supabase
     .from("products")
     .select("id", { count: "exact", head: true })
-    .like("main_image_url", "%shine-shop.com.ua%");
+    .like("main_image_url", "%strongnailbits.com.ua%");
 
   // Count products with Supabase Storage images
   const { count: migratedCount } = await supabase
     .from("products")
     .select("id", { count: "exact", head: true })
     .not("main_image_url", "is", null)
-    .not("main_image_url", "like", "%shine-shop.com.ua%");
+    .not("main_image_url", "like", "%strongnailbits.com.ua%");
 
   // Total products with any image
   const { count: totalWithImages } = await supabase
@@ -145,7 +145,7 @@ async function runMigration(parallelBatchSize: number) {
     const { count } = await supabase
       .from("products")
       .select("id", { count: "exact", head: true })
-      .like("main_image_url", "%shine-shop.com.ua%");
+      .like("main_image_url", "%strongnailbits.com.ua%");
 
     migrationProgress.total_products = count ?? 0;
     migrationProgress.status = "running";
@@ -162,7 +162,7 @@ async function runMigration(parallelBatchSize: number) {
       let query = supabase
         .from("products")
         .select("id, main_image_url, images")
-        .like("main_image_url", "%shine-shop.com.ua%")
+        .like("main_image_url", "%strongnailbits.com.ua%")
         .order("id", { ascending: true })
         .limit(parallelBatchSize);
 
@@ -202,7 +202,7 @@ async function migrateProductImages(
   const allUrls: string[] = [];
   if (product.main_image_url) allUrls.push(product.main_image_url);
   if (product.images && Array.isArray(product.images)) {
-    allUrls.push(...product.images.filter((u) => u.includes("shine-shop.com.ua")));
+    allUrls.push(...product.images.filter((u) => u.includes("strongnailbits.com.ua")));
   }
 
   migrationProgress.total_images += allUrls.length;
@@ -279,11 +279,11 @@ async function migrateProductImages(
   // Update product with new URLs
   if (newUrls.length > 0) {
     const updateData: Record<string, unknown> = {};
-    if (newUrls[0] && !newUrls[0].includes("shine-shop.com.ua")) {
+    if (newUrls[0] && !newUrls[0].includes("strongnailbits.com.ua")) {
       updateData.main_image_url = newUrls[0];
     }
     if (newUrls.length > 1) {
-      const additionalImages = newUrls.slice(1).filter((u) => !u.includes("shine-shop.com.ua"));
+      const additionalImages = newUrls.slice(1).filter((u) => !u.includes("strongnailbits.com.ua"));
       if (additionalImages.length > 0) {
         updateData.images = additionalImages;
       }

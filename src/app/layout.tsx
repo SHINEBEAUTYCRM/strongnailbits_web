@@ -38,8 +38,8 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "SHINE SHOP — Професійна nail-косметика",
-    template: "%s | SHINE SHOP",
+    default: "STRONG NAIL BITS — Професійна nail-косметика",
+    template: "%s | STRONG NAIL BITS",
   },
   description:
     "Професійна косметика для nail-майстрів. Гель-лаки, бази, топи, інструменти. Оптові ціни від 1-ї одиниці. Доставка по Україні.",
@@ -47,17 +47,17 @@ export const metadata: Metadata = {
     "гель-лак оптом",
     "nail косметика",
     "B2B краса",
-    "Shine Shop",
+    "Strong Nail Bits",
     "манікюр",
     "професійна косметика",
   ],
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com",
+    process.env.NEXT_PUBLIC_SITE_URL || "https://strongnailbitsb2b.com",
   ),
   openGraph: {
     type: "website",
     locale: "uk_UA",
-    siteName: "SHINE SHOP",
+    siteName: "STRONG NAIL BITS",
   },
   robots: {
     index: true,
@@ -112,7 +112,7 @@ export default async function RootLayout({
         )}
         {/* Preconnect to critical origins (saves DNS+TCP+TLS per origin) */}
         <link rel="preconnect" href="https://kqgtxmdruxwtocmvsvwh.supabase.co" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://shine-shop.com.ua" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://strongnailbits.com.ua" crossOrigin="anonymous" />
         {/* DNS prefetch for analytics (non-critical, loaded later) */}
         {analytics.gtmContainerId && (
           <link rel="dns-prefetch" href="https://www.googletagmanager.com" />

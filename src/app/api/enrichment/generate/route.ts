@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
 
   const brandProductsList = (brandProducts || []).map(p => `- <a href="/product/${p.slug}">${p.name_uk}</a>`).join('\n');
 
-  const systemPrompt = `Ти — копірайтер інтернет-магазину nail-косметики SHINE SHOP.
+  const systemPrompt = `Ти — копірайтер інтернет-магазину nail-косметики STRONG NAIL BITS.
 Пишеш для МАЙСТРІВ МАНІКЮРУ — професіоналів.
 
 КАТЕГОРИЧНО ЗАБОРОНЕНО:

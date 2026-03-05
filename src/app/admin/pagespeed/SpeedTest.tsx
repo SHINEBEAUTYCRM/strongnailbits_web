@@ -46,7 +46,7 @@ interface PSIResult {
 
 type Strategy = "mobile" | "desktop";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://strongnailbitsb2b.com";
 const PSI_KEY = process.env.NEXT_PUBLIC_GOOGLE_PSI_KEY || "";
 
 const PAGES = [

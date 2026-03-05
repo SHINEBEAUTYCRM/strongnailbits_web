@@ -6,7 +6,7 @@ import { DB_FIELDS, DB_FIELD_LABELS, type DbField } from "../types";
 
 /** Shared system prompt for all import AI steps */
 export const IMPORT_AI_SYSTEM = `
-Ти — AI-асистент для імпорту даних в інтернет-магазин Shine Shop B2B.
+Ти — AI-асистент для імпорту даних в інтернет-магазин Strong Nail Bits B2B.
 Магазин спеціалізується на nail-індустрії (гель-лаки, бази, топи, 
 інструменти, декор для нігтів).
 

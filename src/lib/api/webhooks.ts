@@ -1,5 +1,5 @@
 // ================================================================
-//  ShineShop OS — Webhooks Engine
+//  StrongNailBits OS — Webhooks Engine
 //  HMAC-SHA256 підпис, відправка, retry з backoff, логування
 // ================================================================
 
@@ -59,7 +59,7 @@ async function deliverWebhook(
     'X-Webhook-Event': event,
     'X-Webhook-Signature': `sha256=${signature}`,
     'X-Webhook-Attempt': String(attempt),
-    'User-Agent': 'ShineShop-Webhooks/1.0',
+    'User-Agent': 'StrongNailBits-Webhooks/1.0',
     ...(webhook.headers || {}),
   };
 

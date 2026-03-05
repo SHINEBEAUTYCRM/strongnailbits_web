@@ -166,7 +166,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
     title: category.name_uk,
     description:
       category.description_uk ??
-      `${category.name_uk} — купити оптом в SHINE SHOP. Доставка по Україні.`,
+      `${category.name_uk} — купити оптом в STRONG NAIL BITS. Доставка по Україні.`,
   };
 }
 

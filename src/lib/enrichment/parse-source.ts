@@ -15,7 +15,7 @@ export interface ParsedSourceData {
  */
 export async function parseSourcePage(url: string): Promise<ParsedSourceData> {
   const res = await fetch(url, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ShineShopBot/1.0)' },
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; StrongNailBitsBot/1.0)' },
     signal: AbortSignal.timeout(10000),
   });
 

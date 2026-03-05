@@ -1,5 +1,5 @@
 -- ================================================================
---  Shine Shop B2B — CRM API Integration Tables
+--  Strong Nail Bits B2B — CRM API Integration Tables
 --  Таблиці для інтеграції з Shine Beauty CRM
 -- ================================================================
 

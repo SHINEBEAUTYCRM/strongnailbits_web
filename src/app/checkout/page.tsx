@@ -254,7 +254,7 @@ export default function CheckoutPage() {
             ? `+${profile.phone.startsWith("380") ? profile.phone : "38" + profile.phone}`
             : f.phone,
           email:
-            profile.email && !profile.email.includes("@phone.shineshop.local")
+            profile.email && !profile.email.includes("@phone.strongnailbits.local")
               ? profile.email
               : f.email,
           companyName: profile.company || f.companyName,

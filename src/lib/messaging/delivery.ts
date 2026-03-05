@@ -12,7 +12,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com";
+  process.env.NEXT_PUBLIC_SITE_URL || "https://strongnailbitsb2b.com";
 
 // ────── Types ──────
 

@@ -67,7 +67,7 @@ interface TopUrl {
 
 type Tab = "overview" | "keywords" | "competitors" | "pages";
 
-const DOMAIN = "shineshopb2b.com";
+const DOMAIN = "strongnailbitsb2b.com";
 const SE = "g_ua"; // Google Ukraine
 const COMPETITOR_DOMAINS = [
   "amoreshopping.com",

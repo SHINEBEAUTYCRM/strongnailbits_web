@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Бренди",
   description:
-    "Повний каталог брендів професійної косметики в SHINE SHOP. Гель-лаки, бази, топи та інструменти від найкращих виробників.",
+    "Повний каталог брендів професійної косметики в STRONG NAIL BITS. Гель-лаки, бази, топи та інструменти від найкращих виробників.",
 };
 
 interface Brand {

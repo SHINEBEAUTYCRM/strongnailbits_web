@@ -15,7 +15,7 @@ async function getConfig(): Promise<{ apiKey: string; sender: string }> {
   }
   return {
     apiKey: config.api_key,
-    sender: config.sender || 'Shine SHOP',
+    sender: config.sender || 'StrongNail',
   };
 }
 
@@ -130,7 +130,7 @@ export async function sendOtpSms(
   phone: string,
   code: string,
 ): Promise<SendSmsResult> {
-  const message = `${code} — ваш код для ShineShop. Не повідомляйте нікому.`;
+  const message = `${code} — ваш код для StrongNailBits. Не повідомляйте нікому.`;
   return sendSms(phone, message);
 }
 

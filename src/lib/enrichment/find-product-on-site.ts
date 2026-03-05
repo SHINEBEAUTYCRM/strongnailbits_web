@@ -64,7 +64,7 @@ async function trySearchOnSite(
   for (const path of searchPaths) {
     try {
       const res = await fetch(origin + path, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ShineShopBot/1.0)' },
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; StrongNailBitsBot/1.0)' },
         signal: AbortSignal.timeout(8000),
       });
       if (!res.ok) continue;
@@ -82,7 +82,7 @@ async function trySearchOnSite(
   const shortName = name.replace(/\d+\s*(мл|ml|г|g)/gi, '').trim().split(' ').slice(0, 3).join(' ');
   try {
     const res = await fetch(`${origin}/search?q=${encodeURIComponent(shortName)}`, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ShineShopBot/1.0)' },
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; StrongNailBitsBot/1.0)' },
       signal: AbortSignal.timeout(8000),
     });
     if (res.ok) {
@@ -106,7 +106,7 @@ async function tryCatalogScan(
   for (const path of catalogPaths) {
     try {
       const res = await fetch(origin + path, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ShineShopBot/1.0)' },
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; StrongNailBitsBot/1.0)' },
         signal: AbortSignal.timeout(8000),
       });
       if (!res.ok) continue;

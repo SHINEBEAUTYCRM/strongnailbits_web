@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 
 type Status = "idle" | "sending" | "waiting" | "confirmed" | "error" | "no_telegram";
 
-const ADMIN_BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_ADMIN_BOT_USERNAME || "ShineShopAdminBot";
+const ADMIN_BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_ADMIN_BOT_USERNAME || "StrongNailBitsAdminBot";
 
 export default function AdminLoginPage() {
   const [phone, setPhone] = useState("");
@@ -245,7 +245,7 @@ export default function AdminLoginPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold tracking-wider mb-1">
-            <span style={{ color: "#a855f7" }}>ShineShop</span>{" "}
+            <span style={{ color: "#a855f7" }}>StrongNailBits</span>{" "}
             <span style={{ color: "#52525b", fontSize: "14px", letterSpacing: "0.15em" }}>
               OPERATING SYSTEM
             </span>

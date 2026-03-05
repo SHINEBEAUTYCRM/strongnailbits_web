@@ -1,6 +1,6 @@
 # ТЕХНІЧНЕ ЗАВДАННЯ ДЛЯ ПРОГРАМІСТА 1С
 
-## API інтеграції з сайтом Shine Shop
+## API інтеграції з сайтом Strong Nail Bits
 
 **Версія:** 1.0  
 **Дата:** Лютий 2026  
@@ -12,7 +12,7 @@
 
 ### Що вже зроблено на стороні сайту
 
-- REST API на базовому URL: `https://shineshopb2b.com/api/v1/`
+- REST API на базовому URL: `https://strongnailbitsb2b.com/api/v1/`
 - Авторизація через Bearer-токен
 - Валідація всіх вхідних даних
 - Логування всіх запитів
@@ -128,7 +128,7 @@ HTTPЗапит.Заголовки.Вставить("Content-Type", "application/
 ### Базовий URL
 
 ```
-https://shineshopb2b.com/api/v1/
+https://strongnailbitsb2b.com/api/v1/
 ```
 
 ---
@@ -985,13 +985,13 @@ POST /api/v1/products
 
 | Параметр | Значення |
 |----------|----------|
-| Сайт | https://shineshopb2b.com |
-| Базовий URL API | https://shineshopb2b.com/api/v1/ |
+| Сайт | https://strongnailbitsb2b.com |
+| Базовий URL API | https://strongnailbitsb2b.com/api/v1/ |
 | Авторизація | Bearer Token (SHA-256) |
 | Формат | JSON |
 | Rate Limit | 100 запитів/хв (за замовчуванням) |
 | Кількість ендпоінтів | 16 (15 + health) |
-| Інтерактивна документація | https://shineshopb2b.com/admin/api-docs |
+| Інтерактивна документація | https://strongnailbitsb2b.com/admin/api-docs |
 
 ### 1С система клієнта
 
@@ -1007,10 +1007,10 @@ POST /api/v1/products
 
 ## 12. Контакти
 
-- **API токен** — створюється адміністратором на https://shineshopb2b.com/admin/api-keys
-- **Інтерактивна документація** — https://shineshopb2b.com/admin/api-docs (з прикладами коду і кнопкою "Спробувати")
-- **Лог запитів** — https://shineshopb2b.com/admin/api-keys → вкладка "Лог запитів"
-- **Моніторинг обміну** — https://shineshopb2b.com/admin/1c
+- **API токен** — створюється адміністратором на https://strongnailbitsb2b.com/admin/api-keys
+- **Інтерактивна документація** — https://strongnailbitsb2b.com/admin/api-docs (з прикладами коду і кнопкою "Спробувати")
+- **Лог запитів** — https://strongnailbitsb2b.com/admin/api-keys → вкладка "Лог запитів"
+- **Моніторинг обміну** — https://strongnailbitsb2b.com/admin/1c
 
 ---
 

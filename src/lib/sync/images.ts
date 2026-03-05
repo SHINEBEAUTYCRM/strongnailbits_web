@@ -39,7 +39,7 @@ const FETCH_TIMEOUT_MS = 30_000;
 const BATCH_SIZE = 500;
 const LOG_EVERY = 100;
 
-const OLD_HOST = "shine-shop.com.ua";
+const OLD_HOST = "strongnailbits.com.ua";
 const SUPABASE_HOST = "supabase.co";
 
 /* ------------------------------------------------------------------ */
@@ -113,7 +113,7 @@ async function fetchWithTimeout(
     const response = await fetch(url, {
       signal: controller.signal,
       headers: {
-        "User-Agent": "ShineShop-B2B-Migrator/1.0",
+        "User-Agent": "StrongNailBits-B2B-Migrator/1.0",
       },
     });
     return response;

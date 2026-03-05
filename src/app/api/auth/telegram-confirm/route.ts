@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
       }
 
       const phone380 = normalizeTo380(profile.phone);
-      const fakeEmail = `${phone380}@phone.shineshop.local`;
+      const fakeEmail = `${phone380}@phone.strongnailbits.local`;
       console.log("[TelegramConfirm:register] profile:", profile.id, "email:", fakeEmail);
 
       const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Профіль не знайдено" }, { status: 404 });
     }
 
-    const fakeEmail = `${normalizeTo380(profile.phone)}@phone.shineshop.local`;
+    const fakeEmail = `${normalizeTo380(profile.phone)}@phone.strongnailbits.local`;
     console.log("[TelegramConfirm:login] profile:", profile.id, "email:", fakeEmail);
 
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({

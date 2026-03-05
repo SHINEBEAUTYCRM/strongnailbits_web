@@ -115,14 +115,14 @@ export async function POST(request: NextRequest) {
         .from("profiles")
         .update({
           phone,
-          ...(appleEmail && !appleEmail.includes("@phone.shineshop.local")
+          ...(appleEmail && !appleEmail.includes("@phone.strongnailbits.local")
             ? { email: appleEmail }
             : {}),
         })
         .eq("id", currentUser.id);
     } else {
       // Create new profile
-      const fakeEmail = `${phone}@phone.shineshop.local`;
+      const fakeEmail = `${phone}@phone.strongnailbits.local`;
       await admin.from("profiles").insert({
         id: currentUser.id,
         email: appleEmail || fakeEmail,

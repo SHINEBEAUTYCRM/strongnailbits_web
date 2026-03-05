@@ -18,7 +18,7 @@ export function buildPhotoPath(
 }
 
 export function getPublicImageUrl(storagePath: string): string {
-  const host = process.env.NEXT_PUBLIC_IMAGE_HOST || 'https://img.shineshopb2b.com';
+  const host = process.env.NEXT_PUBLIC_IMAGE_HOST || 'https://img.strongnailbitsb2b.com';
   return `${host}/${storagePath}`;
 }
 

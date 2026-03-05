@@ -1,5 +1,5 @@
 // ================================================================
-//  ShineShop OS — In-Memory Rate Limiter
+//  StrongNailBits OS — In-Memory Rate Limiter
 //  Sliding window rate limiter для API-токенів
 // ================================================================
 

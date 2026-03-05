@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "ShineShop API Documentation",
+  title: "StrongNailBits API Documentation",
   robots: { index: false, follow: false },
 };
 

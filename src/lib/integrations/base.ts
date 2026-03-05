@@ -1,5 +1,5 @@
 // ================================================================
-//  ShineShop OS — Base Integration Class
+//  StrongNailBits OS — Base Integration Class
 //  Абстрактний клас для всіх 47 сервісів
 // ================================================================
 
@@ -11,7 +11,7 @@ import type { VerifyResult, IntegrationKeyRow } from './types';
 let _defaultTenantId: string | null = null;
 
 /**
- * Отримати ID тенанта за замовчуванням (Shine Shop).
+ * Отримати ID тенанта за замовчуванням (Strong Nail Bits).
  * Кешується в пам'яті на рівні серверного рантайму.
  */
 export async function getDefaultTenantId(): Promise<string> {
@@ -52,7 +52,7 @@ export abstract class BaseIntegration {
   }
 
   /**
-   * Ініціалізувати з default tenant (для Shine Shop)
+   * Ініціалізувати з default tenant (для Strong Nail Bits)
    */
   async init(): Promise<void> {
     if (!this.tenantId) {

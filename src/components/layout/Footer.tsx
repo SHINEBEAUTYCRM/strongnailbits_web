@@ -50,10 +50,10 @@ export function Footer({ contacts, social, footer }: FooterProps) {
     FALLBACK_INFO_LINKS;
 
   const instagramUrl =
-    social?.instagram?.url ?? "https://www.instagram.com/shineshop.com.ua/";
-  const telegramUrl = social?.telegram?.url ?? "https://t.me/shineshop_ua";
+    social?.instagram?.url ?? "https://www.instagram.com/strongnailbits.com.ua/";
+  const telegramUrl = social?.telegram?.url ?? "https://t.me/strongnailbits_ua";
   const facebookUrl =
-    social?.facebook?.url ?? "https://www.facebook.com/shineshop.com.ua/";
+    social?.facebook?.url ?? "https://www.facebook.com/strongnailbits.com.ua/";
 
   return (
     <footer className="bg-[#1a1a1a] text-white">
@@ -200,7 +200,7 @@ export function Footer({ contacts, social, footer }: FooterProps) {
 
         <div className="mt-12 border-t border-white/10 pt-6 text-center text-xs text-white/50">
           <p>
-            &copy; {new Date().getFullYear()} SHINE SHOP. Усі права захищені.{" "}
+            &copy; {new Date().getFullYear()} STRONG NAIL BITS. Усі права захищені.{" "}
             <Link
               href="/privacy"
               className="underline transition-colors hover:text-coral"

@@ -26,7 +26,7 @@ const METHOD_COLORS: Record<string, string> = {
   DELETE: "bg-red-500/20 text-red-400 border-red-500/30",
 };
 
-const BASE_URL = "https://shineshopb2b.com";
+const BASE_URL = "https://strongnailbitsb2b.com";
 
 // ─── Code generators ───
 function curlExample(e: DocEndpoint, token: string): string {
@@ -62,7 +62,7 @@ function pythonExample(e: DocEndpoint, token: string): string {
 
 function onecExample(e: DocEndpoint, token: string): string {
   const url = e.path;
-  let code = `// 1С:Підприємство — псевдокод\nHTTPЗ'єднання = Новий HTTPЗ'єднання("shineshopb2b.com", 443, , , , , Новий ЗахищенеЗ'єднанняOpenSSL());\n`;
+  let code = `// 1С:Підприємство — псевдокод\nHTTPЗ'єднання = Новий HTTPЗ'єднання("strongnailbitsb2b.com", 443, , , , , Новий ЗахищенеЗ'єднанняOpenSSL());\n`;
   code += `HTTPЗапит = Новий HTTPЗапит("${url}");\n`;
   code += `HTTPЗапит.Заголовки.Вставити("Authorization", "Bearer ${token || "sk_live_ваш_токен"}");\n`;
   code += `HTTPЗапит.Заголовки.Вставити("Content-Type", "application/json");\n`;

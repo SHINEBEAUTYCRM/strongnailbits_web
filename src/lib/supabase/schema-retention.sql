@@ -44,7 +44,7 @@ INSERT INTO funnel_messages (funnel_id, stage_id, name, channel, template, delay
 SELECT f.id, s.id,
   'Telegram Welcome — Привітання',
   'telegram',
-  '👋 <b>Вітаємо у ShineShop B2B, {{name}}!</b>
+  '👋 <b>Вітаємо у StrongNailBits B2B, {{name}}!</b>
 
 Я — ваш персональний бот-помічник. Ось що я вмію:
 

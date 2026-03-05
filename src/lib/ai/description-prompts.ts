@@ -19,7 +19,7 @@ export interface SeoRequest {
 }
 
 export function buildSystemPrompt(body: GenerateRequest): string {
-  return `Ти — професійний копірайтер інтернет-магазину nail-індустрії Shine Shop.
+  return `Ти — професійний копірайтер інтернет-магазину nail-індустрії Strong Nail Bits.
 Працюєш з описами товарів для nail-майстрів та салонів краси.
 
 СТИЛЬ:
@@ -130,7 +130,7 @@ ${body.existingDescription ? `Поточний опис:\n${body.existingDescrip
 export function buildSeoPrompt(body: SeoRequest): { system: string; user: string } {
   const lang = body.targetLang === 'uk' ? 'українською' : 'російською';
 
-  const system = `Ти — SEO-спеціаліст інтернет-магазину nail-індустрії Shine Shop.
+  const system = `Ти — SEO-спеціаліст інтернет-магазину nail-індустрії Strong Nail Bits.
 Генеруєш мета-теги для товарів. Відповідай ТІЛЬКИ валідним JSON без markdown.`;
 
   const user = `Згенеруй SEO мета-теги ${lang} для товару інтернет-магазину nail-індустрії.
@@ -146,7 +146,7 @@ ${body.category ? `Категорія: ${body.category}` : ''}
 }
 
 Правила:
-- meta_title: "[Назва товару] | [Бренд] — купити в Shine Shop"
+- meta_title: "[Назва товару] | [Бренд] — купити в Strong Nail Bits"
 - meta_description: коротко про товар + "Купити [назва] за найкращою ціною. Доставка по Україні."
 - НЕ використовуй емоджі
 - НЕ використовуй ALL CAPS`;

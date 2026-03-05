@@ -1,7 +1,7 @@
 "use client";
 
 // ================================================================
-//  ShineShop OS — Image Upload with AI Studio
+//  StrongNailBits OS — Image Upload with AI Studio
 //  Замінює звичайний image upload. Дві кнопки: завантажити + AI Studio
 // ================================================================
 

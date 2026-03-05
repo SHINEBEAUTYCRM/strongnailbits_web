@@ -1,5 +1,5 @@
 // ================================================================
-//  Shine Shop B2B — Claude API Client for Enrichment Pipeline
+//  Strong Nail Bits B2B — Claude API Client for Enrichment Pipeline
 //  Models:
 //    claude-haiku-4-5-20251001 — enrichment (fast, cheap)
 //    claude-sonnet-4-5-20250929 — auto-detect, complex tasks
@@ -116,7 +116,7 @@ export async function enrichProduct(
   brandKnowledge: Record<string, unknown>,
   rawParsedData: { title?: string; description?: string; specs?: Record<string, string>; composition?: string; instructions?: string } | null,
 ): Promise<{ metadata: Partial<AIMetadata>; tokens: { input: number; output: number } }> {
-  const systemPrompt = `Ти — експерт nail-індустрії та копірайтер для SHINE SHOP (shineshopb2b.com).
+  const systemPrompt = `Ти — експерт nail-індустрії та копірайтер для STRONG NAIL BITS (strongnailbitsb2b.com).
 Задача: створити опис товару УКРАЇНСЬКОЮ на основі наданих даних.
 
 Бренд знання: ${JSON.stringify(brandKnowledge)}

@@ -8,7 +8,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 
 export const dynamic = 'force-dynamic';
 
-const SHOP_URL = 'https://shineshopb2b.com';
+const SHOP_URL = 'https://strongnailbitsb2b.com';
 
 export async function OPTIONS(req: NextRequest) {
   return handleCorsOptions(req);

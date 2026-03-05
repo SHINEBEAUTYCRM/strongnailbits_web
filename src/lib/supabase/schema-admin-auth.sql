@@ -1,5 +1,5 @@
 -- ================================================================
---  Admin Auth: Telegram-based authentication for ShineShop Admin
+--  Admin Auth: Telegram-based authentication for StrongNailBits Admin
 -- ================================================================
 
 -- 1. Team members (who can access admin)

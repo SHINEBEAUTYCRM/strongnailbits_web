@@ -1,5 +1,5 @@
 // ================================================================
-//  ShineShop OS — PhotoRoom API Types
+//  StrongNailBits OS — PhotoRoom API Types
 //  Типи для AI Image Studio
 // ================================================================
 

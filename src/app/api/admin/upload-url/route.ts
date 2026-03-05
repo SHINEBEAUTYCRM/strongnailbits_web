@@ -1,5 +1,5 @@
 // ================================================================
-//  ShineShop OS — External Image Proxy Download
+//  StrongNailBits OS — External Image Proxy Download
 //  POST /api/admin/upload-url
 //  Завантажує зображення за зовнішнім URL, зберігає в Supabase Storage
 //  Використовується для drag & drop з інших сайтів
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       res = await fetch(url, {
         signal: controller.signal,
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; ShineShop/1.0)',
+          'User-Agent': 'Mozilla/5.0 (compatible; StrongNailBits/1.0)',
           'Accept': 'image/*',
         },
       });

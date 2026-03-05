@@ -1,5 +1,5 @@
 // ================================================================
-//  ShineShop OS — Crypto Utilities
+//  StrongNailBits OS — Crypto Utilities
 //  Шифрування/дешифрування API-ключів у БД
 // ================================================================
 
@@ -31,7 +31,7 @@ async function deriveKey(secret: string): Promise<CryptoKey> {
   return crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
-      salt: encoder.encode('shineshop-os-salt'),
+      salt: encoder.encode('strongnailbits-os-salt'),
       iterations: 100000,
       hash: 'SHA-256',
     },

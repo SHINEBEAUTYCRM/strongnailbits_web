@@ -22,7 +22,7 @@ interface BrandRow {
 
 const BRAND_FEATURE_ID = 18;
 const BATCH_SIZE = 50;
-const CS_CART_BASE_URL = "https://shine-shop.com.ua";
+const CS_CART_BASE_URL = "https://strongnailbits.com.ua";
 
 /* ------------------------------------------------------------------ */
 /*  Хелпери                                                            */

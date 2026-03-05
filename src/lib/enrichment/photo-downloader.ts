@@ -1,5 +1,5 @@
 // ================================================================
-//  Shine Shop B2B — Photo Downloader → Supabase Storage
+//  Strong Nail Bits B2B — Photo Downloader → Supabase Storage
 //  Downloads photos from brand websites and uploads to Storage
 //  Path: products/{brand_slug}/{product_slug}/{n}.jpg
 // ================================================================

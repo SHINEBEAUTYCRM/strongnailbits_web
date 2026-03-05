@@ -1,5 +1,5 @@
 -- ================================================================
---  ShineShop OS — Integration Infrastructure Schema
+--  StrongNailBits OS — Integration Infrastructure Schema
 --  Supabase / PostgreSQL
 --  Розширення для маркетингової екосистеми (47 сервісів)
 -- ================================================================
@@ -12,7 +12,7 @@
 
 CREATE TABLE IF NOT EXISTS tenant_settings (
   id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  name        TEXT        NOT NULL DEFAULT 'Shine Shop',
+  name        TEXT        NOT NULL DEFAULT 'Strong Nail Bits',
   domain      TEXT,
   logo_url    TEXT,
   theme       JSONB       DEFAULT '{}'::jsonb,
@@ -27,10 +27,10 @@ CREATE TRIGGER trg_tenant_settings_updated_at
 
 -- Один тенант за замовчуванням
 INSERT INTO tenant_settings (name, domain)
-VALUES ('Shine Shop', 'shineshopb2b.com')
+VALUES ('Strong Nail Bits', 'strongnailbitsb2b.com')
 ON CONFLICT DO NOTHING;
 
-COMMENT ON TABLE tenant_settings IS 'Налаштування тенанта (White-label OS). Один рядок для Shine Shop, більше для мультитенанта.';
+COMMENT ON TABLE tenant_settings IS 'Налаштування тенанта (White-label OS). Один рядок для Strong Nail Bits, більше для мультитенанта.';
 
 
 -- ================================================================

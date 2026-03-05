@@ -1,5 +1,5 @@
 // ================================================================
-//  ShineShop OS — API Types
+//  StrongNailBits OS — API Types
 // ================================================================
 
 export interface ApiTokenRow {

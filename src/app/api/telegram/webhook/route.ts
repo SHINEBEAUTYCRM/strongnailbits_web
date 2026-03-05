@@ -1,5 +1,5 @@
 /**
- * Telegram Bot Webhook — ShineShop B2B
+ * Telegram Bot Webhook — StrongNailBits B2B
  *
  * Entry point for all Telegram updates.
  * Routes to admin or client handler based on admin_users table.
@@ -335,7 +335,7 @@ async function handleContactShared(
     .maybeSingle();
 
   if (!profile) {
-    const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com";
+    const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://strongnailbitsb2b.com";
     await bot.sendMessage(chatId, "Не знайшли акаунт з цим номером.\n\nЗареєструйтесь на сайті:", {
       reply_markup: {
         inline_keyboard: [
@@ -410,7 +410,7 @@ async function handleClientRegStart(
 
   await bot.sendMessage(
     chatId,
-    `👋 Вітаємо в ShineShop!\n\n` +
+    `👋 Вітаємо в StrongNailBits!\n\n` +
       `Для реєстрації акаунту (${masked}) надішліть свій номер телефону кнопкою нижче.\n\n` +
       `Це потрібно для підтвердження, що номер належить вам.`,
     {
@@ -470,7 +470,7 @@ async function handleClientAuthStart(
 
   await bot.sendMessage(
     chatId,
-    `🔐 <b>Запит на вхід в ShineShop</b>\n\n📱 ${masked}\n🕐 ${timeStr}\n\nЦе ви?`,
+    `🔐 <b>Запит на вхід в StrongNailBits</b>\n\n📱 ${masked}\n🕐 ${timeStr}\n\nЦе ви?`,
     {
       reply_markup: {
         inline_keyboard: [

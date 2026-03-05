@@ -26,7 +26,7 @@ const METHOD_COLORS: Record<string, string> = {
   DELETE: "bg-red-500/20 text-red-400 border-red-500/30",
 };
 
-const BASE_URL = "https://shineshopb2b.com";
+const BASE_URL = "https://strongnailbitsb2b.com";
 const TOKEN_PLACEHOLDER = "sk_live_YOUR_TOKEN";
 
 // ─── Code generators ───
@@ -63,7 +63,7 @@ function pythonExample(e: DocEndpoint): string {
 
 function onecExample(e: DocEndpoint): string {
   const url = e.path;
-  let code = `// 1С:Підприємство — приклад коду\nHTTPЗ'єднання = Новий HTTPЗ'єднання("shineshopb2b.com", 443, , , , , Новий ЗахищенеЗ'єднанняOpenSSL());\n`;
+  let code = `// 1С:Підприємство — приклад коду\nHTTPЗ'єднання = Новий HTTPЗ'єднання("strongnailbitsb2b.com", 443, , , , , Новий ЗахищенеЗ'єднанняOpenSSL());\n`;
   code += `HTTPЗапит = Новий HTTPЗапит("${url}");\n`;
   code += `HTTPЗапит.Заголовки.Вставити("Authorization", "Bearer ${TOKEN_PLACEHOLDER}");\n`;
   code += `HTTPЗапит.Заголовки.Вставити("Content-Type", "application/json");\n`;
@@ -258,9 +258,9 @@ export default function PublicApiDocsPage() {
         <div className="p-4">
           <div className="flex items-center gap-2 mb-1">
             <BookOpen className="h-4 w-4 text-purple-400" />
-            <h2 className="text-sm font-bold text-white">ShineShop API</h2>
+            <h2 className="text-sm font-bold text-white">StrongNailBits API</h2>
           </div>
-          <p className="mb-4 text-[10px] text-zinc-600">v1 · REST · Bearer Auth · shineshopb2b.com</p>
+          <p className="mb-4 text-[10px] text-zinc-600">v1 · REST · Bearer Auth · strongnailbitsb2b.com</p>
 
           <nav className="space-y-3">
             <div className="flex flex-col gap-0.5">

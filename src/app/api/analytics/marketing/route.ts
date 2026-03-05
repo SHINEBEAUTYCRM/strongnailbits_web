@@ -197,7 +197,7 @@ export async function GET() {
       .forEach((e) => {
         try {
           const host = new URL(e.referrer!).hostname.replace("www.", "");
-          if (host && !host.includes("shineshop")) {
+          if (host && !host.includes("strongnailbits")) {
             referrerMap[host] = (referrerMap[host] || 0) + 1;
           }
         } catch (err) { console.error('[API:Analytics:Marketing] Referrer parse error:', err); }

@@ -7,7 +7,7 @@ import type { Banner } from "@/types/banners";
 
 // ─── Constants ────────────────────────────────────────────
 const AUTO_ADVANCE_MS = 5000;
-const SEEN_KEY = "shineshop_seen_stories";
+const SEEN_KEY = "strongnailbits_seen_stories";
 
 // ─── Seen stories helpers ─────────────────────────────────
 function getSeenStories(): string[] {

@@ -1,5 +1,5 @@
 // ================================================================
-//  Shine Shop B2B — Enrichment Pipeline Orchestrator
+//  Strong Nail Bits B2B — Enrichment Pipeline Orchestrator
 //  Processes products in batches with rate limiting
 //  Batch: 10 parallel, Rate limit: 50 req/min to Claude
 //  Each operation → enrichment_log

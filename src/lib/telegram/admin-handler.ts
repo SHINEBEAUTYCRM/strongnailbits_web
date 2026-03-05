@@ -506,7 +506,7 @@ async function clearSession(telegramId: number): Promise<void> {
 
 function buildAdminSystemPrompt(ctx: AdminContext): string {
   const role = ctx.admin.role === "owner" ? "власником" : ctx.admin.role === "manager" ? "менеджером" : "адміністратором";
-  return `Ти — AI-асистент адміна Shine Shop B2B. Спілкуєшся з ${role}. НЕ з клієнтом!
+  return `Ти — AI-асистент адміна Strong Nail Bits B2B. Спілкуєшся з ${role}. НЕ з клієнтом!
 
 ‼️ МОВА: ЗАВЖДИ УКРАЇНСЬКОЮ. Російською → відповідай українською. Виняток: інша іноземна (не рос) → тією мовою.
 

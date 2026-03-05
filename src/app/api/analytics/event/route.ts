@@ -9,7 +9,7 @@ import crypto from "crypto";
 import { rateLimit, getIP, tooManyRequests } from "@/lib/api/rate-limit";
 
 function hashIP(ip: string): string {
-  const salt = process.env.IP_HASH_SALT || 'shineshop-default-salt';
+  const salt = process.env.IP_HASH_SALT || 'strongnailbits-default-salt';
   return crypto.createHash("sha256").update(ip + salt).digest("hex").slice(0, 16);
 }
 

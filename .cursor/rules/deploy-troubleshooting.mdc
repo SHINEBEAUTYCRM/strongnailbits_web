@@ -7,10 +7,10 @@ alwaysApply: true
 
 ## Архитектура деплоя
 
-- Продакшен: **https://shineshopb2b.com**
-- Хостинг: **Vercel** (проект `shineshop.b2b.com.ua`, ID: `prj_5zrPSIEVBeS4kOLnLiXK2ELbbh9u`)
-- Домен: `shineshopb2b.com` (Vercel DNS, ns1/ns2.vercel-dns.com)
-- Репо: `github.com/Aleksdandali/shineshop-b2b` → ветка `main`
+- Продакшен: **https://strongnailbitsb2b.com**
+- Хостинг: **Vercel** (проект `strongnailbits.b2b.com.ua`, ID: `prj_5zrPSIEVBeS4kOLnLiXK2ELbbh9u`)
+- Домен: `strongnailbitsb2b.com` (Vercel DNS, ns1/ns2.vercel-dns.com)
+- Репо: `github.com/Aleksdandali/strongnailbits-b2b` → ветка `main`
 - Автодеплой: push в `main` → GitHub webhook → Vercel build → production
 - CI/CD: нет GitHub Actions, всё через Vercel Git Integration
 - Vercel CLI: `vercel ls` — список деплоев, `vercel inspect <url>` — детали
@@ -84,7 +84,7 @@ vercel --prod
 ```bash
 vercel ls                          # Список деплоев — смотреть статус (Ready/Error)
 vercel inspect <deployment-url>    # Детали конкретного деплоя
-curl -s -o /dev/null -w "HTTP %{http_code}" https://shineshopb2b.com/  # Сайт живой?
+curl -s -o /dev/null -w "HTTP %{http_code}" https://strongnailbitsb2b.com/  # Сайт живой?
 ```
 
 - Если последний деплой `Error` — смотреть логи билда в Vercel Dashboard

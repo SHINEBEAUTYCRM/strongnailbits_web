@@ -18,7 +18,7 @@ export default async function AppConfigPage() {
           Налаштування мобільного додатку
         </h1>
         <p className="text-sm" style={{ color: "var(--a-text-4)" }}>
-          Конфігурація ShineShop Mobile — зміни застосовуються миттєво
+          Конфігурація StrongNailBits Mobile — зміни застосовуються миттєво
         </p>
       </div>
       <AppConfigForm configs={configs ?? []} />

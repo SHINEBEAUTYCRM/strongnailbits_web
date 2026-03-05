@@ -69,7 +69,7 @@ export default async function AccountPage() {
           {`+${profile.phone.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})(\d{2})$/, "$1 ($2) $3-$4-$5")}`}
         </p>
       ) : (
-        !user.email?.includes("@phone.shineshop.local") && (
+        !user.email?.includes("@phone.strongnailbits.local") && (
           <p className="mt-1 text-sm text-[var(--t2)]">{user.email}</p>
         )
       )}

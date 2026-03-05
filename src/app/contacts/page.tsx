@@ -4,7 +4,7 @@ import { Phone, Mail, MapPin, Clock, MessageCircle } from "lucide-react";
 export const metadata: Metadata = {
   title: "Контакти",
   description:
-    "Зв'яжіться з SHINE SHOP: телефон +38(093)744-38-89, email shine.shop.od@gmail.com. Магазин в Одесі, Грецька площа 3/4, ТЦ Афіна.",
+    "Зв'яжіться з STRONG NAIL BITS: телефон +38(093)744-38-89, email shine.shop.od@gmail.com. Магазин в Одесі, Грецька площа 3/4, ТЦ Афіна.",
 };
 
 const CONTACTS = [
@@ -25,8 +25,8 @@ const CONTACTS = [
   {
     icon: MessageCircle,
     label: "Telegram",
-    value: "@shineshop_ua",
-    href: "https://t.me/shineshop_ua",
+    value: "@strongnailbits_ua",
+    href: "https://t.me/strongnailbits_ua",
     sub: "Найшвидший спосіб зв'язку",
   },
   {
@@ -105,7 +105,7 @@ export default function ContactsPage() {
         </h2>
         <div className="mt-4 flex gap-3">
           <a
-            href="https://www.instagram.com/shineshop.com.ua/"
+            href="https://www.instagram.com/strongnailbits.com.ua/"
             target="_blank"
             rel="noopener noreferrer"
             className="flex h-12 items-center gap-2 rounded-xl border border-[var(--border)] bg-white px-4 text-sm font-medium text-dark transition-all hover:-translate-y-0.5 hover:shadow-md"
@@ -116,7 +116,7 @@ export default function ContactsPage() {
             Instagram
           </a>
           <a
-            href="https://t.me/shineshop_ua"
+            href="https://t.me/strongnailbits_ua"
             target="_blank"
             rel="noopener noreferrer"
             className="flex h-12 items-center gap-2 rounded-xl border border-[var(--border)] bg-white px-4 text-sm font-medium text-dark transition-all hover:-translate-y-0.5 hover:shadow-md"
@@ -127,7 +127,7 @@ export default function ContactsPage() {
             Telegram
           </a>
           <a
-            href="https://www.facebook.com/shineshop.com.ua/"
+            href="https://www.facebook.com/strongnailbits.com.ua/"
             target="_blank"
             rel="noopener noreferrer"
             className="flex h-12 items-center gap-2 rounded-xl border border-[var(--border)] bg-white px-4 text-sm font-medium text-dark transition-all hover:-translate-y-0.5 hover:shadow-md"

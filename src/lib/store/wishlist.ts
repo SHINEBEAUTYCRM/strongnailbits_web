@@ -58,7 +58,7 @@ export const useWishlistStore = create<WishlistState>()(
       },
     }),
     {
-      name: "shine-shop-wishlist",
+      name: "strongnailbits-wishlist",
     },
   ),
 );

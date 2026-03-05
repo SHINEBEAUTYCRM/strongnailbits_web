@@ -8,7 +8,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const ALLOWED_ORIGINS = ['https://shineshopb2b.com', 'https://www.shineshopb2b.com'];
+const ALLOWED_ORIGINS = ['https://strongnailbitsb2b.com', 'https://www.strongnailbitsb2b.com'];
 
 function getCorsHeaders(req: Request) {
   const origin = req.headers.get('origin') ?? '';
@@ -115,7 +115,7 @@ serve(async (req) => {
 
     // === Send SMS via AlphaSMS API ===
     const alphaSmsApiKey = Deno.env.get('ALPHASMS_API_KEY');
-    const alphaSmsSender = Deno.env.get('ALPHASMS_SENDER') ?? 'Shine SHOP';
+    const alphaSmsSender = Deno.env.get('ALPHASMS_SENDER') ?? 'StrongNail';
 
     if (alphaSmsApiKey) {
       try {
@@ -128,7 +128,7 @@ serve(async (req) => {
           body: JSON.stringify({
             phone: cleanPhone,
             sender: alphaSmsSender,
-            text: `Ваш код підтвердження: ${code}. ShineShop B2B`,
+            text: `Ваш код підтвердження: ${code}. StrongNailBits B2B`,
           }),
         });
       } catch (smsError) {

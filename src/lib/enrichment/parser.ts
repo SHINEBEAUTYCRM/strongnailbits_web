@@ -1,5 +1,5 @@
 // ================================================================
-//  Shine Shop B2B — Brand Website Parser (Cheerio)
+//  Strong Nail Bits B2B — Brand Website Parser (Cheerio)
 // ================================================================
 
 import * as cheerio from 'cheerio';

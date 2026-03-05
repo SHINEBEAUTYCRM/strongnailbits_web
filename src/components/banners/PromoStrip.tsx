@@ -6,7 +6,7 @@ import { X, Copy, Check } from "lucide-react";
 import type { Banner } from "@/types/banners";
 
 // ─── localStorage key for dismissed banners ──────────────
-const DISMISSED_KEY = "shineshop_dismissed_promos";
+const DISMISSED_KEY = "strongnailbits_dismissed_promos";
 
 function getDismissed(): string[] {
   try {

@@ -1,5 +1,5 @@
 -- ================================================================
---  Shine Shop B2B — Database Schema
+--  Strong Nail Bits B2B — Database Schema
 --  Supabase / PostgreSQL
 -- ================================================================
 

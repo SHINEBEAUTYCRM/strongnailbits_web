@@ -123,7 +123,7 @@ export async function POST(
 
       // Auto-set webhook for telegram-admin
       if (slug === "telegram-admin") {
-        const webhookUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com"}/api/admin/auth/telegram-webhook`;
+        const webhookUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://strongnailbitsb2b.com"}/api/admin/auth/telegram-webhook`;
         try {
           const whBody: Record<string, unknown> = {
             url: webhookUrl,

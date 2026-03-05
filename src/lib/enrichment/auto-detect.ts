@@ -1,5 +1,5 @@
 // ================================================================
-//  Shine Shop B2B — AI Auto-detect CSS Selectors
+//  Strong Nail Bits B2B — AI Auto-detect CSS Selectors
 //  Логика: каталог → находим товар (скоринг) → fetch товара → Claude
 // ================================================================
 
@@ -26,7 +26,7 @@ export async function autoDetectSelectors(catalogUrl: string): Promise<AutoDetec
 
   // ШАГ 2: Fetch страницу товара
   const productResponse = await fetch(productUrl, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ShineShopBot/1.0)' },
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; StrongNailBitsBot/1.0)' },
     signal: AbortSignal.timeout(15000),
   });
 
@@ -53,7 +53,7 @@ export async function autoDetectSelectors(catalogUrl: string): Promise<AutoDetec
 
 async function findProductUrl(catalogUrl: string): Promise<string | null> {
   const response = await fetch(catalogUrl, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ShineShopBot/1.0)' },
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; StrongNailBitsBot/1.0)' },
     signal: AbortSignal.timeout(15000),
   });
 

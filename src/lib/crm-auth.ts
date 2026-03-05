@@ -1,5 +1,5 @@
 // ================================================================
-//  ShineShop OS — CRM API Auth Middleware
+//  StrongNailBits OS — CRM API Auth Middleware
 //  Авторизація через header X-CRM-API-Key для /api/crm/*
 // ================================================================
 

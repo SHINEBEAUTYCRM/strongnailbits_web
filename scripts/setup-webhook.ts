@@ -1,5 +1,5 @@
 /**
- * Register Telegram webhook for @ShineShopAdminBot
+ * Register Telegram webhook for @StrongNailBitsAdminBot
  *
  * Usage: npx tsx scripts/setup-webhook.ts
  *
@@ -28,7 +28,7 @@ try {
 }
 
 const TOKEN = process.env.TELEGRAM_ADMIN_BOT_TOKEN;
-const DOMAIN = process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com";
+const DOMAIN = process.env.NEXT_PUBLIC_SITE_URL || "https://strongnailbitsb2b.com";
 const SECRET = process.env.TELEGRAM_WEBHOOK_SECRET;
 
 async function setup() {
@@ -37,7 +37,7 @@ async function setup() {
     process.exit(1);
   }
 
-  console.log("🔧 Setting up webhook for ShineShopAdminBot...\n");
+  console.log("🔧 Setting up webhook for StrongNailBitsAdminBot...\n");
 
   // 1. Verify bot token
   const meRes = await fetch(`https://api.telegram.org/bot${TOKEN}/getMe`);

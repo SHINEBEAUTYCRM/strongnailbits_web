@@ -1,5 +1,5 @@
 // ================================================================
-//  Shine Shop B2B — Embeddings (pgvector)
+//  Strong Nail Bits B2B — Embeddings (pgvector)
 //  Uses Voyage AI (Anthropic's recommended embedding provider)
 //  Model: voyage-3-lite → vector(1024)
 //  Auth: ANTHROPIC_API_KEY or VOYAGE_API_KEY

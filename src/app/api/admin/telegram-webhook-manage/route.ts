@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const webhookUrl =
     body.url ||
-    `${process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com"}/api/admin/auth/telegram-webhook`;
+    `${process.env.NEXT_PUBLIC_SITE_URL || "https://strongnailbitsb2b.com"}/api/admin/auth/telegram-webhook`;
 
   const whSecret = process.env.TELEGRAM_WEBHOOK_SECRET || "";
 

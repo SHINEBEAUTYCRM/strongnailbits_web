@@ -37,7 +37,7 @@ interface ProductRow {
 
 const ITEMS_PER_PAGE = 250;
 const BATCH_SIZE = 100;
-const CS_CART_BASE_URL = "https://shine-shop.com.ua";
+const CS_CART_BASE_URL = "https://strongnailbits.com.ua";
 
 /* ------------------------------------------------------------------ */
 /*  Хелпери                                                            */
@@ -114,10 +114,10 @@ function mapProduct(
 
   // SEO
   const metaTitle = product.page_title?.trim()
-    || `${name} | Купити в Shine Shop`;
+    || `${name} | Купити в Strong Nail Bits`;
   const metaDescription = product.short_description?.trim()
     || product.meta_description?.trim()
-    || `✅ ${name} ціна від ${price} ₴. Доставка по Україні. Замовити в Shine Shop`;
+    || `✅ ${name} ціна від ${price} ₴. Доставка по Україні. Замовити в Strong Nail Bits`;
 
   // cs_cart_url для 301 редиректів
   const csCartUrl = product.seo_name

@@ -68,8 +68,8 @@ export async function generateMetadata({ params }: BrandPageProps): Promise<Meta
   const brand = await getBrand(slug);
   if (!brand) return { title: "Бренд не знайдено" };
   return {
-    title: brand.meta_title || `${brand.name} — купити в SHINE SHOP`,
-    description: brand.meta_description || `Купити продукцію ${brand.name} в інтернет-магазині SHINE SHOP. Оригінальна продукція, оптові ціни, швидка доставка по Україні.`,
+    title: brand.meta_title || `${brand.name} — купити в STRONG NAIL BITS`,
+    description: brand.meta_description || `Купити продукцію ${brand.name} в інтернет-магазині STRONG NAIL BITS. Оригінальна продукція, оптові ціни, швидка доставка по Україні.`,
   };
 }
 

@@ -145,7 +145,7 @@ export const useCartStore = create<CartState>()(
       },
     }),
     {
-      name: "shine-shop-cart",
+      name: "strongnailbits-cart",
     },
   ),
 );

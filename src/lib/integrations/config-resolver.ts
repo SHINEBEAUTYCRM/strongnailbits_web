@@ -1,5 +1,5 @@
 // ================================================================
-//  ShineShop OS — Universal Config Resolver
+//  StrongNailBits OS — Universal Config Resolver
 //  Єдина точка отримання конфігурації для будь-якого сервісу.
 //  Порядок: in-memory cache → integration_keys (DB) → env vars → null
 // ================================================================

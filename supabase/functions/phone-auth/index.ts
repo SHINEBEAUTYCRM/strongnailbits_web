@@ -9,7 +9,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const ALLOWED_ORIGINS = ['https://shineshopb2b.com', 'https://www.shineshopb2b.com'];
+const ALLOWED_ORIGINS = ['https://strongnailbitsb2b.com', 'https://www.strongnailbitsb2b.com'];
 
 function getCorsHeaders(req: Request) {
   const origin = req.headers.get('origin') ?? '';
@@ -138,7 +138,7 @@ serve(async (req) => {
           );
         }
 
-        const loginEmail = `${cleanPhone}@shineshopb2b.com`;
+        const loginEmail = `${cleanPhone}@strongnailbitsb2b.com`;
 
         // Create auth user
         const { data: authUser, error: authError } = await supabase.auth.admin.createUser({

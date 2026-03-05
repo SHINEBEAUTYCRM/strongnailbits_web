@@ -128,7 +128,7 @@ export function AdminTopNav({
           className="text-lg font-bold tracking-wider"
           style={{ color: "var(--a-accent)", fontFamily: "var(--font-outfit, 'Outfit'), sans-serif" }}
         >
-          ShineShop
+          StrongNailBits
         </span>
         <span
           className="text-[11px] font-medium uppercase tracking-wider hidden sm:inline"

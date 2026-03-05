@@ -1,5 +1,5 @@
 /**
- * ShineShop Telegram Notifications
+ * StrongNailBits Telegram Notifications
  *
  * All notification types with beautiful formatted messages.
  * Each function is fire-and-forget (non-blocking, errors logged silently).
@@ -12,7 +12,7 @@
 import { sendMessage, escHtml, isTelegramConfigured, getBot, TelegramBot } from "./bot";
 import { fmtMoney } from "./formatters";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://strongnailbitsb2b.com";
 const ADMIN_URL = `${SITE_URL}/admin`;
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

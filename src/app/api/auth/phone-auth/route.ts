@@ -97,8 +97,8 @@ export async function POST(request: NextRequest) {
       }
 
       // Create user in Supabase Auth using phone + password
-      // Use phone as email placeholder: 380XXXXXXXXX@phone.shineshop.local
-      const fakeEmail = `${phone}@phone.shineshop.local`;
+      // Use phone as email placeholder: 380XXXXXXXXX@phone.strongnailbits.local
+      const fakeEmail = `${phone}@phone.strongnailbits.local`;
 
       const { data: authData, error: authError } =
         await supabase.auth.admin.createUser({
@@ -188,7 +188,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Safety-net: if email is NULL, build fallback from phone
-      const loginEmail = profile.email || `${phone}@phone.shineshop.local`;
+      const loginEmail = profile.email || `${phone}@phone.strongnailbits.local`;
 
       return NextResponse.json({
         success: true,
@@ -254,7 +254,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Safety-net: if email is NULL, build fallback from phone
-      const loginEmail = profile.email || `${phone}@phone.shineshop.local`;
+      const loginEmail = profile.email || `${phone}@phone.strongnailbits.local`;
 
       // Generate a temporary password and set it, then return credentials
       const tempPassword = crypto.randomUUID();
@@ -310,7 +310,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const fakeEmail = `${phone}@phone.shineshop.local`;
+      const fakeEmail = `${phone}@phone.strongnailbits.local`;
 
       const { data: authData, error: authError } =
         await supabase.auth.admin.createUser({

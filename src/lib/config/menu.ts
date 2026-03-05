@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------------ */
 /*  Main navigation menu config                                       */
-/*  Matches the menu structure of shine-shop.com.ua                   */
+/*  Matches the menu structure of strongnailbits.com.ua                   */
 /*  Edit this file to change the top navigation bar items.            */
 /* ------------------------------------------------------------------ */
 

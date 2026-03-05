@@ -1,9 +1,9 @@
-# Техническое задание: ShineShop B2B — React Native приложение
+# Техническое задание: StrongNailBits B2B — React Native приложение
 
 > **Версия**: 1.0  
 > **Дата**: 11.02.2026  
-> **Проект**: Мобильное приложение ShineShop B2B (iOS + Android)  
-> **Основа**: Копия веб-приложения shineshopb2b.com (Next.js 16)  
+> **Проект**: Мобильное приложение StrongNailBits B2B (iOS + Android)  
+> **Основа**: Копия веб-приложения strongnailbitsb2b.com (Next.js 16)  
 > **База данных**: Общая Supabase (PostgreSQL) — та же, что и у веба
 
 ---
@@ -41,7 +41,7 @@
 
 ### 1.1 О проекте
 
-**ShineShop B2B** — B2B платформа для оптовой продажи профессиональной nail-косметики (гель-лаки, базы, топы, инструменты). Мобильное приложение является полной копией веб-версии и работает с той же базой данных Supabase.
+**StrongNailBits B2B** — B2B платформа для оптовой продажи профессиональной nail-косметики (гель-лаки, базы, топы, инструменты). Мобильное приложение является полной копией веб-версии и работает с той же базой данных Supabase.
 
 ### 1.2 Целевая аудитория
 
@@ -218,7 +218,7 @@ AppState.addEventListener('change', (state) => {
 # .env
 EXPO_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-EXPO_PUBLIC_SITE_URL=https://shineshopb2b.com
+EXPO_PUBLIC_SITE_URL=https://strongnailbitsb2b.com
 ```
 
 ### 4.3 Supabase Edge Functions (новые)
@@ -290,7 +290,7 @@ app/
 ### 5.3 Хедер
 
 Фиксированный хедер с:
-- Лого ShineShop (по центру или слева)
+- Лого StrongNailBits (по центру или слева)
 - Кнопка поиска (иконка `Search`)
 - Кнопка уведомлений (иконка `Bell`) с badge количества непрочитанных → `/notifications`
 
@@ -1224,8 +1224,8 @@ function showToast(message: string, type: 'success' | 'error' | 'info'): void
 
 | Стор | Файл | Персистенция | Аналог веба |
 |---|---|---|---|
-| `useCartStore` | `src/stores/cart.ts` | MMKV (`shine-shop-cart`) | `src/lib/store/cart.ts` |
-| `useWishlistStore` | `src/stores/wishlist.ts` | MMKV (`shine-shop-wishlist`) | `src/lib/store/wishlist.ts` |
+| `useCartStore` | `src/stores/cart.ts` | MMKV (`strongnailbits-cart`) | `src/lib/store/cart.ts` |
+| `useWishlistStore` | `src/stores/wishlist.ts` | MMKV (`strongnailbits-wishlist`) | `src/lib/store/wishlist.ts` |
 | `useAuthStore` | `src/stores/auth.ts` | SecureStore | Нет аналога (сессия в cookies) |
 | `useSettingsStore` | `src/stores/settings.ts` | MMKV | Нет аналога (cookies) |
 
@@ -1724,21 +1724,21 @@ export function useNetworkStatus() {
 ### 15.1 URL-схема
 
 ```
-shineshop://                          → Главная
-shineshop://product/{slug}            → Страница товара
-shineshop://catalog/{slug}            → Категория
-shineshop://search?q={query}          → Поиск
-shineshop://cart                      → Корзина
-shineshop://account                   → Аккаунт
-shineshop://account/orders            → Заказы
+strongnailbits://                          → Главная
+strongnailbits://product/{slug}            → Страница товара
+strongnailbits://catalog/{slug}            → Категория
+strongnailbits://search?q={query}          → Поиск
+strongnailbits://cart                      → Корзина
+strongnailbits://account                   → Аккаунт
+strongnailbits://account/orders            → Заказы
 ```
 
 ### 15.2 Universal Links (iOS) / App Links (Android)
 
 ```
-https://shineshopb2b.com/product/{slug}   → Страница товара
-https://shineshopb2b.com/catalog/{slug}   → Категория
-https://shineshopb2b.com/search?q={query} → Поиск
+https://strongnailbitsb2b.com/product/{slug}   → Страница товара
+https://strongnailbitsb2b.com/catalog/{slug}   → Категория
+https://strongnailbitsb2b.com/search?q={query} → Поиск
 ```
 
 ### 15.3 Конфигурация Expo
@@ -1747,15 +1747,15 @@ https://shineshopb2b.com/search?q={query} → Поиск
 // app.json
 {
   "expo": {
-    "scheme": "shineshop",
+    "scheme": "strongnailbits",
     "ios": {
-      "associatedDomains": ["applinks:shineshopb2b.com"]
+      "associatedDomains": ["applinks:strongnailbitsb2b.com"]
     },
     "android": {
       "intentFilters": [{
         "action": "VIEW",
         "autoVerify": true,
-        "data": [{ "scheme": "https", "host": "shineshopb2b.com" }],
+        "data": [{ "scheme": "https", "host": "strongnailbitsb2b.com" }],
         "category": ["BROWSABLE", "DEFAULT"]
       }]
     }
@@ -1926,7 +1926,7 @@ async function checkForUpdates() {
 ## 20. Структура файлов проекта
 
 ```
-shineshop-mobile/
+strongnailbits-mobile/
 ├── app/                              # Expo Router (экраны)
 │   ├── _layout.tsx                   # Root layout
 │   ├── (auth)/
@@ -2179,7 +2179,7 @@ CREATE TABLE banners (
   subtitle TEXT,
   image_url TEXT NOT NULL,
   image_mobile_url TEXT,           -- отдельное изображение для мобильного (другое соотношение сторон)
-  link TEXT,                       -- URL или deep link (напр. /catalog/gel-laki или shineshop://catalog/gel-laki)
+  link TEXT,                       -- URL или deep link (напр. /catalog/gel-laki или strongnailbits://catalog/gel-laki)
   link_type TEXT DEFAULT 'internal' CHECK (link_type IN ('internal', 'external', 'product', 'category')),
   placement TEXT DEFAULT 'hero' CHECK (placement IN ('hero', 'promo', 'catalog', 'checkout')),
   position INTEGER DEFAULT 0,
@@ -2314,9 +2314,9 @@ INSERT INTO app_config (key, value, description) VALUES
   ('free_shipping_threshold', '2500', 'Порог бесплатной доставки (₴)'),
   ('min_order_amount', '300', 'Минимальная сумма заказа (₴)'),
   ('phone', '"+380671234567"', 'Телефон магазина'),
-  ('email', '"info@shineshopb2b.com"', 'Email магазина'),
-  ('instagram', '"https://instagram.com/shineshop"', 'Instagram'),
-  ('telegram_channel', '"https://t.me/shineshop"', 'Telegram канал'),
+  ('email', '"info@strongnailbitsb2b.com"', 'Email магазина'),
+  ('instagram', '"https://instagram.com/strongnailbits"', 'Instagram'),
+  ('telegram_channel', '"https://t.me/strongnailbits"', 'Telegram канал'),
   ('working_hours', '{"weekdays": "09:00-18:00", "saturday": "10:00-15:00", "sunday": "вихідний"}', 'Часы работы'),
   ('address', '"м. Київ, вул. Хрещатик 1"', 'Адрес магазина'),
   ('currency_symbol', '"₴"', 'Символ валюты'),
@@ -2546,7 +2546,7 @@ export function useAppConfig() {
     freeShippingThreshold: config.free_shipping_threshold ?? 2500,
     minOrderAmount: config.min_order_amount ?? 300,
     phone: config.phone ?? '+380671234567',
-    email: config.email ?? 'info@shineshopb2b.com',
+    email: config.email ?? 'info@strongnailbitsb2b.com',
     instagram: config.instagram ?? '',
     telegram: config.telegram_channel ?? '',
     workingHours: config.working_hours ?? {},
@@ -2905,7 +2905,7 @@ EXPO_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 
 # App
-EXPO_PUBLIC_SITE_URL=https://shineshopb2b.com
+EXPO_PUBLIC_SITE_URL=https://strongnailbitsb2b.com
 EXPO_PUBLIC_APP_VERSION=1.0.0
 
 # Analytics (опционально)
@@ -2921,12 +2921,12 @@ EXPO_PUBLIC_EAS_PROJECT_ID=...
 ```json
 {
   "expo": {
-    "name": "ShineShop B2B",
-    "slug": "shineshop-b2b",
+    "name": "StrongNailBits B2B",
+    "slug": "strongnailbits-b2b",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "shineshop",
+    "scheme": "strongnailbits",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -2935,16 +2935,16 @@ EXPO_PUBLIC_EAS_PROJECT_ID=...
       "backgroundColor": "#FAFAF8"
     },
     "ios": {
-      "bundleIdentifier": "com.shineshop.b2b",
+      "bundleIdentifier": "com.strongnailbits.b2b",
       "supportsTablet": true,
-      "associatedDomains": ["applinks:shineshopb2b.com"],
+      "associatedDomains": ["applinks:strongnailbitsb2b.com"],
       "infoPlist": {
         "CFBundleAllowMixedLocalizations": true,
         "CFBundleDevelopmentRegion": "uk"
       }
     },
     "android": {
-      "package": "com.shineshop.b2b",
+      "package": "com.strongnailbits.b2b",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#FAFAF8"
@@ -2956,12 +2956,12 @@ EXPO_PUBLIC_EAS_PROJECT_ID=...
           "data": [
             {
               "scheme": "https",
-              "host": "shineshopb2b.com",
+              "host": "strongnailbitsb2b.com",
               "pathPrefix": "/product"
             },
             {
               "scheme": "https",
-              "host": "shineshopb2b.com",
+              "host": "strongnailbitsb2b.com",
               "pathPrefix": "/catalog"
             }
           ],
@@ -2985,5 +2985,5 @@ EXPO_PUBLIC_EAS_PROJECT_ID=...
 
 > **Документ создан**: 11.02.2026  
 > **Автор**: AI Assistant  
-> **Проект**: ShineShop B2B Mobile App  
+> **Проект**: StrongNailBits B2B Mobile App  
 > **Статус**: Черновик для согласования

@@ -1,5 +1,5 @@
 /**
- * Claude AI Client for ShineShop
+ * Claude AI Client for StrongNailBits
  *
  * Provides access to Anthropic Claude API for:
  * - Message personalization

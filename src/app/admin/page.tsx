@@ -26,7 +26,7 @@ export default async function DashboardPage() {
     <div>
       <div className="mb-8">
         <h1 className="text-2xl font-semibold mb-1" style={{ color: "var(--a-text)" }}>Dashboard</h1>
-        <p className="text-sm" style={{ color: "var(--a-text-4)" }}>Огляд магазину Shine Shop</p>
+        <p className="text-sm" style={{ color: "var(--a-text-4)" }}>Огляд магазину Strong Nail Bits</p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {cards.map((c) => (

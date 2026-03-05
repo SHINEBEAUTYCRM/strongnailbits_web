@@ -1,5 +1,5 @@
 // ================================================================
-//  ShineShop OS — Banner System Types
+//  StrongNailBits OS — Banner System Types
 // ================================================================
 
 export type BannerType =

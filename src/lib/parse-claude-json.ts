@@ -1,5 +1,5 @@
 // ================================================================
-//  Shine Shop B2B — Parse JSON from Claude responses
+//  Strong Nail Bits B2B — Parse JSON from Claude responses
 //  Handles markdown code fences, extra text, etc.
 // ================================================================
 

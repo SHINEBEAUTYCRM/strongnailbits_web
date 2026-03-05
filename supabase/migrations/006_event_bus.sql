@@ -3,7 +3,7 @@
 -- ⚠️ Виконати вручну в Supabase Dashboard → SQL Editor
 -- ================================================================
 
--- 1. Вихідні події (DenGrow/ShineShop → зовнішні сервіси)
+-- 1. Вихідні події (DenGrow/StrongNailBits → зовнішні сервіси)
 CREATE TABLE IF NOT EXISTS event_outbox (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenant_settings(id),
@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS event_outbox (
   CONSTRAINT valid_outbox_status CHECK (status IN ('pending', 'processing', 'sent', 'failed', 'dead'))
 );
 
--- 2. Вхідні події (зовнішні сервіси → ShineShop)
+-- 2. Вхідні події (зовнішні сервіси → StrongNailBits)
 CREATE TABLE IF NOT EXISTS event_inbox (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenant_settings(id),

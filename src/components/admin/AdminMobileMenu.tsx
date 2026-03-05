@@ -87,7 +87,7 @@ export function AdminMobileMenu({ open, onClose, displayName, displayEmail }: Ad
         >
           <Link href="/admin" className="flex items-center gap-2" onClick={onClose}>
             <span className="text-lg font-bold tracking-wider" style={{ color: "var(--a-accent)" }}>
-              ShineShop
+              StrongNailBits
             </span>
             <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: "var(--a-text-4)" }}>
               OS

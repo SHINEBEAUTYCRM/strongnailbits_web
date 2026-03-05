@@ -1,7 +1,7 @@
 "use client";
 
 // ================================================================
-//  ShineShop OS — Image Studio Zustand Store
+//  StrongNailBits OS — Image Studio Zustand Store
 //  Стейт-менеджмент для AI Image Studio
 // ================================================================
 

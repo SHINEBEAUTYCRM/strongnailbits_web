@@ -1,13 +1,13 @@
 ---
-description: ShineShop B2B project rules
+description: StrongNailBits B2B project rules
 globs:
 ---
 
-# ShineShop B2B — Project Rules
+# StrongNailBits B2B — Project Rules
 
 ## ПРОЕКТ
-- ShineShop B2B — e-commerce платформа для nail-індустрії
-- Сайт: shineshopb2b.com
+- StrongNailBits B2B — e-commerce платформа для nail-індустрії
+- Сайт: strongnailbitsb2b.com
 - Stack: Next.js 16, React, TypeScript, Supabase, Vercel
 - БД: Supabase (PostgreSQL + Auth + Edge Functions + RLS + Realtime)
 - Деплой: Vercel (auto-deploy з main branch)
@@ -73,11 +73,11 @@ globs:
 
 ## TELEGRAM БОТИ
 
-### @shineshop_b2b_bot — клієнтський бот:
+### @strongnailbits_b2b_bot — клієнтський бот:
 - Токен: TELEGRAM_BOT_TOKEN (env)
 - Сповіщення клієнтам про замовлення
 
-### @ShineShopAdminBot — адмін бот:
+### @StrongNailBitsAdminBot — адмін бот:
 - Токен: TELEGRAM_ADMIN_BOT_TOKEN (env)
 - Підтвердження входу в адмінку
 - Webhook: /api/admin/auth/telegram-webhook

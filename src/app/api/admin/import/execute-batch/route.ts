@@ -204,13 +204,13 @@ export async function POST(request: NextRequest) {
       const totalErrors = (currentBatch?.error_count ?? 0) + errors.length;
 
       const [{ count: externalImageCount }] = await Promise.all([
-        supabase.from("products").select("id", { count: "exact", head: true }).like("main_image_url", "%shine-shop.com.ua%"),
+        supabase.from("products").select("id", { count: "exact", head: true }).like("main_image_url", "%strongnailbits.com.ua%"),
       ]);
 
       const recommendations: Array<{ type: string; message: string }> = [];
       if (totalErrors > 0) recommendations.push({ type: "warning", message: `${totalErrors} рядків з помилками` });
       if ((externalImageCount ?? 0) > 0) {
-        recommendations.push({ type: "warning", message: `${externalImageCount} товарів з фото на shine-shop.com.ua — потрібна міграція` });
+        recommendations.push({ type: "warning", message: `${externalImageCount} товарів з фото на strongnailbits.com.ua — потрібна міграція` });
       }
 
       finalReport = {

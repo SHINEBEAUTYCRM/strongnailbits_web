@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       const botUsername =
         (await getServiceField("telegram-bot", "bot_username")) ||
         process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ||
-        "shineshop_b2b_bot";
+        "strongnailbits_b2b_bot";
       const botUrl = `https://t.me/${botUsername}?start=reg_${regToken}`;
 
       return NextResponse.json({
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
 
       const result = await bot.sendMessage(
         profile.telegram_chat_id,
-        `🔐 <b>Запит на вхід</b>\n\nВхід на сайт/додаток ShineShop\n📱 ${masked}\n🕐 ${timeStr}\n\nЦе ви?`,
+        `🔐 <b>Запит на вхід</b>\n\nВхід на сайт/додаток StrongNailBits\n📱 ${masked}\n🕐 ${timeStr}\n\nЦе ви?`,
         {
           reply_markup: {
             inline_keyboard: [
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
     const botUsername =
       (await getServiceField("telegram-bot", "bot_username")) ||
       process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ||
-      "shineshop_b2b_bot";
+      "strongnailbits_b2b_bot";
     const botUrl = `https://t.me/${botUsername}?start=auth_${token}`;
 
     return NextResponse.json({

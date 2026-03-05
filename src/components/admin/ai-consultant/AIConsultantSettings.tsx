@@ -390,7 +390,7 @@ export function AIConsultantSettings() {
                 lineHeight: 1.6,
                 resize: "vertical",
               }}
-              placeholder="Ти — AI-консультант інтернет-магазину Shine Shop..."
+              placeholder="Ти — AI-консультант інтернет-магазину Strong Nail Bits..."
             />
           </div>
 

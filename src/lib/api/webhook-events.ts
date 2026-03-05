@@ -1,5 +1,5 @@
 // ================================================================
-//  ShineShop OS — Webhook Events (shared client/server constants)
+//  StrongNailBits OS — Webhook Events (shared client/server constants)
 // ================================================================
 
 /** Supported webhook events */

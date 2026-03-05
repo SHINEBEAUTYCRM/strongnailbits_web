@@ -21,7 +21,7 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { trackFunnelEvent } from "@/lib/funnels/tracker";
 
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com").trim();
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://strongnailbitsb2b.com").trim();
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
 const MAX_HISTORY = 20;
 
@@ -464,7 +464,7 @@ async function sendWelcome(
   const lines = [
     greeting,
     ``,
-    `Я <b>Shine</b> — AI-асистент магазину Shine Shop 💅`,
+    `Я <b>Shine</b> — AI-асистент магазину Strong Nail Bits 💅`,
     ``,
     `🔍 12 000+ товарів для nail-індустрії`,
     `🤖 Запитуйте — я знайду та порекомендую`,
@@ -817,7 +817,7 @@ function buildClientSystemPrompt(ctx: ClientContext): string {
     ? `Клієнт: ${ctx.userName || "?"}, profile_id: ${ctx.profileId}, ${ctx.isWholesale ? "опт" : "роздріб"}.`
     : `Клієнт НЕ прив'язаний. Для кошика/замовлень → /link.`;
 
-  return `Ти — Shine, AI-асистент Shine Shop B2B (nail-постачальник, 12000+ товарів, 80+ брендів).
+  return `Ти — Shine, AI-асистент Strong Nail Bits B2B (nail-постачальник, 12000+ товарів, 80+ брендів).
 
 ‼️ МОВА: ЗАВЖДИ УКРАЇНСЬКОЮ. Російською → відповідай українською. Виняток: інша іноземна (не рос) → тією мовою.
 

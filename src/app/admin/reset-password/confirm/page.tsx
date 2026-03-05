@@ -86,7 +86,7 @@ export default function ConfirmResetPage() {
       <div className="w-full max-w-[400px] mx-4">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold tracking-wider mb-1">
-            <span style={{ color: "#a855f7" }}>ShineShop</span>{" "}
+            <span style={{ color: "#a855f7" }}>StrongNailBits</span>{" "}
             <span style={{ color: "#52525b", fontSize: "14px", letterSpacing: "0.15em" }}>OPERATING SYSTEM</span>
           </h1>
           <p className="text-sm" style={{ color: "#52525b" }}>Новий пароль</p>

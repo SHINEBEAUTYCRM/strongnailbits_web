@@ -1,5 +1,5 @@
 // ================================================================
-//  ShineShop OS — PhotoRoom Edit Proxy
+//  StrongNailBits OS — PhotoRoom Edit Proxy
 //  POST /api/photoroom/edit
 //  Проксує запити до PhotoRoom API v2, результат зберігає в Supabase Storage
 // ================================================================

@@ -41,8 +41,8 @@ export function Header({ contacts }: HeaderProps) {
   const phoneDisplay = contacts?.phone ?? "+38 (093) 744-38-89";
   const phoneRaw = contacts?.phone_raw ?? "+380937443889";
   const scheduleWeekdays = contacts?.schedule?.weekdays ?? "Пн-Пт: 9:00 — 18:00";
-  const telegramUrl = "https://t.me/shineshop_ua";
-  const instagramUrl = "https://www.instagram.com/shineshop.com.ua/";
+  const telegramUrl = "https://t.me/strongnailbits_ua";
+  const instagramUrl = "https://www.instagram.com/strongnailbits.com.ua/";
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
@@ -557,7 +557,7 @@ export function Header({ contacts }: HeaderProps) {
                     </div>
                     <div className="flex items-center gap-3 pt-1">
                       <a
-                        href="https://t.me/shineshop_ua"
+                        href="https://t.me/strongnailbits_ua"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#e8e8e8] text-[#6b6b7b] transition-colors hover:border-coral hover:text-coral"
@@ -568,7 +568,7 @@ export function Header({ contacts }: HeaderProps) {
                         </svg>
                       </a>
                       <a
-                        href="https://www.instagram.com/shineshop.com.ua/"
+                        href="https://www.instagram.com/strongnailbits.com.ua/"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#e8e8e8] text-[#6b6b7b] transition-colors hover:border-coral hover:text-coral"

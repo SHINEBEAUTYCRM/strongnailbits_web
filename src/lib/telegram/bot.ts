@@ -1,5 +1,5 @@
 /**
- * Telegram Bot API Client — ShineShop
+ * Telegram Bot API Client — StrongNailBits
  *
  * Full-featured wrapper for Telegram Bot API.
  * Supports: messages, photos, media groups, callbacks, chat actions, webhooks.

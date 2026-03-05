@@ -22,8 +22,8 @@ export async function generateMetadata({ searchParams }: SearchPageProps): Promi
   return {
     title: q ? `Пошук: ${q}` : "Пошук",
     description: q
-      ? `Результати пошуку за запитом "${q}" в SHINE SHOP`
-      : "Пошук товарів в SHINE SHOP",
+      ? `Результати пошуку за запитом "${q}" в STRONG NAIL BITS`
+      : "Пошук товарів в STRONG NAIL BITS",
     robots: { index: false, follow: true },
   };
 }

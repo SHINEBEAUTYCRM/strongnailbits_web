@@ -1,5 +1,5 @@
 /**
- * Telegram Admin Bot Webhook — @ShineShopAdminBot
+ * Telegram Admin Bot Webhook — @StrongNailBitsAdminBot
  *
  * Handles:
  * - /start  → onboarding: welcome + request phone contact
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
 
 // ────── Constants ──────
 
-const ADMIN_URL = "https://shineshopb2b.com/admin";
+const ADMIN_URL = "https://strongnailbitsb2b.com/admin";
 const ROLE_LABELS: Record<string, string> = {
   ceo: "CEO",
   admin: "Адмін",
@@ -187,13 +187,13 @@ async function handleStart(chatId: number): Promise<void> {
   await tgApi("sendMessage", {
     chat_id: chatId,
     text: [
-      "🟣 *ShineShop Admin Panel*",
+      "🟣 *StrongNailBits Admin Panel*",
       "",
-      "Вітаю\\! Я бот для входу в адмін\\-панель ShineShop\\.",
+      "Вітаю\\! Я бот для входу в адмін\\-панель StrongNailBits\\.",
       "",
       "📋 *Як почати:*",
       "1\\. Надішліть свій номер телефону \\(кнопка нижче\\)",
-      "2\\. Відкрийте [адмін\\-панель](https://shineshopb2b.com/admin)",
+      "2\\. Відкрийте [адмін\\-панель](https://strongnailbitsb2b.com/admin)",
       "3\\. Введіть свій номер — отримаєте підтвердження тут",
       "",
       "Потрібна допомога? Натисніть /help",
@@ -220,7 +220,7 @@ async function handleHelp(chatId: number): Promise<void> {
       "/help — Ця довідка",
       "",
       "🔐 *Як увійти в адмінку:*",
-      "1\\. Відкрийте [shineshopb2b\\.com/admin](https://shineshopb2b.com/admin)",
+      "1\\. Відкрийте [strongnailbitsb2b\\.com/admin](https://strongnailbitsb2b.com/admin)",
       "2\\. Введіть номер телефону",
       "3\\. Натисніть «✅ Підтвердити вхід» тут у боті",
       "",
@@ -365,7 +365,7 @@ async function handleUnknown(chatId: number): Promise<void> {
   await tgApi("sendMessage", {
     chat_id: chatId,
     text: [
-      "Це бот для авторизації в адмін-панелі ShineShop.",
+      "Це бот для авторизації в адмін-панелі StrongNailBits.",
       "",
       "Доступні команди:",
       "/start — Прив'язати номер",

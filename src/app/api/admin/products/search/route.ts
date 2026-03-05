@@ -1,5 +1,5 @@
 // ================================================================
-//  ShineShop OS — Product Search for Image Studio
+//  StrongNailBits OS — Product Search for Image Studio
 //  GET /api/admin/products/search?q=keyword&limit=20
 //  Пошук товарів з зображеннями для AI Image Studio
 // ================================================================

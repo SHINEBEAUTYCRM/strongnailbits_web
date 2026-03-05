@@ -27,7 +27,7 @@ interface ProductImageResult {
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const FETCH_OPTS: RequestInit = {
-  headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ShineShopBot/1.0)' },
+  headers: { 'User-Agent': 'Mozilla/5.0 (compatible; StrongNailBitsBot/1.0)' },
   signal: AbortSignal.timeout(10_000),
 };
 
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
           try {
             const imgRes = await fetch(toDownload[i], {
               headers: {
-                'User-Agent': 'Mozilla/5.0 (compatible; ShineShopBot/1.0)',
+                'User-Agent': 'Mozilla/5.0 (compatible; StrongNailBitsBot/1.0)',
                 Referer: new URL(toDownload[i]).origin,
               },
               signal: AbortSignal.timeout(30_000),

@@ -1,5 +1,5 @@
 -- ============================================================
--- ShineShop B2B Mobile App — Create carts table
+-- StrongNailBits B2B Mobile App — Create carts table
 -- Required for cart sync between devices (useCartSync.ts)
 -- ============================================================
 

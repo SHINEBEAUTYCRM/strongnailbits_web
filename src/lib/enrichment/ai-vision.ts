@@ -1,5 +1,5 @@
 // ================================================================
-//  Shine Shop B2B — AI Vision (Claude Vision)
+//  Strong Nail Bits B2B — AI Vision (Claude Vision)
 //  Analyzes product photos: color, finish, density
 //  Only for color products (gel polish, gel paint, etc.)
 //  Skip for: bits, liquids, furniture

@@ -1,5 +1,5 @@
 // ================================================================
-//  GET /api/crm/ping — перевірка з'єднання CRM ↔ Shine Shop
+//  GET /api/crm/ping — перевірка з'єднання CRM ↔ Strong Nail Bits
 // ================================================================
 
 import { NextRequest } from 'next/server';
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
 
   return crmJson({
     status: 'ok',
-    shop: 'Shine Shop B2B',
+    shop: 'Strong Nail Bits B2B',
     version: '1.0',
     timestamp: new Date().toISOString(),
   });

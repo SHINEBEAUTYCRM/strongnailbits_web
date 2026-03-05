@@ -1,7 +1,7 @@
 /**
  * Claude Tool Implementations — 15 client-facing tools
  *
- * Adapted to actual ShineShop DB schema:
+ * Adapted to actual StrongNailBits DB schema:
  * - products: name_uk, quantity (not amount), brand_id FK, category_id FK
  * - orders: profile_id (not user_id), ttn + tracking_number
  * - profiles: telegram_chat_id, type='wholesale' for B2B
@@ -12,7 +12,7 @@ import { type SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { trackFunnelEvent } from "@/lib/funnels/tracker";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://strongnailbitsb2b.com";
 const FREE_DELIVERY_FROM = 1500;
 
 // ────── Main Router ──────
@@ -779,9 +779,9 @@ async function getBusinessInfo(params: Record<string, unknown>) {
   const info: Record<string, unknown> = {
     contacts: {
       phone: "+380XXXXXXXXX",
-      telegram: "@shineshop_ua",
-      instagram: "@shineshop.ua",
-      email: "info@shineshopb2b.com",
+      telegram: "@strongnailbits_ua",
+      instagram: "@strongnailbits.ua",
+      email: "info@strongnailbitsb2b.com",
       address: "Одеса, Україна",
       site: SITE_URL,
     },
@@ -842,7 +842,7 @@ async function getBusinessInfo(params: Record<string, unknown>) {
       registration_url: `${SITE_URL}/register`,
     },
     about: {
-      name: "Shine Shop B2B",
+      name: "Strong Nail Bits B2B",
       description:
         "Найбільший nail-постачальник в Одесі. Працює з 2017 року. 12 000+ товарів, 80+ брендів.",
       site: SITE_URL,

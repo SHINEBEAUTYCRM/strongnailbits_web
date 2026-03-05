@@ -1067,7 +1067,7 @@ export function AuthForm({ mode, redirect }: AuthFormProps) {
   // ────── RENDER: Telegram waiting ──────
   if (step === "telegram-waiting") {
     const botUsername =
-      process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "shineshop_b2b_bot";
+      process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "strongnailbits_b2b_bot";
     const minutes = Math.floor(tgCountdown / 60);
     const seconds = tgCountdown % 60;
 

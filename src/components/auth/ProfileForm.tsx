@@ -26,7 +26,7 @@ export function ProfileForm({ userId, initialData }: ProfileFormProps) {
   const [phone, setPhone] = useState(initialData.phone);
   const [company, setCompany] = useState(initialData.company);
   const [email, setEmail] = useState(
-    initialData.email?.includes("@phone.shineshop.local") ? "" : (initialData.email || ""),
+    initialData.email?.includes("@phone.strongnailbits.local") ? "" : (initialData.email || ""),
   );
   const [city, setCity] = useState(initialData.city);
   const [cityRef, setCityRef] = useState("");

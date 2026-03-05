@@ -151,7 +151,7 @@ export default function MigrateImagesPage() {
       {stats && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <StatCard
-            label="Фото на shine-shop.com.ua"
+            label="Фото на strongnailbits.com.ua"
             value={stats.external_images.toLocaleString("uk-UA")}
             sublabel="Потрібна міграція"
             color="#f87171"

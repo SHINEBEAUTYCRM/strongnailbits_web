@@ -1,5 +1,5 @@
 // ================================================================
-//  ShineShop OS — Service Registry
+//  StrongNailBits OS — Service Registry
 //  Статичний реєстр всіх 47 сервісів екосистеми
 // ================================================================
 
@@ -175,7 +175,7 @@ const freeUtilities: ServiceDefinition[] = [
     requiredFields: [
       { key: 'bot_token', label: 'Bot Token', type: 'password', placeholder: '123456:ABC-DEF...', required: true },
       { key: 'chat_id', label: 'Chat ID', type: 'text', placeholder: '-100123456789', required: false, helpText: 'ID чату або групи для сповіщень (можна додати пізніше)' },
-      { key: 'bot_username', label: 'Bot Username', type: 'text', placeholder: 'shineshop_b2b_bot', required: false },
+      { key: 'bot_username', label: 'Bot Username', type: 'text', placeholder: 'strongnailbits_b2b_bot', required: false },
     ],
     envMapping: {
       bot_token: 'TELEGRAM_BOT_TOKEN',
@@ -343,7 +343,7 @@ const paidMarketing: ServiceDefinition[] = [
     docsUrl: 'https://alphasms.net/about/techdocs/',
     requiredFields: [
       { key: 'api_key', label: 'API Key', type: 'password', required: true, helpText: 'Ключ з кабінету AlphaSMS → Налаштування → API' },
-      { key: 'sender', label: 'Alpha-name (відправник)', type: 'text', placeholder: 'Shine SHOP', required: true, helpText: 'Зареєстроване ім\'я відправника SMS' },
+      { key: 'sender', label: 'Alpha-name (відправник)', type: 'text', placeholder: 'StrongNail', required: true, helpText: 'Зареєстроване ім\'я відправника SMS' },
     ],
     envMapping: {
       api_key: 'ALPHASMS_API_KEY',
@@ -361,7 +361,7 @@ const paidMarketing: ServiceDefinition[] = [
     docsUrl: 'https://turbosms.ua/api.html',
     requiredFields: [
       { key: 'api_key', label: 'API Key', type: 'password', required: true },
-      { key: 'sender', label: 'Alpha-name', type: 'text', placeholder: 'ShineShop', required: true, helpText: 'Зареєстроване ім\'я відправника' },
+      { key: 'sender', label: 'Alpha-name', type: 'text', placeholder: 'StrongNailBits', required: true, helpText: 'Зареєстроване ім\'я відправника' },
     ],
   },
   {
@@ -725,7 +725,7 @@ const marketplace: ServiceDefinition[] = [
     category: 'marketplace',
     module: 'Маркетплейс',
     icon: 'Split',
-    description: 'Авто-розподіл оплати: комісія Shine Shop + виплата селлеру.',
+    description: 'Авто-розподіл оплати: комісія Strong Nail Bits + виплата селлеру.',
     isRequired: false,
     requiredFields: [],
   },
@@ -759,7 +759,7 @@ const marketplace: ServiceDefinition[] = [
     category: 'marketplace',
     module: 'Маркетплейс',
     icon: 'Route',
-    description: 'Роутинг доставки: Shine Shop / Seller / 3PL.',
+    description: 'Роутинг доставки: Strong Nail Bits / Seller / 3PL.',
     isRequired: false,
     requiredFields: [],
   },
@@ -780,7 +780,7 @@ const seoServices: ServiceDefinition[] = [
     isRequired: true,
     docsUrl: 'https://search.google.com/search-console',
     requiredFields: [
-      { key: 'site_url', label: 'Site URL', type: 'url', placeholder: 'https://shineshopb2b.com', required: true },
+      { key: 'site_url', label: 'Site URL', type: 'url', placeholder: 'https://strongnailbitsb2b.com', required: true },
       { key: 'service_account_json', label: 'Service Account JSON', type: 'password', required: false, helpText: 'JSON ключ сервісного акаунту Google' },
     ],
   },
@@ -868,7 +868,7 @@ const additionalServices: ServiceDefinition[] = [
     isRequired: false,
     requiredFields: [
       { key: 'bot_token', label: 'Bot Token', type: 'password', required: true },
-      { key: 'bot_username', label: 'Bot Username', type: 'text', placeholder: 'ShineShopAdminBot', required: false },
+      { key: 'bot_username', label: 'Bot Username', type: 'text', placeholder: 'StrongNailBitsAdminBot', required: false },
     ],
     envMapping: {
       bot_token: 'TELEGRAM_ADMIN_BOT_TOKEN',

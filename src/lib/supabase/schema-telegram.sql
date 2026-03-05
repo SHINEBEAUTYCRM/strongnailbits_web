@@ -1,5 +1,5 @@
 -- ================================================================
---  Shine Shop Telegram Bot — Database Schema
+--  Strong Nail Bits Telegram Bot — Database Schema
 --  Admin users, link codes, notification settings, sessions
 -- ================================================================
 

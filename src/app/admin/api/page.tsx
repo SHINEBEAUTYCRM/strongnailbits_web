@@ -88,7 +88,7 @@ const SECTIONS: Section[] = [
     id: "integrations",
     title: "Інтеграції (47 сервісів)",
     description: "Підключення зовнішніх сервісів",
-    longDescription: "Реєстр усіх 47 сервісів, які можна підключити до ShineShop OS: аналітика (GA4, Clarity, PostHog), реклама (Facebook, Google Ads), комунікації (TurboSMS, Telegram), платежі (Fondy, LiqPay), доставка (Нова Пошта) та інші.",
+    longDescription: "Реєстр усіх 47 сервісів, які можна підключити до StrongNailBits OS: аналітика (GA4, Clarity, PostHog), реклама (Facebook, Google Ads), комунікації (TurboSMS, Telegram), платежі (Fondy, LiqPay), доставка (Нова Пошта) та інші.",
     href: "/admin/settings/integrations",
     icon: Plug,
     color: "rose",

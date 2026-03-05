@@ -1,5 +1,5 @@
 // ================================================================
-//  Shine Shop B2B — AI Enrichment (Claude)
+//  Strong Nail Bits B2B — AI Enrichment (Claude)
 //  Generates Ukrainian descriptions, tags, compatibility
 //  Rule: if field.edited === true && field.source === 'manual' → DO NOT overwrite
 // ================================================================

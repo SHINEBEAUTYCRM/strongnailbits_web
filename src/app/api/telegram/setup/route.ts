@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
   // ─── Webhook ───
   if (action === "all" || action === "webhook") {
     const siteUrl =
-      (process.env.NEXT_PUBLIC_SITE_URL || "https://shineshopb2b.com").trim();
+      (process.env.NEXT_PUBLIC_SITE_URL || "https://strongnailbitsb2b.com").trim();
     const webhookUrl = `${siteUrl}/api/telegram/webhook`;
     const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
 
@@ -79,12 +79,12 @@ export async function GET(request: NextRequest) {
   // ─── Bot Description ───
   if (action === "all" || action === "description") {
     results.shortDescription = await bot.setMyShortDescription(
-      "ShineShop B2B — AI-асистент nail-магазину 💅",
+      "StrongNailBits B2B — AI-асистент nail-магазину 💅",
     );
 
     results.description = await bot.setMyDescription(
       [
-        "Бот ShineShop B2B — оптова косметика для нігтів.",
+        "Бот StrongNailBits B2B — оптова косметика для нігтів.",
         "",
         "🔍 Пошук серед 12 000+ товарів",
         "📦 Статус замовлень онлайн",

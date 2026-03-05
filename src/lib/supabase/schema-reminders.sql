@@ -1,5 +1,5 @@
 -- ========================================
--- Shine Shop Telegram Bot — Reminders & Consumables
+-- Strong Nail Bits Telegram Bot — Reminders & Consumables
 -- Run in Supabase SQL Editor
 -- ========================================
 

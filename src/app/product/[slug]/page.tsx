@@ -126,7 +126,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   const product = await getProduct(slug);
   if (!product) return { title: "Товар не знайдено" };
 
-  const title = product.meta_title || `${product.name_uk} | Купити в SHINE SHOP`;
+  const title = product.meta_title || `${product.name_uk} | Купити в STRONG NAIL BITS`;
   const description =
     product.meta_description ||
     `${product.name_uk} ціна від ${product.price} ₴. Доставка по Україні.`;

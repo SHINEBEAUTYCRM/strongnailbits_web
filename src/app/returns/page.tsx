@@ -4,7 +4,7 @@ import { RotateCcw, Clock, AlertCircle, CheckCircle, Phone, Mail, Truck } from "
 export const metadata: Metadata = {
   title: "Повернення і обмін",
   description:
-    "Умови повернення і обміну товарів в SHINE SHOP. 14 днів на повернення, безкоштовний обмін, гарантія на всі товари.",
+    "Умови повернення і обміну товарів в STRONG NAIL BITS. 14 днів на повернення, безкоштовний обмін, гарантія на всі товари.",
 };
 
 const RETURN_RULES = [

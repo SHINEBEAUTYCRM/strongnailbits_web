@@ -1,5 +1,5 @@
 -- ================================================================
---  Shine Shop B2B — Enrichment Pipeline Schema
+--  Strong Nail Bits B2B — Enrichment Pipeline Schema
 --  pgvector + brands extension + products enrichment + enrichment_log
 -- ================================================================
 
@@ -79,7 +79,7 @@ ALTER TABLE products ADD COLUMN IF NOT EXISTS raw_parsed_data JSONB DEFAULT '{}'
 -- Источник каждого фото
 -- [
 --   { "url": "/storage/products/dark-028-1.jpg", "source": "parsed", "from": "dark.ua", "type": "bottle" },
---   { "url": "https://shine-shop.com.ua/images/detailed/...", "source": "cs_cart", "type": "main" }
+--   { "url": "https://strongnailbits.com.ua/images/detailed/...", "source": "cs_cart", "type": "main" }
 -- ]
 ALTER TABLE products ADD COLUMN IF NOT EXISTS photo_sources JSONB DEFAULT '[]';
 

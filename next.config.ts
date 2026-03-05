@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "shine-shop.com.ua",
+        hostname: "strongnailbits.com.ua",
         pathname: "/**",
       },
       {
@@ -16,12 +16,12 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "shineshopb2b.com",
+        hostname: "strongnailbitsb2b.com",
         pathname: "/**",
       },
       {
         protocol: "https",
-        hostname: "img.shineshopb2b.com",
+        hostname: "img.strongnailbitsb2b.com",
         pathname: "/**",
       },
     ],

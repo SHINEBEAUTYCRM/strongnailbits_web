@@ -4,7 +4,7 @@ import { Store, Truck, Users, Award, Heart, Shield } from "lucide-react";
 export const metadata: Metadata = {
   title: "Про нас",
   description:
-    "SHINE SHOP — інтернет-магазин професійної nail-косметики. Оптові ціни, доставка по Україні, більше 14 000 товарів від 80+ брендів.",
+    "STRONG NAIL BITS — інтернет-магазин професійної nail-косметики. Оптові ціни, доставка по Україні, більше 14 000 товарів від 80+ брендів.",
 };
 
 const VALUES = [
@@ -46,7 +46,7 @@ export default function AboutPage() {
       {/* Hero */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-coral to-[#ff6b81] px-6 py-12 text-white md:px-12 md:py-16">
         <h1 className="font-unbounded text-2xl font-black leading-tight md:text-4xl">
-          Про SHINE SHOP
+          Про STRONG NAIL BITS
         </h1>
         <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/80 md:text-base">
           Ми — команда ентузіастів nail-індустрії з Одеси. Наша мета — зробити

@@ -60,7 +60,7 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-[400px] mx-4">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold tracking-wider mb-1">
-            <span style={{ color: "#a855f7" }}>ShineShop</span>{" "}
+            <span style={{ color: "#a855f7" }}>StrongNailBits</span>{" "}
             <span style={{ color: "#52525b", fontSize: "14px", letterSpacing: "0.15em" }}>OPERATING SYSTEM</span>
           </h1>
           <p className="text-sm" style={{ color: "#52525b" }}>Відновлення пароля</p>
@@ -79,7 +79,7 @@ export default function ResetPasswordPage() {
 
           <div className="mb-5">
             <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@shineshop.com"
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@strongnailbits.com"
               className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
               style={{ background: "#111116", border: "1px solid #1e1e2a", color: "#e4e4e7" }}
               onFocus={(e) => { e.currentTarget.style.borderColor = "#7c3aed"; }}

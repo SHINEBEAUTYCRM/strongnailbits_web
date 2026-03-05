@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       try {
         const res = await fetch(imageUrl, {
           headers: {
-            'User-Agent': 'Mozilla/5.0 (compatible; ShineShopBot/1.0)',
+            'User-Agent': 'Mozilla/5.0 (compatible; StrongNailBitsBot/1.0)',
             Referer: new URL(imageUrl).origin,
           },
           signal: AbortSignal.timeout(30_000),

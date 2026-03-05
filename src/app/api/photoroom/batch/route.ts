@@ -1,5 +1,5 @@
 // ================================================================
-//  ShineShop OS — PhotoRoom Batch Proxy
+//  StrongNailBits OS — PhotoRoom Batch Proxy
 //  POST /api/photoroom/batch
 //  Пакетна обробка до 10 зображень паралельно
 // ================================================================
