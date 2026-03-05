@@ -138,7 +138,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
       title,
       description,
       images: product.main_image_url
-        ? [{ url: product.main_image_url, width: 800, height: 800 }]
+        ? [{ url: product.main_image_url.split(";")[0].trim(), width: 800, height: 800 }]
         : undefined,
       type: "website",
     },
@@ -166,7 +166,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const category = Array.isArray(categoryData) ? categoryData[0] ?? null : categoryData;
 
   const allImages: string[] = [];
-  if (product.main_image_url) allImages.push(product.main_image_url);
+  // main_image_url may contain multiple URLs separated by ";"
+  if (product.main_image_url) {
+    const mainUrls = product.main_image_url.split(";").map((u: string) => u.trim()).filter(Boolean);
+    for (const url of mainUrls) {
+      if (!allImages.includes(url)) allImages.push(url);
+    }
+  }
   if (product.images && Array.isArray(product.images)) {
     for (const img of product.images) {
       const url = typeof img === "string" ? img : (img as { url?: string })?.url;
@@ -291,7 +297,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 quantity={product.quantity}
                 status={product.status}
                 sku={product.sku}
-                image={product.main_image_url}
+                image={product.main_image_url?.split(";")[0].trim() ?? null}
                 brand={brand?.name ?? null}
                 isB2bPrice={!!b2bPrice}
               />
