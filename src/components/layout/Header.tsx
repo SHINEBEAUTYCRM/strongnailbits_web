@@ -179,7 +179,7 @@ export function Header({ contacts, logoUrl }: HeaderProps) {
           <Link href="/" className="flex shrink-0 items-center">
             {logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={logoUrl} alt="Strong Nail Bits" className="h-[40px] w-auto object-contain" />
+              <img src={logoUrl} alt="Strong Nail Bits" className="h-[52px] w-auto object-contain" />
             ) : (
               <span className="flex items-baseline gap-1.5">
                 <span className="font-unbounded text-xl font-black text-[#1a1a1a]">STRONG NAIL</span>
@@ -284,7 +284,7 @@ export function Header({ contacts, logoUrl }: HeaderProps) {
           <Link href="/" className="flex shrink-0 items-center">
             {logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={logoUrl} alt="Strong Nail Bits" className="h-[28px] w-auto object-contain" />
+              <img src={logoUrl} alt="Strong Nail Bits" className="h-[44px] w-auto object-contain" />
             ) : (
               <span className="flex items-baseline gap-1">
                 <span className="font-unbounded text-[15px] font-black text-[#1a1a1a]">STRONG NAIL</span>
