@@ -4,12 +4,10 @@ import type { SiteContacts, SiteSocial } from "@/lib/site-settings";
 /* ---- Fallbacks (used when DB is not available) ---- */
 
 const FALLBACK_CATALOG_LINKS = [
-  { label: "Гель-лаки", href: "/catalog/gel-laki" },
-  { label: "Бази", href: "/catalog/bazy" },
-  { label: "Топи", href: "/catalog/topy" },
-  { label: "Для обличчя і тіла", href: "/catalog/dlya-oblychya-i-tila" },
-  { label: "Брови і вії", href: "/catalog/brovy-i-viji" },
-  { label: "Депіляція", href: "/catalog/depilyaciya" },
+  { label: "Твердосплавні фрези", href: "/catalog/tverdosplavni-frezi" },
+  { label: "Алмазні фрези", href: "/catalog/almazni-frezi" },
+  { label: "Алмазні фрези PREMIUM", href: "/catalog/almazni-frezi-premium" },
+  { label: "Фрези SET", href: "/catalog/frezi-set-upakovka" },
 ];
 
 const FALLBACK_INFO_LINKS = [

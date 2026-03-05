@@ -41,20 +41,26 @@ export function MobileCategoryMenu({
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    const html = document.documentElement;
     if (open) {
       setStack([{ title: "Каталог", slug: null, items: categories }]);
       setMounted(true);
       requestAnimationFrame(() => {
         requestAnimationFrame(() => setVisible(true));
       });
+      html.style.overflow = "hidden";
       document.body.style.overflow = "hidden";
     } else {
       setVisible(false);
       const timer = setTimeout(() => setMounted(false), 300);
+      html.style.overflow = "";
       document.body.style.overflow = "";
       return () => clearTimeout(timer);
     }
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      html.style.overflow = "";
+      document.body.style.overflow = "";
+    };
   }, [open, categories]);
 
   const current = stack[stack.length - 1];
@@ -128,7 +134,7 @@ export function MobileCategoryMenu({
             )}
 
             {/* Category list */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto overscroll-contain">
                 <div
                   key={stack.length}
                   className="flex flex-col"

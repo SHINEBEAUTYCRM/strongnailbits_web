@@ -24,8 +24,16 @@ export function CatalogButton() {
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
+    const html = document.documentElement;
+    if (open) {
+      html.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+    } else {
+      html.style.overflow = "";
+      document.body.style.overflow = "";
+    }
     return () => {
+      html.style.overflow = "";
       document.body.style.overflow = "";
     };
   }, [open]);

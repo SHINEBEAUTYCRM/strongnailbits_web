@@ -121,15 +121,17 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => setVisible(true));
       });
+      document.documentElement.style.overflow = "hidden";
       document.body.style.overflow = "hidden";
       setTimeout(() => inputRef.current?.focus(), 100);
     } else {
       setVisible(false);
       const timer = setTimeout(() => setMounted(false), 200);
+      document.documentElement.style.overflow = "";
       document.body.style.overflow = "";
       return () => clearTimeout(timer);
     }
-    return () => { document.body.style.overflow = ""; };
+    return () => { document.documentElement.style.overflow = ""; document.body.style.overflow = ""; };
   }, [open]);
 
   useEffect(() => {
@@ -276,7 +278,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
 
               <div className="h-px bg-[var(--border)]" />
 
-              <div className="max-h-[60vh] overflow-y-auto">
+              <div className="max-h-[60vh] overflow-y-auto overscroll-contain">
                 {/* Autocomplete suggestions */}
                 {suggestions.length > 0 && query.length >= 2 && (
                   <div className="border-b border-gray-100 px-2 py-2">

@@ -31,15 +31,17 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => setVisible(true));
       });
+      document.documentElement.style.overflow = "hidden";
       document.body.style.overflow = "hidden";
       hydrateCart();
     } else {
       setVisible(false);
       const timer = setTimeout(() => setMounted(false), 300);
+      document.documentElement.style.overflow = "";
       document.body.style.overflow = "";
       return () => clearTimeout(timer);
     }
-    return () => { document.body.style.overflow = ""; };
+    return () => { document.documentElement.style.overflow = ""; document.body.style.overflow = ""; };
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const total = getTotal();
@@ -85,7 +87,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
 
         {/* Items */}
         {hydrating ? (
-          <div className="flex-1 overflow-y-auto p-5">
+          <div className="flex-1 overflow-y-auto overscroll-contain p-5">
             <div className="flex flex-col gap-4">
               {[...Array(items.length || 2)].map((_, i) => (
                 <div key={i} className="flex gap-3 rounded-card border border-[var(--border)] bg-white p-3 animate-pulse">
@@ -122,7 +124,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
             </button>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto p-5">
+          <div className="flex-1 overflow-y-auto overscroll-contain p-5">
             <div className="flex flex-col gap-4">
               {items.map((item) => (
                 <div

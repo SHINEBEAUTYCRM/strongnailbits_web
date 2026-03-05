@@ -115,10 +115,18 @@ export function Header({ contacts }: HeaderProps) {
 
   /* Close catalog dropdown on outside click is handled by the backdrop overlay */
 
-  /* Lock body scroll for mobile menu */
+  /* Lock page scroll for mobile menu */
   useEffect(() => {
-    document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
+    const html = document.documentElement;
+    if (mobileMenuOpen) {
+      html.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+    } else {
+      html.style.overflow = "";
+      document.body.style.overflow = "";
+    }
     return () => {
+      html.style.overflow = "";
       document.body.style.overflow = "";
     };
   }, [mobileMenuOpen]);
@@ -447,7 +455,7 @@ export function Header({ contacts }: HeaderProps) {
           </div>
 
           {/* Scrollable list */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto overscroll-contain">
             {/* Root: show all categories from DB tree */}
             {menuStack.length === 0 && (
               <>

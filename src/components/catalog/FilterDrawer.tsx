@@ -43,14 +43,16 @@ export function FilterDrawer({
       requestAnimationFrame(() => {
         requestAnimationFrame(() => setVisible(true));
       });
+      document.documentElement.style.overflow = "hidden";
       document.body.style.overflow = "hidden";
     } else {
       setVisible(false);
       const timer = setTimeout(() => setMounted(false), 300);
+      document.documentElement.style.overflow = "";
       document.body.style.overflow = "";
       return () => clearTimeout(timer);
     }
-    return () => { document.body.style.overflow = ""; };
+    return () => { document.documentElement.style.overflow = ""; document.body.style.overflow = ""; };
   }, [open]);
 
   if (!mounted) return null;
@@ -84,7 +86,7 @@ export function FilterDrawer({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-5">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-5">
           {/* Subcategories */}
           {subcategories && subcategories.length > 0 && (
             <div className="mb-6">

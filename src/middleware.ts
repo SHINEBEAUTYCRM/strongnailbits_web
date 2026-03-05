@@ -108,37 +108,38 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
-  // TODO: re-enable auth after setup
   // ── Admin API routes — require session cookie ──
   if (isAdminApi(pathname)) {
-    // const sessionToken = request.cookies.get(SESSION_COOKIE)?.value;
-    // if (!sessionToken) {
-    //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    // }
+    const sessionToken = request.cookies.get(SESSION_COOKIE)?.value;
+    if (!sessionToken) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     return NextResponse.next({ request });
   }
 
   // ── Admin routes — check admin_session cookie ──
   if (isAdminRoute(pathname)) {
-    // const sessionToken = request.cookies.get(SESSION_COOKIE)?.value;
+    const sessionToken = request.cookies.get(SESSION_COOKIE)?.value;
 
     // Public admin pages (login, register, unauthorized)
-    // if (isAdminPublic(pathname)) {
-    //   if (sessionToken && pathname === "/admin/login") {
-    //     const url = request.nextUrl.clone();
-    //     url.pathname = "/admin";
-    //     return NextResponse.redirect(url);
-    //   }
-    //   return NextResponse.next({ request });
-    // }
+    if (isAdminPublic(pathname)) {
+      // If already has session and on login page → redirect to dashboard
+      if (sessionToken && pathname === "/admin/login") {
+        const url = request.nextUrl.clone();
+        url.pathname = "/admin";
+        return NextResponse.redirect(url);
+      }
+      return NextResponse.next({ request });
+    }
 
-    // // Protected admin pages — require session cookie
-    // if (!sessionToken) {
-    //   const url = request.nextUrl.clone();
-    //   url.pathname = "/admin/login";
-    //   return NextResponse.redirect(url);
-    // }
+    // Protected admin pages — require session cookie
+    if (!sessionToken) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/admin/login";
+      return NextResponse.redirect(url);
+    }
 
+    // Session validation is done in getAdminUser() at the page level
     return NextResponse.next({ request });
   }
 
