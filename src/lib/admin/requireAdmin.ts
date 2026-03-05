@@ -8,10 +8,15 @@ import { SESSION_COOKIE } from "@/lib/admin/auth";
  * Uses the custom admin_session cookie + admin_sessions/team_members tables.
  * Use in API routes: const check = await requireAdmin(); if (check.error) return check.error;
  */
+// TODO: re-enable auth after setup — remove the early return below
 export async function requireAdmin(): Promise<
   { user: { id: string; name: string; role: string }; error: null } |
   { user: null; error: NextResponse }
 > {
+  // Temporarily bypass auth for all admin API routes
+  return { user: { id: "setup", name: "Setup", role: "admin" }, error: null };
+
+  /* Original auth logic — uncomment when re-enabling:
   try {
     const cookieStore = await cookies();
     const sessionToken = cookieStore.get(SESSION_COOKIE)?.value;
@@ -71,4 +76,5 @@ export async function requireAdmin(): Promise<
       error: NextResponse.json({ error: "Auth error" }, { status: 500 }),
     };
   }
+  */
 }
