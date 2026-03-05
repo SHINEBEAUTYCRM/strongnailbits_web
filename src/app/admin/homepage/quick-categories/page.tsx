@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { getQuickCategories, getCategoryList } from "@/lib/admin/data";
 import { QuickCategoriesClient } from "./QuickCategoriesClient";
 import { Layers } from "lucide-react";
