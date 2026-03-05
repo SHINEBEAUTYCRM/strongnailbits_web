@@ -169,10 +169,10 @@ export function Header({ contacts }: HeaderProps) {
           {/* Logo */}
           <Link href="/" className="flex shrink-0 items-baseline gap-1.5">
             <span className="font-unbounded text-xl font-black text-[#1a1a1a]">
-              SHINE
+              STRONG NAIL
             </span>
             <span className="font-unbounded text-xl font-black text-coral">
-              SHOP
+              BITS
             </span>
           </Link>
 
@@ -271,10 +271,10 @@ export function Header({ contacts }: HeaderProps) {
 
           <Link href="/" className="flex shrink-0 items-baseline gap-1">
             <span className="font-unbounded text-[15px] font-black text-[#1a1a1a]">
-              SHINE
+              STRONG NAIL
             </span>
             <span className="font-unbounded text-[15px] font-black text-coral">
-              SHOP
+              BITS
             </span>
           </Link>
 
