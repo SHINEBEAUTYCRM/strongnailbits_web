@@ -188,7 +188,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     product.slug,
   );
 
-  const properties = await getProductFeatures(product.id);
+  const properties = (product.properties as Record<string, unknown> | null) ?? {};
 
   // Check B2B individual price for logged-in user
   let b2bPrice: number | null = null;

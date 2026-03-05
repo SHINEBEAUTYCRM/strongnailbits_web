@@ -10,9 +10,16 @@ interface ProductInfoProps {
   name: string;
   sku: string | null;
   brand: { name: string; slug: string } | null;
-  properties: Record<string, string>;
+  properties: Record<string, unknown> | null;
   description: string | null;
 }
+
+const PROPERTY_LABELS: Record<string, string> = {
+  abraziv: "Абразив",
+  diametr: "Діаметр",
+  forma: "Форма",
+  color: "Колір",
+};
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "description", label: "Опис" },
@@ -31,7 +38,7 @@ export function ProductInfo({
     description ? "description" : "properties",
   );
   const [descExpanded, setDescExpanded] = useState(false);
-  const propertyEntries = Object.entries(properties);
+  const propertyEntries = properties ? Object.entries(properties).filter(([, v]) => v != null && v !== "") : [];
   const descLong = description && description.length > 500;
 
   return (
@@ -111,21 +118,20 @@ export function ProductInfo({
       {activeTab === "properties" && (
         <div>
           {propertyEntries.length > 0 ? (
-            <div className="overflow-hidden rounded-xl border border-[#f0f0f0]">
-              {propertyEntries.map(([key, value], i) => (
-                <div
-                  key={key}
-                  className={`flex gap-4 px-4 py-3 text-[13px] ${
-                    i % 2 === 0 ? "bg-[#fafafa]" : "bg-white"
-                  }`}
-                >
-                  <span className="w-2/5 shrink-0 text-[#999]">{key}</span>
-                  <span className="min-w-0 break-words font-medium text-[#222]">
-                    {value}
-                  </span>
-                </div>
-              ))}
-            </div>
+            <table className="w-full overflow-hidden rounded-xl border border-[#f0f0f0] text-[13px]">
+              <tbody>
+                {propertyEntries.map(([key, value], i) => (
+                  <tr key={key} className={i % 2 === 0 ? "bg-[#fafafa]" : "bg-white"}>
+                    <td className="w-2/5 px-4 py-3 text-[#999]">
+                      {PROPERTY_LABELS[key] || key}
+                    </td>
+                    <td className="px-4 py-3 font-medium text-[#222]">
+                      {String(value)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           ) : (
             <p className="text-[13px] text-[#999]">
               Характеристики не вказані
