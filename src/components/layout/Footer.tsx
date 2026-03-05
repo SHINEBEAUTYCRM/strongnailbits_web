@@ -41,7 +41,7 @@ export function Footer({ contacts, social, footer }: FooterProps) {
 
   const description =
     (footer?.description as string) ??
-    "Професійна nail-косметика для майстрів та салонів. Оптові ціни від 1 одиниці. Доставка по Україні та за кордон.";
+    "Фрези для манікюру та педикюру. Професійні насадки для nail-майстрів та салонів. Доставка по Україні.";
   const catalogLinks =
     (footer?.catalog_links as { label: string; href: string }[]) ??
     FALLBACK_CATALOG_LINKS;
@@ -63,10 +63,10 @@ export function Footer({ contacts, social, footer }: FooterProps) {
           <div>
             <Link href="/" className="inline-flex items-baseline gap-1.5">
               <span className="font-unbounded text-xl font-black text-white">
-                SHINE
+                STRONG NAIL
               </span>
               <span className="font-unbounded text-xl font-black text-coral">
-                SHOP
+                BITS
               </span>
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-white/60">
