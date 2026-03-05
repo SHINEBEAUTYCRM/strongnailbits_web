@@ -35,9 +35,10 @@ const SearchModal = dynamic(
 
 interface HeaderProps {
   contacts?: SiteContacts | null;
+  logoUrl?: string | null;
 }
 
-export function Header({ contacts }: HeaderProps) {
+export function Header({ contacts, logoUrl }: HeaderProps) {
   const phoneDisplay = contacts?.phone ?? "+38 (093) 744-38-89";
   const phoneRaw = contacts?.phone_raw ?? "+380937443889";
   const scheduleWeekdays = contacts?.schedule?.weekdays ?? "Пн-Пт: 9:00 — 18:00";
@@ -175,13 +176,16 @@ export function Header({ contacts }: HeaderProps) {
         {/* ── Desktop ── */}
         <div className="mx-auto hidden h-[72px] max-w-[1400px] items-center gap-4 px-6 lg:flex">
           {/* Logo */}
-          <Link href="/" className="flex shrink-0 items-baseline gap-1.5">
-            <span className="font-unbounded text-xl font-black text-[#1a1a1a]">
-              STRONG NAIL
-            </span>
-            <span className="font-unbounded text-xl font-black text-coral">
-              BITS
-            </span>
+          <Link href="/" className="flex shrink-0 items-center">
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoUrl} alt="Strong Nail Bits" className="h-[40px] w-auto object-contain" />
+            ) : (
+              <span className="flex items-baseline gap-1.5">
+                <span className="font-unbounded text-xl font-black text-[#1a1a1a]">STRONG NAIL</span>
+                <span className="font-unbounded text-xl font-black text-coral">BITS</span>
+              </span>
+            )}
           </Link>
 
           {/* Catalog button + dropdown */}
@@ -277,13 +281,16 @@ export function Header({ contacts }: HeaderProps) {
             {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
 
-          <Link href="/" className="flex shrink-0 items-baseline gap-1">
-            <span className="font-unbounded text-[15px] font-black text-[#1a1a1a]">
-              STRONG NAIL
-            </span>
-            <span className="font-unbounded text-[15px] font-black text-coral">
-              BITS
-            </span>
+          <Link href="/" className="flex shrink-0 items-center">
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoUrl} alt="Strong Nail Bits" className="h-[28px] w-auto object-contain" />
+            ) : (
+              <span className="flex items-baseline gap-1">
+                <span className="font-unbounded text-[15px] font-black text-[#1a1a1a]">STRONG NAIL</span>
+                <span className="font-unbounded text-[15px] font-black text-coral">BITS</span>
+              </span>
+            )}
           </Link>
 
           <div className="flex-1" />

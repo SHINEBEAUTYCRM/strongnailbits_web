@@ -83,6 +83,8 @@ export default async function RootLayout({
   let contacts: SiteContacts | null = null;
   let social: SiteSocial | null = null;
   let footerData: Record<string, unknown> | null = null;
+  let logoUrl: string | null = null;
+  let faviconUrl: string | null = null;
 
   try {
     const settings = await getSiteSettings();
@@ -93,6 +95,15 @@ export default async function RootLayout({
     contacts = settings?.contacts ?? null;
     social = settings?.social ?? null;
     footerData = (settings?.footer ?? null) as Record<string, unknown> | null;
+
+    const raw = settings as unknown as Record<string, unknown>;
+    const parseBrandingUrl = (v: unknown): string | null => {
+      if (!v) return null;
+      const s = typeof v === "string" ? v.replace(/^"|"$/g, "") : "";
+      return s || null;
+    };
+    logoUrl = parseBrandingUrl(raw.logo_url);
+    faviconUrl = parseBrandingUrl(raw.favicon_url);
   } catch {
     /* Table may not exist yet — use CSS fallback from globals.css */
   }
@@ -126,6 +137,7 @@ export default async function RootLayout({
         {analytics.fbPixelId && (
           <link rel="dns-prefetch" href="https://connect.facebook.net" />
         )}
+        {faviconUrl && <link rel="icon" href={faviconUrl} />}
       </head>
       <body
         className={`${unbounded.variable} ${inter.variable} ${jetbrainsMono.variable} antialiased`}
@@ -152,7 +164,7 @@ export default async function RootLayout({
         <SiteTracker />
         <AnnouncementBarWrapper />
         <TopBarWrapper />
-        <Header contacts={contacts} />
+        <Header contacts={contacts} logoUrl={logoUrl} />
         <main className="min-h-[calc(100dvh-80px)]">
           <CartSyncProvider>{children}</CartSyncProvider>
         </main>

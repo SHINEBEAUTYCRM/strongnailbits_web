@@ -148,7 +148,7 @@ export const adminNavigation: NavSection[] = [
     children: [
       { label: "Команда", href: "/admin/team", icon: UsersRound },
       { label: "Задачі", href: "/admin/tasks", icon: CheckSquare },
-      { label: "Shine Board", href: "/admin/board", icon: Palette },
+      { label: "Дошка", href: "/admin/board", icon: Palette },
       { label: "Чат", href: "/admin/chat", icon: MessageCircle },
     ],
   },
@@ -202,6 +202,7 @@ export const adminNavigation: NavSection[] = [
       { label: "Монітор 1С", href: "/admin/1c", icon: Activity },
       { label: "PageSpeed", href: "/admin/pagespeed", icon: Gauge },
       { label: "Користувачі", href: "/admin/users", icon: Shield },
+      { label: "Логотип і Фавікон", href: "/admin/system/branding", icon: ImageIcon },
       { label: "Cron Jobs", href: "/admin/settings/cron", icon: Clock, badge: "скоро" },
       { label: "Тригери", href: "/admin/settings/triggers", icon: Zap, badge: "скоро" },
       { label: "Логи", href: "/admin/settings/logs", icon: ScrollText, badge: "скоро" },
