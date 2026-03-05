@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
         {
           error: "no_telegram",
           message:
-            `Спочатку прив'яжіть Telegram: відкрийте @${process.env.NEXT_PUBLIC_TELEGRAM_ADMIN_BOT_USERNAME || "StrongNailBitsAdminBot"} і надішліть /start`,
+            `Спочатку прив'яжіть Telegram: відкрийте @${process.env.NEXT_PUBLIC_TELEGRAM_ADMIN_BOT_USERNAME || "SNB_admin_bot"} і надішліть /start`,
         },
         { status: 400 },
       );

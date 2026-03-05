@@ -77,7 +77,7 @@ globs:
 - Токен: TELEGRAM_BOT_TOKEN (env)
 - Сповіщення клієнтам про замовлення
 
-### @StrongNailBitsAdminBot — адмін бот:
+### @SNB_admin_bot — адмін бот:
 - Токен: TELEGRAM_ADMIN_BOT_TOKEN (env)
 - Підтвердження входу в адмінку
 - Webhook: /api/admin/auth/telegram-webhook

@@ -868,7 +868,7 @@ const additionalServices: ServiceDefinition[] = [
     isRequired: false,
     requiredFields: [
       { key: 'bot_token', label: 'Bot Token', type: 'password', required: true },
-      { key: 'bot_username', label: 'Bot Username', type: 'text', placeholder: 'StrongNailBitsAdminBot', required: false },
+      { key: 'bot_username', label: 'Bot Username', type: 'text', placeholder: 'SNB_admin_bot', required: false },
     ],
     envMapping: {
       bot_token: 'TELEGRAM_ADMIN_BOT_TOKEN',

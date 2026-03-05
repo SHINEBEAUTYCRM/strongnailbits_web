@@ -1,5 +1,5 @@
 /**
- * Telegram Admin Bot Webhook — @StrongNailBitsAdminBot
+ * Telegram Admin Bot Webhook — @SNB_admin_bot
  *
  * Handles:
  * - /start  → onboarding: welcome + request phone contact

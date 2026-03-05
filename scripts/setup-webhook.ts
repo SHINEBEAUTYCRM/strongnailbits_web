@@ -1,5 +1,5 @@
 /**
- * Register Telegram webhook for @StrongNailBitsAdminBot
+ * Register Telegram webhook for @SNB_admin_bot
  *
  * Usage: npx tsx scripts/setup-webhook.ts
  *
@@ -37,7 +37,7 @@ async function setup() {
     process.exit(1);
   }
 
-  console.log("🔧 Setting up webhook for StrongNailBitsAdminBot...\n");
+  console.log("🔧 Setting up webhook for SNB_admin_bot...\n");
 
   // 1. Verify bot token
   const meRes = await fetch(`https://api.telegram.org/bot${TOKEN}/getMe`);

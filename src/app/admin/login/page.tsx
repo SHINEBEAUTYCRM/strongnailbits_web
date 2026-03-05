@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 
 type Status = "idle" | "sending" | "waiting" | "confirmed" | "error" | "no_telegram";
 
-const ADMIN_BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_ADMIN_BOT_USERNAME || "StrongNailBitsAdminBot";
+const ADMIN_BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_ADMIN_BOT_USERNAME || "SNB_admin_bot";
 
 export default function AdminLoginPage() {
   const [phone, setPhone] = useState("");
