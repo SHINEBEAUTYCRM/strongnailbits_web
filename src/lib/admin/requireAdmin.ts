@@ -14,7 +14,7 @@ export async function requireAdmin(): Promise<
   { user: null; error: NextResponse }
 > {
   // Temporarily bypass auth for all admin API routes
-  return { user: { id: "setup", name: "Setup", role: "admin" }, error: null };
+  return { user: { id: "00000000-0000-0000-0000-000000000000", name: "Setup", role: "admin" }, error: null };
 
   /* Original auth logic — uncomment when re-enabling:
   try {
